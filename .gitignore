@@ -1,0 +1,11 @@
+/vendor/
+/lib/*.so
+/lib/*.dylib
+/lib/*.dll
+/lib/*.h
+/rust/target/
+composer.lock
+.phpunit.result.cache
+.idea/
+.vscode/
+*.log

@@ -1,0 +1,14 @@
+[package]
+name = "phpndarray"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "phpndarray"
+crate-type = ["cdylib"]
+
+[dependencies]
+ndarray = "0.15"
+
+[build-dependencies]
+cbindgen = "0.26"

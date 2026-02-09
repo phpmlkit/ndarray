@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust FFI"
+  short_description: "Rust FFI patterns with C/C++ interop"
+  default_prompt: "Use $rust-ffi to solve this Rust task with concrete code and checks."
