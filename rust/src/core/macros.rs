@@ -1,0 +1,103 @@
+//! Macros for reducing type dispatch boilerplate.
+//!
+//! These macros generate repetitive code for handling all 11 data types
+//! without manual duplication.
+//!
+//! Note: FFI functions (extern "C") must be written explicitly because
+//! cbindgen cannot expand Rust macros when generating the C header.
+
+/// Dispatch an operation across all ArrayData variants.
+///
+/// This macro expands a match expression that handles all 11 type variants,
+/// binding the inner Arc<RwLock<ArrayD<T>>> to the specified identifier.
+///
+/// # Example
+/// ```ignore
+/// match_array_data!(self.data, arr => {
+///     arr.read().shape().to_vec()
+/// })
+/// ```
+#[macro_export]
+macro_rules! match_array_data {
+    ($data:expr, $arr:ident => $body:expr) => {
+        match &$data {
+            $crate::core::ArrayData::Int8($arr) => $body,
+            $crate::core::ArrayData::Int16($arr) => $body,
+            $crate::core::ArrayData::Int32($arr) => $body,
+            $crate::core::ArrayData::Int64($arr) => $body,
+            $crate::core::ArrayData::Uint8($arr) => $body,
+            $crate::core::ArrayData::Uint16($arr) => $body,
+            $crate::core::ArrayData::Uint32($arr) => $body,
+            $crate::core::ArrayData::Uint64($arr) => $body,
+            $crate::core::ArrayData::Float32($arr) => $body,
+            $crate::core::ArrayData::Float64($arr) => $body,
+            $crate::core::ArrayData::Bool($arr) => $body,
+        }
+    };
+}
+
+/// Generate from_slice_* methods for NDArrayWrapper.
+///
+/// This macro generates type-specific constructors that create an NDArrayWrapper
+/// from a slice of the given type.
+///
+/// # Arguments
+/// * `$method` - Method name (e.g., `from_slice_i8`)
+/// * `$type` - Rust type (e.g., `i8`)
+/// * `$variant` - ArrayData variant (e.g., `Int8`)
+/// * `$dtype` - DType variant (e.g., `Int8`)
+#[macro_export]
+macro_rules! impl_from_slice {
+    ($($method:ident, $type:ty, $variant:ident, $dtype:ident);* $(;)?) => {
+        impl $crate::core::NDArrayWrapper {
+            $(
+                #[doc = concat!("Create array from ", stringify!($type), " slice.")]
+                pub fn $method(data: &[$type], shape: &[usize]) -> Result<Self, String> {
+                    let expected_len: usize = shape.iter().product();
+                    if data.len() != expected_len {
+                        return Err(format!(
+                            "Data length {} does not match shape {:?} (expected {})",
+                            data.len(),
+                            shape,
+                            expected_len
+                        ));
+                    }
+
+                    let arr = ndarray::ArrayD::from_shape_vec(
+                        ndarray::IxDyn(shape),
+                        data.to_vec()
+                    ).map_err(|e| format!("Shape error: {}", e))?;
+
+                    Ok(Self {
+                        data: $crate::core::ArrayData::$variant(
+                            std::sync::Arc::new(parking_lot::RwLock::new(arr))
+                        ),
+                        dtype: $crate::dtype::DType::$dtype,
+                    })
+                }
+            )*
+        }
+    };
+}
+
+/// Generate to_vec_* methods for NDArrayWrapper.
+///
+/// This macro generates type-specific accessors that return a copy of the
+/// data as a `Vec<T>`.
+#[macro_export]
+macro_rules! impl_to_vec {
+    ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
+        impl $crate::core::NDArrayWrapper {
+            $(
+                #[doc = concat!("Get array data as `Vec<", stringify!($type), ">` if type matches.")]
+                pub fn $method(&self) -> Option<Vec<$type>> {
+                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
+                        Some(arr.read().iter().cloned().collect())
+                    } else {
+                        None
+                    }
+                }
+            )*
+        }
+    };
+}

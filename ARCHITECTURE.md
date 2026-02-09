@@ -81,17 +81,19 @@ ndarray/
 │   ├── cbindgen.toml            # C header generation config
 │   │
 │   ├── src/
-│   │   ├── lib.rs               # FFI exports
-│   │   ├── ndarray_wrapper.rs   # NDArray wrapper
-│   │   ├── ffi/
-│   │   │   ├── mod.rs
-│   │   │   ├── array.rs         # Array FFI functions
-│   │   │   ├── operations.rs    # Operation FFI functions
-│   │   │   ├── linalg.rs        # Linear algebra FFI
-│   │   │   └── error.rs         # Error handling
-│   │   ├── memory.rs            # Memory management
+│   │   ├── lib.rs               # FFI exports and module root
 │   │   ├── dtype.rs             # Data type handling
-│   │   └── utils.rs
+│   │   │
+│   │   ├── core/                # Internal implementation
+│   │   │   ├── mod.rs           # Module exports
+│   │   │   ├── macros.rs        # Type dispatch macros
+│   │   │   ├── array_data.rs    # ArrayData enum
+│   │   │   └── wrapper.rs       # NDArrayWrapper
+│   │   │
+│   │   └── ffi/                 # FFI layer
+│   │       ├── mod.rs           # Module exports
+│   │       ├── types.rs         # NdArrayHandle opaque pointer
+│   │       └── array.rs         # Array creation and manipulation
 │   │
 │   └── tests/
 │       └── integration_tests.rs
@@ -1483,34 +1485,63 @@ $float32 = $a->astype(DType::FLOAT32);
 
 ## 5. Rust Implementation
 
-### 5.1 Core Structures
+### 5.1 Module Organization
 
-**File**: `rust/src/ndarray_wrapper.rs`
+The Rust codebase is organized into two main modules:
+
+**`core/`** - Internal implementation (not exposed to FFI)
+- `macros.rs` - Type dispatch macros for reducing boilerplate
+- `array_data.rs` - `ArrayData` enum with 11 type variants
+- `wrapper.rs` - `NDArrayWrapper` struct and methods
+
+**`ffi/`** - FFI layer (exposed to PHP)
+- `types.rs` - `NdArrayHandle` opaque pointer type
+- `array.rs` - Array creation, destruction, and property functions
+
+### 5.2 Type Dispatch Macros
+
+The library uses three key macros to handle the 11 supported data types without repetition:
+
+**`match_array_data!`** - Dispatches operations across all ArrayData variants:
+```rust
+match_array_data!(self.data, arr => {
+    arr.read().shape().to_vec()
+})
+```
+
+**`impl_from_slice!`** - Generates type-specific constructors:
+```rust
+impl_from_slice!(
+    from_slice_i8, i8, Int8, Int8;
+    from_slice_f64, f64, Float64, Float64;
+    // ... all 11 types
+);
+```
+
+**`impl_ffi_create!`** - Generates FFI array creation functions:
+```rust
+impl_ffi_create!(
+    ndarray_create_int8, i8, from_slice_i8;
+    ndarray_create_float64, f64, from_slice_f64;
+    // ... all 11 types
+);
+```
+
+### 5.3 Core Structures
+
+**File**: `rust/src/core/array_data.rs`
 
 ```rust
-use ndarray::{Array, ArrayD, ArrayView, ArrayViewMut, IxDyn, Axis};
-use std::sync::Arc;
+use ndarray::ArrayD;
 use parking_lot::RwLock;
+use std::sync::Arc;
 
-/// Data type enumeration matching PHP
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum DType {
-    Int8 = 0,
-    Int16 = 1,
-    Int32 = 2,
-    Int64 = 3,
-    Uint8 = 4,
-    Uint16 = 5,
-    Uint32 = 6,
-    Uint64 = 7,
-    Float32 = 8,
-    Float64 = 9,
-    Bool = 10,
-}
-
-/// Enum to hold different data types
-#[derive(Debug, Clone)]
+/// Enum holding arrays of different data types.
+///
+/// Each variant wraps an Arc<RwLock<ArrayD<T>>> to enable:
+/// - Shared ownership for views (Arc)
+/// - Interior mutability with read/write locking (RwLock)
+#[derive(Clone)]
 pub enum ArrayData {
     Int8(Arc<RwLock<ArrayD<i8>>>),
     Int16(Arc<RwLock<ArrayD<i16>>>),
@@ -1522,341 +1553,139 @@ pub enum ArrayData {
     Uint64(Arc<RwLock<ArrayD<u64>>>),
     Float32(Arc<RwLock<ArrayD<f32>>>),
     Float64(Arc<RwLock<ArrayD<f64>>>),
-    Bool(Arc<RwLock<ArrayD<bool>>>),
+    Bool(Arc<RwLock<ArrayD<u8>>>), // Store bool as u8 for FFI compatibility
 }
+```
 
-/// Main wrapper around ndarray
+**File**: `rust/src/core/wrapper.rs`
+
+```rust
+use crate::core::ArrayData;
+use crate::dtype::DType;
+
+/// Main wrapper around ndarray with type information.
 pub struct NDArrayWrapper {
     pub data: ArrayData,
     pub dtype: DType,
 }
 
 impl NDArrayWrapper {
-    /// Create new array from raw data
-    pub fn from_slice<T: Clone + 'static>(
-        data: &[T],
-        shape: &[usize],
-        dtype: DType,
-    ) -> Result<Self, String> {
-        let arr = ArrayD::from_shape_vec(IxDyn(shape), data.to_vec())
-            .map_err(|e| format!("Shape error: {}", e))?;
-        
-        let data = match dtype {
-            DType::Float64 => {
-                // Assuming T is f64 for now
-                ArrayData::Float64(Arc::new(RwLock::new(
-                    unsafe { std::mem::transmute(arr) }
-                )))
-            }
-            // Handle other types...
-            _ => return Err("Unsupported dtype".to_string()),
-        };
-        
-        Ok(Self { data, dtype })
-    }
-
-    /// Create zeros array
-    pub fn zeros(shape: &[usize], dtype: DType) -> Self {
-        match dtype {
-            DType::Float64 => {
-                let arr = ArrayD::zeros(IxDyn(shape));
-                Self {
-                    data: ArrayData::Float64(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Float32 => {
-                let arr = ArrayD::zeros(IxDyn(shape));
-                Self {
-                    data: ArrayData::Float32(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Int64 => {
-                let arr = ArrayD::zeros(IxDyn(shape));
-                Self {
-                    data: ArrayData::Int64(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            // Handle other types...
-            _ => unimplemented!("Dtype not yet implemented"),
-        }
-    }
-
-    /// Get element at indices
-    pub fn get(&self, indices: &[usize]) -> Result<f64, String> {
-        match &self.data {
-            ArrayData::Float64(arr) => {
-                let arr = arr.read();
-                let idx = IxDyn(indices);
-                arr.get(idx)
-                    .copied()
-                    .ok_or_else(|| "Index out of bounds".to_string())
-            }
-            // Handle other types...
-            _ => Err("Unsupported dtype".to_string()),
-        }
-    }
-
-    /// Set element at indices
-    pub fn set(&mut self, indices: &[usize], value: f64) -> Result<(), String> {
-        match &mut self.data {
-            ArrayData::Float64(arr) => {
-                let mut arr = arr.write();
-                let idx = IxDyn(indices);
-                if let Some(elem) = arr.get_mut(idx) {
-                    *elem = value;
-                    Ok(())
-                } else {
-                    Err("Index out of bounds".to_string())
-                }
-            }
-            // Handle other types...
-            _ => Err("Unsupported dtype".to_string()),
-        }
-    }
-
-    /// Element-wise addition
-    pub fn add(&self, other: &Self) -> Result<Self, String> {
-        match (&self.data, &other.data) {
-            (ArrayData::Float64(a), ArrayData::Float64(b)) => {
-                let a = a.read();
-                let b = b.read();
-                let result = &*a + &*b;
-                Ok(Self {
-                    data: ArrayData::Float64(Arc::new(RwLock::new(result))),
-                    dtype: self.dtype,
-                })
-            }
-            // Handle other type combinations...
-            _ => Err("Type mismatch".to_string()),
-        }
-    }
-
-    /// Dot product / matrix multiplication
-    pub fn dot(&self, other: &Self) -> Result<Self, String> {
-        match (&self.data, &other.data) {
-            (ArrayData::Float64(a), ArrayData::Float64(b)) => {
-                let a = a.read();
-                let b = b.read();
-                
-                // Use ndarray's dot method
-                let result = a.dot(&*b);
-                
-                Ok(Self {
-                    data: ArrayData::Float64(Arc::new(RwLock::new(result))),
-                    dtype: self.dtype,
-                })
-            }
-            _ => Err("Type mismatch".to_string()),
-        }
-    }
-
-    /// Sum reduction
-    pub fn sum(&self, axis: Option<usize>) -> Result<Self, String> {
-        match &self.data {
-            ArrayData::Float64(arr) => {
-                let arr = arr.read();
-                let result = if let Some(ax) = axis {
-                    arr.sum_axis(Axis(ax))
-                } else {
-                    // Return scalar as 0-d array
-                    let sum = arr.sum();
-                    ArrayD::from_elem(IxDyn(&[]), sum)
-                };
-                
-                Ok(Self {
-                    data: ArrayData::Float64(Arc::new(RwLock::new(result))),
-                    dtype: self.dtype,
-                })
-            }
-            _ => Err("Unsupported dtype".to_string()),
-        }
-    }
-
-    /// Get shape
+    /// Get the shape of the array.
     pub fn shape(&self) -> Vec<usize> {
-        match &self.data {
-            ArrayData::Float64(arr) => arr.read().shape().to_vec(),
-            ArrayData::Float32(arr) => arr.read().shape().to_vec(),
-            ArrayData::Int64(arr) => arr.read().shape().to_vec(),
-            // Handle other types...
-            _ => vec![],
-        }
+        match_array_data!(self.data, arr => {
+            arr.read().shape().to_vec()
+        })
+    }
+
+    /// Get data as f64 slice (for FFI - converts from actual type).
+    pub fn to_f64_vec(&self) -> Vec<f64> {
+        match_array_data!(self.data, arr => {
+            arr.read().iter().map(|&x| x as f64).collect()
+        })
+    }
+}
+
+// from_slice_* methods are generated by impl_from_slice! macro
+```
+
+### 5.4 FFI Layer
+
+**Important**: FFI functions (`extern "C"`) must be written explicitly, not via macro.
+`cbindgen` parses Rust source at the AST level and cannot see macro-expanded code.
+The macros (`match_array_data!`, `impl_from_slice!`) reduce boilerplate in internal
+Rust code only.
+
+**File**: `rust/src/ffi/types.rs`
+
+```rust
+use crate::core::NDArrayWrapper;
+
+/// Opaque pointer type for FFI.
+///
+/// PHP holds this pointer and passes it back to Rust for operations.
+#[repr(C)]
+pub struct NdArrayHandle {
+    _private: [u8; 0],
+}
+
+impl NdArrayHandle {
+    pub fn from_wrapper(wrapper: Box<NDArrayWrapper>) -> *mut Self {
+        Box::into_raw(wrapper) as *mut Self
+    }
+
+    pub unsafe fn as_wrapper<'a>(ptr: *mut Self) -> &'a NDArrayWrapper {
+        &*(ptr as *const NDArrayWrapper)
+    }
+
+    pub unsafe fn into_wrapper(ptr: *mut Self) -> Box<NDArrayWrapper> {
+        Box::from_raw(ptr as *mut NDArrayWrapper)
     }
 }
 ```
-
-### 5.2 FFI Layer
 
 **File**: `rust/src/ffi/array.rs`
 
 ```rust
-use std::os::raw::c_void;
-use std::slice;
-use crate::ndarray_wrapper::{NDArrayWrapper, DType};
+use crate::core::NDArrayWrapper;
+use crate::ffi::NdArrayHandle;
 
-/// Opaque pointer for FFI
-#[repr(C)]
-pub struct OpaqueNDArray {
-    _private: [u8; 0],
-}
+// FFI functions must be explicit for cbindgen to generate C headers.
+// Each ndarray_create_* function follows this pattern:
 
-impl OpaqueNDArray {
-    fn from_wrapper(wrapper: Box<NDArrayWrapper>) -> *mut Self {
-        Box::into_raw(wrapper) as *mut Self
-    }
-
-    unsafe fn to_wrapper<'a>(ptr: *mut Self) -> &'a mut NDArrayWrapper {
-        &mut *(ptr as *mut NDArrayWrapper)
-    }
-
-    unsafe fn to_box(ptr: *mut Self) -> Box<NDArrayWrapper> {
-        Box::from_raw(ptr as *mut NDArrayWrapper)
-    }
-}
-
-/// Create array from data
+/// Create an NDArray from f64 data.
 #[no_mangle]
-pub extern "C" fn ndarray_create(
+pub unsafe extern "C" fn ndarray_create_float64(
     data: *const f64,
     len: usize,
     shape: *const usize,
     ndim: usize,
-    dtype: u8,
-) -> *mut OpaqueNDArray {
+) -> *mut NdArrayHandle {
     if data.is_null() || shape.is_null() {
         return std::ptr::null_mut();
     }
 
-    let dtype = match dtype {
-        8 => DType::Float32,
-        9 => DType::Float64,
-        _ => return std::ptr::null_mut(),
-    };
+    let data_slice = slice::from_raw_parts(data, len);
+    let shape_slice = slice::from_raw_parts(shape, ndim);
 
-    let data_slice = unsafe { slice::from_raw_parts(data, len) };
-    let shape_slice = unsafe { slice::from_raw_parts(shape, ndim) };
-
-    match NDArrayWrapper::from_slice(data_slice, shape_slice, dtype) {
-        Ok(wrapper) => OpaqueNDArray::from_wrapper(Box::new(wrapper)),
+    match NDArrayWrapper::from_slice_f64(data_slice, shape_slice) {
+        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
         Err(_) => std::ptr::null_mut(),
     }
 }
 
-/// Create zeros array
-#[no_mangle]
-pub extern "C" fn ndarray_zeros(
-    shape: *const usize,
-    ndim: usize,
-    dtype: u8,
-) -> *mut OpaqueNDArray {
-    if shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let dtype = match dtype {
-        8 => DType::Float32,
-        9 => DType::Float64,
-        2 => DType::Int32,
-        3 => DType::Int64,
-        _ => return std::ptr::null_mut(),
-    };
-
-    let shape_slice = unsafe { slice::from_raw_parts(shape, ndim) };
-    let wrapper = NDArrayWrapper::zeros(shape_slice, dtype);
-    
-    OpaqueNDArray::from_wrapper(Box::new(wrapper))
-}
-
-/// Destroy array
-#[no_mangle]
-pub extern "C" fn ndarray_destroy(ptr: *mut OpaqueNDArray) {
-    if !ptr.is_null() {
-        unsafe {
-            let _ = OpaqueNDArray::to_box(ptr);
-        }
-    }
-}
-
-/// Get item
-#[no_mangle]
-pub extern "C" fn ndarray_get_item(
-    ptr: *mut OpaqueNDArray,
-    indices: *const usize,
-    ndim: usize,
-) -> f64 {
-    if ptr.is_null() || indices.is_null() {
-        return 0.0;
-    }
-
-    let wrapper = unsafe { OpaqueNDArray::to_wrapper(ptr) };
-    let indices_slice = unsafe { slice::from_raw_parts(indices, ndim) };
-
-    wrapper.get(indices_slice).unwrap_or(0.0)
-}
-
-/// Set item
-#[no_mangle]
-pub extern "C" fn ndarray_set_item(
-    ptr: *mut OpaqueNDArray,
-    indices: *const usize,
-    ndim: usize,
-    value: f64,
-) -> bool {
-    if ptr.is_null() || indices.is_null() {
-        return false;
-    }
-
-    let wrapper = unsafe { OpaqueNDArray::to_wrapper(ptr) };
-    let indices_slice = unsafe { slice::from_raw_parts(indices, ndim) };
-
-    wrapper.set(indices_slice, value).is_ok()
-}
-
-/// Add arrays
-#[no_mangle]
-pub extern "C" fn ndarray_add(
-    a: *mut OpaqueNDArray,
-    b: *mut OpaqueNDArray,
-) -> *mut OpaqueNDArray {
-    if a.is_null() || b.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let a_wrapper = unsafe { OpaqueNDArray::to_wrapper(a) };
-    let b_wrapper = unsafe { OpaqueNDArray::to_wrapper(b) };
-
-    match a_wrapper.add(b_wrapper) {
-        Ok(result) => OpaqueNDArray::from_wrapper(Box::new(result)),
-        Err(_) => std::ptr::null_mut(),
-    }
-}
-
-/// Get shape
-#[no_mangle]
-pub extern "C" fn ndarray_get_shape(
-    ptr: *mut OpaqueNDArray,
-    out_shape: *mut usize,
-    max_ndim: usize,
-) -> usize {
-    if ptr.is_null() || out_shape.is_null() {
-        return 0;
-    }
-
-    let wrapper = unsafe { OpaqueNDArray::to_wrapper(ptr) };
-    let shape = wrapper.shape();
-    let ndim = shape.len().min(max_ndim);
-
-    let out_slice = unsafe { slice::from_raw_parts_mut(out_shape, ndim) };
-    out_slice.copy_from_slice(&shape[..ndim]);
-
-    ndim
-}
+// Similar explicit functions for all 11 types:
+// ndarray_create_int8, ndarray_create_int16, ndarray_create_int32, ndarray_create_int64,
+// ndarray_create_uint8, ndarray_create_uint16, ndarray_create_uint32, ndarray_create_uint64,
+// ndarray_create_float32, ndarray_create_float64, ndarray_create_bool
 ```
 
-### 5.3 BLAS Integration (Optional)
+### 5.5 Adding New Operations
+
+To add a new operation across all data types:
+
+1. **Add the operation to `NDArrayWrapper`** in `rust/src/core/wrapper.rs`:
+   ```rust
+   pub fn my_operation(&self) -> Vec<f64> {
+       match_array_data!(self.data, arr => {
+           // operation implementation
+       })
+   }
+   ```
+
+2. **Add the FFI function** in `rust/src/ffi/array.rs`:
+   ```rust
+   #[no_mangle]
+   pub unsafe extern "C" fn ndarray_my_operation(
+       handle: *const NdArrayHandle,
+       // parameters...
+   ) -> /* return type */ {
+       // implementation
+   }
+   ```
+
+3. **Update the C header** in `lib/ndarray_php.h` with the function signature.
+
+4. **Add the PHP method** in `src/NDArray.php` that calls the FFI function.
 
 **File**: `rust/Cargo.toml` (excerpt)
 
