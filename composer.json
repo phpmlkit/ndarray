@@ -1,5 +1,5 @@
 {
-  "name": "yourvendor/phpndarray",
+  "name": "yourvendor/ndarray",
   "description": "High-performance N-dimensional arrays for PHP, powered by Rust",
   "type": "library",
   "license": "MIT",
@@ -12,12 +12,12 @@
   },
   "autoload": {
     "psr-4": {
-      "PHPNDArray\\": "src/"
+      "NDArray\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "PHPNDArray\\Tests\\": "tests/"
+      "NDArray\\Tests\\": "tests/"
     }
   }
 }

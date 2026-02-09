@@ -1,10 +1,10 @@
 [package]
-name = "phpndarray"
+name = "ndarray_php"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "phpndarray"
+name = "ndarray_php"
 crate-type = ["cdylib"]
 
 [dependencies]

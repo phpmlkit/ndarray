@@ -3,7 +3,7 @@
 ## 1. Project Overview
 
 ### 1.1 Project Name
-**PHPNDArray** - A high-performance N-dimensional array library for PHP, backed by Rust
+**NDArray PHP** - A high-performance N-dimensional array library for PHP, backed by Rust
 
 ### 1.2 Purpose
 To provide PHP developers with a NumPy-like interface for efficient numerical computing, scientific computing, and data manipulation, leveraging Rust's performance and safety through FFI.
