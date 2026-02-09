@@ -1,10 +1,8 @@
-#[no_mangle]
-pub extern "C" fn hello_from_rust() -> i32 {
-    println!("Hello from Rust!");
-    42
-}
+//! NDArray PHP - Rust FFI Library
+//!
+//! This crate provides the Rust backend for the NDArray PHP library.
+//! It exposes C-compatible functions for PHP FFI.
 
-#[no_mangle]
-pub extern "C" fn add_numbers(a: i32, b: i32) -> i32 {
-    a + b
-}
+pub mod dtype;
+
+pub use dtype::{DType, DTypeError};
