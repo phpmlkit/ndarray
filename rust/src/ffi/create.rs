@@ -3,36 +3,72 @@
 use std::slice;
 
 use crate::core::NDArrayWrapper;
+use crate::error::{self, ERR_GENERIC, ERR_PANIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::NdArrayHandle;
 
 // ============================================================================
 // Array Creation Functions
 // ============================================================================
-// Note: These must be written explicitly (not via macro) so cbindgen can
-// generate the C header declarations.
+// Note: These return an integer status code.
+// 0 = Success
+// Non-zero = Error code (message in thread-local storage)
+
+/// Helper for creation functions to reduce boilerplate
+unsafe fn create_helper<T, F>(
+    data: *const T,
+    len: usize,
+    shape: *const usize,
+    ndim: usize,
+    out_handle: *mut *mut NdArrayHandle,
+    method: F,
+) -> i32
+where
+    F: Fn(&[T], &[usize]) -> Result<NDArrayWrapper, String> + std::panic::UnwindSafe,
+{
+    if data.is_null() || shape.is_null() || out_handle.is_null() {
+        return ERR_GENERIC;
+    }
+
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let data_slice = slice::from_raw_parts(data, len);
+        let shape_slice = slice::from_raw_parts(shape, ndim);
+
+        match method(data_slice, shape_slice) {
+            Ok(wrapper) => {
+                *out_handle = NdArrayHandle::from_wrapper(Box::new(wrapper));
+                SUCCESS
+            }
+            Err(e) => {
+                error::set_last_error(e);
+                ERR_SHAPE
+            }
+        }
+    })) {
+        Ok(code) => code,
+        Err(_) => {
+            error::set_last_error("Panic during array creation");
+            ERR_PANIC
+        }
+    }
+}
 
 /// Create an NDArray from i8 data.
-///
-/// # Safety
-/// All pointers must be valid and point to sufficient memory.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_create_int8(
     data: *const i8,
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_i8(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_i8,
+    )
 }
 
 /// Create an NDArray from i16 data.
@@ -42,18 +78,16 @@ pub unsafe extern "C" fn ndarray_create_int16(
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_i16(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_i16,
+    )
 }
 
 /// Create an NDArray from i32 data.
@@ -63,18 +97,16 @@ pub unsafe extern "C" fn ndarray_create_int32(
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_i32(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_i32,
+    )
 }
 
 /// Create an NDArray from i64 data.
@@ -84,18 +116,16 @@ pub unsafe extern "C" fn ndarray_create_int64(
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_i64(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_i64,
+    )
 }
 
 /// Create an NDArray from u8 data.
@@ -105,18 +135,16 @@ pub unsafe extern "C" fn ndarray_create_uint8(
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_u8(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_u8,
+    )
 }
 
 /// Create an NDArray from u16 data.
@@ -126,18 +154,16 @@ pub unsafe extern "C" fn ndarray_create_uint16(
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_u16(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_u16,
+    )
 }
 
 /// Create an NDArray from u32 data.
@@ -147,18 +173,16 @@ pub unsafe extern "C" fn ndarray_create_uint32(
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_u32(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_u32,
+    )
 }
 
 /// Create an NDArray from u64 data.
@@ -168,18 +192,16 @@ pub unsafe extern "C" fn ndarray_create_uint64(
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_u64(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_u64,
+    )
 }
 
 /// Create an NDArray from f32 data.
@@ -189,18 +211,16 @@ pub unsafe extern "C" fn ndarray_create_float32(
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_f32(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_f32,
+    )
 }
 
 /// Create an NDArray from f64 data.
@@ -210,37 +230,33 @@ pub unsafe extern "C" fn ndarray_create_float64(
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_f64(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_f64,
+    )
 }
 
-/// Create an NDArray from bool data (passed as u8: 0 = false, non-zero = true).
+/// Create an NDArray from bool data.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_create_bool(
     data: *const u8,
     len: usize,
     shape: *const usize,
     ndim: usize,
-) -> *mut NdArrayHandle {
-    if data.is_null() || shape.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let data_slice = slice::from_raw_parts(data, len);
-    let shape_slice = slice::from_raw_parts(shape, ndim);
-
-    match NDArrayWrapper::from_slice_bool(data_slice, shape_slice) {
-        Ok(wrapper) => NdArrayHandle::from_wrapper(Box::new(wrapper)),
-        Err(_) => std::ptr::null_mut(),
-    }
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    create_helper(
+        data,
+        len,
+        shape,
+        ndim,
+        out_handle,
+        NDArrayWrapper::from_slice_bool,
+    )
 }

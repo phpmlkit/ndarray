@@ -6,8 +6,8 @@
 // Macros must be declared before modules that use them
 #[macro_use]
 pub mod core;
-
 pub mod dtype;
+pub mod error;
 pub mod ffi;
 
 // Re-export public types

@@ -212,8 +212,19 @@ final class NDArrayTest extends TestCase
     public function testEmptyArrayThrows(): void
     {
         $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('Cannot create array from empty data');
 
         NDArray::array([]);
+    }
+
+    public function testJaggedArrayThrows(): void
+    {
+        $this->expectException(ShapeException::class);
+        // Rust error message should be propagated
+        $this->expectExceptionMessage('Data length 3 does not match shape [2, 2] (expected 4)');
+
+        // [[1, 2], [3]] -> inferred shape [2, 2], flattened length 3
+        NDArray::array([[1, 2], [3]]);
     }
 
     // =========================================================================

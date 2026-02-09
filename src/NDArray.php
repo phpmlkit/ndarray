@@ -10,19 +10,10 @@ use NDArray\Exceptions\ShapeException;
 use NDArray\FFI\FFIInterface;
 
 /**
- * N-dimensional array class backed by Rust.
+ * N-dimensional array class.
  */
 class NDArray
 {
-    /** Opaque pointer to Rust NDArrayWrapper */
-    private CData $handle;
-
-    /** Shape of the array */
-    private array $shape;
-
-    /** Data type */
-    private DType $dtype;
-
     /** Number of dimensions */
     private int $ndim;
 
@@ -31,12 +22,13 @@ class NDArray
 
     /**
      * Private constructor - use factory methods.
+     *
+     * @param CData $handle Opaque pointer to Rust NDArrayWrapper
+     * @param array $shape Shape of the array
+     * @param DType $dtype Data type
      */
-    private function __construct(CData $handle, array $shape, DType $dtype)
+    private function __construct(private CData $handle, private array $shape, private DType $dtype)
     {
-        $this->handle = $handle;
-        $this->shape = $shape;
-        $this->dtype = $dtype;
         $this->ndim = count($shape);
         $this->size = (int) array_product($shape);
     }
@@ -77,10 +69,6 @@ class NDArray
         $len = count($flatData);
 
         $handle = self::createTyped($ffi, $dtype, $flatData, $shape, $len);
-
-        if ($handle === null) {
-            throw new ShapeException('Failed to create array: shape/data mismatch');
-        }
 
         return new self($handle, $shape, $dtype);
     }
@@ -163,18 +151,16 @@ class NDArray
         $ffi = FFIInterface::get();
 
         $outPtr = $ffi->new("char*");
-        $outLen = $ffi->new("uintptr_t");
+        $outLen = $ffi->new("size_t");
 
-        $success = $ffi->ndarray_to_json(
+        $status = $ffi->ndarray_to_json(
             $this->handle,
             FFIInterface::addr($outPtr),
             FFIInterface::addr($outLen),
             17 // default max precision
         );
 
-        if (!$success) {
-            throw new \RuntimeException("Failed to serialize array to JSON");
-        }
+        FFIInterface::checkStatus($status);
 
         $json = FFI::string($outPtr, $outLen->cdata);
 
@@ -232,16 +218,15 @@ class NDArray
     /**
      * Create an NDArray handle using the appropriate FFI function for the dtype.
      *
-     * @param \FFI $ffi FFI instance
+     * @param FFI $ffi FFI instance
      * @param DType $dtype Data type
      * @param array $data Flat array of values
      * @param array<int> $shape Array shape
      * @param int $len Number of elements
-     * @return CData|null Opaque handle or null on failure
+     * @return CData Opaque handle
      */
-    private static function createTyped(\FFI $ffi, DType $dtype, array $data, array $shape, int $len): ?CData
+    private static function createTyped(FFI $ffi, DType $dtype, array $data, array $shape, int $len): CData
     {
-        // Convert bools to u8 (0 or 1) for FFI
         if ($dtype === DType::Bool) {
             $data = array_map(fn($v) => $v ? 1 : 0, $data);
         }
@@ -249,9 +234,20 @@ class NDArray
         $cData = FFIInterface::createCArray($dtype->ffiType(), $data);
         $cShape = FFIInterface::createShapeArray($shape);
 
-        // Dynamic dispatch to the appropriate FFI function
-        $funcName = 'ndarray_create_' . $dtype->name();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
 
-        return $ffi->$funcName($cData, $len, $cShape, count($shape));
+        $funcName = "ndarray_create_{$dtype->name()}";
+        
+        $status = $ffi->$funcName(
+            $cData, 
+            $len, 
+            $cShape, 
+            count($shape),
+            FFIInterface::addr($outHandle)
+        );
+
+        FFIInterface::checkStatus($status);
+
+        return $outHandle;
     }
 }

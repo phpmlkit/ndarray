@@ -90,6 +90,48 @@ final class FFIInterface
     }
 
     /**
+     * Get the last error message from Rust.
+     *
+     * @return string
+     */
+    public static function getLastError(): string
+    {
+        $ffi = self::get();
+        $buffer = $ffi->new("char[1024]");
+        $len = $ffi->ndarray_get_last_error($buffer, 1024);
+        
+        if ($len === 0) {
+            return "Unknown error";
+        }
+        
+        return FFI::string($buffer, $len);
+    }
+
+    /**
+     * Check the status code returned by an FFI function.
+     *
+     * @param int $code
+     * @throws RuntimeException
+     */
+    public static function checkStatus(int $code): void
+    {
+        if ($code === 0) {
+            return;
+        }
+
+        $message = self::getLastError();
+
+        match ($code) {
+            1 => throw new \NDArray\Exceptions\NDArrayException($message), // Generic
+            2 => throw new \NDArray\Exceptions\ShapeException($message), // Shape
+            3 => throw new \NDArray\Exceptions\DTypeException($message), // DType
+            4 => throw new \RuntimeException("Allocation error: $message"), // Alloc
+            5 => throw new \RuntimeException("Rust panic: $message"), // Panic
+            default => throw new \RuntimeException("Unknown error ($code): $message"),
+        };
+    }
+
+    /**
      * Create a C array from a PHP array with the given type.
      *
      * @param string $type C type (e.g., 'double', 'int64_t', 'size_t')
