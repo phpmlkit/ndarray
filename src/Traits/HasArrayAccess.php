@@ -24,7 +24,7 @@ trait HasArrayAccess
     public function offsetExists(mixed $offset): bool
     {
         try {
-            if (is_string($offset) && str_contains($offset, ':')) {
+            if ($this->isSlice($offset)) {
                 $this->slice($this->parseSelectors($offset));
                 return true;
             }
@@ -51,7 +51,7 @@ trait HasArrayAccess
      */
     public function offsetGet(mixed $offset): self|int|float|bool
     {
-        if (is_string($offset) && str_contains($offset, ':')) {
+        if ($this->isSlice($offset)) {
             return $this->slice($this->parseSelectors($offset));
         }
 
@@ -73,7 +73,7 @@ trait HasArrayAccess
      */
     public function offsetSet(mixed $offset, mixed $value): void
     {
-        if (is_string($offset) && str_contains($offset, ':')) {
+        if ($this->isSlice($offset)) {
             $view = $this->slice($this->parseSelectors($offset));
             $view->assign($value);
             return;
@@ -111,6 +111,14 @@ trait HasArrayAccess
     // =========================================================================
 
     /**
+     * Check if offset is a slice syntax string.
+     */
+    private function isSlice(mixed $offset): bool
+    {
+        return is_string($offset) && str_contains($offset, ':');
+    }
+
+    /**
      * Parse an ArrayAccess offset into integer indices.
      *
      * @param int|string $offset
@@ -124,13 +132,6 @@ trait HasArrayAccess
         }
 
         if (is_string($offset)) {
-            if (str_contains($offset, ':')) {
-                throw new IndexException(
-                    "Slice syntax ('$offset') passed to parseOffset. Should use parseSelectors."
-                );
-            }
-
-            // Comma-separated multi-index: "1,2" -> [1, 2]
             $parts = explode(',', $offset);
             $indices = [];
             foreach ($parts as $part) {

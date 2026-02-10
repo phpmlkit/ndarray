@@ -41,6 +41,27 @@ impl NDArrayWrapper {
             arr.read().iter().map(|&x| x as f64).collect()
         })
     }
+
+    /// Check if this wrapper points to the same underlying array data as another.
+    pub fn is_same_array(&self, other: &Self) -> bool {
+        use crate::core::ArrayData::*;
+        use std::sync::Arc;
+
+        match (&self.data, &other.data) {
+            (Int8(a), Int8(b)) => Arc::ptr_eq(a, b),
+            (Int16(a), Int16(b)) => Arc::ptr_eq(a, b),
+            (Int32(a), Int32(b)) => Arc::ptr_eq(a, b),
+            (Int64(a), Int64(b)) => Arc::ptr_eq(a, b),
+            (Uint8(a), Uint8(b)) => Arc::ptr_eq(a, b),
+            (Uint16(a), Uint16(b)) => Arc::ptr_eq(a, b),
+            (Uint32(a), Uint32(b)) => Arc::ptr_eq(a, b),
+            (Uint64(a), Uint64(b)) => Arc::ptr_eq(a, b),
+            (Float32(a), Float32(b)) => Arc::ptr_eq(a, b),
+            (Float64(a), Float64(b)) => Arc::ptr_eq(a, b),
+            (Bool(a), Bool(b)) => Arc::ptr_eq(a, b),
+            _ => false,
+        }
+    }
 }
 
 // Generate all from_slice_* methods using the macro
@@ -116,6 +137,36 @@ crate::impl_fill_slice!(
     fill_slice_f32, f32, Float32;
     fill_slice_f64, f64, Float64;
     fill_slice_bool, u8, Bool
+);
+
+// Generate assign_slice_* methods for array assignment
+crate::impl_assign_slice!(
+    assign_slice_i8, i8, Int8;
+    assign_slice_i16, i16, Int16;
+    assign_slice_i32, i32, Int32;
+    assign_slice_i64, i64, Int64;
+    assign_slice_u8, u8, Uint8;
+    assign_slice_u16, u16, Uint16;
+    assign_slice_u32, u32, Uint32;
+    assign_slice_u64, u64, Uint64;
+    assign_slice_f32, f32, Float32;
+    assign_slice_f64, f64, Float64;
+    assign_slice_bool, u8, Bool
+);
+
+// Generate copy_view_* methods for creating owned arrays from views
+crate::impl_copy_view!(
+    copy_view_i8, i8, Int8, Int8;
+    copy_view_i16, i16, Int16, Int16;
+    copy_view_i32, i32, Int32, Int32;
+    copy_view_i64, i64, Int64, Int64;
+    copy_view_u8, u8, Uint8, Uint8;
+    copy_view_u16, u16, Uint16, Uint16;
+    copy_view_u32, u32, Uint32, Uint32;
+    copy_view_u64, u64, Uint64, Uint64;
+    copy_view_f32, f32, Float32, Float32;
+    copy_view_f64, f64, Float64, Float64;
+    copy_view_bool, u8, Bool, Bool
 );
 
 #[cfg(test)]

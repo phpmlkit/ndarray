@@ -260,3 +260,54 @@ pub unsafe extern "C" fn ndarray_create_bool(
         NDArrayWrapper::from_slice_bool,
     )
 }
+
+// ============================================================================
+// Array Copy (View to Owned)
+// ============================================================================
+
+/// Create a deep copy of an array view.
+#[no_mangle]
+pub unsafe extern "C" fn ndarray_copy(
+    handle: *const NdArrayHandle,
+    offset: usize,
+    shape_ptr: *const usize,
+    strides_ptr: *const usize,
+    ndim: usize,
+    out_handle: *mut *mut NdArrayHandle,
+) -> i32 {
+    if handle.is_null() || shape_ptr.is_null() || strides_ptr.is_null() || out_handle.is_null() {
+        return ERR_GENERIC;
+    }
+
+    crate::ffi_guard!({
+        let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
+        let shape = slice::from_raw_parts(shape_ptr, ndim);
+        let strides = slice::from_raw_parts(strides_ptr, ndim);
+
+        use crate::dtype::DType::*;
+        let result = match wrapper.dtype {
+            Int8 => wrapper.copy_view_i8(offset, shape, strides),
+            Int16 => wrapper.copy_view_i16(offset, shape, strides),
+            Int32 => wrapper.copy_view_i32(offset, shape, strides),
+            Int64 => wrapper.copy_view_i64(offset, shape, strides),
+            Uint8 => wrapper.copy_view_u8(offset, shape, strides),
+            Uint16 => wrapper.copy_view_u16(offset, shape, strides),
+            Uint32 => wrapper.copy_view_u32(offset, shape, strides),
+            Uint64 => wrapper.copy_view_u64(offset, shape, strides),
+            Float32 => wrapper.copy_view_f32(offset, shape, strides),
+            Float64 => wrapper.copy_view_f64(offset, shape, strides),
+            Bool => wrapper.copy_view_bool(offset, shape, strides),
+        };
+
+        match result {
+            Ok(new_wrapper) => {
+                *out_handle = NdArrayHandle::from_wrapper(Box::new(new_wrapper));
+                SUCCESS
+            }
+            Err(e) => {
+                error::set_last_error(e);
+                ERR_GENERIC
+            }
+        }
+    })
+}

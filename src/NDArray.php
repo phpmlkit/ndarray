@@ -95,6 +95,16 @@ class NDArray implements ArrayAccess
     }
 
     /**
+     * Get strides.
+     *
+     * @return array<int>
+     */
+    public function strides(): array
+    {
+        return $this->strides;
+    }
+
+    /**
      * Get number of dimensions.
      */
     public function ndim(): int

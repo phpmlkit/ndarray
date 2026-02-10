@@ -49,6 +49,38 @@ trait HasConversion
         return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
     }
 
+    /**
+     * Create a deep copy of the array (or view).
+     *
+     * The returned array is always C-contiguous and owns its data.
+     *
+     * @return self
+     */
+    public function copy(): self
+    {
+        $ffi = Lib::get();
+
+        $cShape = Lib::createCArray('size_t', $this->shape);
+        $cStrides = Lib::createCArray('size_t', $this->strides);
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $status = $ffi->ndarray_copy(
+            $this->handle,
+            $this->offset,
+            $cShape,
+            $cStrides,
+            $this->ndim,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        // Copy is always contiguous, so compute standard strides
+        // But constructor computes them if passed empty/null?
+        // Constructor takes strides. If I pass [], it computes contiguous strides.
+        return new self($outHandle, $this->shape, $this->dtype);
+    }
+
     // =========================================================================
     // Private Helpers
     // =========================================================================

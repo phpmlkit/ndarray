@@ -137,8 +137,26 @@ interface Bindings
     public function ndarray_fill_bool(CData $handle, int $value, int $offset, CData $shape, CData $strides, int $ndim): int;
 
     // =========================================================================
+    // Slice Assignment (copy from another view)
+    // =========================================================================
+
+    public function ndarray_assign_int8(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+    public function ndarray_assign_int16(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+    public function ndarray_assign_int32(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+    public function ndarray_assign_int64(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+    public function ndarray_assign_uint8(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+    public function ndarray_assign_uint16(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+    public function ndarray_assign_uint32(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+    public function ndarray_assign_uint64(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+    public function ndarray_assign_float32(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+    public function ndarray_assign_float64(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+    public function ndarray_assign_bool(CData $dst, int $doff, CData $dshp, CData $dstr, CData $src, int $soff, CData $sshp, CData $sstr, int $ndim): int;
+
+    // =========================================================================
     // Generators
     // =========================================================================
+
+    public function ndarray_copy(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
 
     public function ndarray_zeros(CData $shape, int $ndim, int $dtype, CData $out_handle): int;
     public function ndarray_ones(CData $shape, int $ndim, int $dtype, CData $out_handle): int;

@@ -289,7 +289,7 @@ final class SlicingTest extends TestCase
         $arr = NDArray::zeros([5]);
         
         $this->expectException(ShapeException::class);
-        $this->expectExceptionMessage('Input array has 2 elements, expected 3');
+        $this->expectExceptionMessage('Cannot assign array of size 2 to view of size 3');
         
         $arr->slice(['0:3'])->assign([1, 2]);
     }

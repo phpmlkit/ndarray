@@ -100,39 +100,18 @@ trait HasSlicing
      */
     public function assign(mixed $value): void
     {
-        // 1. Scalar assignment (fill)
         if (is_scalar($value)) {
             $this->fill($value);
             return;
         }
 
-        // 2. NDArray assignment
         if ($value instanceof NDArray) {
-            if ($value->size() !== $this->size) {
-                throw new ShapeException(
-                    "Cannot assign array of size {$value->size()} to view of size {$this->size}"
-                );
-            }
-            // For now, convert to flat array and assign.
-            // TODO: Implement optimized C-side copy/broadcast when available.
-            $flatData = $value->toArray(); // Takes into account source strides/views
-            $this->assignFlat($flatData);
+            $this->assignFromNDArray($value);
             return;
         }
 
-        // 3. PHP Array assignment
         if (is_array($value)) {
-            // Flatten the input array to match the view's iteration order
-            // Note: This assumes the input array structure matches the view's shape
-            // or is at least compatible in total element count.
-            $flatData = $this->flattenPhpArray($value);
-            
-            if (count($flatData) !== $this->size) {
-                throw new ShapeException(
-                    "Input array has " . count($flatData) . " elements, expected {$this->size}"
-                );
-            }
-            $this->assignFlat($flatData);
+            $this->assignFromArray($value);
             return;
         }
 
@@ -151,14 +130,12 @@ trait HasSlicing
         $cShape = Lib::createCArray('size_t', $this->shape);
         $cStrides = Lib::createCArray('size_t', $this->strides);
         
-        // Handle boolean conversion
         if ($this->dtype === DType::Bool) {
             $value = $value ? 1 : 0;
         }
 
         $funcName = "ndarray_fill_{$this->dtype->name()}";
         
-        // FFI call to fill the view
         $status = $ffi->$funcName(
             $this->handle,
             $value,
@@ -172,53 +149,76 @@ trait HasSlicing
     }
 
     /**
-     * Assign flat data to the array in row-major order.
+     * Assign from another NDArray using efficient Rust backend.
      */
-    private function assignFlat(array $flatData): void
+    private function assignFromNDArray(NDArray $value): void
     {
-        // TODO: Move this to Rust via ndarray_assign
-        $i = 0;
-        $this->mapInPlace(function() use (&$flatData, &$i) {
-            return $flatData[$i++] ?? 0;
-        });
-    }
+        if ($value->size() !== $this->size) {
+            throw new ShapeException(
+                "Cannot assign array of size {$value->size()} to view of size {$this->size}"
+            );
+        }
 
-    /**
-     * Internal helper to iterate over all elements and set values.
-     * 
-     * @param callable $callback fn(current_indices) -> value_to_set
-     */
-    private function mapInPlace(callable $callback): void
-    {
-        // We need to iterate over all indices of the current view.
-        // We'll reuse the recursive logic similar to offset calculation.
+        // FFI call
+        $ffi = Lib::get();
+
+        $dstShape = Lib::createCArray('size_t', $this->shape);
+        $dstStrides = Lib::createCArray('size_t', $this->strides);
+
+        // If shapes differ but sizes match, we treat source as if reshaped to destination shape
+        // For strict correctness, we pass source shape/strides as is, but our Rust `impl_assign_slice`
+        // assumes it can iterate/zip. If we want flattened assignment, we need to handle that.
+        // But `ndarray` assign requires broadcast compatibility.
+        // If shapes match, great. If not, we might need to reshape the source view temporarily?
+        // Actually, if we just want to copy data in order, we can reshape source to destination shape locally.
         
-        $iterate = function (array $currentIndices, int $dim) use (&$iterate, $callback) {
-            if ($dim === $this->ndim) {
-                // Leaf node: set value
-                $val = $callback();
-                $this->set($currentIndices, $val);
-                return;
+        $src = $value;
+        if ($src->shape() !== $this->shape) {
+            // Try to reshape source to match destination shape (if size matches, which we checked)
+            // If source is not contiguous, reshape might fail/copy.
+            // But we need compatible shapes for `assign`.
+            if ($src->isContiguous()) {
+                $src = $src->reshape($this->shape);
+            } else {
+                // If not contiguous, we copy to make it reshape-able
+                $src = $src->copy()->reshape($this->shape);
             }
+        }
 
-            for ($i = 0; $i < $this->shape[$dim]; $i++) {
-                $currentIndices[$dim] = $i;
-                $iterate($currentIndices, $dim + 1);
-            }
-        };
+        $srcShape = Lib::createCArray('size_t', $src->shape());
+        $srcStrides = Lib::createCArray('size_t', $src->strides());
 
-        $iterate(array_fill(0, $this->ndim, 0), 0);
+        $funcName = "ndarray_assign_{$this->dtype->name()}";
+
+        $status = $ffi->$funcName(
+            $this->handle,
+            $this->offset,
+            $dstShape,
+            $dstStrides,
+            $src->getHandle(),
+            // We need src offset. NDArray doesn't expose public offset?
+            // Wait, `offset` is private in NDArray. 
+            // I need to access it. But I'm in a trait used by NDArray.
+            // `$src` is an instance of NDArray. Private properties of other instances of the same class
+            // ARE accessible in PHP.
+            $src->offset,
+            $srcShape,
+            $srcStrides,
+            $this->ndim
+        );
+
+        Lib::checkStatus($status);
     }
 
     /**
-     * Flatten a nested PHP array into a flat list.
+     * Assign from PHP array by converting to temporary NDArray.
      */
-    private function flattenPhpArray(array $array): array
+    private function assignFromArray(array $value): void
     {
-        $result = [];
-        array_walk_recursive($array, function ($a) use (&$result) {
-            $result[] = $a;
-        });
-        return $result;
+        // Create temporary array
+        $tmp = NDArray::array($value, $this->dtype);
+        
+        // Use NDArray assignment
+        $this->assignFromNDArray($tmp);
     }
 }
