@@ -191,21 +191,37 @@ trait CreatesArrays
         }
 
         $dtype ??= DType::fromValue($start);
-        $data = [];
 
-        if ($step > 0) {
-            for ($i = $start; $i < $stop; $i += $step) {
-                $data[] = $i;
-            }
-        } elseif ($step < 0) {
-            for ($i = $start; $i > $stop; $i += $step) {
-                $data[] = $i;
-            }
-        } else {
+        if ($step == 0) {
             throw new \InvalidArgumentException("Step cannot be zero");
         }
 
-        return self::array($data, $dtype);
+        if ($dtype === DType::Bool) {
+            throw new \InvalidArgumentException("Bool dtype not supported for arange");
+        }
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $status = $ffi->ndarray_arange(
+            (float) $start,
+            (float) $stop,
+            (float) $step,
+            $dtype->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        // Calculate the shape
+        $num = 0;
+        if ($step > 0 && $start < $stop) {
+            $num = (int) ceil(($stop - $start) / $step);
+        } elseif ($step < 0 && $start > $stop) {
+            $num = (int) ceil(($start - $stop) / -$step);
+        }
+
+        return new self($outHandle, [$num], $dtype);
     }
 
     /**
@@ -229,18 +245,114 @@ trait CreatesArrays
             throw new ShapeException("Number of samples, $num, must be positive");
         }
 
-        $data = [];
-        
-        if ($num === 1) {
-            $data[] = $start;
-        } else {
-            $step = $endpoint ? ($stop - $start) / ($num - 1) : ($stop - $start) / $num;
-            for ($i = 0; $i < $num; $i++) {
-                $data[] = $start + $i * $step;
-            }
+        if ($dtype !== DType::Float32 && $dtype !== DType::Float64) {
+            throw new \InvalidArgumentException("linspace only supports Float32 and Float64 dtypes");
         }
 
-        return self::array($data, $dtype);
+        $ffi = Lib::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $status = $ffi->ndarray_linspace(
+            $start,
+            $stop,
+            $num,
+            $endpoint,
+            $dtype->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new self($outHandle, [$num], $dtype);
+    }
+
+    /**
+     * Create numbers spaced evenly on a log scale.
+     *
+     * @param float $start The starting exponent (base**start is the first value)
+     * @param float $stop The end exponent (base**stop is the final value)
+     * @param int $num Number of samples to generate
+     * @param float $base The base of the log space
+     * @param DType $dtype Data type (default: Float64)
+     * @return self
+     */
+    public static function logspace(
+        float $start,
+        float $stop,
+        int $num = 50,
+        float $base = 10.0,
+        DType $dtype = DType::Float64
+    ): self {
+        if ($num <= 0) {
+            throw new ShapeException("Number of samples, $num, must be positive");
+        }
+
+        if ($dtype !== DType::Float32 && $dtype !== DType::Float64) {
+            throw new \InvalidArgumentException("logspace only supports Float32 and Float64 dtypes");
+        }
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $status = $ffi->ndarray_logspace(
+            $start,
+            $stop,
+            $num,
+            $base,
+            $dtype->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new self($outHandle, [$num], $dtype);
+    }
+
+    /**
+     * Create numbers spaced geometrically from start to stop.
+     *
+     * @param float $start The starting value of the sequence
+     * @param float $stop The end value of the sequence
+     * @param int $num Number of samples to generate
+     * @param DType $dtype Data type (default: Float64)
+     * @return self
+     */
+    public static function geomspace(
+        float $start,
+        float $stop,
+        int $num = 50,
+        DType $dtype = DType::Float64
+    ): self {
+        if ($num <= 0) {
+            throw new ShapeException("Number of samples, $num, must be positive");
+        }
+
+        if ($dtype !== DType::Float32 && $dtype !== DType::Float64) {
+            throw new \InvalidArgumentException("geomspace only supports Float32 and Float64 dtypes");
+        }
+
+        if ($start == 0.0 || $stop == 0.0) {
+            throw new \InvalidArgumentException("geomspace does not support zero values");
+        }
+
+        if (($start > 0.0) !== ($stop > 0.0)) {
+            throw new \InvalidArgumentException("geomspace requires start and stop to have the same sign");
+        }
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $status = $ffi->ndarray_geomspace(
+            $start,
+            $stop,
+            $num,
+            $dtype->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new self($outHandle, [$num], $dtype);
     }
 
     // =========================================================================

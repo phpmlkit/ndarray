@@ -162,6 +162,10 @@ interface Bindings
     public function ndarray_ones(CData $shape, int $ndim, int $dtype, CData $out_handle): int;
     public function ndarray_full(CData $shape, int $ndim, CData $value, int $dtype, CData $out_handle): int;
     public function ndarray_eye(int $n, int $m, int $k, int $dtype, CData $out_handle): int;
+    public function ndarray_arange(float $start, float $stop, float $step, int $dtype, CData $out_handle): int;
+    public function ndarray_linspace(float $start, float $stop, int $num, bool $endpoint, int $dtype, CData $out_handle): int;
+    public function ndarray_logspace(float $start, float $stop, int $num, float $base, int $dtype, CData $out_handle): int;
+    public function ndarray_geomspace(float $start, float $stop, int $num, int $dtype, CData $out_handle): int;
 
     // =========================================================================
     // Properties
