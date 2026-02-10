@@ -17,6 +17,7 @@ pub const ERR_DTYPE: i32 = 3;
 pub const ERR_ALLOC: i32 = 4;
 pub const ERR_PANIC: i32 = 5;
 pub const ERR_INDEX: i32 = 6;
+pub const ERR_MATH: i32 = 7;
 
 /// Set the last error message.
 pub fn set_last_error<E: Display>(err: E) {

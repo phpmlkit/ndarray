@@ -168,6 +168,24 @@ interface Bindings
     public function ndarray_geomspace(float $start, float $stop, int $num, int $dtype, CData $out_handle): int;
 
     // =========================================================================
+    // Arithmetic Operations - Array-Array
+    // =========================================================================
+
+    public function ndarray_add(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_sub(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_mul(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_div(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
+
+    // =========================================================================
+    // Arithmetic Operations - Array-Scalar
+    // =========================================================================
+
+    public function ndarray_add_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
+    public function ndarray_sub_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
+    public function ndarray_mul_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
+    public function ndarray_div_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
+
+    // =========================================================================
     // Properties
     // =========================================================================
 
