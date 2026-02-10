@@ -94,6 +94,13 @@ Agents must follow these rules exactly:
 	- operation name
 	- shape/dtype context where possible
 
+### Binding Maintenance (Type Intelligence)
+
+- Whenever a new FFI function is exported in Rust (`extern "C"`), you **MUST** update `src/FFI/Bindings.php`.
+- Add the method signature to the `Bindings` interface to match the C header.
+- This ensures IDEs (VS Code, PHPStorm) and static analyzers provide correct autocomplete and type checking for `$ffi->method_name(...)` calls.
+- Failure to do this degrades the developer experience and makes the codebase harder to maintain.
+
 ⸻
 
 ## API Design Rules

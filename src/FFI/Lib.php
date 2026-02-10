@@ -9,11 +9,13 @@ use FFI\CData;
 use RuntimeException;
 
 /**
- * Singleton manager for FFI access to the Rust library.
+ * Singleton wrapper for the FFI library.
  */
-final class FFIInterface
+final class Lib
 {
+    /** @var (FFI&Bindings)|null */
     private static ?FFI $ffi = null;
+    
     private static ?string $libraryPath = null;
 
     /**
@@ -48,14 +50,18 @@ final class FFIInterface
             );
         }
 
-        self::$ffi = FFI::cdef(
+        /** @var FFI&Bindings $ffi */
+        $ffi = FFI::cdef(
             file_get_contents($headerPath),
             self::$libraryPath
         );
+        self::$ffi = $ffi;
     }
 
     /**
      * Get FFI instance.
+     *
+     * @return FFI&Bindings
      */
     public static function get(): FFI
     {

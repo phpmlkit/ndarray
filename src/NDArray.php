@@ -7,7 +7,9 @@ namespace NDArray;
 use FFI;
 use FFI\CData;
 use NDArray\Exceptions\ShapeException;
-use NDArray\FFI\FFIInterface;
+use NDArray\FFI\Box;
+use NDArray\FFI\Handle;
+use NDArray\FFI\Lib;
 
 /**
  * N-dimensional array class.
@@ -23,7 +25,7 @@ class NDArray
     /**
      * Private constructor - use factory methods.
      *
-     * @param CData $handle Opaque pointer to Rust NDArrayWrapper
+     * @param Handle $handle Opaque pointer to Rust NDArrayWrapper
      * @param array $shape Shape of the array
      * @param DType $dtype Data type
      */
@@ -39,7 +41,7 @@ class NDArray
     public function __destruct()
     {
         if (isset($this->handle)) {
-            FFIInterface::get()->ndarray_free($this->handle);
+            Lib::get()->ndarray_free($this->handle);
         }
     }
 
@@ -65,7 +67,7 @@ class NDArray
 
         $dtype ??= DType::fromArray($data);
 
-        $ffi = FFIInterface::get();
+        $ffi = Lib::get();
         $len = count($flatData);
 
         $handle = self::createTyped($ffi, $dtype, $flatData, $shape, $len);
@@ -84,18 +86,18 @@ class NDArray
     {
         $dtype ??= DType::Float64;
 
-        $ffi = FFIInterface::get();
-        $cShape = FFIInterface::createShapeArray($shape);
+        $ffi = Lib::get();
+        $cShape = Lib::createShapeArray($shape);
         $outHandle = $ffi->new("struct NdArrayHandle*");
 
         $status = $ffi->ndarray_zeros(
             $cShape,
             count($shape),
             $dtype->value,
-            FFIInterface::addr($outHandle)
+            Lib::addr($outHandle)
         );
 
-        FFIInterface::checkStatus($status);
+        Lib::checkStatus($status);
 
         return new self($outHandle, $shape, $dtype);
     }
@@ -111,18 +113,18 @@ class NDArray
     {
         $dtype ??= DType::Float64;
 
-        $ffi = FFIInterface::get();
-        $cShape = FFIInterface::createShapeArray($shape);
+        $ffi = Lib::get();
+        $cShape = Lib::createShapeArray($shape);
         $outHandle = $ffi->new("struct NdArrayHandle*");
 
         $status = $ffi->ndarray_ones(
             $cShape,
             count($shape),
             $dtype->value,
-            FFIInterface::addr($outHandle)
+            Lib::addr($outHandle)
         );
 
-        FFIInterface::checkStatus($status);
+        Lib::checkStatus($status);
 
         return new self($outHandle, $shape, $dtype);
     }
@@ -150,8 +152,8 @@ class NDArray
             }
         }
 
-        $ffi = FFIInterface::get();
-        $cShape = FFIInterface::createShapeArray($shape);
+        $ffi = Lib::get();
+        $cShape = Lib::createShapeArray($shape);
 
         // Create scalar value for FFI
         if ($dtype === DType::Bool) {
@@ -159,7 +161,7 @@ class NDArray
         } else {
             $val = $fillValue;
         }
-        $cValue = FFIInterface::createCArray($dtype->ffiType(), [$val]);
+        $cValue = Lib::createCArray($dtype->ffiType(), [$val]);
 
         $outHandle = $ffi->new("struct NdArrayHandle*");
 
@@ -168,10 +170,10 @@ class NDArray
             count($shape),
             $cValue, // Pointer to value
             $dtype->value,
-            FFIInterface::addr($outHandle)
+            Lib::addr($outHandle)
         );
 
-        FFIInterface::checkStatus($status);
+        Lib::checkStatus($status);
 
         return new self($outHandle, $shape, $dtype);
     }
@@ -190,7 +192,7 @@ class NDArray
         $M ??= $N;
         $dtype ??= DType::Float64;
 
-        $ffi = FFIInterface::get();
+        $ffi = Lib::get();
         $outHandle = $ffi->new("struct NdArrayHandle*");
 
         $status = $ffi->ndarray_eye(
@@ -198,10 +200,10 @@ class NDArray
             $M,
             $k,
             $dtype->value,
-            FFIInterface::addr($outHandle)
+            Lib::addr($outHandle)
         );
 
-        FFIInterface::checkStatus($status);
+        Lib::checkStatus($status);
 
         return new self($outHandle, [$N, $M], $dtype);
     }
@@ -281,19 +283,20 @@ class NDArray
      */
     public function toArray(): array
     {
-        $ffi = FFIInterface::get();
+        $ffi = Lib::get();
 
         $outPtr = $ffi->new("char*");
+        /** @var Box */
         $outLen = $ffi->new("size_t");
 
         $status = $ffi->ndarray_to_json(
             $this->handle,
-            FFIInterface::addr($outPtr),
-            FFIInterface::addr($outLen),
+            Lib::addr($outPtr),
+            Lib::addr($outLen),
             17 // default max precision
         );
 
-        FFIInterface::checkStatus($status);
+        Lib::checkStatus($status);
 
         $json = FFI::string($outPtr, $outLen->cdata);
 
@@ -364,22 +367,22 @@ class NDArray
             $data = array_map(fn($v) => $v ? 1 : 0, $data);
         }
 
-        $cData = FFIInterface::createCArray($dtype->ffiType(), $data);
-        $cShape = FFIInterface::createShapeArray($shape);
+        $cData = Lib::createCArray($dtype->ffiType(), $data);
+        $cShape = Lib::createShapeArray($shape);
 
         $outHandle = $ffi->new("struct NdArrayHandle*");
 
         $funcName = "ndarray_create_{$dtype->name()}";
-        
+
         $status = $ffi->$funcName(
-            $cData, 
-            $len, 
-            $cShape, 
+            $cData,
+            $len,
+            $cShape,
             count($shape),
-            FFIInterface::addr($outHandle)
+            Lib::addr($outHandle)
         );
 
-        FFIInterface::checkStatus($status);
+        Lib::checkStatus($status);
 
         return $outHandle;
     }
