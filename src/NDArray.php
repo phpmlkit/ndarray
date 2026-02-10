@@ -73,6 +73,139 @@ class NDArray
         return new self($handle, $shape, $dtype);
     }
 
+    /**
+     * Create an array filled with zeros.
+     *
+     * @param array<int> $shape Array shape
+     * @param DType|null $dtype Data type (default: Float64)
+     * @return self
+     */
+    public static function zeros(array $shape, ?DType $dtype = null): self
+    {
+        $dtype ??= DType::Float64;
+
+        $ffi = FFIInterface::get();
+        $cShape = FFIInterface::createShapeArray($shape);
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $status = $ffi->ndarray_zeros(
+            $cShape,
+            count($shape),
+            $dtype->value,
+            FFIInterface::addr($outHandle)
+        );
+
+        FFIInterface::checkStatus($status);
+
+        return new self($outHandle, $shape, $dtype);
+    }
+
+    /**
+     * Create an array filled with ones.
+     *
+     * @param array<int> $shape Array shape
+     * @param DType|null $dtype Data type (default: Float64)
+     * @return self
+     */
+    public static function ones(array $shape, ?DType $dtype = null): self
+    {
+        $dtype ??= DType::Float64;
+
+        $ffi = FFIInterface::get();
+        $cShape = FFIInterface::createShapeArray($shape);
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $status = $ffi->ndarray_ones(
+            $cShape,
+            count($shape),
+            $dtype->value,
+            FFIInterface::addr($outHandle)
+        );
+
+        FFIInterface::checkStatus($status);
+
+        return new self($outHandle, $shape, $dtype);
+    }
+
+    /**
+     * Create an array filled with a specific value.
+     *
+     * @param array<int> $shape Array shape
+     * @param mixed $fillValue Value to fill array with
+     * @param DType|null $dtype Data type (default: inferred from value)
+     * @return self
+     */
+    public static function full(array $shape, mixed $fillValue, ?DType $dtype = null): self
+    {
+        if ($dtype === null) {
+            // Simple inference based on value type
+            if (is_int($fillValue)) {
+                $dtype = DType::Int64;
+            } elseif (is_float($fillValue)) {
+                $dtype = DType::Float64;
+            } elseif (is_bool($fillValue)) {
+                $dtype = DType::Bool;
+            } else {
+                throw new \InvalidArgumentException("Cannot infer dtype from fill value");
+            }
+        }
+
+        $ffi = FFIInterface::get();
+        $cShape = FFIInterface::createShapeArray($shape);
+
+        // Create scalar value for FFI
+        if ($dtype === DType::Bool) {
+            $val = $fillValue ? 1 : 0;
+        } else {
+            $val = $fillValue;
+        }
+        $cValue = FFIInterface::createCArray($dtype->ffiType(), [$val]);
+
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $status = $ffi->ndarray_full(
+            $cShape,
+            count($shape),
+            $cValue, // Pointer to value
+            $dtype->value,
+            FFIInterface::addr($outHandle)
+        );
+
+        FFIInterface::checkStatus($status);
+
+        return new self($outHandle, $shape, $dtype);
+    }
+
+    /**
+     * Create a 2D identity matrix.
+     *
+     * @param int $N Number of rows
+     * @param int|null $M Number of columns (default: N)
+     * @param int $k Diagonal index (0: main, >0: upper, <0: lower)
+     * @param DType|null $dtype Data type (default: Float64)
+     * @return self
+     */
+    public static function eye(int $N, ?int $M = null, int $k = 0, ?DType $dtype = null): self
+    {
+        $M ??= $N;
+        $dtype ??= DType::Float64;
+
+        $ffi = FFIInterface::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $status = $ffi->ndarray_eye(
+            $N,
+            $M,
+            $k,
+            $dtype->value,
+            FFIInterface::addr($outHandle)
+        );
+
+        FFIInterface::checkStatus($status);
+
+        return new self($outHandle, [$N, $M], $dtype);
+    }
+
     // =========================================================================
     // Properties
     // =========================================================================
