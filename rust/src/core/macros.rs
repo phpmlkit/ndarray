@@ -186,6 +186,57 @@ macro_rules! impl_set_element {
     };
 }
 
+/// Generate fill_slice_* methods for NDArrayWrapper.
+///
+/// Each method fills a view (defined by offset, shape, strides) with a scalar value.
+#[macro_export]
+macro_rules! impl_fill_slice {
+    ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
+        impl $crate::core::NDArrayWrapper {
+            $(
+                pub fn $method(
+                    &self,
+                    value: $type,
+                    offset: usize,
+                    shape: &[usize],
+                    strides: &[usize],
+                ) -> Result<(), String> {
+                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
+                        let mut guard = arr.write();
+                        let raw_ptr = guard.as_mut_ptr();
+
+                        // Safety: The caller (PHP) is responsible for ensuring the view
+                        // is within bounds of the allocated memory.
+                        // We construct a view from the raw pointer offset.
+
+                        unsafe {
+                            let ptr = raw_ptr.add(offset);
+                            // Convert strides to IxDyn (which expects usize, negative strides are wrapped)
+                            let strides_ix = ndarray::IxDyn(strides);
+
+                            // Construct the view
+                            // We use from_shape_ptr which is unsafe.
+                            let mut view = ndarray::ArrayViewMut::from_shape_ptr(
+                                ndarray::ShapeBuilder::strides(ndarray::IxDyn(shape), strides_ix),
+                                ptr
+                            );
+
+                            view.fill(value);
+                        }
+
+                        Ok(())
+                    } else {
+                        Err(format!(
+                            "Type mismatch: expected {}, got {:?}",
+                            stringify!($variant), self.dtype
+                        ))
+                    }
+                }
+            )*
+        }
+    };
+}
+
 /// Generate to_vec_* methods for NDArrayWrapper.
 ///
 /// This macro generates type-specific accessors that return a copy of the

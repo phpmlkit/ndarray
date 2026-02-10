@@ -24,6 +24,11 @@ trait HasArrayAccess
     public function offsetExists(mixed $offset): bool
     {
         try {
+            if (is_string($offset) && str_contains($offset, ':')) {
+                $this->slice($this->parseSelectors($offset));
+                return true;
+            }
+
             $indices = $this->parseOffset($offset);
         } catch (IndexException) {
             return false;
@@ -46,28 +51,49 @@ trait HasArrayAccess
      */
     public function offsetGet(mixed $offset): self|int|float|bool
     {
+        if (is_string($offset) && str_contains($offset, ':')) {
+            return $this->slice($this->parseSelectors($offset));
+        }
+
         $indices = $this->parseOffset($offset);
 
         return $this->get(...$indices);
     }
 
     /**
-     * Set element at offset (full indexing only).
+     * Set element at offset.
+     *
+     * Supports:
+     * - Scalar assignment: $arr[0,0] = 5
+     * - Slice assignment: $arr['0:2'] = $other
+     * - Partial assignment: $arr[0] = $row
      *
      * @param int|string $offset
-     * @param int|float|bool $value
+     * @param mixed $value
      */
     public function offsetSet(mixed $offset, mixed $value): void
     {
-        $indices = $this->parseOffset($offset);
-
-        if (count($indices) !== $this->ndim) {
-            throw new IndexException(
-                "ArrayAccess set requires exactly {$this->ndim} indices for a scalar assignment"
-            );
+        if (is_string($offset) && str_contains($offset, ':')) {
+            $view = $this->slice($this->parseSelectors($offset));
+            $view->assign($value);
+            return;
         }
 
-        $this->set($indices, $value);
+        $indices = $this->parseOffset($offset);
+
+        if (count($indices) === $this->ndim) {
+            if (!is_scalar($value)) {
+                throw new IndexException("Cannot assign array to scalar index");
+            }
+            $this->set($indices, $value);
+        } else {
+            $view = $this->get(...$indices);
+            if ($view instanceof self) {
+                $view->assign($value);
+            } else {
+                throw new IndexException("Unexpected scalar return for partial index");
+            }
+        }
     }
 
     /**
@@ -98,10 +124,9 @@ trait HasArrayAccess
         }
 
         if (is_string($offset)) {
-            // Check for slice syntax (reserved for future)
             if (str_contains($offset, ':')) {
                 throw new IndexException(
-                    "Slice syntax ('$offset') is not yet supported. Use get() for indexing."
+                    "Slice syntax ('$offset') passed to parseOffset. Should use parseSelectors."
                 );
             }
 
@@ -110,7 +135,7 @@ trait HasArrayAccess
             $indices = [];
             foreach ($parts as $part) {
                 $trimmed = trim($part);
-                if (!is_numeric($trimmed) || str_contains($trimmed, '.')) {
+                if (!is_numeric($trimmed)) {
                     throw new IndexException("Invalid index component: '$trimmed'");
                 }
                 $indices[] = (int) $trimmed;
@@ -122,5 +147,30 @@ trait HasArrayAccess
         throw new IndexException(
             sprintf("Invalid offset type: expected int or string, got %s", get_debug_type($offset))
         );
+    }
+
+    /**
+     * Parse a slice string into selectors (int or string).
+     *
+     * @param string $offset e.g. "0:5, 1"
+     * @return array<int|string>
+     */
+    private function parseSelectors(string $offset): array
+    {
+        $parts = explode(',', $offset);
+        $selectors = [];
+        
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if (str_contains($part, ':')) {
+                $selectors[] = $part;
+            } elseif (is_numeric($part)) {
+                $selectors[] = (int)$part;
+            } else {
+                throw new IndexException("Invalid slice selector: '$part'");
+            }
+        }
+
+        return $selectors;
     }
 }

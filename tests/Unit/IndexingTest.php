@@ -298,18 +298,15 @@ final class IndexingTest extends TestCase
     }
 
     // =========================================================================
-    // ArrayAccess — Slice Syntax Throws
+    // ArrayAccess — Slice Syntax Works
     // =========================================================================
 
-    public function testSliceSyntaxThrows(): void
+    public function testSliceSyntaxWorks(): void
     {
         $arr = NDArray::array([1, 2, 3, 4], DType::Int64);
 
-        $this->expectException(IndexException::class);
-        $this->expectExceptionMessage('Slice syntax');
-
-        /** @noinspection PhpUnusedLocalVariableInspection */
-        $_ = $arr['0:2'];
+        $slice = $arr['0:2'];
+        $this->assertSame([1, 2], $slice->toArray());
     }
 
     // =========================================================================
@@ -457,20 +454,23 @@ final class IndexingTest extends TestCase
     }
 
     // =========================================================================
-    // ArrayAccess Partial Set Throws
+    // ArrayAccess Partial Set Broadcasts
     // =========================================================================
 
-    public function testArrayAccessPartialSetThrows(): void
+    public function testArrayAccessPartialSetBroadcasts(): void
     {
         $arr = NDArray::array([
             [1, 2],
             [3, 4],
         ], DType::Int64);
 
-        $this->expectException(IndexException::class);
-        $this->expectExceptionMessage('requires exactly 2 indices');
-
-        $arr[0] = 99; // Single index on 2D — can't assign scalar to a row
+        // Assign scalar to row (broadcast)
+        $arr[0] = 99;
+        
+        $this->assertSame([
+            [99, 99],
+            [3, 4],
+        ], $arr->toArray());
     }
 
     // =========================================================================

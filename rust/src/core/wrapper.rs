@@ -103,6 +103,21 @@ crate::impl_set_element!(
     set_element_bool, u8, Bool
 );
 
+// Generate fill_slice_* methods for view filling
+crate::impl_fill_slice!(
+    fill_slice_i8, i8, Int8;
+    fill_slice_i16, i16, Int16;
+    fill_slice_i32, i32, Int32;
+    fill_slice_i64, i64, Int64;
+    fill_slice_u8, u8, Uint8;
+    fill_slice_u16, u16, Uint16;
+    fill_slice_u32, u32, Uint32;
+    fill_slice_u64, u64, Uint64;
+    fill_slice_f32, f32, Float32;
+    fill_slice_f64, f64, Float64;
+    fill_slice_bool, u8, Bool
+);
+
 #[cfg(test)]
 mod tests {
     use super::*;

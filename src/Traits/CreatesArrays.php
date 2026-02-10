@@ -174,6 +174,75 @@ trait CreatesArrays
         return new self($outHandle, [$N, $M], $dtype);
     }
 
+    /**
+     * Create evenly spaced values within a given interval.
+     *
+     * @param int|float $start Start of interval (inclusive)
+     * @param int|float|null $stop End of interval (exclusive)
+     * @param int|float $step Spacing between values
+     * @param DType|null $dtype Data type
+     * @return self
+     */
+    public static function arange(int|float $start, int|float|null $stop = null, int|float $step = 1, ?DType $dtype = null): self
+    {
+        if ($stop === null) {
+            $stop = $start;
+            $start = 0;
+        }
+
+        $dtype ??= DType::fromValue($start);
+        $data = [];
+
+        if ($step > 0) {
+            for ($i = $start; $i < $stop; $i += $step) {
+                $data[] = $i;
+            }
+        } elseif ($step < 0) {
+            for ($i = $start; $i > $stop; $i += $step) {
+                $data[] = $i;
+            }
+        } else {
+            throw new \InvalidArgumentException("Step cannot be zero");
+        }
+
+        return self::array($data, $dtype);
+    }
+
+    /**
+     * Create evenly spaced numbers over a specified interval.
+     *
+     * @param float $start The starting value of the sequence
+     * @param float $stop The end value of the sequence
+     * @param int $num Number of samples to generate
+     * @param bool $endpoint If true, stop is the last sample
+     * @param DType $dtype Data type (default: Float64)
+     * @return self
+     */
+    public static function linspace(
+        float $start,
+        float $stop,
+        int $num = 50,
+        bool $endpoint = true,
+        DType $dtype = DType::Float64
+    ): self {
+        if ($num <= 0) {
+            throw new ShapeException("Number of samples, $num, must be positive");
+        }
+
+        $data = [];
+        
+        if ($num === 1) {
+            $data[] = $start;
+        } else {
+            $step = $endpoint ? ($stop - $start) / ($num - 1) : ($stop - $start) / $num;
+            for ($i = 0; $i < $num; $i++) {
+                $data[] = $start + $i * $step;
+            }
+        }
+
+        return self::array($data, $dtype);
+    }
+
     // =========================================================================
     // Private Helpers
     // =========================================================================

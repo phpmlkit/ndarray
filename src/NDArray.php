@@ -47,12 +47,6 @@ class NDArray implements ArrayAccess
     /** Element strides per dimension (in element count, not bytes) */
     private readonly array $strides;
 
-    /** Flat element offset into root data */
-    private readonly int $offset;
-
-    /** Non-null if this is a view — keeps the root alive via PHP refcount */
-    private readonly ?self $base;
-
     /**
      * Private constructor — use factory methods.
      *
@@ -68,14 +62,12 @@ class NDArray implements ArrayAccess
         private array $shape,
         private readonly DType $dtype,
         array $strides = [],
-        int $offset = 0,
-        ?self $base = null,
+        private readonly int $offset = 0,
+        private readonly ?self $base = null,
     ) {
         $this->ndim = count($shape);
         $this->size = (int) array_product($shape);
         $this->strides = $strides ?: self::computeStrides($shape);
-        $this->offset = $offset;
-        $this->base = $base;
     }
 
     /**
@@ -158,6 +150,15 @@ class NDArray implements ArrayAccess
     public function isView(): bool
     {
         return $this->base !== null;
+    }
+
+    /**
+     * Check if the array is C-contiguous (row-major).
+     */
+    public function isContiguous(): bool
+    {
+        $expected = self::computeStrides($this->shape);
+        return $this->strides === $expected;
     }
 
     // =========================================================================

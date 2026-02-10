@@ -121,6 +121,22 @@ interface Bindings
     public function ndarray_set_element_bool(CData $handle, int $flat_index, int $value): int;
 
     // =========================================================================
+    // Slice Filling (view filling)
+    // =========================================================================
+
+    public function ndarray_fill_int8(CData $handle, int $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+    public function ndarray_fill_int16(CData $handle, int $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+    public function ndarray_fill_int32(CData $handle, int $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+    public function ndarray_fill_int64(CData $handle, int $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+    public function ndarray_fill_uint8(CData $handle, int $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+    public function ndarray_fill_uint16(CData $handle, int $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+    public function ndarray_fill_uint32(CData $handle, int $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+    public function ndarray_fill_uint64(CData $handle, int $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+    public function ndarray_fill_float32(CData $handle, float $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+    public function ndarray_fill_float64(CData $handle, float $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+    public function ndarray_fill_bool(CData $handle, int $value, int $offset, CData $shape, CData $strides, int $ndim): int;
+
+    // =========================================================================
     // Generators
     // =========================================================================
 
