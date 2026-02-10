@@ -186,6 +186,35 @@ interface Bindings
     public function ndarray_div_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
 
     // =========================================================================
+    // Element-wise Math Operations
+    // =========================================================================
+
+    public function ndarray_abs(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_sqrt(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_exp(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_log(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_sin(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_cos(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_tan(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_sinh(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_cosh(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_tanh(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_asin(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_acos(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_atan(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_cbrt(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_ceil(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_exp2(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_floor(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_log2(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_log10(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_pow2(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_round(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_signum(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_recip(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_hypot(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
+
+    // =========================================================================
     // Properties
     // =========================================================================
 

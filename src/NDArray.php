@@ -39,13 +39,13 @@ class NDArray implements ArrayAccess
     use HasSlicing;
 
     /** Number of dimensions */
-    private int $ndim;
+    protected int $ndim;
 
     /** Total number of elements in this array/view */
-    private int $size;
+    protected int $size;
 
     /** Element strides per dimension (in element count, not bytes) */
-    private readonly array $strides;
+    protected readonly array $strides;
 
     /**
      * Private constructor — use factory methods.
@@ -57,13 +57,13 @@ class NDArray implements ArrayAccess
      * @param int $offset Flat offset into root data
      * @param self|null $base Parent array if this is a view
      */
-    private function __construct(
-        private readonly CData $handle,
-        private array $shape,
-        private readonly DType $dtype,
+    protected function __construct(
+        protected readonly CData $handle,
+        protected array $shape,
+        protected readonly DType $dtype,
         array $strides = [],
-        private readonly int $offset = 0,
-        private readonly ?self $base = null,
+        protected readonly int $offset = 0,
+        protected readonly ?self $base = null,
     ) {
         $this->ndim = count($shape);
         $this->size = (int) array_product($shape);

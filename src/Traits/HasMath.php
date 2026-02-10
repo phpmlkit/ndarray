@@ -73,44 +73,244 @@ trait HasMath
     }
 
     /**
-     * Negate all elements of this array.
-     *
-     * @return NDArray
-     */
-    public function negate(): NDArray
-    {
-        return $this->multiply(-1);
-    }
-
-    /**
-     * Compute the absolute value of all elements.
+     * Compute absolute value element-wise.
      *
      * @return NDArray
      */
     public function abs(): NDArray
     {
-        $data = $this->toArray();
-        $result = $this->absRecursive($data);
-        return NDArray::array($result, $this->dtype);
+        return $this->unaryOp('ndarray_abs');
     }
 
     /**
-     * Helper to compute absolute value recursively for nested arrays.
+     * Compute square root element-wise.
      *
-     * @param array $data
-     * @return array
+     * @return NDArray
      */
-    private function absRecursive(array $data): array
+    public function sqrt(): NDArray
     {
-        $result = [];
-        foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                $result[$key] = $this->absRecursive($value);
-            } else {
-                $result[$key] = abs($value);
-            }
-        }
-        return $result;
+        return $this->unaryOp('ndarray_sqrt');
+    }
+
+    /**
+     * Compute exponential element-wise.
+     *
+     * @return NDArray
+     */
+    public function exp(): NDArray
+    {
+        return $this->unaryOp('ndarray_exp');
+    }
+
+    /**
+     * Compute natural logarithm element-wise.
+     *
+     * @return NDArray
+     */
+    public function log(): NDArray
+    {
+        return $this->unaryOp('ndarray_log');
+    }
+
+    /**
+     * Compute sine element-wise.
+     *
+     * @return NDArray
+     */
+    public function sin(): NDArray
+    {
+        return $this->unaryOp('ndarray_sin');
+    }
+
+    /**
+     * Compute cosine element-wise.
+     *
+     * @return NDArray
+     */
+    public function cos(): NDArray
+    {
+        return $this->unaryOp('ndarray_cos');
+    }
+
+    /**
+     * Compute tangent element-wise.
+     *
+     * @return NDArray
+     */
+    public function tan(): NDArray
+    {
+        return $this->unaryOp('ndarray_tan');
+    }
+
+    /**
+     * Compute hyperbolic sine element-wise.
+     *
+     * @return NDArray
+     */
+    public function sinh(): NDArray
+    {
+        return $this->unaryOp('ndarray_sinh');
+    }
+
+    /**
+     * Compute hyperbolic cosine element-wise.
+     *
+     * @return NDArray
+     */
+    public function cosh(): NDArray
+    {
+        return $this->unaryOp('ndarray_cosh');
+    }
+
+    /**
+     * Compute hyperbolic tangent element-wise.
+     *
+     * @return NDArray
+     */
+    public function tanh(): NDArray
+    {
+        return $this->unaryOp('ndarray_tanh');
+    }
+
+    /**
+     * Compute arc sine element-wise.
+     *
+     * @return NDArray
+     */
+    public function asin(): NDArray
+    {
+        return $this->unaryOp('ndarray_asin');
+    }
+
+    /**
+     * Compute arc cosine element-wise.
+     *
+     * @return NDArray
+     */
+    public function acos(): NDArray
+    {
+        return $this->unaryOp('ndarray_acos');
+    }
+
+    /**
+     * Compute arc tangent element-wise.
+     *
+     * @return NDArray
+     */
+    public function atan(): NDArray
+    {
+        return $this->unaryOp('ndarray_atan');
+    }
+
+    /**
+     * Compute cube root element-wise.
+     *
+     * @return NDArray
+     */
+    public function cbrt(): NDArray
+    {
+        return $this->unaryOp('ndarray_cbrt');
+    }
+
+    /**
+     * Compute ceiling element-wise.
+     *
+     * @return NDArray
+     */
+    public function ceil(): NDArray
+    {
+        return $this->unaryOp('ndarray_ceil');
+    }
+
+    /**
+     * Compute base-2 exponential (2^x) element-wise.
+     *
+     * @return NDArray
+     */
+    public function exp2(): NDArray
+    {
+        return $this->unaryOp('ndarray_exp2');
+    }
+
+    /**
+     * Compute floor element-wise.
+     *
+     * @return NDArray
+     */
+    public function floor(): NDArray
+    {
+        return $this->unaryOp('ndarray_floor');
+    }
+
+    /**
+     * Compute base-2 logarithm element-wise.
+     *
+     * @return NDArray
+     */
+    public function log2(): NDArray
+    {
+        return $this->unaryOp('ndarray_log2');
+    }
+
+    /**
+     * Compute base-10 logarithm element-wise.
+     *
+     * @return NDArray
+     */
+    public function log10(): NDArray
+    {
+        return $this->unaryOp('ndarray_log10');
+    }
+
+    /**
+     * Compute x^2 (square) element-wise.
+     *
+     * @return NDArray
+     */
+    public function pow2(): NDArray
+    {
+        return $this->unaryOp('ndarray_pow2');
+    }
+
+    /**
+     * Compute round element-wise.
+     *
+     * @return NDArray
+     */
+    public function round(): NDArray
+    {
+        return $this->unaryOp('ndarray_round');
+    }
+
+    /**
+     * Compute signum element-wise.
+     *
+     * @return NDArray
+     */
+    public function signum(): NDArray
+    {
+        return $this->unaryOp('ndarray_signum');
+    }
+
+    /**
+     * Compute reciprocal (1/x) element-wise.
+     *
+     * @return NDArray
+     */
+    public function recip(): NDArray
+    {
+        return $this->unaryOp('ndarray_recip');
+    }
+
+    /**
+     * Compute hypotenuse sqrt(a^2 + b^2) element-wise.
+     *
+     * @param NDArray $other Other array
+     * @return NDArray
+     */
+    public function hypot(NDArray $other): NDArray
+    {
+        return $this->binaryOp('ndarray_hypot', $other);
     }
 
     /**
@@ -180,6 +380,34 @@ trait HasMath
             $aStrides,
             count($this->shape),
             $scalar,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new NDArray($outHandle, $this->shape, $this->dtype);
+    }
+
+    /**
+     * Perform a unary operation.
+     *
+     * @param string $funcName FFI function name
+     * @return NDArray
+     */
+    private function unaryOp(string $funcName): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $aShape = Lib::createShapeArray($this->shape);
+        $aStrides = Lib::createShapeArray($this->strides);
+
+        $status = $ffi->$funcName(
+            $this->handle,
+            $this->offset,
+            $aShape,
+            $aStrides,
+            count($this->shape),
             Lib::addr($outHandle)
         );
 

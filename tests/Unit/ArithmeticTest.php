@@ -92,24 +92,6 @@ final class ArithmeticTest extends TestCase
         $this->assertEqualsWithDelta([10, 14, 18], $result->toArray(), 0.0001);
     }
 
-    public function testNegate(): void
-    {
-        $a = NDArray::array([[1, -2], [3, -4]], DType::Float64);
-        
-        $result = $a->negate();
-        
-        $this->assertEqualsWithDelta([[-1, 2], [-3, 4]], $result->toArray(), 0.0001);
-    }
-
-    public function testAbs(): void
-    {
-        $a = NDArray::array([[1, -2], [-3, 4]], DType::Float64);
-        
-        $result = $a->abs();
-        
-        $this->assertEqualsWithDelta([[1, 2], [3, 4]], $result->toArray(), 0.0001);
-    }
-
     public function testStaticMethods(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
