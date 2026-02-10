@@ -1,15 +1,15 @@
 //! Array generation FFI functions (zeros, ones, full, eye).
 
-use std::slice;
-use std::os::raw::c_void;
-use std::sync::Arc;
+use ndarray::{s, Array2, ArrayD, IxDyn};
 use parking_lot::RwLock;
-use ndarray::{ArrayD, Array2, IxDyn, s};
+use std::os::raw::c_void;
+use std::slice;
+use std::sync::Arc;
 
-use crate::core::{NDArrayWrapper, ArrayData};
+use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
+use crate::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
-use crate::error::{SUCCESS, ERR_GENERIC, ERR_DTYPE};
 
 // ============================================================================
 // Array Generators
@@ -37,48 +37,81 @@ pub unsafe extern "C" fn ndarray_zeros(
         let wrapper = match dtype_enum {
             DType::Int8 => {
                 let arr = ArrayD::<i8>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Int8(Arc::new(RwLock::new(arr))), dtype: DType::Int8 }
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int8,
+                }
             }
             DType::Int16 => {
                 let arr = ArrayD::<i16>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Int16(Arc::new(RwLock::new(arr))), dtype: DType::Int16 }
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int16,
+                }
             }
             DType::Int32 => {
                 let arr = ArrayD::<i32>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Int32(Arc::new(RwLock::new(arr))), dtype: DType::Int32 }
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int32,
+                }
             }
             DType::Int64 => {
                 let arr = ArrayD::<i64>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Int64(Arc::new(RwLock::new(arr))), dtype: DType::Int64 }
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int64,
+                }
             }
             DType::Uint8 => {
                 let arr = ArrayD::<u8>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Uint8(Arc::new(RwLock::new(arr))), dtype: DType::Uint8 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint8,
+                }
             }
             DType::Uint16 => {
                 let arr = ArrayD::<u16>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Uint16(Arc::new(RwLock::new(arr))), dtype: DType::Uint16 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint16,
+                }
             }
             DType::Uint32 => {
                 let arr = ArrayD::<u32>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Uint32(Arc::new(RwLock::new(arr))), dtype: DType::Uint32 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint32,
+                }
             }
             DType::Uint64 => {
                 let arr = ArrayD::<u64>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Uint64(Arc::new(RwLock::new(arr))), dtype: DType::Uint64 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint64,
+                }
             }
             DType::Float32 => {
                 let arr = ArrayD::<f32>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Float32(Arc::new(RwLock::new(arr))), dtype: DType::Float32 }
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Float32,
+                }
             }
             DType::Float64 => {
                 let arr = ArrayD::<f64>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Float64(Arc::new(RwLock::new(arr))), dtype: DType::Float64 }
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Float64,
+                }
             }
             DType::Bool => {
                 // bool zeros = false
                 let arr = ArrayD::<u8>::zeros(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Bool(Arc::new(RwLock::new(arr))), dtype: DType::Bool }
+                NDArrayWrapper {
+                    data: ArrayData::Bool(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Bool,
+                }
             }
         };
 
@@ -109,48 +142,81 @@ pub unsafe extern "C" fn ndarray_ones(
         let wrapper = match dtype_enum {
             DType::Int8 => {
                 let arr = ArrayD::<i8>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Int8(Arc::new(RwLock::new(arr))), dtype: DType::Int8 }
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int8,
+                }
             }
             DType::Int16 => {
                 let arr = ArrayD::<i16>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Int16(Arc::new(RwLock::new(arr))), dtype: DType::Int16 }
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int16,
+                }
             }
             DType::Int32 => {
                 let arr = ArrayD::<i32>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Int32(Arc::new(RwLock::new(arr))), dtype: DType::Int32 }
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int32,
+                }
             }
             DType::Int64 => {
                 let arr = ArrayD::<i64>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Int64(Arc::new(RwLock::new(arr))), dtype: DType::Int64 }
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int64,
+                }
             }
             DType::Uint8 => {
                 let arr = ArrayD::<u8>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Uint8(Arc::new(RwLock::new(arr))), dtype: DType::Uint8 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint8,
+                }
             }
             DType::Uint16 => {
                 let arr = ArrayD::<u16>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Uint16(Arc::new(RwLock::new(arr))), dtype: DType::Uint16 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint16,
+                }
             }
             DType::Uint32 => {
                 let arr = ArrayD::<u32>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Uint32(Arc::new(RwLock::new(arr))), dtype: DType::Uint32 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint32,
+                }
             }
             DType::Uint64 => {
                 let arr = ArrayD::<u64>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Uint64(Arc::new(RwLock::new(arr))), dtype: DType::Uint64 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint64,
+                }
             }
             DType::Float32 => {
                 let arr = ArrayD::<f32>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Float32(Arc::new(RwLock::new(arr))), dtype: DType::Float32 }
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Float32,
+                }
             }
             DType::Float64 => {
                 let arr = ArrayD::<f64>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Float64(Arc::new(RwLock::new(arr))), dtype: DType::Float64 }
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Float64,
+                }
             }
             DType::Bool => {
                 // bool ones = true (1)
                 let arr = ArrayD::<u8>::ones(IxDyn(shape_slice));
-                NDArrayWrapper { data: ArrayData::Bool(Arc::new(RwLock::new(arr))), dtype: DType::Bool }
+                NDArrayWrapper {
+                    data: ArrayData::Bool(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Bool,
+                }
             }
         };
 
@@ -183,57 +249,90 @@ pub unsafe extern "C" fn ndarray_full(
             DType::Int8 => {
                 let val = *(value as *const i8);
                 let arr = ArrayD::<i8>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Int8(Arc::new(RwLock::new(arr))), dtype: DType::Int8 }
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int8,
+                }
             }
             DType::Int16 => {
                 let val = *(value as *const i16);
                 let arr = ArrayD::<i16>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Int16(Arc::new(RwLock::new(arr))), dtype: DType::Int16 }
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int16,
+                }
             }
             DType::Int32 => {
                 let val = *(value as *const i32);
                 let arr = ArrayD::<i32>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Int32(Arc::new(RwLock::new(arr))), dtype: DType::Int32 }
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int32,
+                }
             }
             DType::Int64 => {
                 let val = *(value as *const i64);
                 let arr = ArrayD::<i64>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Int64(Arc::new(RwLock::new(arr))), dtype: DType::Int64 }
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Int64,
+                }
             }
             DType::Uint8 => {
                 let val = *(value as *const u8);
                 let arr = ArrayD::<u8>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Uint8(Arc::new(RwLock::new(arr))), dtype: DType::Uint8 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint8,
+                }
             }
             DType::Uint16 => {
                 let val = *(value as *const u16);
                 let arr = ArrayD::<u16>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Uint16(Arc::new(RwLock::new(arr))), dtype: DType::Uint16 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint16,
+                }
             }
             DType::Uint32 => {
                 let val = *(value as *const u32);
                 let arr = ArrayD::<u32>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Uint32(Arc::new(RwLock::new(arr))), dtype: DType::Uint32 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint32,
+                }
             }
             DType::Uint64 => {
                 let val = *(value as *const u64);
                 let arr = ArrayD::<u64>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Uint64(Arc::new(RwLock::new(arr))), dtype: DType::Uint64 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Uint64,
+                }
             }
             DType::Float32 => {
                 let val = *(value as *const f32);
                 let arr = ArrayD::<f32>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Float32(Arc::new(RwLock::new(arr))), dtype: DType::Float32 }
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Float32,
+                }
             }
             DType::Float64 => {
                 let val = *(value as *const f64);
                 let arr = ArrayD::<f64>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Float64(Arc::new(RwLock::new(arr))), dtype: DType::Float64 }
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Float64,
+                }
             }
             DType::Bool => {
                 let val = *(value as *const u8);
                 let arr = ArrayD::<u8>::from_elem(IxDyn(shape_slice), val);
-                NDArrayWrapper { data: ArrayData::Bool(Arc::new(RwLock::new(arr))), dtype: DType::Bool }
+                NDArrayWrapper {
+                    data: ArrayData::Bool(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Bool,
+                }
             }
         };
 
@@ -263,10 +362,11 @@ pub unsafe extern "C" fn ndarray_eye(
 
         // Helper to fill diagonal using slice logic
         fn fill_eye<T>(mut arr: Array2<T>, k: isize, one: T) -> Array2<T>
-        where T: Clone
+        where
+            T: Clone,
         {
             let (rows, cols) = arr.dim();
-            
+
             // Determine slice range based on k
             if k >= 0 {
                 // Upper diagonal
@@ -290,57 +390,90 @@ pub unsafe extern "C" fn ndarray_eye(
             DType::Int8 => {
                 let arr = Array2::<i8>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1);
-                NDArrayWrapper { data: ArrayData::Int8(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Int8 }
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Int8,
+                }
             }
             DType::Int16 => {
                 let arr = Array2::<i16>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1);
-                NDArrayWrapper { data: ArrayData::Int16(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Int16 }
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Int16,
+                }
             }
             DType::Int32 => {
                 let arr = Array2::<i32>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1);
-                NDArrayWrapper { data: ArrayData::Int32(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Int32 }
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Int32,
+                }
             }
             DType::Int64 => {
                 let arr = Array2::<i64>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1);
-                NDArrayWrapper { data: ArrayData::Int64(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Int64 }
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Int64,
+                }
             }
             DType::Uint8 => {
                 let arr = Array2::<u8>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1);
-                NDArrayWrapper { data: ArrayData::Uint8(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Uint8 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Uint8,
+                }
             }
             DType::Uint16 => {
                 let arr = Array2::<u16>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1);
-                NDArrayWrapper { data: ArrayData::Uint16(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Uint16 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Uint16,
+                }
             }
             DType::Uint32 => {
                 let arr = Array2::<u32>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1);
-                NDArrayWrapper { data: ArrayData::Uint32(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Uint32 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Uint32,
+                }
             }
             DType::Uint64 => {
                 let arr = Array2::<u64>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1);
-                NDArrayWrapper { data: ArrayData::Uint64(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Uint64 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Uint64,
+                }
             }
             DType::Float32 => {
                 let arr = Array2::<f32>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1.0);
-                NDArrayWrapper { data: ArrayData::Float32(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Float32 }
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Float32,
+                }
             }
             DType::Float64 => {
                 let arr = Array2::<f64>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1.0);
-                NDArrayWrapper { data: ArrayData::Float64(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Float64 }
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Float64,
+                }
             }
             DType::Bool => {
                 let arr = Array2::<u8>::zeros((n, m));
                 let arr = fill_eye(arr, k, 1);
-                NDArrayWrapper { data: ArrayData::Bool(Arc::new(RwLock::new(arr.into_dyn()))), dtype: DType::Bool }
+                NDArrayWrapper {
+                    data: ArrayData::Bool(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Bool,
+                }
             }
         };
 

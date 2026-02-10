@@ -73,6 +73,36 @@ crate::impl_to_vec!(
     to_bool_vec, u8, Bool
 );
 
+// Generate get_element_* methods for single-element access
+crate::impl_get_element!(
+    get_element_i8, i8, Int8;
+    get_element_i16, i16, Int16;
+    get_element_i32, i32, Int32;
+    get_element_i64, i64, Int64;
+    get_element_u8, u8, Uint8;
+    get_element_u16, u16, Uint16;
+    get_element_u32, u32, Uint32;
+    get_element_u64, u64, Uint64;
+    get_element_f32, f32, Float32;
+    get_element_f64, f64, Float64;
+    get_element_bool, u8, Bool
+);
+
+// Generate set_element_* methods for single-element mutation
+crate::impl_set_element!(
+    set_element_i8, i8, Int8;
+    set_element_i16, i16, Int16;
+    set_element_i32, i32, Int32;
+    set_element_i64, i64, Int64;
+    set_element_u8, u8, Uint8;
+    set_element_u16, u16, Uint16;
+    set_element_u32, u32, Uint32;
+    set_element_u64, u64, Uint64;
+    set_element_f32, f32, Float32;
+    set_element_f64, f64, Float64;
+    set_element_bool, u8, Bool
+);
+
 #[cfg(test)]
 mod tests {
     use super::*;

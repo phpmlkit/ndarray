@@ -133,6 +133,7 @@ final class Lib
             3 => throw new \NDArray\Exceptions\DTypeException($message), // DType
             4 => throw new \RuntimeException("Allocation error: $message"), // Alloc
             5 => throw new \RuntimeException("Rust panic: $message"), // Panic
+            6 => throw new \NDArray\Exceptions\IndexException($message), // Index
             default => throw new \RuntimeException("Unknown error ($code): $message"),
         };
     }

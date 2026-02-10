@@ -80,6 +80,112 @@ macro_rules! impl_from_slice {
     };
 }
 
+/// Generate get_element_* methods for NDArrayWrapper.
+///
+/// Each method reads a single element at a flat index and returns the value
+/// in its native type. Returns an error if the dtype doesn't match or the
+/// index is out of bounds.
+#[macro_export]
+macro_rules! impl_get_element {
+    ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
+        impl $crate::core::NDArrayWrapper {
+            $(
+                #[doc = concat!("Get element at flat index as `", stringify!($type), "`.")]
+                pub fn $method(&self, flat_index: usize) -> Result<$type, String> {
+                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
+                        let guard = arr.read();
+                        let flat = guard.as_slice_memory_order();
+                        match flat {
+                            Some(slice) => {
+                                if flat_index >= slice.len() {
+                                    Err(format!(
+                                        "Index {} out of bounds for array with {} elements",
+                                        flat_index, slice.len()
+                                    ))
+                                } else {
+                                    Ok(slice[flat_index])
+                                }
+                            }
+                            None => {
+                                // Non-contiguous array: use iterator
+                                guard.iter().nth(flat_index).copied().ok_or_else(|| {
+                                    format!(
+                                        "Index {} out of bounds for array with {} elements",
+                                        flat_index, guard.len()
+                                    )
+                                })
+                            }
+                        }
+                    } else {
+                        Err(format!(
+                            "Type mismatch: expected {}, got {:?}",
+                            stringify!($variant), self.dtype
+                        ))
+                    }
+                }
+            )*
+        }
+    };
+}
+
+/// Generate set_element_* methods for NDArrayWrapper.
+///
+/// Each method writes a single element at a flat index.
+/// Returns an error if the dtype doesn't match or the index is out of bounds.
+#[macro_export]
+macro_rules! impl_set_element {
+    ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
+        impl $crate::core::NDArrayWrapper {
+            $(
+                #[doc = concat!("Set element at flat index from `", stringify!($type), "`.")]
+                pub fn $method(&self, flat_index: usize, value: $type) -> Result<(), String> {
+                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
+                        let mut guard = arr.write();
+                        let flat = guard.as_slice_memory_order_mut();
+                        match flat {
+                            Some(slice) => {
+                                if flat_index >= slice.len() {
+                                    Err(format!(
+                                        "Index {} out of bounds for array with {} elements",
+                                        flat_index, slice.len()
+                                    ))
+                                } else {
+                                    slice[flat_index] = value;
+                                    Ok(())
+                                }
+                            }
+                            None => {
+                                // Non-contiguous: fall back to indexed iteration
+                                let len = guard.len();
+                                if flat_index >= len {
+                                    return Err(format!(
+                                        "Index {} out of bounds for array with {} elements",
+                                        flat_index, len
+                                    ));
+                                }
+                                if let Some(elem) = guard.iter_mut().nth(flat_index) {
+                                    *elem = value;
+                                    Ok(())
+                                } else {
+                                    Err(format!(
+                                        "Index {} out of bounds for array with {} elements",
+                                        flat_index, len
+                                    ))
+                                }
+                            }
+                        }
+                    } else {
+                        Err(format!(
+                            "Type mismatch: expected {}, got {:?}",
+                            stringify!($variant), self.dtype
+                        ))
+                    }
+                }
+            )*
+        }
+    };
+}
+
 /// Generate to_vec_* methods for NDArrayWrapper.
 ///
 /// This macro generates type-specific accessors that return a copy of the

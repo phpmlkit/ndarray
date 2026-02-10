@@ -5,6 +5,7 @@
 pub mod create;
 pub mod data;
 pub mod generators;
+pub mod indexing;
 pub mod properties;
 pub mod serialize;
 mod serialize_helpers;
@@ -16,5 +17,6 @@ pub use types::NdArrayHandle;
 pub use create::*;
 pub use data::*;
 pub use generators::*;
+pub use indexing::*;
 pub use properties::*;
 pub use serialize::*;
