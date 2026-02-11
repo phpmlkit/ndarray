@@ -2,151 +2,124 @@
 //!
 //! Provides type-specific get operations for single elements at a flat index.
 
-use crate::core::NDArrayWrapper;
+use std::ffi::c_void;
+
+use crate::dtype::DType;
 use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
 use crate::ffi::NdArrayHandle;
 
-/// Helper for getting element values.
-pub unsafe fn get_element_helper<T, F>(
+/// Get an element at the given flat index.
+///
+/// # Arguments
+/// * `handle` - Array handle
+/// * `flat_index` - Flat index of the element
+/// * `out_value` - Pointer to store the value (type depends on array dtype)
+///
+/// The caller must ensure `out_value` points to the correct type for the array's dtype.
+#[no_mangle]
+pub unsafe extern "C" fn ndarray_get_element(
     handle: *const NdArrayHandle,
     flat_index: usize,
-    out_value: *mut T,
-    method: F,
-) -> i32
-where
-    T: Copy,
-    F: Fn(&NDArrayWrapper, usize) -> Result<T, String> + std::panic::UnwindSafe,
-{
+    out_value: *mut c_void,
+) -> i32 {
     if handle.is_null() || out_value.is_null() {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        match method(wrapper, flat_index) {
-            Ok(value) => {
-                *out_value = value;
-                SUCCESS
-            }
-            Err(e) => {
-                if e.contains("Type mismatch") {
-                    error::set_last_error(e);
-                    ERR_DTYPE
-                } else {
-                    error::set_last_error(e);
-                    ERR_INDEX
+
+        let result = match wrapper.dtype {
+            DType::Int8 => match wrapper.get_element_i8(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut i8) = v;
+                    SUCCESS
                 }
-            }
-        }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Int16 => match wrapper.get_element_i16(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut i16) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Int32 => match wrapper.get_element_i32(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut i32) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Int64 => match wrapper.get_element_i64(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut i64) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Uint8 => match wrapper.get_element_u8(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut u8) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Uint16 => match wrapper.get_element_u16(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut u16) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Uint32 => match wrapper.get_element_u32(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut u32) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Uint64 => match wrapper.get_element_u64(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut u64) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Float32 => match wrapper.get_element_f32(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut f32) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Float64 => match wrapper.get_element_f64(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut f64) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Bool => match wrapper.get_element_bool(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut u8) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+        };
+
+        result
     })
 }
 
-/// Get an int8 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_int8(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut i8,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_i8(i))
-}
-
-/// Get an int16 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_int16(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut i16,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_i16(i))
-}
-
-/// Get an int32 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_int32(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut i32,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_i32(i))
-}
-
-/// Get an int64 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_int64(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut i64,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_i64(i))
-}
-
-/// Get a uint8 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_uint8(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut u8,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_u8(i))
-}
-
-/// Get a uint16 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_uint16(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut u16,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_u16(i))
-}
-
-/// Get a uint32 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_uint32(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut u32,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_u32(i))
-}
-
-/// Get a uint64 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_uint64(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut u64,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_u64(i))
-}
-
-/// Get a float32 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_float32(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut f32,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_f32(i))
-}
-
-/// Get a float64 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_float64(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut f64,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_f64(i))
-}
-
-/// Get a bool element at the given flat index (stored as u8).
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_element_bool(
-    handle: *const NdArrayHandle,
-    flat_index: usize,
-    out_value: *mut u8,
-) -> i32 {
-    get_element_helper(handle, flat_index, out_value, |w, i| w.get_element_bool(i))
+/// Helper to handle get_element errors
+fn handle_get_error(e: String) -> i32 {
+    if e.contains("Type mismatch") {
+        error::set_last_error(e);
+        ERR_DTYPE
+    } else {
+        error::set_last_error(e);
+        ERR_INDEX
+    }
 }

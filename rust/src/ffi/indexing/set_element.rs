@@ -1,29 +1,82 @@
 //! Element-level set operations.
 //!
-//! Provides type-specific set operations for single elements at a flat index.
+//! Provides unified set operations for single elements at a flat index.
 
-use crate::core::NDArrayWrapper;
+use std::ffi::c_void;
+
+use crate::dtype::DType;
 use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
 use crate::ffi::NdArrayHandle;
 
-/// Helper for setting element values.
-pub unsafe fn set_element_helper<T, F>(
+/// Set an element at the given flat index.
+///
+/// # Arguments
+/// * `handle` - Array handle
+/// * `flat_index` - Flat index of the element
+/// * `value` - Pointer to the value (type depends on array dtype)
+///
+/// The caller must ensure `value` points to the correct type for the array's dtype.
+#[no_mangle]
+pub unsafe extern "C" fn ndarray_set_element(
     handle: *mut NdArrayHandle,
     flat_index: usize,
-    value: T,
-    method: F,
-) -> i32
-where
-    T: Copy,
-    F: Fn(&NDArrayWrapper, usize, T) -> Result<(), String> + std::panic::UnwindSafe,
-{
-    if handle.is_null() {
+    value: *const c_void,
+) -> i32 {
+    if handle.is_null() || value.is_null() {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle);
-        match method(wrapper, flat_index, value) {
+
+        let result = match wrapper.dtype {
+            DType::Int8 => {
+                let v = *(value as *const i8);
+                wrapper.set_element_i8(flat_index, v)
+            }
+            DType::Int16 => {
+                let v = *(value as *const i16);
+                wrapper.set_element_i16(flat_index, v)
+            }
+            DType::Int32 => {
+                let v = *(value as *const i32);
+                wrapper.set_element_i32(flat_index, v)
+            }
+            DType::Int64 => {
+                let v = *(value as *const i64);
+                wrapper.set_element_i64(flat_index, v)
+            }
+            DType::Uint8 => {
+                let v = *(value as *const u8);
+                wrapper.set_element_u8(flat_index, v)
+            }
+            DType::Uint16 => {
+                let v = *(value as *const u16);
+                wrapper.set_element_u16(flat_index, v)
+            }
+            DType::Uint32 => {
+                let v = *(value as *const u32);
+                wrapper.set_element_u32(flat_index, v)
+            }
+            DType::Uint64 => {
+                let v = *(value as *const u64);
+                wrapper.set_element_u64(flat_index, v)
+            }
+            DType::Float32 => {
+                let v = *(value as *const f32);
+                wrapper.set_element_f32(flat_index, v)
+            }
+            DType::Float64 => {
+                let v = *(value as *const f64);
+                wrapper.set_element_f64(flat_index, v)
+            }
+            DType::Bool => {
+                let v = *(value as *const u8);
+                wrapper.set_element_bool(flat_index, v)
+            }
+        };
+
+        match result {
             Ok(()) => SUCCESS,
             Err(e) => {
                 if e.contains("Type mismatch") {
@@ -35,117 +88,5 @@ where
                 }
             }
         }
-    })
-}
-
-/// Set an int8 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_int8(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: i8,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| w.set_element_i8(i, v))
-}
-
-/// Set an int16 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_int16(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: i16,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| w.set_element_i16(i, v))
-}
-
-/// Set an int32 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_int32(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: i32,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| w.set_element_i32(i, v))
-}
-
-/// Set an int64 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_int64(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: i64,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| w.set_element_i64(i, v))
-}
-
-/// Set a uint8 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_uint8(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: u8,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| w.set_element_u8(i, v))
-}
-
-/// Set a uint16 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_uint16(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: u16,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| w.set_element_u16(i, v))
-}
-
-/// Set a uint32 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_uint32(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: u32,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| w.set_element_u32(i, v))
-}
-
-/// Set a uint64 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_uint64(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: u64,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| w.set_element_u64(i, v))
-}
-
-/// Set a float32 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_float32(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: f32,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| w.set_element_f32(i, v))
-}
-
-/// Set a float64 element at the given flat index.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_float64(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: f64,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| w.set_element_f64(i, v))
-}
-
-/// Set a bool element at the given flat index (stored as u8).
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_set_element_bool(
-    handle: *mut NdArrayHandle,
-    flat_index: usize,
-    value: u8,
-) -> i32 {
-    set_element_helper(handle, flat_index, value, |w, i, v| {
-        w.set_element_bool(i, v)
     })
 }

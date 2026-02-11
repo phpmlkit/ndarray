@@ -1,162 +1,141 @@
 //! Array data access FFI functions.
 
-use crate::core::NDArrayWrapper;
-use crate::error::{self, ERR_DTYPE, ERR_GENERIC, SUCCESS};
-use crate::ffi::NdArrayHandle;
+use std::ffi::c_void;
 use std::slice;
 
-// ============================================================================
-// Array Data Access Functions
-// ============================================================================
-// Note: These accessors return an integer status code.
+use crate::dtype::DType;
+use crate::error::{self, ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::ffi::NdArrayHandle;
 
-unsafe fn get_data_helper<T, F>(
+/// Get array data.
+///
+/// # Arguments
+/// * `handle` - Array handle
+/// * `out_data` - Pointer to output buffer (type depends on array dtype)
+/// * `max_len` - Maximum number of elements to copy
+/// * `out_len` - Output: actual number of elements in the array
+///
+/// The caller must ensure `out_data` points to a buffer of the correct type
+/// and sufficient size for the array's dtype.
+#[no_mangle]
+pub unsafe extern "C" fn ndarray_get_data(
     handle: *const NdArrayHandle,
-    out_data: *mut T,
+    out_data: *mut c_void,
     max_len: usize,
     out_len: *mut usize,
-    method: F,
-) -> i32
-where
-    T: Copy,
-    F: Fn(&NDArrayWrapper) -> Option<Vec<T>> + std::panic::UnwindSafe,
-{
+) -> i32 {
     if handle.is_null() || out_data.is_null() || out_len.is_null() {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        if let Some(data) = method(wrapper) {
-            let len = data.len().min(max_len);
-            let out_slice = slice::from_raw_parts_mut(out_data, len);
-            out_slice.copy_from_slice(&data[..len]);
-            *out_len = data.len();
-            SUCCESS
-        } else {
-            error::set_last_error("Data type mismatch");
-            ERR_DTYPE
-        }
+
+        let result = match wrapper.dtype {
+            DType::Int8 => {
+                if let Some(data) = wrapper.to_int8_vec() {
+                    copy_data_to_buffer(data, out_data as *mut i8, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+            DType::Int16 => {
+                if let Some(data) = wrapper.to_int16_vec() {
+                    copy_data_to_buffer(data, out_data as *mut i16, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+            DType::Int32 => {
+                if let Some(data) = wrapper.to_int32_vec() {
+                    copy_data_to_buffer(data, out_data as *mut i32, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+            DType::Int64 => {
+                if let Some(data) = wrapper.to_int64_vec() {
+                    copy_data_to_buffer(data, out_data as *mut i64, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+            DType::Uint8 => {
+                if let Some(data) = wrapper.to_uint8_vec() {
+                    copy_data_to_buffer(data, out_data as *mut u8, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+            DType::Uint16 => {
+                if let Some(data) = wrapper.to_uint16_vec() {
+                    copy_data_to_buffer(data, out_data as *mut u16, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+            DType::Uint32 => {
+                if let Some(data) = wrapper.to_uint32_vec() {
+                    copy_data_to_buffer(data, out_data as *mut u32, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+            DType::Uint64 => {
+                if let Some(data) = wrapper.to_uint64_vec() {
+                    copy_data_to_buffer(data, out_data as *mut u64, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+            DType::Float32 => {
+                if let Some(data) = wrapper.to_float32_vec() {
+                    copy_data_to_buffer(data, out_data as *mut f32, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+            DType::Float64 => {
+                if let Some(data) = wrapper.to_float64_vec() {
+                    copy_data_to_buffer(data, out_data as *mut f64, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+            DType::Bool => {
+                if let Some(data) = wrapper.to_bool_vec() {
+                    copy_data_to_buffer(data, out_data as *mut u8, max_len, out_len)
+                } else {
+                    error::set_last_error("Data type mismatch");
+                    ERR_DTYPE
+                }
+            }
+        };
+
+        result
     })
 }
 
-/// Get int8 data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_int8(
-    handle: *const NdArrayHandle,
-    out_data: *mut i8,
+/// Helper to copy data to output buffer
+unsafe fn copy_data_to_buffer<T: Copy>(
+    data: Vec<T>,
+    out_data: *mut T,
     max_len: usize,
     out_len: *mut usize,
 ) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_int8_vec())
-}
-
-/// Get int16 data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_int16(
-    handle: *const NdArrayHandle,
-    out_data: *mut i16,
-    max_len: usize,
-    out_len: *mut usize,
-) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_int16_vec())
-}
-
-/// Get int32 data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_int32(
-    handle: *const NdArrayHandle,
-    out_data: *mut i32,
-    max_len: usize,
-    out_len: *mut usize,
-) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_int32_vec())
-}
-
-/// Get int64 data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_int64(
-    handle: *const NdArrayHandle,
-    out_data: *mut i64,
-    max_len: usize,
-    out_len: *mut usize,
-) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_int64_vec())
-}
-
-/// Get uint8 data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_uint8(
-    handle: *const NdArrayHandle,
-    out_data: *mut u8,
-    max_len: usize,
-    out_len: *mut usize,
-) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_uint8_vec())
-}
-
-/// Get uint16 data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_uint16(
-    handle: *const NdArrayHandle,
-    out_data: *mut u16,
-    max_len: usize,
-    out_len: *mut usize,
-) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_uint16_vec())
-}
-
-/// Get uint32 data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_uint32(
-    handle: *const NdArrayHandle,
-    out_data: *mut u32,
-    max_len: usize,
-    out_len: *mut usize,
-) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_uint32_vec())
-}
-
-/// Get uint64 data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_uint64(
-    handle: *const NdArrayHandle,
-    out_data: *mut u64,
-    max_len: usize,
-    out_len: *mut usize,
-) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_uint64_vec())
-}
-
-/// Get float32 data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_float32(
-    handle: *const NdArrayHandle,
-    out_data: *mut f32,
-    max_len: usize,
-    out_len: *mut usize,
-) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_float32_vec())
-}
-
-/// Get float64 data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_float64(
-    handle: *const NdArrayHandle,
-    out_data: *mut f64,
-    max_len: usize,
-    out_len: *mut usize,
-) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_float64_vec())
-}
-
-/// Get bool data.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_data_bool(
-    handle: *const NdArrayHandle,
-    out_data: *mut u8,
-    max_len: usize,
-    out_len: *mut usize,
-) -> i32 {
-    get_data_helper(handle, out_data, max_len, out_len, |w| w.to_bool_vec())
+    let len = data.len().min(max_len);
+    let out_slice = slice::from_raw_parts_mut(out_data, len);
+    out_slice.copy_from_slice(&data[..len]);
+    *out_len = data.len();
+    SUCCESS
 }

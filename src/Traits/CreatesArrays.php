@@ -418,13 +418,12 @@ trait CreatesArrays
 
         $outHandle = $ffi->new("struct NdArrayHandle*");
 
-        $funcName = "ndarray_create_{$dtype->name()}";
-
-        $status = $ffi->$funcName(
+        $status = $ffi->ndarray_create(
             $cData,
             $len,
             $cShape,
             count($shape),
+            $dtype->value,
             Lib::addr($outHandle)
         );
 

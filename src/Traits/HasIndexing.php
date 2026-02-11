@@ -150,7 +150,7 @@ trait HasIndexing
     }
 
     /**
-     * Read a scalar value at a flat index via type-specific FFI call.
+     * Read a scalar value at a flat index via FFI.
      *
      * @param int $flatIndex
      * @return int|float|bool
@@ -160,33 +160,32 @@ trait HasIndexing
         $ffi = Lib::get();
 
         return match ($this->dtype) {
-            DType::Int8 => $this->getTypedScalar($ffi, 'ndarray_get_element_int8', 'int8_t', $flatIndex),
-            DType::Int16 => $this->getTypedScalar($ffi, 'ndarray_get_element_int16', 'int16_t', $flatIndex),
-            DType::Int32 => $this->getTypedScalar($ffi, 'ndarray_get_element_int32', 'int32_t', $flatIndex),
-            DType::Int64 => $this->getTypedScalar($ffi, 'ndarray_get_element_int64', 'int64_t', $flatIndex),
-            DType::Uint8 => $this->getTypedScalar($ffi, 'ndarray_get_element_uint8', 'uint8_t', $flatIndex),
-            DType::Uint16 => $this->getTypedScalar($ffi, 'ndarray_get_element_uint16', 'uint16_t', $flatIndex),
-            DType::Uint32 => $this->getTypedScalar($ffi, 'ndarray_get_element_uint32', 'uint32_t', $flatIndex),
-            DType::Uint64 => $this->getTypedScalar($ffi, 'ndarray_get_element_uint64', 'uint64_t', $flatIndex),
-            DType::Float32 => $this->getTypedScalar($ffi, 'ndarray_get_element_float32', 'float', $flatIndex),
-            DType::Float64 => $this->getTypedScalar($ffi, 'ndarray_get_element_float64', 'double', $flatIndex),
-            DType::Bool => (bool) $this->getTypedScalar($ffi, 'ndarray_get_element_bool', 'uint8_t', $flatIndex),
+            DType::Int8 => $this->getTypedScalar($ffi, 'int8_t', $flatIndex),
+            DType::Int16 => $this->getTypedScalar($ffi, 'int16_t', $flatIndex),
+            DType::Int32 => $this->getTypedScalar($ffi, 'int32_t', $flatIndex),
+            DType::Int64 => $this->getTypedScalar($ffi, 'int64_t', $flatIndex),
+            DType::Uint8 => $this->getTypedScalar($ffi, 'uint8_t', $flatIndex),
+            DType::Uint16 => $this->getTypedScalar($ffi, 'uint16_t', $flatIndex),
+            DType::Uint32 => $this->getTypedScalar($ffi, 'uint32_t', $flatIndex),
+            DType::Uint64 => $this->getTypedScalar($ffi, 'uint64_t', $flatIndex),
+            DType::Float32 => $this->getTypedScalar($ffi, 'float', $flatIndex),
+            DType::Float64 => $this->getTypedScalar($ffi, 'double', $flatIndex),
+            DType::Bool => (bool) $this->getTypedScalar($ffi, 'uint8_t', $flatIndex),
         };
     }
 
     /**
-     * Call a type-specific get_element FFI function.
+     * Get a scalar value via FFI using the unified ndarray_get_element function.
      *
      * @param FFI $ffi
-     * @param string $funcName FFI function name
      * @param string $cType C type for the output value
      * @param int $flatIndex
      * @return int|float
      */
-    private function getTypedScalar(FFI $ffi, string $funcName, string $cType, int $flatIndex): int|float
+    private function getTypedScalar(FFI $ffi, string $cType, int $flatIndex): int|float
     {
         $outValue = $ffi->new($cType);
-        $status = $ffi->$funcName($this->handle, $flatIndex, Lib::addr($outValue));
+        $status = $ffi->ndarray_get_element($this->handle, $flatIndex, Lib::addr($outValue));
         Lib::checkStatus($status);
 
         return $outValue->cdata;
@@ -202,25 +201,29 @@ trait HasIndexing
     {
         $ffi = Lib::get();
 
-        $funcName = match ($this->dtype) {
-            DType::Int8 => 'ndarray_set_element_int8',
-            DType::Int16 => 'ndarray_set_element_int16',
-            DType::Int32 => 'ndarray_set_element_int32',
-            DType::Int64 => 'ndarray_set_element_int64',
-            DType::Uint8 => 'ndarray_set_element_uint8',
-            DType::Uint16 => 'ndarray_set_element_uint16',
-            DType::Uint32 => 'ndarray_set_element_uint32',
-            DType::Uint64 => 'ndarray_set_element_uint64',
-            DType::Float32 => 'ndarray_set_element_float32',
-            DType::Float64 => 'ndarray_set_element_float64',
-            DType::Bool => 'ndarray_set_element_bool',
+        // Create C value of appropriate type
+        $cValue = match ($this->dtype) {
+            DType::Int8 => $ffi->new('int8_t'),
+            DType::Int16 => $ffi->new('int16_t'),
+            DType::Int32 => $ffi->new('int32_t'),
+            DType::Int64 => $ffi->new('int64_t'),
+            DType::Uint8 => $ffi->new('uint8_t'),
+            DType::Uint16 => $ffi->new('uint16_t'),
+            DType::Uint32 => $ffi->new('uint32_t'),
+            DType::Uint64 => $ffi->new('uint64_t'),
+            DType::Float32 => $ffi->new('float'),
+            DType::Float64 => $ffi->new('double'),
+            DType::Bool => $ffi->new('uint8_t'),
         };
 
+        // Set the value
         if ($this->dtype === DType::Bool) {
-            $value = $value ? 1 : 0;
+            $cValue->cdata = $value ? 1 : 0;
+        } else {
+            $cValue->cdata = $value;
         }
 
-        $status = $ffi->$funcName($this->handle, $flatIndex, $value);
+        $status = $ffi->ndarray_set_element($this->handle, $flatIndex, Lib::addr($cValue));
         Lib::checkStatus($status);
     }
 }

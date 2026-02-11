@@ -6,6 +6,7 @@ pub mod arithmetic;
 pub mod array;
 pub mod generators;
 pub mod indexing;
+pub mod reductions;
 mod types;
 
 pub use types::NdArrayHandle;
@@ -15,3 +16,4 @@ pub use arithmetic::*;
 pub use array::*;
 pub use generators::*;
 pub use indexing::*;
+pub use reductions::*;

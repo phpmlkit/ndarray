@@ -126,25 +126,41 @@ trait HasSlicing
     private function fill(mixed $value): void
     {
         $ffi = Lib::get();
-        
+
         $cShape = Lib::createCArray('size_t', $this->shape);
         $cStrides = Lib::createCArray('size_t', $this->strides);
-        
+
+        // Create C value of appropriate type
+        $cValue = match ($this->dtype) {
+            DType::Int8 => $ffi->new('int8_t'),
+            DType::Int16 => $ffi->new('int16_t'),
+            DType::Int32 => $ffi->new('int32_t'),
+            DType::Int64 => $ffi->new('int64_t'),
+            DType::Uint8 => $ffi->new('uint8_t'),
+            DType::Uint16 => $ffi->new('uint16_t'),
+            DType::Uint32 => $ffi->new('uint32_t'),
+            DType::Uint64 => $ffi->new('uint64_t'),
+            DType::Float32 => $ffi->new('float'),
+            DType::Float64 => $ffi->new('double'),
+            DType::Bool => $ffi->new('uint8_t'),
+        };
+
+        // Set the value
         if ($this->dtype === DType::Bool) {
-            $value = $value ? 1 : 0;
+            $cValue->cdata = $value ? 1 : 0;
+        } else {
+            $cValue->cdata = $value;
         }
 
-        $funcName = "ndarray_fill_{$this->dtype->name()}";
-        
-        $status = $ffi->$funcName(
+        $status = $ffi->ndarray_fill(
             $this->handle,
-            $value,
+            Lib::addr($cValue),
             $this->offset,
             $cShape,
             $cStrides,
             $this->ndim
         );
-        
+
         Lib::checkStatus($status);
     }
 
@@ -188,19 +204,12 @@ trait HasSlicing
         $srcShape = Lib::createCArray('size_t', $src->shape());
         $srcStrides = Lib::createCArray('size_t', $src->strides());
 
-        $funcName = "ndarray_assign_{$this->dtype->name()}";
-
-        $status = $ffi->$funcName(
+        $status = $ffi->ndarray_assign(
             $this->handle,
             $this->offset,
             $dstShape,
             $dstStrides,
             $src->getHandle(),
-            // We need src offset. NDArray doesn't expose public offset?
-            // Wait, `offset` is private in NDArray. 
-            // I need to access it. But I'm in a trait used by NDArray.
-            // `$src` is an instance of NDArray. Private properties of other instances of the same class
-            // ARE accessible in PHP.
             $src->offset,
             $srcShape,
             $srcStrides,

@@ -20,9 +20,9 @@ trait HasConversion
      * Uses strided view serialization when this is a view,
      * or full array serialization for root arrays.
      *
-     * @return array
+     * @return array|float|int Returns array for N-dimensional arrays, scalar for 0-dimensional
      */
-    public function toArray(): array
+    public function toArray(): array|float|int
     {
         $ffi = Lib::get();
 
