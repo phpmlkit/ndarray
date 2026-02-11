@@ -3,22 +3,15 @@
 //! This module exposes Rust functionality to PHP via C-compatible functions.
 
 pub mod arithmetic;
-pub mod create;
-pub mod data;
+pub mod array;
 pub mod generators;
 pub mod indexing;
-pub mod properties;
-pub mod serialize;
-mod serialize_helpers;
 mod types;
 
 pub use types::NdArrayHandle;
 
 // Re-export all FFI functions for lib.rs
 pub use arithmetic::*;
-pub use create::*;
-pub use data::*;
+pub use array::*;
 pub use generators::*;
 pub use indexing::*;
-pub use properties::*;
-pub use serialize::*;

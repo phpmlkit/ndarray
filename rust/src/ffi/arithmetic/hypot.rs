@@ -38,20 +38,52 @@ pub unsafe extern "C" fn ndarray_hypot(
         };
 
         let result = match out_dtype {
-            crate::dtype::DType::Float64 => {
-                binary_op_f64(a_wrapper, a_offset, a_shape_slice, b_wrapper, b_offset, b_shape_slice, &|a, b| a.hypot(b))
-            }
-            crate::dtype::DType::Float32 => {
-                binary_op_f32(a_wrapper, a_offset, a_shape_slice, b_wrapper, b_offset, b_shape_slice, &|a, b| a.hypot(b))
-            }
-            crate::dtype::DType::Int64 => {
-                binary_op_i64(a_wrapper, a_offset, a_shape_slice, b_wrapper, b_offset, b_shape_slice, &|a, b| a.hypot(b))
-            }
-            crate::dtype::DType::Int32 => {
-                binary_op_i32(a_wrapper, a_offset, a_shape_slice, b_wrapper, b_offset, b_shape_slice, &|a, b| a.hypot(b))
-            }
+            crate::dtype::DType::Float64 => binary_op_f64(
+                a_wrapper,
+                a_offset,
+                a_shape_slice,
+                b_wrapper,
+                b_offset,
+                b_shape_slice,
+                &|a, b| a.hypot(b),
+            ),
+            crate::dtype::DType::Float32 => binary_op_f32(
+                a_wrapper,
+                a_offset,
+                a_shape_slice,
+                b_wrapper,
+                b_offset,
+                b_shape_slice,
+                &|a, b| a.hypot(b),
+            ),
+            crate::dtype::DType::Int64 => binary_op_i64(
+                a_wrapper,
+                a_offset,
+                a_shape_slice,
+                b_wrapper,
+                b_offset,
+                b_shape_slice,
+                &|a, b| a.hypot(b),
+            ),
+            crate::dtype::DType::Int32 => binary_op_i32(
+                a_wrapper,
+                a_offset,
+                a_shape_slice,
+                b_wrapper,
+                b_offset,
+                b_shape_slice,
+                &|a, b| a.hypot(b),
+            ),
             _ => {
-                match binary_op_f64(a_wrapper, a_offset, a_shape_slice, b_wrapper, b_offset, b_shape_slice, &|a, b| a.hypot(b)) {
+                match binary_op_f64(
+                    a_wrapper,
+                    a_offset,
+                    a_shape_slice,
+                    b_wrapper,
+                    b_offset,
+                    b_shape_slice,
+                    &|a, b| a.hypot(b),
+                ) {
                     Ok(wrapper) => convert_wrapper_dtype(wrapper, out_dtype),
                     Err(e) => Err(e),
                 }
