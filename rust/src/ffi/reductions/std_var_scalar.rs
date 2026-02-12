@@ -1,19 +1,116 @@
 //! Scalar variance and standard deviation reductions.
 
-use crate::dtype::DType;
+use crate::core::view_helpers::{
+    create_scalar_wrapper_f64, extract_view_f32, extract_view_f64, extract_view_i16,
+    extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32,
+    extract_view_u64, extract_view_u8,
+};
+use crate::core::NDArrayWrapper;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::reductions::helpers::{create_scalar_wrapper, extract_view};
 use crate::ffi::NdArrayHandle;
 
+/// Compute variance using ndarray's native method.
+///
+/// For float types (f64, f32), uses native var() method.
+/// For integers, extracts as f64 then computes variance.
+fn compute_var(
+    wrapper: &NDArrayWrapper,
+    offset: usize,
+    shape: &[usize],
+    strides: &[usize],
+    ddof: f64,
+) -> f64 {
+    unsafe {
+        // Float64 - native support
+        if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
+            return view.var(ddof);
+        }
+        // Float32 - native support with f32 precision
+        if let Some(view) = extract_view_f32(wrapper, offset, shape, strides) {
+            return view.var(ddof as f32) as f64;
+        }
+        // Integers - convert to f64, then use ndarray's var
+        if let Some(view) = extract_view_i64(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).var(ddof);
+        }
+        if let Some(view) = extract_view_i32(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).var(ddof);
+        }
+        if let Some(view) = extract_view_i16(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).var(ddof);
+        }
+        if let Some(view) = extract_view_i8(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).var(ddof);
+        }
+        if let Some(view) = extract_view_u64(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).var(ddof);
+        }
+        if let Some(view) = extract_view_u32(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).var(ddof);
+        }
+        if let Some(view) = extract_view_u16(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).var(ddof);
+        }
+        if let Some(view) = extract_view_u8(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).var(ddof);
+        }
+    }
+    0.0
+}
+
+/// Compute standard deviation using ndarray's native method.
+fn compute_std(
+    wrapper: &NDArrayWrapper,
+    offset: usize,
+    shape: &[usize],
+    strides: &[usize],
+    ddof: f64,
+) -> f64 {
+    unsafe {
+        // Float64 - native support
+        if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
+            return view.std(ddof);
+        }
+        // Float32 - native support
+        if let Some(view) = extract_view_f32(wrapper, offset, shape, strides) {
+            return view.std(ddof as f32) as f64;
+        }
+        // Integers - convert to f64, then use ndarray's std
+        if let Some(view) = extract_view_i64(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).std(ddof);
+        }
+        if let Some(view) = extract_view_i32(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).std(ddof);
+        }
+        if let Some(view) = extract_view_i16(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).std(ddof);
+        }
+        if let Some(view) = extract_view_i8(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).std(ddof);
+        }
+        if let Some(view) = extract_view_u64(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).std(ddof);
+        }
+        if let Some(view) = extract_view_u32(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).std(ddof);
+        }
+        if let Some(view) = extract_view_u16(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).std(ddof);
+        }
+        if let Some(view) = extract_view_u8(wrapper, offset, shape, strides) {
+            return view.mapv(|x| x as f64).std(ddof);
+        }
+    }
+    0.0
+}
+
 /// Compute the variance of all elements (scalar reduction).
-/// ddof: Delta degrees of freedom (0 for population, 1 for sample).
-/// Returns a 0-dimensional array handle containing the variance as Float64.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_var(
     handle: *const NdArrayHandle,
     offset: usize,
     shape: *const usize,
-    _strides: *const usize,
+    strides: *const usize,
     ndim: usize,
     ddof: f64,
     out_handle: *mut *mut NdArrayHandle,
@@ -25,9 +122,9 @@ pub unsafe extern "C" fn ndarray_var(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let shape_slice = std::slice::from_raw_parts(shape, ndim);
+        let strides_slice = std::slice::from_raw_parts(strides, ndim);
 
-        let view = extract_view(wrapper, offset, shape_slice);
-        let n = view.len() as f64;
+        let n = shape_slice.iter().map(|&x| x as f64).product::<f64>();
 
         if n <= ddof {
             crate::error::set_last_error(format!(
@@ -37,11 +134,8 @@ pub unsafe extern "C" fn ndarray_var(
             return ERR_GENERIC;
         }
 
-        // Compute variance using ndarray's var method
-        let var_val = view.var(ddof);
-
-        // Variance should be Float64
-        let result_wrapper = create_scalar_wrapper(var_val, DType::Float64);
+        let result = compute_var(wrapper, offset, shape_slice, strides_slice, ddof);
+        let result_wrapper = create_scalar_wrapper_f64(result);
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
 
         SUCCESS
@@ -49,14 +143,12 @@ pub unsafe extern "C" fn ndarray_var(
 }
 
 /// Compute the standard deviation of all elements (scalar reduction).
-/// ddof: Delta degrees of freedom (0 for population, 1 for sample).
-/// Returns a 0-dimensional array handle containing the std as Float64.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_std(
     handle: *const NdArrayHandle,
     offset: usize,
     shape: *const usize,
-    _strides: *const usize,
+    strides: *const usize,
     ndim: usize,
     ddof: f64,
     out_handle: *mut *mut NdArrayHandle,
@@ -68,9 +160,9 @@ pub unsafe extern "C" fn ndarray_std(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let shape_slice = std::slice::from_raw_parts(shape, ndim);
+        let strides_slice = std::slice::from_raw_parts(strides, ndim);
 
-        let view = extract_view(wrapper, offset, shape_slice);
-        let n = view.len() as f64;
+        let n = shape_slice.iter().map(|&x| x as f64).product::<f64>();
 
         if n <= ddof {
             crate::error::set_last_error(format!(
@@ -80,11 +172,8 @@ pub unsafe extern "C" fn ndarray_std(
             return ERR_GENERIC;
         }
 
-        // Compute std using ndarray's std method
-        let std_val = view.std(ddof);
-
-        // Std should be Float64
-        let result_wrapper = create_scalar_wrapper(std_val, DType::Float64);
+        let result = compute_std(wrapper, offset, shape_slice, strides_slice, ddof);
+        let result_wrapper = create_scalar_wrapper_f64(result);
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
 
         SUCCESS

@@ -2,7 +2,7 @@
 
 use ndarray::IxDyn;
 
-use crate::core::{ArrayData, NDArrayWrapper};
+use crate::core::NDArrayWrapper;
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::NdArrayHandle;

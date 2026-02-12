@@ -1,13 +1,73 @@
 //! Axis product reduction.
 
+use crate::core::view_helpers::{
+    extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
+    extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+};
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::reductions::helpers::{extract_view, validate_axis};
+use crate::ffi::reductions::helpers::validate_axis;
 use crate::ffi::NdArrayHandle;
 use ndarray::Axis;
 use parking_lot::RwLock;
 use std::sync::Arc;
+
+/// Compute product along axis using ndarray's native product_axis method.
+///
+/// Works with all types that implement Mul + One traits.
+fn product_axis_view(
+    wrapper: &NDArrayWrapper,
+    offset: usize,
+    shape: &[usize],
+    strides: &[usize],
+    axis: usize,
+) -> ndarray::ArrayD<f64> {
+    unsafe {
+        // Float64 - native support
+        if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
+            return view.product_axis(Axis(axis));
+        }
+        // Float32 - native support, convert result to f64
+        if let Some(view) = extract_view_f32(wrapper, offset, shape, strides) {
+            return view.product_axis(Axis(axis)).mapv(|x| x as f64);
+        }
+        // Int64 - native support via Mul + One
+        if let Some(view) = extract_view_i64(wrapper, offset, shape, strides) {
+            return view.product_axis(Axis(axis)).mapv(|x| x as f64);
+        }
+        // Int32
+        if let Some(view) = extract_view_i32(wrapper, offset, shape, strides) {
+            return view.product_axis(Axis(axis)).mapv(|x| x as f64);
+        }
+        // Int16
+        if let Some(view) = extract_view_i16(wrapper, offset, shape, strides) {
+            return view.product_axis(Axis(axis)).mapv(|x| x as f64);
+        }
+        // Int8
+        if let Some(view) = extract_view_i8(wrapper, offset, shape, strides) {
+            return view.product_axis(Axis(axis)).mapv(|x| x as f64);
+        }
+        // Uint64
+        if let Some(view) = extract_view_u64(wrapper, offset, shape, strides) {
+            return view.product_axis(Axis(axis)).mapv(|x| x as f64);
+        }
+        // Uint32
+        if let Some(view) = extract_view_u32(wrapper, offset, shape, strides) {
+            return view.product_axis(Axis(axis)).mapv(|x| x as f64);
+        }
+        // Uint16
+        if let Some(view) = extract_view_u16(wrapper, offset, shape, strides) {
+            return view.product_axis(Axis(axis)).mapv(|x| x as f64);
+        }
+        // Uint8
+        if let Some(view) = extract_view_u8(wrapper, offset, shape, strides) {
+            return view.product_axis(Axis(axis)).mapv(|x| x as f64);
+        }
+    }
+    // Return empty array if no type matched
+    ndarray::ArrayD::zeros(ndarray::IxDyn(&[]))
+}
 
 /// Product along axis.
 #[no_mangle]
@@ -15,7 +75,7 @@ pub unsafe extern "C" fn ndarray_product_axis(
     handle: *const NdArrayHandle,
     offset: usize,
     shape: *const usize,
-    _strides: *const usize,
+    strides: *const usize,
     ndim: usize,
     axis: i32,
     keepdims: bool,
@@ -28,6 +88,7 @@ pub unsafe extern "C" fn ndarray_product_axis(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let shape_slice = std::slice::from_raw_parts(shape, ndim);
+        let strides_slice = std::slice::from_raw_parts(strides, ndim);
 
         // Validate axis
         let axis_usize = match validate_axis(shape_slice, axis) {
@@ -38,10 +99,8 @@ pub unsafe extern "C" fn ndarray_product_axis(
             }
         };
 
-        let view = extract_view(wrapper, offset, shape_slice);
-
-        // Fold along axis to compute product
-        let result_arr = view.fold_axis(Axis(axis_usize), 1.0, |acc, &x| acc * x);
+        // Compute product along axis using proper strided view
+        let result_arr = product_axis_view(wrapper, offset, shape_slice, strides_slice, axis_usize);
 
         // Handle keepdims
         let final_arr = if keepdims {

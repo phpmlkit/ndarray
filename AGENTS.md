@@ -219,6 +219,42 @@ Agents must follow these rules for code comments and docblocks:
 
 ⸻
 
+## Rust View Extraction Patterns
+
+When implementing operations that work with strided array views in Rust:
+
+### Type-Specific Extraction
+Use `extract_view_f64`, `extract_view_i64`, etc. from `view_helpers.rs` instead of generic conversion. This avoids unnecessary data copying for native types.
+
+```rust
+// Good: Try native type first
+if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
+    return view.sum();  // Zero-copy for f64
+}
+if let Some(view) = extract_view_i64(wrapper, offset, shape, strides) {
+    return view.iter().map(|&x| x as f64).sum();  // Exact integer sum
+}
+```
+
+### Use Native ndarray Methods
+Prefer ndarray's built-in methods over manual implementations:
+- `view.sum()` not manual iteration
+- `view.mean()` not `sum / n`
+- `view.var(ddof)` not manual variance calculation
+- `view.product()` not manual fold
+- `view.product_axis(axis)` not manual fold_axis
+
+### Float Operations for Integers
+For operations requiring float arithmetic (mean, var, std):
+- Extract integer view as native type
+- Use `.mapv(|x| x as f64)` to convert
+- Then call ndarray's float methods
+
+### File Organization
+- Keep operation-specific logic in its own file (e.g., `sum_scalar.rs`)
+- `view_helpers.rs` should only contain generic extraction utilities
+- Never put operation logic in view_helpers
+
 ## Final Principle
 
 This project aims to be: A serious numerical computing foundation for PHP, not a convenience wrapper.

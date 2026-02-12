@@ -6,6 +6,7 @@
 mod array_data;
 #[macro_use]
 mod macros;
+pub mod view_helpers;
 mod wrapper;
 
 pub use array_data::ArrayData;

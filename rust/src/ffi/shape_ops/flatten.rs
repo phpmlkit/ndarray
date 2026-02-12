@@ -1,7 +1,5 @@
 //! Flatten and ravel operations.
 
-use ndarray::IxDyn;
-
 use crate::core::NDArrayWrapper;
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, SUCCESS};

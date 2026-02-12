@@ -1,13 +1,245 @@
 //! Axis argmin/argmax reductions.
 
+use crate::core::view_helpers::{
+    extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
+    extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+};
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::reductions::helpers::{compute_axis_output_shape, extract_view, validate_axis};
+use crate::ffi::reductions::helpers::{compute_axis_output_shape, validate_axis};
 use crate::ffi::NdArrayHandle;
-use ndarray::{ArrayD, Axis, IxDyn};
+use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;
+
+/// Compute argmin along axis using proper strided view.
+fn argmin_axis_view(
+    wrapper: &NDArrayWrapper,
+    offset: usize,
+    shape: &[usize],
+    strides: &[usize],
+    axis: usize,
+) -> ndarray::ArrayD<i64> {
+    unsafe {
+        // Try Float64 first (fastest path)
+        if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Float32
+        if let Some(view) = extract_view_f32(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Int64
+        if let Some(view) = extract_view_i64(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Int32
+        if let Some(view) = extract_view_i32(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Int16
+        if let Some(view) = extract_view_i16(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Int8
+        if let Some(view) = extract_view_i8(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Uint64
+        if let Some(view) = extract_view_u64(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Uint32
+        if let Some(view) = extract_view_u32(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Uint16
+        if let Some(view) = extract_view_u16(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Uint8
+        if let Some(view) = extract_view_u8(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+    }
+    // Return empty array if no type matched
+    ndarray::ArrayD::zeros(ndarray::IxDyn(&[]))
+}
+
+/// Compute argmax along axis using proper strided view.
+fn argmax_axis_view(
+    wrapper: &NDArrayWrapper,
+    offset: usize,
+    shape: &[usize],
+    strides: &[usize],
+    axis: usize,
+) -> ndarray::ArrayD<i64> {
+    unsafe {
+        // Try Float64 first (fastest path)
+        if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Float32
+        if let Some(view) = extract_view_f32(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Int64
+        if let Some(view) = extract_view_i64(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Int32
+        if let Some(view) = extract_view_i32(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Int16
+        if let Some(view) = extract_view_i16(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Int8
+        if let Some(view) = extract_view_i8(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Uint64
+        if let Some(view) = extract_view_u64(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Uint32
+        if let Some(view) = extract_view_u32(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Uint16
+        if let Some(view) = extract_view_u16(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+        // Uint8
+        if let Some(view) = extract_view_u8(wrapper, offset, shape, strides) {
+            return view.map_axis(ndarray::Axis(axis), |lane| {
+                lane.iter()
+                    .enumerate()
+                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                    .map(|(idx, _)| idx as i64)
+                    .unwrap_or(0)
+            });
+        }
+    }
+    // Return empty array if no type matched
+    ndarray::ArrayD::zeros(ndarray::IxDyn(&[]))
+}
 
 /// Argmin along axis (indices of minimum values).
 #[no_mangle]
@@ -15,7 +247,7 @@ pub unsafe extern "C" fn ndarray_argmin_axis(
     handle: *const NdArrayHandle,
     offset: usize,
     shape: *const usize,
-    _strides: *const usize,
+    strides: *const usize,
     ndim: usize,
     axis: i32,
     keepdims: bool,
@@ -28,6 +260,7 @@ pub unsafe extern "C" fn ndarray_argmin_axis(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let shape_slice = std::slice::from_raw_parts(shape, ndim);
+        let strides_slice = std::slice::from_raw_parts(strides, ndim);
 
         // Validate axis
         let axis_usize = match validate_axis(shape_slice, axis) {
@@ -38,7 +271,6 @@ pub unsafe extern "C" fn ndarray_argmin_axis(
             }
         };
 
-        let view = extract_view(wrapper, offset, shape_slice);
         let axis_len = shape_slice[axis_usize];
 
         if axis_len == 0 {
@@ -46,14 +278,8 @@ pub unsafe extern "C" fn ndarray_argmin_axis(
             return ERR_GENERIC;
         }
 
-        // Map along axis to find index of minimum
-        let result_arr: ArrayD<i64> = view.map_axis(Axis(axis_usize), |lane| {
-            lane.iter()
-                .enumerate()
-                .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                .map(|(idx, _)| idx as i64)
-                .unwrap_or(0)
-        });
+        // Compute argmin along axis using proper strided view
+        let result_arr = argmin_axis_view(wrapper, offset, shape_slice, strides_slice, axis_usize);
 
         // Handle keepdims
         let out_shape = compute_axis_output_shape(shape_slice, axis_usize, keepdims);
@@ -84,7 +310,7 @@ pub unsafe extern "C" fn ndarray_argmax_axis(
     handle: *const NdArrayHandle,
     offset: usize,
     shape: *const usize,
-    _strides: *const usize,
+    strides: *const usize,
     ndim: usize,
     axis: i32,
     keepdims: bool,
@@ -97,6 +323,7 @@ pub unsafe extern "C" fn ndarray_argmax_axis(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let shape_slice = std::slice::from_raw_parts(shape, ndim);
+        let strides_slice = std::slice::from_raw_parts(strides, ndim);
 
         // Validate axis
         let axis_usize = match validate_axis(shape_slice, axis) {
@@ -107,7 +334,6 @@ pub unsafe extern "C" fn ndarray_argmax_axis(
             }
         };
 
-        let view = extract_view(wrapper, offset, shape_slice);
         let axis_len = shape_slice[axis_usize];
 
         if axis_len == 0 {
@@ -115,14 +341,8 @@ pub unsafe extern "C" fn ndarray_argmax_axis(
             return ERR_GENERIC;
         }
 
-        // Map along axis to find index of maximum
-        let result_arr: ArrayD<i64> = view.map_axis(Axis(axis_usize), |lane| {
-            lane.iter()
-                .enumerate()
-                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                .map(|(idx, _)| idx as i64)
-                .unwrap_or(0)
-        });
+        // Compute argmax along axis using proper strided view
+        let result_arr = argmax_axis_view(wrapper, offset, shape_slice, strides_slice, axis_usize);
 
         // Handle keepdims
         let out_shape = compute_axis_output_shape(shape_slice, axis_usize, keepdims);
