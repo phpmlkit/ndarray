@@ -3,7 +3,7 @@
 //! Provides scalar reductions (sum, mean, min, max, etc.) and
 //! axis reductions with keepdims support.
 
-pub mod helpers;
+mod helpers;
 
 // Scalar reductions
 pub mod argminmax_scalar;

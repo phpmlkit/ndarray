@@ -5,7 +5,7 @@ use crate::core::view_helpers::{
     extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32,
     extract_view_u64, extract_view_u8,
 };
-use crate::core::{ArrayData, NDArrayWrapper};
+use crate::core::NDArrayWrapper;
 use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
 

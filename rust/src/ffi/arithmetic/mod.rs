@@ -3,8 +3,6 @@
 //! Provides element-wise arithmetic and mathematical operations with
 //! broadcasting support for both array-array and array-scalar operations.
 
-pub mod helpers;
-
 // Binary operations
 pub mod add;
 pub mod div;

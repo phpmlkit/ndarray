@@ -7,7 +7,7 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::reductions::helpers::{compute_axis_output_shape, validate_axis};
+use crate::ffi::reductions::helpers::validate_axis;
 use crate::ffi::NdArrayHandle;
 use ndarray::Axis;
 use parking_lot::RwLock;

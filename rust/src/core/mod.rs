@@ -6,6 +6,7 @@
 mod array_data;
 #[macro_use]
 mod macros;
+pub mod math_helpers;
 pub mod view_helpers;
 mod wrapper;
 

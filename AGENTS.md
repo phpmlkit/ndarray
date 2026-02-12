@@ -250,10 +250,100 @@ For operations requiring float arithmetic (mean, var, std):
 - Use `.mapv(|x| x as f64)` to convert
 - Then call ndarray's float methods
 
+### Mixed Type Operations
+Use `extract_view_as_*` functions to handle operations between different types:
+
+```rust
+use crate::core::view_helpers::extract_view_as_i32;
+
+// This extracts any input type as i32 (with silent truncation)
+if let Some(view) = extract_view_as_i32(wrapper, offset, shape, strides) {
+    // view is ArrayD<i32> regardless of input type
+}
+```
+
+Available functions:
+- `extract_view_as_f64`, `extract_view_as_f32` - for float operations
+- `extract_view_as_i64`, `extract_view_as_i32`, etc. - for integer operations
+- `extract_view_as_u64`, `extract_view_as_u32`, etc. - for unsigned operations
+
+These functions:
+- Try native extraction first (zero-copy for matching types)
+- Convert from other types via `mapv(|x| x as TargetType)`
+- Silently truncate values that don't fit (Rust's `as` behavior)
+
 ### File Organization
 - Keep operation-specific logic in its own file (e.g., `sum_scalar.rs`)
 - `view_helpers.rs` should only contain generic extraction utilities
 - Never put operation logic in view_helpers
+
+## Arithmetic Operations Patterns
+
+### Type-Preserving Operations
+Use `math_helpers.rs` for type-specific operations:
+
+**Generic ops** (work on all types like abs, pow2):
+```rust
+use crate::core::math_helpers::unary_op_generic;
+
+let result = unary_op_generic(
+    wrapper, offset, shape, strides,
+    |x: f64| x.abs(),
+    |x: f32| x.abs(),
+    |x: i64| x.abs(),
+    // ... etc for all types
+)?;
+```
+
+**Float-only ops** (floor, sqrt, sin, etc.):
+```rust
+use crate::core::math_helpers::unary_op_float_only;
+
+let result = unary_op_float_only(
+    wrapper, offset, shape, strides,
+    |x: f64| x.floor(),
+    |x: f32| x.floor(),
+    "floor",
+)?;
+```
+
+**Binary ops** with type promotion:
+```rust
+use crate::core::math_helpers::{
+    binary_op_f64, binary_op_i64, promote_dtypes,
+};
+
+let out_dtype = promote_dtypes(a.dtype, b.dtype)?;
+let result = match out_dtype {
+    DType::Float64 => binary_op_f64(a, ..., b, ..., |x, y| x + y),
+    DType::Int64 => binary_op_i64(a, ..., b, ..., |x, y| x + y),
+    // ... etc
+};
+```
+
+Binary helpers use `extract_view_as_*` internally, so they automatically handle mixed types:
+- `binary_op_i32(Int32 array, Int16 array)` converts Int16 to Int32 automatically
+- No need for separate "mixed" helper functions
+
+**Scalar ops** preserving input type:
+```rust
+use crate::core::math_helpers::scalar_op_generic;
+
+let result = scalar_op_generic(
+    wrapper, offset, shape, strides, scalar,
+    |a: f64, b: f64| a + b,
+    |a: f32, b: f32| a + b,
+    |a: i64, b: i64| a + b,
+    // ... etc
+)?;
+```
+
+### Key Principles
+- Never convert through f64 unless necessary
+- Use closures with explicit type parameters: `|x: f64| x.abs()` not `|x| x.abs()`
+- Binary operations promote to higher precision dtype
+- Float-only operations error on integer inputs
+- Bool operations error (use specific Bool helpers if needed)
 
 ## Final Principle
 
