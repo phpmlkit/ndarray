@@ -7,6 +7,7 @@ pub mod array;
 pub mod generators;
 pub mod indexing;
 pub mod reductions;
+pub mod shape_ops;
 mod types;
 
 pub use types::NdArrayHandle;
@@ -17,3 +18,4 @@ pub use array::*;
 pub use generators::*;
 pub use indexing::*;
 pub use reductions::*;
+pub use shape_ops::*;

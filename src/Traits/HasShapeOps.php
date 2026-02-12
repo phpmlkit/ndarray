@@ -5,53 +5,286 @@ declare(strict_types=1);
 namespace NDArray\Traits;
 
 use NDArray\Exceptions\ShapeException;
+use NDArray\FFI\Lib;
+use NDArray\NDArray;
 
 /**
  * Shape manipulation operations.
  *
- * Will provide reshape(), transpose(), flatten(), squeeze(),
- * expand_dims(), ravel(), swapaxes(), etc.
+ * Provides reshape(), transpose(), flatten(), squeeze(),
+ * expand_dims(), ravel(), swap_axes(), etc.
  */
 trait HasShapeOps
 {
     /**
      * Reshape the array to a new shape.
      *
-     * Returns a new view if possible (i.e., if the array is C-contiguous).
-     * If the array is not contiguous, this currently throws an exception.
-     * Use copy()->reshape() for non-contiguous arrays.
+     * Returns a new array with the specified shape.
+     * Supports both C-order (row-major, order='C') and F-order (column-major, order='F').
      *
-     * @param array<int> $newShape
-     * @return self
+     * @param array<int> $newShape New shape
+     * @param string $order Memory layout: 'C' for row-major, 'F' for column-major
+     * @return NDArray
      */
-    public function reshape(array $newShape): self
+    public function reshape(array $newShape, string $order = 'C'): NDArray
     {
-        $newSize = (int) array_product($newShape);
-        if ($newSize !== $this->size) {
-            throw new ShapeException(
-                "Cannot reshape array of size {$this->size} into shape " . json_encode($newShape)
-            );
-        }
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
 
-        if (!$this->isContiguous()) {
-            throw new ShapeException(
-                "Reshaping non-contiguous arrays (e.g. slices) is not yet supported. Use ->copy()->reshape()."
-            );
-        }
+        $cShape = Lib::createShapeArray($newShape);
+        $orderCode = $order === 'F' ? 1 : 0; // 0=C (RowMajor), 1=F (ColumnMajor)
 
-        // Compute new strides for C-contiguous layout
-        $newStrides = self::computeStrides($newShape);
-
-        // Determine base: if this is already a view, use its base; otherwise this is the base
-        $root = $this->base ?? $this;
-
-        return new self(
-            handle: $this->handle,
-            shape: $newShape,
-            dtype: $this->dtype,
-            strides: $newStrides,
-            offset: $this->offset,
-            base: $root,
+        $status = $ffi->ndarray_reshape(
+            $this->handle,
+            $cShape,
+            count($newShape),
+            $orderCode,
+            Lib::addr($outHandle)
         );
+
+        Lib::checkStatus($status);
+
+        return new NDArray($outHandle, $newShape, $this->dtype);
+    }
+
+    /**
+     * Transpose the array.
+     *
+     * For 2D arrays, swaps rows and columns.
+     * For nD arrays, reverses the order of all axes.
+     *
+     * @return NDArray
+     */
+    public function transpose(): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_transpose(
+            $this->handle,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        // Compute new shape (reversed)
+        $newShape = array_reverse($this->shape);
+
+        return new NDArray($outHandle, $newShape, $this->dtype);
+    }
+
+    /**
+     * Swap two axes of the array.
+     *
+     * @param int $axis1 First axis to swap
+     * @param int $axis2 Second axis to swap
+     * @return NDArray
+     */
+    public function swapAxes(int $axis1, int $axis2): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_swap_axes(
+            $this->handle,
+            $axis1,
+            $axis2,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        // Compute new shape
+        $newShape = $this->shape;
+        $temp = $newShape[$axis1];
+        $newShape[$axis1] = $newShape[$axis2];
+        $newShape[$axis2] = $temp;
+
+        return new NDArray($outHandle, $newShape, $this->dtype);
+    }
+
+    /**
+     * Move axis from source position to destination.
+     *
+     * @param int $source Source axis position
+     * @param int $destination Destination axis position
+     * @return NDArray
+     */
+    public function moveAxis(int $source, int $destination): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_move_axis(
+            $this->handle,
+            $source,
+            $destination,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        // Compute new shape by moving axis
+        $newShape = $this->shape;
+        $axis = $newShape[$source];
+        array_splice($newShape, $source, 1);
+        array_splice($newShape, $destination, 0, [$axis]);
+
+        return new NDArray($outHandle, $newShape, $this->dtype);
+    }
+
+    /**
+     * Flatten the array to 1D.
+     *
+     * Always returns a copy in C-order (row-major).
+     *
+     * @return NDArray
+     */
+    public function flatten(): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_flatten(
+            $this->handle,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new NDArray($outHandle, [$this->size], $this->dtype);
+    }
+
+    /**
+     * Ravel the array to 1D.
+     *
+     * Similar to flatten() but may return a view if the array is contiguous.
+     *
+     * @param string $order Memory layout: 'C' for row-major, 'F' for column-major
+     * @return NDArray
+     */
+    public function ravel(string $order = 'C'): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $orderCode = $order === 'F' ? 1 : 0;
+
+        $status = $ffi->ndarray_ravel(
+            $this->handle,
+            $orderCode,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new NDArray($outHandle, [$this->size], $this->dtype);
+    }
+
+    /**
+     * Remove axes of length 1 from the array.
+     *
+     * If no axes are specified, removes all length-1 axes.
+     *
+     * @param array<int>|null $axes Specific axes to squeeze (null for all)
+     * @return NDArray
+     */
+    public function squeeze(?array $axes = null): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        if ($axes === null) {
+            // Squeeze all length-1 axes
+            $cAxes = null;
+            $numAxes = 0;
+            
+            // Compute new shape
+            $newShape = array_values(array_filter($this->shape, fn($dim) => $dim !== 1));
+            
+            // Ensure at least 1 dimension
+            if (empty($newShape)) {
+                $newShape = [1];
+            }
+        } else {
+            // Squeeze specific axes
+            $cAxes = Lib::createShapeArray($axes);
+            $numAxes = count($axes);
+            
+            // Compute new shape
+            $newShape = [];
+            foreach ($this->shape as $i => $dim) {
+                if (!in_array($i, $axes, true)) {
+                    $newShape[] = $dim;
+                }
+            }
+        }
+
+        $status = $ffi->ndarray_squeeze(
+            $this->handle,
+            $cAxes,
+            $numAxes,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new NDArray($outHandle, $newShape, $this->dtype);
+    }
+
+    /**
+     * Expand dimensions by inserting a new axis.
+     *
+     * Equivalent to NumPy's expand_dims.
+     *
+     * @param int $axis Position where new axis is inserted
+     * @return NDArray
+     */
+    public function expandDims(int $axis): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        // Handle negative axis
+        $ndim = count($this->shape);
+        if ($axis < 0) {
+            $axis = $ndim + $axis + 1;
+        }
+
+        // Validate axis
+        if ($axis < 0 || $axis > $ndim) {
+            throw new ShapeException("Axis $axis is out of bounds for array with $ndim dimensions");
+        }
+
+        $status = $ffi->ndarray_expand_dims(
+            $this->handle,
+            $axis,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        // Compute new shape
+        $newShape = $this->shape;
+        array_splice($newShape, $axis, 0, [1]);
+
+        return new NDArray($outHandle, $newShape, $this->dtype);
+    }
+
+    /**
+     * Static helper to compute strides from shape (C-contiguous).
+     *
+     * @param array<int> $shape
+     * @return array<int>
+     */
+    private static function computeStrides(array $shape): array
+    {
+        $strides = [];
+        $stride = 1;
+        for ($i = count($shape) - 1; $i >= 0; $i--) {
+            $strides[$i] = $stride;
+            $stride *= $shape[$i];
+        }
+        return $strides;
     }
 }
