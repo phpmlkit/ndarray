@@ -485,6 +485,53 @@ trait HasMath
     }
 
     /**
+     * Clamp (clip) array values to a specified range.
+     *
+     * Similar to NumPy's clip function. Values outside [min, max] are set
+     * to the nearest boundary.
+     *
+     * @param float $min Minimum value
+     * @param float $max Maximum value
+     * @return NDArray
+     * @throws \InvalidArgumentException If min > max
+     */
+    public function clamp(float $min, float $max): NDArray
+    {
+        if ($min > $max) {
+            throw new \InvalidArgumentException("Clamp requires min <= max");
+        }
+
+        $ffi = Lib::get();
+        $out = $ffi->new('void*');
+
+        $ndim = count($this->shape);
+        $shapeC = $ffi->new('size_t[' . $ndim . ']', false);
+        $stridesC = $ffi->new('size_t[' . $ndim . ']', false);
+
+        foreach ($this->shape as $i => $dim) {
+            $shapeC[$i] = $dim;
+        }
+        foreach ($this->strides as $i => $stride) {
+            $stridesC[$i] = $stride;
+        }
+
+        $status = $ffi->ndarray_clamp(
+            $this->handle,
+            $this->offset,
+            $shapeC,
+            $stridesC,
+            $ndim,
+            $min,
+            $max,
+            \FFI::addr($out)
+        );
+
+        Lib::checkStatus($status);
+
+        return new NDArray($out, $this->shape, $this->dtype);
+    }
+
+    /**
      * Compute the broadcasted shape of two arrays.
      *
      * @param array<int> $shapeA

@@ -245,4 +245,41 @@ final class MathFunctionsTest extends TestCase
         $result = $a->pow2()->sqrt();
         $this->assertEqualsWithDelta([1, 2, 3], $result->toArray(), 0.0001);
     }
+
+    public function testClamp(): void
+    {
+        $a = NDArray::array([0, 5, 10], DType::Float64);
+        $result = $a->clamp(2, 8);
+        $this->assertEqualsWithDelta([2, 5, 8], $result->toArray(), 0.0001);
+    }
+
+    public function testClampValuesBelowMin(): void
+    {
+        $a = NDArray::array([0, 1, 2], DType::Float64);
+        $result = $a->clamp(5, 10);
+        $this->assertEqualsWithDelta([5, 5, 5], $result->toArray(), 0.0001);
+    }
+
+    public function testClampValuesAboveMax(): void
+    {
+        $a = NDArray::array([8, 9, 10], DType::Float64);
+        $result = $a->clamp(0, 5);
+        $this->assertEqualsWithDelta([5, 5, 5], $result->toArray(), 0.0001);
+    }
+
+    public function testClampInvalidRange(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Float64);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $a->clamp(10, 5);
+    }
+
+    public function testClampPreservesDtype(): void
+    {
+        $a = NDArray::array([0, 5, 10], DType::Int32);
+        $result = $a->clamp(2, 8);
+        $this->assertSame(DType::Int32, $result->dtype());
+        $this->assertEquals([2, 5, 8], $result->toArray());
+    }
 }

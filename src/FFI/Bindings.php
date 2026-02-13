@@ -116,6 +116,7 @@ interface Bindings
     public function ndarray_to_radians(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_powi(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, int $exp, CData $out_handle): int;
     public function ndarray_powf(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $exp, CData $out_handle): int;
+    public function ndarray_clamp(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $min_val, float $max_val, CData $out_handle): int;
 
     // Binary math operations
     public function ndarray_hypot(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
@@ -175,4 +176,13 @@ interface Bindings
     public function ndarray_ravel(CData $handle, int $order, CData $out_handle): int;
     public function ndarray_squeeze(CData $handle, CData $axes, int $num_axes, CData $out_handle): int;
     public function ndarray_expand_dims(CData $handle, int $axis, CData $out_handle): int;
+
+    // =========================================================================
+    // Linear Algebra Operations
+    // =========================================================================
+
+    public function ndarray_dot(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle): int;
+    public function ndarray_matmul(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle): int;
+    public function ndarray_diagonal(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
+    public function ndarray_trace(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
 }

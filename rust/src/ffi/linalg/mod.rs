@@ -1,0 +1,11 @@
+//! Linear algebra operations.
+
+pub mod diagonal;
+pub mod dot;
+pub mod matmul;
+pub mod trace;
+
+pub use diagonal::*;
+pub use dot::*;
+pub use matmul::*;
+pub use trace::*;

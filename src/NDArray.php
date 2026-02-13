@@ -12,6 +12,7 @@ use NDArray\Traits\HasArrayAccess;
 use NDArray\Traits\HasComparison;
 use NDArray\Traits\HasConversion;
 use NDArray\Traits\HasIndexing;
+use NDArray\Traits\HasLinearAlgebra;
 use NDArray\Traits\HasMath;
 use NDArray\Traits\HasReductions;
 use NDArray\Traits\HasShapeOps;
@@ -33,6 +34,7 @@ class NDArray implements ArrayAccess
     use HasIndexing;
     use HasArrayAccess;
     use HasConversion;
+    use HasLinearAlgebra;
     use HasMath;
     use HasReductions;
     use HasShapeOps;
