@@ -41,6 +41,48 @@ final class MathFunctionsTest extends TestCase
         $this->assertEqualsWithDelta([0, 1], $result->toArray(), 0.0001);
     }
 
+    public function testLn(): void
+    {
+        $a = NDArray::array([1, M_E], DType::Float64);
+        $result = $a->ln();
+        $this->assertEqualsWithDelta([0, 1], $result->toArray(), 0.0001);
+    }
+
+    public function testLn1p(): void
+    {
+        $a = NDArray::array([0, M_E - 1], DType::Float64);
+        $result = $a->ln1p();
+        $this->assertEqualsWithDelta([0, 1], $result->toArray(), 0.0001);
+    }
+
+    public function testToDegrees(): void
+    {
+        $a = NDArray::array([0, M_PI / 2, M_PI], DType::Float64);
+        $result = $a->toDegrees();
+        $this->assertEqualsWithDelta([0, 90, 180], $result->toArray(), 0.0001);
+    }
+
+    public function testToRadians(): void
+    {
+        $a = NDArray::array([0, 90, 180], DType::Float64);
+        $result = $a->toRadians();
+        $this->assertEqualsWithDelta([0, M_PI / 2, M_PI], $result->toArray(), 0.0001);
+    }
+
+    public function testPowi(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Float64);
+        $result = $a->powi(3);
+        $this->assertEqualsWithDelta([1, 8, 27], $result->toArray(), 0.0001);
+    }
+
+    public function testPowf(): void
+    {
+        $a = NDArray::array([1, 4, 9], DType::Float64);
+        $result = $a->powf(0.5);
+        $this->assertEqualsWithDelta([1, 2, 3], $result->toArray(), 0.0001);
+    }
+
     public function testSin(): void
     {
         $a = NDArray::array([0, M_PI / 2], DType::Float64);

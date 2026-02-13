@@ -250,11 +250,9 @@ final class SlicingTest extends TestCase
     {
         $arr = NDArray::zeros([5], DType::Int32);
         
-        // $arr['1:3'] = 5
         $arr['1:3'] = 5;
         $this->assertSame([0, 5, 5, 0, 0], $arr->toArray());
 
-        // $arr['3:'] = [8, 9]
         $arr['3:'] = [8, 9];
         $this->assertSame([0, 5, 5, 8, 9], $arr->toArray());
     }
@@ -263,7 +261,6 @@ final class SlicingTest extends TestCase
     {
         $arr = NDArray::zeros([2, 2], DType::Int32);
         
-        // $arr[0] = [1, 2]
         $arr[0] = [1, 2];
         
         $this->assertSame([

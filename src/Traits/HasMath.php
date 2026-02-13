@@ -113,6 +113,18 @@ trait HasMath
     }
 
     /**
+     * Compute natural logarithm element-wise.
+     *
+     * Alias for log().
+     *
+     * @return NDArray
+     */
+    public function ln(): NDArray
+    {
+        return $this->unaryOp('ndarray_ln');
+    }
+
+    /**
      * Compute sine element-wise.
      *
      * @return NDArray
@@ -300,6 +312,62 @@ trait HasMath
     public function recip(): NDArray
     {
         return $this->unaryOp('ndarray_recip');
+    }
+
+    /**
+     * Compute ln(1+x) element-wise.
+     *
+     * More accurate than log(1+x) for small x.
+     *
+     * @return NDArray
+     */
+    public function ln1p(): NDArray
+    {
+        return $this->unaryOp('ndarray_ln_1p');
+    }
+
+    /**
+     * Convert radians to degrees element-wise.
+     *
+     * @return NDArray
+     */
+    public function toDegrees(): NDArray
+    {
+        return $this->unaryOp('ndarray_to_degrees');
+    }
+
+    /**
+     * Convert degrees to radians element-wise.
+     *
+     * @return NDArray
+     */
+    public function toRadians(): NDArray
+    {
+        return $this->unaryOp('ndarray_to_radians');
+    }
+
+    /**
+     * Compute x^n where n is an integer, element-wise.
+     *
+     * Generally faster than pow() for integer exponents.
+     *
+     * @param int $exp Integer exponent
+     * @return NDArray
+     */
+    public function powi(int $exp): NDArray
+    {
+        return $this->scalarOp('ndarray_powi', $exp);
+    }
+
+    /**
+     * Compute x^y where y is a float, element-wise.
+     *
+     * @param float $exp Float exponent
+     * @return NDArray
+     */
+    public function powf(float $exp): NDArray
+    {
+        return $this->scalarOp('ndarray_powf', $exp);
     }
 
     /**

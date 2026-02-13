@@ -91,6 +91,7 @@ interface Bindings
     public function ndarray_sqrt(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_exp(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_log(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_ln(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_sin(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_cos(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_tan(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
@@ -110,6 +111,11 @@ interface Bindings
     public function ndarray_round(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_signum(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_recip(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_ln_1p(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_to_degrees(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_to_radians(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_powi(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, int $exp, CData $out_handle): int;
+    public function ndarray_powf(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $exp, CData $out_handle): int;
 
     // Binary math operations
     public function ndarray_hypot(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
