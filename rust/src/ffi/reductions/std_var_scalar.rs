@@ -1,9 +1,8 @@
 //! Scalar variance and standard deviation reductions.
 
 use crate::core::view_helpers::{
-    create_scalar_wrapper_f64, extract_view_f32, extract_view_f64, extract_view_i16,
-    extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32,
-    extract_view_u64, extract_view_u8,
+    extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
+    extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::core::NDArrayWrapper;
 use crate::error::{ERR_GENERIC, SUCCESS};
@@ -135,7 +134,8 @@ pub unsafe extern "C" fn ndarray_var(
         }
 
         let result = compute_var(wrapper, offset, shape_slice, strides_slice, ddof);
-        let result_wrapper = create_scalar_wrapper_f64(result);
+        let result_wrapper =
+            NDArrayWrapper::create_scalar_wrapper(result, crate::dtype::DType::Float64);
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
 
         SUCCESS
@@ -173,7 +173,8 @@ pub unsafe extern "C" fn ndarray_std(
         }
 
         let result = compute_std(wrapper, offset, shape_slice, strides_slice, ddof);
-        let result_wrapper = create_scalar_wrapper_f64(result);
+        let result_wrapper =
+            NDArrayWrapper::create_scalar_wrapper(result, crate::dtype::DType::Float64);
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
 
         SUCCESS

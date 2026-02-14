@@ -5,6 +5,9 @@
 
 use crate::core::ArrayData;
 use crate::dtype::DType;
+use ndarray::{ArrayD, IxDyn};
+use parking_lot::RwLock;
+use std::sync::Arc;
 
 /// Main wrapper around ndarray with type information.
 pub struct NDArrayWrapper {
@@ -60,6 +63,107 @@ impl NDArrayWrapper {
             (Float64(a), Float64(b)) => Arc::ptr_eq(a, b),
             (Bool(a), Bool(b)) => Arc::ptr_eq(a, b),
             _ => false,
+        }
+    }
+
+    /// Create a 0-dimensional (scalar) array wrapper from an f64 value with specified dtype.
+    ///
+    /// The value is converted to the target dtype. For Float64, this is a no-op conversion.
+    pub fn create_scalar_wrapper(value: f64, dtype: DType) -> NDArrayWrapper {
+        let shape: Vec<usize> = vec![];
+
+        match dtype {
+            DType::Float64 => {
+                let arr = ArrayD::<f64>::from_shape_vec(IxDyn(&shape), vec![value])
+                    .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
+            DType::Float32 => {
+                let arr = ArrayD::<f32>::from_shape_vec(IxDyn(&shape), vec![value as f32])
+                    .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
+            DType::Int64 => {
+                let arr = ArrayD::<i64>::from_shape_vec(IxDyn(&shape), vec![value as i64])
+                    .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
+            DType::Int32 => {
+                let arr = ArrayD::<i32>::from_shape_vec(IxDyn(&shape), vec![value as i32])
+                    .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
+            DType::Int16 => {
+                let arr = ArrayD::<i16>::from_shape_vec(IxDyn(&shape), vec![value as i16])
+                    .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
+            DType::Int8 => {
+                let arr = ArrayD::<i8>::from_shape_vec(IxDyn(&shape), vec![value as i8])
+                    .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
+            DType::Uint64 => {
+                let arr = ArrayD::<u64>::from_shape_vec(IxDyn(&shape), vec![value as u64])
+                    .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
+            DType::Uint32 => {
+                let arr = ArrayD::<u32>::from_shape_vec(IxDyn(&shape), vec![value as u32])
+                    .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
+            DType::Uint16 => {
+                let arr = ArrayD::<u16>::from_shape_vec(IxDyn(&shape), vec![value as u16])
+                    .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
+            DType::Uint8 => {
+                let arr = ArrayD::<u8>::from_shape_vec(IxDyn(&shape), vec![value as u8])
+                    .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
+            DType::Bool => {
+                let arr = ArrayD::<u8>::from_shape_vec(
+                    IxDyn(&shape),
+                    vec![if value != 0.0 { 1 } else { 0 }],
+                )
+                .expect("Failed to create scalar array");
+                NDArrayWrapper {
+                    data: ArrayData::Bool(Arc::new(RwLock::new(arr))),
+                    dtype,
+                }
+            }
         }
     }
 }

@@ -2,9 +2,9 @@
 
 use crate::core::math_helpers::{
     binary_op_f32, binary_op_f64, binary_op_i16, binary_op_i32, binary_op_i64, binary_op_i8,
-    binary_op_u16, binary_op_u32, binary_op_u64, binary_op_u8, promote_dtypes, scalar_op_f32,
-    scalar_op_f64, scalar_op_i16, scalar_op_i32, scalar_op_i64, scalar_op_i8, scalar_op_u16,
-    scalar_op_u32, scalar_op_u64, scalar_op_u8,
+    binary_op_u16, binary_op_u32, binary_op_u64, binary_op_u8, scalar_op_f32, scalar_op_f64,
+    scalar_op_i16, scalar_op_i32, scalar_op_i64, scalar_op_i8, scalar_op_u16, scalar_op_u32,
+    scalar_op_u64, scalar_op_u8,
 };
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
@@ -38,12 +38,7 @@ pub unsafe extern "C" fn ndarray_add(
         let a_strides_slice = slice::from_raw_parts(a_strides, ndim);
         let b_strides_slice = slice::from_raw_parts(b_strides, ndim);
 
-        let out_dtype = match promote_dtypes(a_wrapper.dtype, b_wrapper.dtype) {
-            Some(d) => d,
-            None => {
-                return ERR_GENERIC;
-            }
-        };
+        let out_dtype = DType::promote(a_wrapper.dtype, b_wrapper.dtype);
 
         let result = match out_dtype {
             DType::Float64 => binary_op_f64(

@@ -1,8 +1,6 @@
 //! Hypotenuse operation.
 
-use crate::core::math_helpers::{
-    binary_op_f32, binary_op_f64, promote_dtypes, scalar_op_f32, scalar_op_f64,
-};
+use crate::core::math_helpers::{binary_op_f32, binary_op_f64, scalar_op_f32, scalar_op_f64};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
@@ -35,12 +33,7 @@ pub unsafe extern "C" fn ndarray_hypot(
         let a_strides_slice = slice::from_raw_parts(a_strides, ndim);
         let b_strides_slice = slice::from_raw_parts(b_strides, ndim);
 
-        let out_dtype = match promote_dtypes(a_wrapper.dtype, b_wrapper.dtype) {
-            Some(d) => d,
-            None => {
-                return ERR_GENERIC;
-            }
-        };
+        let out_dtype = DType::promote(a_wrapper.dtype, b_wrapper.dtype);
 
         // hypot only makes sense for float types
         let result = match out_dtype {
