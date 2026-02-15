@@ -106,7 +106,7 @@ The primary array type representing N-dimensional arrays.
 
 **Requirements**:
 - [x] 4.1.1: Integer indexing: `$array[0]`, `$array[1, 2]`
-- [ ] 4.1.2: Negative indexing: `$array[-1]`
+- [x] 4.1.2: Negative indexing: `$array[-1]`
 - [x] 4.1.3: Multi-dimensional indexing: `$array[0, 1, 2]`
 - [x] 4.1.4: Return scalar for single element, NDArray for sub-array
 

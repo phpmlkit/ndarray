@@ -7,6 +7,7 @@ namespace NDArray\Traits;
 use FFI;
 use NDArray\DType;
 use NDArray\Exceptions\IndexException;
+use NDArray\FFI\Bindings;
 use NDArray\FFI\Lib;
 
 /**
@@ -22,6 +23,8 @@ trait HasIndexing
      *
      * Full indices (count === ndim) return a scalar via FFI read.
      * Partial indices (count < ndim) return a view (pure PHP, zero FFI).
+     *
+     * Supports negative indices: -1 refers to the last element, -2 to second-to-last, etc.
      *
      * @param int ...$indices One or more dimension indices
      * @return self|int|float|bool Scalar for full indexing, view for partial
@@ -40,31 +43,31 @@ trait HasIndexing
             );
         }
 
-        // Validate each index
+        // Normalize and validate each index
+        $normalizedIndices = [];
         foreach ($indices as $dim => $index) {
             $dimSize = $this->shape[$dim];
-            if ($index < 0 || $index >= $dimSize) {
-                throw new IndexException(
-                    "Index $index is out of bounds for dimension $dim with size $dimSize"
-                );
-            }
+            $normalizedIndex = $this->normalizeIndex($index, $dimSize, $dim);
+            $normalizedIndices[] = $normalizedIndex;
         }
 
         if ($count === $this->ndim) {
             // Full indexing — return scalar via FFI
-            $flatIndex = $this->calculateFlatIndex($indices);
+            $flatIndex = $this->calculateFlatIndex($normalizedIndices);
 
             return $this->getScalar($flatIndex);
         }
 
         // Partial indexing — return a view (pure PHP, zero FFI)
-        return $this->createView($indices);
+        return $this->createView($normalizedIndices);
     }
 
     /**
      * Set a scalar value at the given indices.
      *
      * Requires full indexing (count === ndim).
+     *
+     * Supports negative indices: -1 refers to the last element, -2 to second-to-last, etc.
      *
      * @param array<int> $indices Indices for each dimension
      * @param int|float|bool $value Value to set
@@ -79,17 +82,14 @@ trait HasIndexing
             );
         }
 
-        // Validate each index
+        // Normalize and validate each index
+        $normalizedIndices = [];
         foreach ($indices as $dim => $index) {
             $dimSize = $this->shape[$dim];
-            if ($index < 0 || $index >= $dimSize) {
-                throw new IndexException(
-                    "Index $index is out of bounds for dimension $dim with size $dimSize"
-                );
-            }
+            $normalizedIndices[] = $this->normalizeIndex($index, $dimSize, $dim);
         }
 
-        $flatIndex = $this->calculateFlatIndex($indices);
+        $flatIndex = $this->calculateFlatIndex($normalizedIndices);
 
         $this->setScalar($flatIndex, $value);
     }
@@ -114,6 +114,33 @@ trait HasIndexing
         }
 
         return $flatIndex;
+    }
+
+    /**
+     * Normalize an index to a positive value, handling negative indices.
+     *
+     * Negative indices count from the end: -1 is the last element,
+     * -2 is the second-to-last, etc.
+     *
+     * @param int $index The index (may be negative)
+     * @param int $size The size of the dimension
+     * @param int $dim The dimension number (for error messages)
+     * @return int The normalized positive index
+     * @throws IndexException If the index is out of bounds
+     */
+    private function normalizeIndex(int $index, int $size, int $dim): int
+    {
+        if ($index < 0) {
+            $index = $size + $index;
+        }
+
+        if ($index < 0 || $index >= $size) {
+            throw new IndexException(
+                "Index " . ($index - $size) . " is out of bounds for dimension $dim with size $size"
+            );
+        }
+
+        return $index;
     }
 
     /**
@@ -177,7 +204,7 @@ trait HasIndexing
     /**
      * Get a scalar value via FFI using the unified ndarray_get_element function.
      *
-     * @param FFI $ffi
+     * @param FFI&Bindings $ffi
      * @param string $cType C type for the output value
      * @param int $flatIndex
      * @return int|float

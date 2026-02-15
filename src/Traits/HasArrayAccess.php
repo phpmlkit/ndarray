@@ -35,7 +35,15 @@ trait HasArrayAccess
         }
 
         foreach ($indices as $dim => $index) {
-            if ($dim >= $this->ndim || $index < 0 || $index >= $this->shape[$dim]) {
+            if ($dim >= $this->ndim) {
+                return false;
+            }
+            // Handle negative indices: -1 means last element
+            $dimSize = $this->shape[$dim];
+            if ($index < 0) {
+                $index = $dimSize + $index;
+            }
+            if ($index < 0 || $index >= $dimSize) {
                 return false;
             }
         }

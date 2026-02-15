@@ -8,6 +8,7 @@ use FFI;
 use FFI\CData;
 use NDArray\DType;
 use NDArray\Exceptions\ShapeException;
+use NDArray\FFI\Bindings;
 use NDArray\FFI\Lib;
 
 /**
@@ -400,7 +401,7 @@ trait CreatesArrays
     /**
      * Create an NDArray handle using the appropriate FFI function for the dtype.
      *
-     * @param FFI $ffi FFI instance
+     * @param FFI&Bindings $ffi FFI instance
      * @param DType $dtype Data type
      * @param array $data Flat array of values
      * @param array<int> $shape Array shape

@@ -294,7 +294,11 @@ final class IndexingTest extends TestCase
         $this->assertTrue(isset($arr[0]));
         $this->assertTrue(isset($arr[2]));
         $this->assertFalse(isset($arr[3]));
-        $this->assertFalse(isset($arr[-1]));
+        // Negative indices are now valid!
+        $this->assertTrue(isset($arr[-1]));
+        $this->assertTrue(isset($arr[-2]));
+        $this->assertTrue(isset($arr[-3]));
+        $this->assertFalse(isset($arr[-4]));
     }
 
     // =========================================================================
@@ -343,14 +347,224 @@ final class IndexingTest extends TestCase
         $arr->get(5);
     }
 
-    public function testGetNegativeIndexThrows(): void
+    // =========================================================================
+    // Negative Indexing
+    // =========================================================================
+
+    public function testGetNegativeIndex1D(): void
+    {
+        $arr = NDArray::array([10, 20, 30, 40, 50], DType::Int64);
+
+        // -1 should return last element
+        $this->assertSame(50, $arr->get(-1));
+        // -2 should return second-to-last
+        $this->assertSame(40, $arr->get(-2));
+        // -5 should return first element
+        $this->assertSame(10, $arr->get(-5));
+    }
+
+    public function testGetNegativeIndex2D(): void
+    {
+        $arr = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ], DType::Int64);
+
+        // -1, -1 should be bottom-right corner
+        $this->assertSame(9, $arr->get(-1, -1));
+        // -1, 0 should be first element of last row
+        $this->assertSame(7, $arr->get(-1, 0));
+        // 0, -1 should be last element of first row
+        $this->assertSame(3, $arr->get(0, -1));
+        // -2, -2 should be middle
+        $this->assertSame(5, $arr->get(-2, -2));
+    }
+
+    public function testGetNegativeIndex3D(): void
+    {
+        $arr = NDArray::array([
+            [[1, 2], [3, 4]],
+            [[5, 6], [7, 8]],
+        ], DType::Int32);
+
+        // -1, -1, -1 should be last element
+        $this->assertSame(8, $arr->get(-1, -1, -1));
+        // -1, 0, 0 should be first element of last matrix
+        $this->assertSame(5, $arr->get(-1, 0, 0));
+    }
+
+    public function testGetNegativeIndexOutOfBoundsThrows(): void
     {
         $arr = NDArray::array([1, 2, 3], DType::Int64);
 
         $this->expectException(IndexException::class);
         $this->expectExceptionMessage('out of bounds');
 
-        $arr->get(-1);
+        // -4 is out of bounds for array of size 3 (would be index -1)
+        $arr->get(-4);
+    }
+
+    public function testSetNegativeIndex(): void
+    {
+        $arr = NDArray::array([1, 2, 3, 4, 5], DType::Int64);
+
+        // Set last element using negative index
+        $arr->set([-1], 99);
+        $this->assertSame(99, $arr->get(-1));
+        $this->assertSame([1, 2, 3, 4, 99], $arr->toArray());
+
+        // Set first element using negative index
+        $arr->set([-5], 11);
+        $this->assertSame(11, $arr->get(0));
+        $this->assertSame([11, 2, 3, 4, 99], $arr->toArray());
+    }
+
+    public function testSetNegativeIndex2D(): void
+    {
+        $arr = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ], DType::Int64);
+
+        // Set bottom-right corner
+        $arr->set([-1, -1], 99);
+        $this->assertSame(99, $arr->get(2, 2));
+
+        // Set first element of last row
+        $arr->set([-1, 0], 77);
+        $this->assertSame(77, $arr->get(2, 0));
+    }
+
+    public function testArrayAccessNegativeIndex(): void
+    {
+        $arr = NDArray::array([10, 20, 30, 40], DType::Int64);
+
+        // Test ArrayAccess with negative string indices
+        $this->assertSame(40, $arr['-1']);
+        $this->assertSame(30, $arr['-2']);
+        $this->assertSame(10, $arr['-4']);
+    }
+
+    public function testArrayAccessNegativeMultiIndex(): void
+    {
+        $arr = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ], DType::Int64);
+
+        // Test multi-dimensional negative indexing via ArrayAccess
+        $this->assertSame(9, $arr['-1,-1']);
+        $this->assertSame(7, $arr['-1,0']);
+        $this->assertSame(3, $arr['0,-1']);
+        $this->assertSame(5, $arr['-2,-2']);
+    }
+
+    public function testArrayAccessNegativeIndexSet(): void
+    {
+        $arr = NDArray::array([1, 2, 3, 4, 5], DType::Int64);
+
+        // Set using negative index
+        $arr['-1'] = 99;
+        $this->assertSame(99, $arr[4]);
+        $this->assertSame([1, 2, 3, 4, 99], $arr->toArray());
+    }
+
+    public function testArrayAccessNegativeMultiIndexSet(): void
+    {
+        $arr = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ], DType::Int64);
+
+        // Set using negative multi-index
+        $arr['-1,-1'] = 99;
+        $this->assertSame(99, $arr->get(2, 2));
+    }
+
+    public function testOffsetExistsWithNegativeIndex(): void
+    {
+        $arr = NDArray::array([1, 2, 3], DType::Int64);
+
+        // These should exist
+        $this->assertTrue(isset($arr[-1]));
+        $this->assertTrue(isset($arr[-2]));
+        $this->assertTrue(isset($arr[-3]));
+
+        // These should not exist
+        $this->assertFalse(isset($arr[-4]));
+        $this->assertFalse(isset($arr[3]));
+    }
+
+    public function testPartialIndexWithNegativeIndex(): void
+    {
+        $arr = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ], DType::Int64);
+
+        // Get last row using negative index
+        $lastRow = $arr->get(-1);
+        $this->assertInstanceOf(NDArray::class, $lastRow);
+        $this->assertTrue($lastRow->isView());
+        $this->assertSame([7, 8, 9], $lastRow->toArray());
+
+        // Get first row using negative index (size is 3, so -3 = 0)
+        $firstRow = $arr->get(-3);
+        $this->assertSame([1, 2, 3], $firstRow->toArray());
+    }
+
+    public function testViewOfViewWithNegativeIndex(): void
+    {
+        $arr = NDArray::array([
+            [[1, 2], [3, 4]],
+            [[5, 6], [7, 8]],
+        ], DType::Int32);
+
+        // Get last matrix
+        $lastMatrix = $arr->get(-1);
+        $this->assertSame([[5, 6], [7, 8]], $lastMatrix->toArray());
+
+        // Get last row of last matrix
+        $lastRow = $lastMatrix->get(-1);
+        $this->assertSame([7, 8], $lastRow->toArray());
+
+        // Get last element
+        $this->assertSame(8, $lastRow->get(-1));
+    }
+
+    public function testNegativeIndexAllDTypes(): void
+    {
+        // Test negative indexing works with all dtypes
+        $dtypes = [
+            DType::Int8,
+            DType::Int16,
+            DType::Int32,
+            DType::Int64,
+            DType::Uint8,
+            DType::Uint16,
+            DType::Uint32,
+            DType::Uint64,
+            DType::Float32,
+            DType::Float64,
+        ];
+
+        foreach ($dtypes as $dtype) {
+            $arr = NDArray::array([10, 20, 30, 40, 50], $dtype);
+            $this->assertEqualsWithDelta(50, $arr->get(-1), 0.001, "Failed for $dtype->name");
+            $this->assertEqualsWithDelta(40, $arr->get(-2), 0.001, "Failed for $dtype->name");
+            $this->assertEqualsWithDelta(10, $arr->get(-5), 0.001, "Failed for $dtype->name");
+        }
+
+        // Test Bool separately since values are different
+        $boolArr = NDArray::array([true, false, true, false], DType::Bool);
+        $this->assertSame(false, $boolArr->get(-1));
+        $this->assertSame(true, $boolArr->get(-2));
+        $this->assertSame(true, $boolArr->get(-4));
     }
 
     public function testSetPartialIndicesThrows(): void
