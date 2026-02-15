@@ -1,11 +1,19 @@
-//! Absolute value operation.
+//! Absolute value operation using ndarray's mapv with abs().
 
-use crate::core::math_helpers::unary_op_generic;
+use crate::core::view_helpers::{
+    extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
+    extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+};
+use crate::core::{ArrayData, NDArrayWrapper};
+use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
-use std::slice;
 
-/// Compute absolute value element-wise.
+use parking_lot::RwLock;
+use std::slice;
+use std::sync::Arc;
+
+/// Compute absolute value element-wise using ndarray's abs().
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_abs(
     a: *const NdArrayHandle,
@@ -24,32 +32,144 @@ pub unsafe extern "C" fn ndarray_abs(
         let a_shape_slice = slice::from_raw_parts(a_shape, ndim);
         let a_strides_slice = slice::from_raw_parts(a_strides, ndim);
 
-        let result = unary_op_generic::<f64, f32, _, _, _, _, _, _, _, _, _, _>(
-            a_wrapper,
-            a_offset,
-            a_shape_slice,
-            a_strides_slice,
-            |x: f64| x.abs(),
-            |x: f32| x.abs(),
-            |x: i64| x.abs(),
-            |x: i32| x.abs(),
-            |x: i16| x.abs(),
-            |x: i8| x.abs(),
-            |x: u64| x, // abs is identity for unsigned
-            |x: u32| x,
-            |x: u16| x,
-            |x: u8| x,
-        );
+        let result_wrapper = match a_wrapper.dtype {
+            DType::Float64 => {
+                let Some(view) =
+                    extract_view_f64(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract f64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.abs();
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float64,
+                }
+            }
+            DType::Float32 => {
+                let Some(view) =
+                    extract_view_f32(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract f32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.abs();
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float32,
+                }
+            }
+            DType::Int64 => {
+                let Some(view) =
+                    extract_view_i64(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.mapv(|x| x.abs());
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int64,
+                }
+            }
+            DType::Int32 => {
+                let Some(view) =
+                    extract_view_i32(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.mapv(|x| x.abs());
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int32,
+                }
+            }
+            DType::Int16 => {
+                let Some(view) =
+                    extract_view_i16(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.mapv(|x| x.abs());
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int16,
+                }
+            }
+            DType::Int8 => {
+                let Some(view) =
+                    extract_view_i8(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.mapv(|x| x.abs());
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int8,
+                }
+            }
+            DType::Uint64 => {
+                let Some(view) =
+                    extract_view_u64(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint64,
+                }
+            }
+            DType::Uint32 => {
+                let Some(view) =
+                    extract_view_u32(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint32,
+                }
+            }
+            DType::Uint16 => {
+                let Some(view) =
+                    extract_view_u16(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint16,
+                }
+            }
+            DType::Uint8 => {
+                let Some(view) =
+                    extract_view_u8(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint8,
+                }
+            }
+            DType::Bool => {
+                crate::error::set_last_error("abs() not supported for Bool type".to_string());
+                return ERR_GENERIC;
+            }
+        };
 
-        match result {
-            Ok(wrapper) => {
-                *out = NdArrayHandle::from_wrapper(Box::new(wrapper));
-                SUCCESS
-            }
-            Err(e) => {
-                crate::error::set_last_error(e);
-                ERR_GENERIC
-            }
-        }
+        *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
+        SUCCESS
     })
 }

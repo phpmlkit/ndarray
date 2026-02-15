@@ -11,235 +11,8 @@ use crate::ffi::reductions::helpers::{compute_axis_output_shape, validate_axis};
 use crate::ffi::NdArrayHandle;
 use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
+use std::slice;
 use std::sync::Arc;
-
-/// Compute argmin along axis using proper strided view.
-fn argmin_axis_view(
-    wrapper: &NDArrayWrapper,
-    offset: usize,
-    shape: &[usize],
-    strides: &[usize],
-    axis: usize,
-) -> ndarray::ArrayD<i64> {
-    unsafe {
-        // Try Float64 first (fastest path)
-        if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Float32
-        if let Some(view) = extract_view_f32(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Int64
-        if let Some(view) = extract_view_i64(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Int32
-        if let Some(view) = extract_view_i32(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Int16
-        if let Some(view) = extract_view_i16(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Int8
-        if let Some(view) = extract_view_i8(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Uint64
-        if let Some(view) = extract_view_u64(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Uint32
-        if let Some(view) = extract_view_u32(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Uint16
-        if let Some(view) = extract_view_u16(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Uint8
-        if let Some(view) = extract_view_u8(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-    }
-    // Return empty array if no type matched
-    ndarray::ArrayD::zeros(ndarray::IxDyn(&[]))
-}
-
-/// Compute argmax along axis using proper strided view.
-fn argmax_axis_view(
-    wrapper: &NDArrayWrapper,
-    offset: usize,
-    shape: &[usize],
-    strides: &[usize],
-    axis: usize,
-) -> ndarray::ArrayD<i64> {
-    unsafe {
-        // Try Float64 first (fastest path)
-        if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Float32
-        if let Some(view) = extract_view_f32(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Int64
-        if let Some(view) = extract_view_i64(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Int32
-        if let Some(view) = extract_view_i32(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Int16
-        if let Some(view) = extract_view_i16(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Int8
-        if let Some(view) = extract_view_i8(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Uint64
-        if let Some(view) = extract_view_u64(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Uint32
-        if let Some(view) = extract_view_u32(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Uint16
-        if let Some(view) = extract_view_u16(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-        // Uint8
-        if let Some(view) = extract_view_u8(wrapper, offset, shape, strides) {
-            return view.map_axis(ndarray::Axis(axis), |lane| {
-                lane.iter()
-                    .enumerate()
-                    .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                    .map(|(idx, _)| idx as i64)
-                    .unwrap_or(0)
-            });
-        }
-    }
-    // Return empty array if no type matched
-    ndarray::ArrayD::zeros(ndarray::IxDyn(&[]))
-}
 
 /// Argmin along axis (indices of minimum values).
 #[no_mangle]
@@ -259,8 +32,8 @@ pub unsafe extern "C" fn ndarray_argmin_axis(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = std::slice::from_raw_parts(shape, ndim);
-        let strides_slice = std::slice::from_raw_parts(strides, ndim);
+        let shape_slice = slice::from_raw_parts(shape, ndim);
+        let strides_slice = slice::from_raw_parts(strides, ndim);
 
         // Validate axis
         let axis_usize = match validate_axis(shape_slice, axis) {
@@ -278,17 +51,161 @@ pub unsafe extern "C" fn ndarray_argmin_axis(
             return ERR_GENERIC;
         }
 
-        // Compute argmin along axis using proper strided view
-        let result_arr = argmin_axis_view(wrapper, offset, shape_slice, strides_slice, axis_usize);
+        // Match on dtype, extract view, compute argmin along axis, and create result wrapper
+        let result_arr: ArrayD<i64> = match wrapper.dtype {
+            DType::Float64 => {
+                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract f64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Float32 => {
+                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract f32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Int64 => {
+                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Int32 => {
+                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Int16 => {
+                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Int8 => {
+                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Uint64 => {
+                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Uint32 => {
+                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Uint16 => {
+                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Uint8 => {
+                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Bool => {
+                crate::error::set_last_error(
+                    "argmin_axis() not supported for Bool type".to_string(),
+                );
+                return ERR_GENERIC;
+            }
+        };
 
         // Handle keepdims
         let out_shape = compute_axis_output_shape(shape_slice, axis_usize, keepdims);
         let final_arr = if keepdims {
-            // Need to insert dimension
-            let reshaped =
-                ArrayD::from_shape_vec(IxDyn(&out_shape), result_arr.iter().cloned().collect())
-                    .expect("Failed to reshape argmin result");
-            reshaped
+            ArrayD::from_shape_vec(IxDyn(&out_shape), result_arr.iter().cloned().collect())
+                .expect("Failed to reshape argmin result")
         } else {
             result_arr
         };
@@ -322,8 +239,8 @@ pub unsafe extern "C" fn ndarray_argmax_axis(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = std::slice::from_raw_parts(shape, ndim);
-        let strides_slice = std::slice::from_raw_parts(strides, ndim);
+        let shape_slice = slice::from_raw_parts(shape, ndim);
+        let strides_slice = slice::from_raw_parts(strides, ndim);
 
         // Validate axis
         let axis_usize = match validate_axis(shape_slice, axis) {
@@ -341,8 +258,155 @@ pub unsafe extern "C" fn ndarray_argmax_axis(
             return ERR_GENERIC;
         }
 
-        // Compute argmax along axis using proper strided view
-        let result_arr = argmax_axis_view(wrapper, offset, shape_slice, strides_slice, axis_usize);
+        // Match on dtype, extract view, compute argmax along axis, and create result wrapper
+        let result_arr: ArrayD<i64> = match wrapper.dtype {
+            DType::Float64 => {
+                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract f64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Float32 => {
+                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract f32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Int64 => {
+                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Int32 => {
+                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Int16 => {
+                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Int8 => {
+                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Uint64 => {
+                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Uint32 => {
+                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Uint16 => {
+                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Uint8 => {
+                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.map_axis(ndarray::Axis(axis_usize), |lane| {
+                    lane.iter()
+                        .enumerate()
+                        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                        .map(|(idx, _)| idx as i64)
+                        .unwrap_or(0)
+                })
+            }
+            DType::Bool => {
+                crate::error::set_last_error(
+                    "argmax_axis() not supported for Bool type".to_string(),
+                );
+                return ERR_GENERIC;
+            }
+        };
 
         // Handle keepdims
         let out_shape = compute_axis_output_shape(shape_slice, axis_usize, keepdims);

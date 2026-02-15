@@ -1,66 +1,14 @@
-//! Scalar product reduction.
+//! Scalar product reduction using ndarray's product() method.
 
 use crate::core::view_helpers::{
     extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
     extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::core::NDArrayWrapper;
+use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
-
-/// Compute product using ndarray's native product() method.
-///
-/// Works with all types that implement Mul + One traits.
-fn compute_product(
-    wrapper: &NDArrayWrapper,
-    offset: usize,
-    shape: &[usize],
-    strides: &[usize],
-) -> f64 {
-    unsafe {
-        // Float64 - native support
-        if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
-            return view.product();
-        }
-        // Float32 - native support
-        if let Some(view) = extract_view_f32(wrapper, offset, shape, strides) {
-            return view.product() as f64;
-        }
-        // Int64 - native support via Mul + One
-        if let Some(view) = extract_view_i64(wrapper, offset, shape, strides) {
-            return view.product() as f64;
-        }
-        // Int32
-        if let Some(view) = extract_view_i32(wrapper, offset, shape, strides) {
-            return view.product() as f64;
-        }
-        // Int16
-        if let Some(view) = extract_view_i16(wrapper, offset, shape, strides) {
-            return view.product() as f64;
-        }
-        // Int8
-        if let Some(view) = extract_view_i8(wrapper, offset, shape, strides) {
-            return view.product() as f64;
-        }
-        // Uint64
-        if let Some(view) = extract_view_u64(wrapper, offset, shape, strides) {
-            return view.product() as f64;
-        }
-        // Uint32
-        if let Some(view) = extract_view_u32(wrapper, offset, shape, strides) {
-            return view.product() as f64;
-        }
-        // Uint16
-        if let Some(view) = extract_view_u16(wrapper, offset, shape, strides) {
-            return view.product() as f64;
-        }
-        // Uint8
-        if let Some(view) = extract_view_u8(wrapper, offset, shape, strides) {
-            return view.product() as f64;
-        }
-    }
-    1.0
-}
+use std::slice;
 
 /// Compute the product of all elements in the array (scalar reduction).
 #[no_mangle]
@@ -78,11 +26,98 @@ pub unsafe extern "C" fn ndarray_product(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = std::slice::from_raw_parts(shape, ndim);
-        let strides_slice = std::slice::from_raw_parts(strides, ndim);
+        let shape_slice = slice::from_raw_parts(shape, ndim);
+        let strides_slice = slice::from_raw_parts(strides, ndim);
 
-        let result = compute_product(wrapper, offset, shape_slice, strides_slice);
-        let result_wrapper = NDArrayWrapper::create_scalar_wrapper(result, wrapper.dtype);
+        // Match on dtype, extract view, compute product, and create result wrapper
+        let (product_result, result_dtype) = match wrapper.dtype {
+            DType::Float64 => {
+                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract f64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                (view.product(), DType::Float64)
+            }
+            DType::Float32 => {
+                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract f32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                (view.product() as f64, DType::Float32)
+            }
+            DType::Int64 => {
+                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                (view.product() as f64, DType::Int64)
+            }
+            DType::Int32 => {
+                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                (view.product() as f64, DType::Int32)
+            }
+            DType::Int16 => {
+                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                (view.product() as f64, DType::Int16)
+            }
+            DType::Int8 => {
+                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract i8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                (view.product() as f64, DType::Int8)
+            }
+            DType::Uint64 => {
+                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                (view.product() as f64, DType::Uint64)
+            }
+            DType::Uint32 => {
+                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                (view.product() as f64, DType::Uint32)
+            }
+            DType::Uint16 => {
+                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                (view.product() as f64, DType::Uint16)
+            }
+            DType::Uint8 => {
+                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract u8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                (view.product() as f64, DType::Uint8)
+            }
+            DType::Bool => {
+                crate::error::set_last_error("product() not supported for Bool type".to_string());
+                return ERR_GENERIC;
+            }
+        };
+
+        let result_wrapper = NDArrayWrapper::create_scalar_wrapper(product_result, result_dtype);
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
 
         SUCCESS

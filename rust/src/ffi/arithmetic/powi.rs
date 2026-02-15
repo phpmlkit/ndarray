@@ -1,11 +1,15 @@
-//! Integer power operation.
+//! Integer power operation using ndarray's mapv with powi.
 
-use crate::core::math_helpers::unary_op_float_only;
+use crate::core::view_helpers::{extract_view_f32, extract_view_f64};
+use crate::core::{ArrayData, NDArrayWrapper};
+use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
+use parking_lot::RwLock;
 use std::slice;
+use std::sync::Arc;
 
-/// Compute x^n where n is an integer, element-wise.
+/// Compute x^n where n is an integer, element-wise using ndarray's powi.
 ///
 /// Generally faster than powf for integer exponents.
 #[no_mangle]
@@ -27,25 +31,42 @@ pub unsafe extern "C" fn ndarray_powi(
         let a_shape_slice = slice::from_raw_parts(a_shape, ndim);
         let a_strides_slice = slice::from_raw_parts(a_strides, ndim);
 
-        let result = unary_op_float_only(
-            a_wrapper,
-            a_offset,
-            a_shape_slice,
-            a_strides_slice,
-            |x: f64| x.powi(exp),
-            |x: f32| x.powi(exp),
-            "powi",
-        );
+        let result_wrapper = match a_wrapper.dtype {
+            DType::Float64 => {
+                let Some(view) =
+                    extract_view_f64(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract f64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.powi(exp);
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float64,
+                }
+            }
+            DType::Float32 => {
+                let Some(view) =
+                    extract_view_f32(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                else {
+                    crate::error::set_last_error("Failed to extract f32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.powi(exp);
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float32,
+                }
+            }
+            _ => {
+                crate::error::set_last_error(
+                    "powi() requires float type (Float64 or Float32)".to_string(),
+                );
+                return ERR_GENERIC;
+            }
+        };
 
-        match result {
-            Ok(wrapper) => {
-                *out = NdArrayHandle::from_wrapper(Box::new(wrapper));
-                SUCCESS
-            }
-            Err(e) => {
-                crate::error::set_last_error(e);
-                ERR_GENERIC
-            }
-        }
+        *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
+        SUCCESS
     })
 }
