@@ -168,14 +168,14 @@ interface Bindings
     // Shape Operations
     // =========================================================================
 
-    public function ndarray_reshape(CData $handle, CData $new_shape, int $new_ndim, int $order, CData $out_handle): int;
+    public function ndarray_reshape(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $new_shape, int $new_ndim, int $order, CData $out_handle): int;
     public function ndarray_transpose(CData $handle, CData $out_handle): int;
     public function ndarray_swap_axes(CData $handle, int $axis1, int $axis2, CData $out_handle): int;
     public function ndarray_move_axis(CData $handle, int $source, int $destination, CData $out_handle): int;
     public function ndarray_flatten(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
     public function ndarray_ravel(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $order, CData $out_handle): int;
-    public function ndarray_squeeze(CData $handle, CData $axes, int $num_axes, CData $out_handle): int;
-    public function ndarray_expand_dims(CData $handle, int $axis, CData $out_handle): int;
+    public function ndarray_squeeze(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $axes, int $num_axes, CData $out_handle): int;
+    public function ndarray_expand_dims(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $out_handle): int;
 
     // =========================================================================
     // Linear Algebra Operations

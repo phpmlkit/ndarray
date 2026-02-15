@@ -36,6 +36,10 @@ trait HasShapeOps
 
         $status = $ffi->ndarray_reshape(
             $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
             $cShape,
             count($newShape),
             $orderCode,
@@ -230,6 +234,10 @@ trait HasShapeOps
 
         $status = $ffi->ndarray_squeeze(
             $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
             $cAxes,
             $numAxes,
             Lib::addr($outHandle)
@@ -266,6 +274,10 @@ trait HasShapeOps
 
         $status = $ffi->ndarray_expand_dims(
             $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
             $axis,
             Lib::addr($outHandle)
         );

@@ -1,42 +1,46 @@
 //! Squeeze and expand_dims operations.
 
-use std::slice;
-
-use crate::core::NDArrayWrapper;
+use crate::core::view_helpers::{
+    extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
+    extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+};
+use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::NdArrayHandle;
+use ndarray::Axis;
+use parking_lot::RwLock;
+use std::slice;
+use std::sync::Arc;
 
 /// Remove axes of length 1 from the array.
 ///
 /// If `axes` is null and `num_axes` is 0, removes all length-1 axes.
 /// Otherwise, removes only the specified axes.
-///
-/// # Arguments
-/// * `handle` - Array handle
-/// * `axes` - Pointer to array of axis indices to squeeze (null for all)
-/// * `num_axes` - Number of axes to squeeze (0 for all length-1 axes)
-/// * `out_handle` - Output handle pointer
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_squeeze(
     handle: *const NdArrayHandle,
+    offset: usize,
+    shape: *const usize,
+    strides: *const usize,
+    ndim: usize,
     axes: *const usize,
     num_axes: usize,
     out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() {
+    if handle.is_null() || out_handle.is_null() || shape.is_null() {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape = wrapper.shape();
-        let ndim = shape.len();
+        let shape_slice = slice::from_raw_parts(shape, ndim);
+        let strides_slice = slice::from_raw_parts(strides, ndim);
 
         // Determine which axes to squeeze
         let axes_to_squeeze: Vec<usize> = if num_axes == 0 {
             // Squeeze all length-1 axes
-            shape
+            shape_slice
                 .iter()
                 .enumerate()
                 .filter(|(_, &dim)| dim == 1)
@@ -58,10 +62,10 @@ pub unsafe extern "C" fn ndarray_squeeze(
                     ));
                     return ERR_SHAPE;
                 }
-                if shape[axis] != 1 {
+                if shape_slice[axis] != 1 {
                     error::set_last_error(format!(
                         "Cannot squeeze axis {} with size {} (must be 1)",
-                        axis, shape[axis]
+                        axis, shape_slice[axis]
                     ));
                     return ERR_SHAPE;
                 }
@@ -69,70 +73,313 @@ pub unsafe extern "C" fn ndarray_squeeze(
             requested
         };
 
-        // Compute new shape
-        let new_shape: Vec<usize> = shape
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| !axes_to_squeeze.contains(i))
-            .map(|(_, &dim)| dim)
-            .collect();
-
-        // If no axes were squeezed, just copy
-        // Otherwise, reshape to new shape
-        if new_shape == shape {
-            // Just return a copy
-            let flat_data = wrapper.to_f64_vec();
-            let result = create_wrapper_from_f64(&flat_data, &shape, wrapper.dtype);
-            match result {
-                Ok(new_wrapper) => {
-                    *out_handle = NdArrayHandle::from_wrapper(Box::new(new_wrapper));
-                    SUCCESS
+        // If no axes to squeeze, return a copy of the data
+        if axes_to_squeeze.is_empty() {
+            let result_wrapper = match wrapper.dtype {
+                DType::Float64 => {
+                    let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                    else {
+                        error::set_last_error("Failed to extract f64 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Float64(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Float64,
+                    }
                 }
-                Err(e) => {
-                    error::set_last_error(format!("Squeeze failed: {}", e));
-                    ERR_GENERIC
+                DType::Float32 => {
+                    let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                    else {
+                        error::set_last_error("Failed to extract f32 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Float32(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Float32,
+                    }
                 }
-            }
-        } else {
-            // Reshape to remove length-1 dimensions
-            let flat_data = wrapper.to_f64_vec();
-            let result = create_wrapper_from_f64(&flat_data, &new_shape, wrapper.dtype);
-            match result {
-                Ok(new_wrapper) => {
-                    *out_handle = NdArrayHandle::from_wrapper(Box::new(new_wrapper));
-                    SUCCESS
+                DType::Int64 => {
+                    let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
+                    else {
+                        error::set_last_error("Failed to extract i64 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int64(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Int64,
+                    }
                 }
-                Err(e) => {
-                    error::set_last_error(format!("Squeeze failed: {}", e));
-                    ERR_GENERIC
+                DType::Int32 => {
+                    let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
+                    else {
+                        error::set_last_error("Failed to extract i32 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int32(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Int32,
+                    }
                 }
-            }
+                DType::Int16 => {
+                    let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
+                    else {
+                        error::set_last_error("Failed to extract i16 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int16(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Int16,
+                    }
+                }
+                DType::Int8 => {
+                    let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
+                    else {
+                        error::set_last_error("Failed to extract i8 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int8(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Int8,
+                    }
+                }
+                DType::Uint64 => {
+                    let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
+                    else {
+                        error::set_last_error("Failed to extract u64 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint64(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Uint64,
+                    }
+                }
+                DType::Uint32 => {
+                    let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
+                    else {
+                        error::set_last_error("Failed to extract u32 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint32(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Uint32,
+                    }
+                }
+                DType::Uint16 => {
+                    let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
+                    else {
+                        error::set_last_error("Failed to extract u16 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint16(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Uint16,
+                    }
+                }
+                DType::Uint8 => {
+                    let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                    else {
+                        error::set_last_error("Failed to extract u8 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint8(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Uint8,
+                    }
+                }
+                DType::Bool => {
+                    error::set_last_error("squeeze() not supported for Bool type".to_string());
+                    return ERR_GENERIC;
+                }
+            };
+            *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
+            return SUCCESS;
         }
+
+        // Match on dtype, extract view, squeeze axes, and create result wrapper
+        let result_wrapper = match wrapper.dtype {
+            DType::Float64 => {
+                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract f64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let mut result = view.to_owned();
+                // Remove axes in reverse order to maintain correct indices
+                for &axis in axes_to_squeeze.iter().rev() {
+                    result = result.remove_axis(Axis(axis));
+                }
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float64,
+                }
+            }
+            DType::Float32 => {
+                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract f32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let mut result = view.to_owned();
+                for &axis in axes_to_squeeze.iter().rev() {
+                    result = result.remove_axis(Axis(axis));
+                }
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float32,
+                }
+            }
+            DType::Int64 => {
+                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract i64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let mut result = view.to_owned();
+                for &axis in axes_to_squeeze.iter().rev() {
+                    result = result.remove_axis(Axis(axis));
+                }
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int64,
+                }
+            }
+            DType::Int32 => {
+                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract i32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let mut result = view.to_owned();
+                for &axis in axes_to_squeeze.iter().rev() {
+                    result = result.remove_axis(Axis(axis));
+                }
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int32,
+                }
+            }
+            DType::Int16 => {
+                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract i16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let mut result = view.to_owned();
+                for &axis in axes_to_squeeze.iter().rev() {
+                    result = result.remove_axis(Axis(axis));
+                }
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int16,
+                }
+            }
+            DType::Int8 => {
+                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract i8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let mut result = view.to_owned();
+                for &axis in axes_to_squeeze.iter().rev() {
+                    result = result.remove_axis(Axis(axis));
+                }
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int8,
+                }
+            }
+            DType::Uint64 => {
+                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract u64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let mut result = view.to_owned();
+                for &axis in axes_to_squeeze.iter().rev() {
+                    result = result.remove_axis(Axis(axis));
+                }
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint64,
+                }
+            }
+            DType::Uint32 => {
+                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract u32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let mut result = view.to_owned();
+                for &axis in axes_to_squeeze.iter().rev() {
+                    result = result.remove_axis(Axis(axis));
+                }
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint32,
+                }
+            }
+            DType::Uint16 => {
+                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract u16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let mut result = view.to_owned();
+                for &axis in axes_to_squeeze.iter().rev() {
+                    result = result.remove_axis(Axis(axis));
+                }
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint16,
+                }
+            }
+            DType::Uint8 => {
+                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract u8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let mut result = view.to_owned();
+                for &axis in axes_to_squeeze.iter().rev() {
+                    result = result.remove_axis(Axis(axis));
+                }
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint8,
+                }
+            }
+            DType::Bool => {
+                error::set_last_error("squeeze() not supported for Bool type".to_string());
+                return ERR_GENERIC;
+            }
+        };
+
+        *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
+        SUCCESS
     })
 }
 
 /// Insert a new axis at the specified position.
 ///
 /// Equivalent to NumPy's expand_dims.
-///
-/// # Arguments
-/// * `handle` - Array handle
-/// * `axis` - Position where new axis is inserted
-/// * `out_handle` - Output handle pointer
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_expand_dims(
     handle: *const NdArrayHandle,
+    offset: usize,
+    shape: *const usize,
+    strides: *const usize,
+    ndim: usize,
     axis: usize,
     out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() {
+    if handle.is_null() || out_handle.is_null() || shape.is_null() {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let mut shape = wrapper.shape();
-        let ndim = shape.len();
+        let shape_slice = slice::from_raw_parts(shape, ndim);
+        let strides_slice = slice::from_raw_parts(strides, ndim);
 
         // Validate axis - can be from 0 to ndim (inclusive, for appending)
         if axis > ndim {
@@ -143,74 +390,135 @@ pub unsafe extern "C" fn ndarray_expand_dims(
             return ERR_SHAPE;
         }
 
-        // Insert new axis with size 1
-        shape.insert(axis, 1);
-
-        // Get data and create new array with expanded shape
-        let flat_data = wrapper.to_f64_vec();
-        let result = create_wrapper_from_f64(&flat_data, &shape, wrapper.dtype);
-
-        match result {
-            Ok(new_wrapper) => {
-                *out_handle = NdArrayHandle::from_wrapper(Box::new(new_wrapper));
-                SUCCESS
+        // Match on dtype, extract view, insert axis, and create result wrapper
+        let result_wrapper = match wrapper.dtype {
+            DType::Float64 => {
+                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract f64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.insert_axis(Axis(axis)).to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float64,
+                }
             }
-            Err(e) => {
-                error::set_last_error(format!("Expand dims failed: {}", e));
-                ERR_GENERIC
+            DType::Float32 => {
+                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract f32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.insert_axis(Axis(axis)).to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float32,
+                }
             }
-        }
+            DType::Int64 => {
+                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract i64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.insert_axis(Axis(axis)).to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int64,
+                }
+            }
+            DType::Int32 => {
+                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract i32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.insert_axis(Axis(axis)).to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int32,
+                }
+            }
+            DType::Int16 => {
+                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract i16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.insert_axis(Axis(axis)).to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int16,
+                }
+            }
+            DType::Int8 => {
+                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract i8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.insert_axis(Axis(axis)).to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int8,
+                }
+            }
+            DType::Uint64 => {
+                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract u64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.insert_axis(Axis(axis)).to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint64,
+                }
+            }
+            DType::Uint32 => {
+                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract u32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.insert_axis(Axis(axis)).to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint32,
+                }
+            }
+            DType::Uint16 => {
+                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract u16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.insert_axis(Axis(axis)).to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint16,
+                }
+            }
+            DType::Uint8 => {
+                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract u8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.insert_axis(Axis(axis)).to_owned();
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint8,
+                }
+            }
+            DType::Bool => {
+                error::set_last_error("expand_dims() not supported for Bool type".to_string());
+                return ERR_GENERIC;
+            }
+        };
+
+        *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
+        SUCCESS
     })
-}
-
-/// Helper to create wrapper from f64 data preserving dtype
-fn create_wrapper_from_f64(
-    data: &[f64],
-    shape: &[usize],
-    dtype: DType,
-) -> Result<NDArrayWrapper, String> {
-    match dtype {
-        DType::Float64 => NDArrayWrapper::from_slice_f64(data, shape),
-        DType::Float32 => NDArrayWrapper::from_slice_f32(
-            &data.iter().map(|x| *x as f32).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int64 => NDArrayWrapper::from_slice_i64(
-            &data.iter().map(|x| *x as i64).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int32 => NDArrayWrapper::from_slice_i32(
-            &data.iter().map(|x| *x as i32).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int16 => NDArrayWrapper::from_slice_i16(
-            &data.iter().map(|x| *x as i16).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int8 => {
-            NDArrayWrapper::from_slice_i8(&data.iter().map(|x| *x as i8).collect::<Vec<_>>(), shape)
-        }
-        DType::Uint64 => NDArrayWrapper::from_slice_u64(
-            &data.iter().map(|x| *x as u64).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Uint32 => NDArrayWrapper::from_slice_u32(
-            &data.iter().map(|x| *x as u32).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Uint16 => NDArrayWrapper::from_slice_u16(
-            &data.iter().map(|x| *x as u16).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Uint8 => {
-            NDArrayWrapper::from_slice_u8(&data.iter().map(|x| *x as u8).collect::<Vec<_>>(), shape)
-        }
-        DType::Bool => NDArrayWrapper::from_slice_bool(
-            &data
-                .iter()
-                .map(|x| if *x != 0.0 { 1 } else { 0 })
-                .collect::<Vec<_>>(),
-            shape,
-        ),
-    }
 }
