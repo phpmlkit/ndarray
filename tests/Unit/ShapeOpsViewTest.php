@@ -183,4 +183,174 @@ final class ShapeOpsViewTest extends TestCase
         
         $this->assertSame([2, 2, 3], $view->shape());
     }
+
+    // ========================================================================
+    // Shape Operations on Views
+    // ========================================================================
+
+    public function testViewReshape(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5, 6, 7, 8], DType::Float64);
+        $view = $a->slice(['2:6']); // [3, 4, 5, 6]
+        $result = $view->reshape([2, 2]);
+        
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertEqualsWithDelta([[3, 4], [5, 6]], $result->toArray(), 0.0001);
+    }
+
+    public function testViewFlatten(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
+        $view = $a->slice(['0:2', '1:3']); // [[2, 3], [5, 6]]
+        $result = $view->flatten();
+        
+        $this->assertSame([4], $result->shape());
+        $this->assertEqualsWithDelta([2, 3, 5, 6], $result->toArray(), 0.0001);
+    }
+
+    public function testViewTranspose(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
+        $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
+        $result = $view->transpose();
+        
+        $this->assertSame([3, 2], $result->shape());
+        $this->assertEqualsWithDelta([[1, 4], [2, 5], [3, 6]], $result->toArray(), 0.0001);
+    }
+
+    public function testViewSwapAxes(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
+        $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
+        $result = $view->swapAxes(0, 1);
+        
+        $this->assertSame([3, 2], $result->shape());
+        $this->assertEqualsWithDelta([[1, 4], [2, 5], [3, 6]], $result->toArray(), 0.0001);
+    }
+
+    public function testViewSqueeze(): void
+    {
+        $a = NDArray::array([[[[1, 2]]], [[[3, 4]]]], DType::Float64);
+        $view = $a->slice(['0:1', ':', ':', ':']); // [[[[1, 2]]]]
+        $result = $view->squeeze();
+        
+        $this->assertSame([2], $result->shape());
+        $this->assertEqualsWithDelta([1, 2], $result->toArray(), 0.0001);
+    }
+
+    public function testViewInsertAxis(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
+        $view = $a->slice(['1:4']); // [2, 3, 4]
+        $result = $view->insertAxis(0);
+        
+        $this->assertSame([1, 3], $result->shape());
+        $this->assertEqualsWithDelta([[2, 3, 4]], $result->toArray(), 0.0001);
+    }
+
+    public function testViewExpandDims(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
+        $view = $a->slice(['1:4']); // [2, 3, 4]
+        $result = $view->expandDims(1);
+        
+        $this->assertSame([3, 1], $result->shape());
+        $this->assertEqualsWithDelta([[2], [3], [4]], $result->toArray(), 0.0001);
+    }
+
+    public function testViewInvertAxis(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
+        $view = $a->slice(['1:4']); // [2, 3, 4]
+        $result = $view->invertAxis(0);
+        
+        $this->assertSame([3], $result->shape());
+        $this->assertEqualsWithDelta([4, 3, 2], $result->toArray(), 0.0001);
+    }
+
+    public function testViewRavel(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
+        $view = $a->slice(['1:3', '0:2']); // [[4, 5], [7, 8]]
+        $result = $view->ravel();
+        
+        $this->assertSame([4], $result->shape());
+        $this->assertEqualsWithDelta([4, 5, 7, 8], $result->toArray(), 0.0001);
+    }
+
+    public function testViewMergeAxes(): void
+    {
+        $a = NDArray::array([
+            [[1, 2], [3, 4]],
+            [[5, 6], [7, 8]],
+            [[9, 10], [11, 12]]
+        ], DType::Float64);
+        $view = $a->slice(['0:2', ':', ':']); // First 2 rows of 3D array [2, 2, 2]
+        $result = $view->mergeAxes(0, 1);
+        
+        // Merging axes: [2, 2, 2] -> squeeze removes length-1 axis
+        $this->assertSame([4, 2], $result->shape());
+    }
+
+    public function testViewTransposeThenFlatten(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
+        $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
+        $result = $view->transpose()->flatten();
+        
+        $this->assertSame([6], $result->shape());
+        $this->assertEqualsWithDelta([1, 4, 2, 5, 3, 6], $result->toArray(), 0.0001);
+    }
+
+    public function testViewComplexChaining(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], DType::Float64);
+        $view = $a->slice(['2:10']); // [3, 4, 5, 6, 7, 8, 9, 10]
+        $result = $view->reshape([2, 2, 2])
+                       ->transpose()
+                       ->insertAxis(0)
+                       ->flatten();
+        
+        $this->assertSame([8], $result->shape());
+    }
+
+    public function testViewSwapAxesThenFlatten(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
+        $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
+        $result = $view->swapAxes(0, 1)->flatten();
+        
+        $this->assertSame([6], $result->shape());
+        $this->assertEqualsWithDelta([1, 4, 2, 5, 3, 6], $result->toArray(), 0.0001);
+    }
+
+    public function testStridedViewFlatten(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16]
+        ], DType::Float64);
+        $view = $a->slice(['::2', '::2']); // [[1, 3], [9, 11]]
+        $result = $view->flatten();
+        
+        $this->assertSame([4], $result->shape());
+        $this->assertEqualsWithDelta([1, 3, 9, 11], $result->toArray(), 0.0001);
+    }
+
+    public function testStridedViewTranspose(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16]
+        ], DType::Float64);
+        $view = $a->slice(['::2', '::2']); // [[1, 3], [9, 11]]
+        $result = $view->transpose();
+        
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertEqualsWithDelta([[1, 9], [3, 11]], $result->toArray(), 0.0001);
+    }
 }

@@ -14,8 +14,6 @@ use std::slice;
 use std::sync::Arc;
 
 /// Flatten array to 1D.
-///
-/// Always returns a copy in C-order (row-major).
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_flatten(
     handle: *const NdArrayHandle,
@@ -34,7 +32,7 @@ pub unsafe extern "C" fn ndarray_flatten(
         let shape_slice = slice::from_raw_parts(shape, ndim);
         let strides_slice = slice::from_raw_parts(strides, ndim);
 
-        // Match on dtype, extract view, flatten, and create result wrapper
+        // Match on dtype, extract view, flatten in logical order, and create result wrapper
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
@@ -157,8 +155,16 @@ pub unsafe extern "C" fn ndarray_flatten(
                 }
             }
             DType::Bool => {
-                error::set_last_error("flatten() not supported for Bool type".to_string());
-                return ERR_GENERIC;
+                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract bool view".to_string());
+                    return ERR_GENERIC;
+                };
+                let flat = view.flatten().into_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Bool(Arc::new(RwLock::new(flat))),
+                    dtype: DType::Bool,
+                }
             }
         };
 
@@ -170,7 +176,7 @@ pub unsafe extern "C" fn ndarray_flatten(
 /// Ravel array to 1D.
 ///
 /// Similar to flatten but may return a view if the array is already contiguous.
-/// For FFI simplicity, we always return a copy.
+/// For FFI simplicity, we always return a copy in the specified order.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_ravel(
     handle: *const NdArrayHandle,
@@ -319,8 +325,16 @@ pub unsafe extern "C" fn ndarray_ravel(
                 }
             }
             DType::Bool => {
-                error::set_last_error("ravel() not supported for Bool type".to_string());
-                return ERR_GENERIC;
+                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                else {
+                    error::set_last_error("Failed to extract u8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let flat = view.flatten_with_order(order).into_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Bool(Arc::new(RwLock::new(flat))),
+                    dtype: DType::Bool,
+                }
             }
         };
 

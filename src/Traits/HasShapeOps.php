@@ -66,6 +66,10 @@ trait HasShapeOps
 
         $status = $ffi->ndarray_transpose(
             $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
             Lib::addr($outHandle)
         );
 
@@ -91,6 +95,10 @@ trait HasShapeOps
 
         $status = $ffi->ndarray_swap_axes(
             $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
             $axis1,
             $axis2,
             Lib::addr($outHandle)
@@ -108,31 +116,114 @@ trait HasShapeOps
     }
 
     /**
-     * Move axis from source position to destination.
+     * Merge axes by combining take into into.
      *
-     * @param int $source Source axis position
-     * @param int $destination Destination axis position
+     * If possible, merge in the axis take to into. Returns the merged array.
+     *
+     * @param int $take Axis to merge from
+     * @param int $into Axis to merge into
      * @return NDArray
      */
-    public function moveAxis(int $source, int $destination): NDArray
+    public function mergeAxes(int $take, int $into): NDArray
     {
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_move_axis(
+        $status = $ffi->ndarray_merge_axes(
             $this->handle,
-            $source,
-            $destination,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
+            $take,
+            $into,
             Lib::addr($outHandle)
         );
 
         Lib::checkStatus($status);
 
-        // Compute new shape by moving axis
+        // Compute new shape (product of merged axes)
         $newShape = $this->shape;
-        $axis = $newShape[$source];
-        array_splice($newShape, $source, 1);
-        array_splice($newShape, $destination, 0, [$axis]);
+        $newShape[$into] = $newShape[$take] * $newShape[$into];
+        array_splice($newShape, $take, 1);
+
+        return new NDArray($outHandle, $newShape, $this->dtype);
+    }
+
+    /**
+     * Reverse the stride of an axis.
+     *
+     * @param int $axis Axis to invert
+     * @return NDArray
+     */
+    public function invertAxis(int $axis): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        // Handle negative axis
+        if ($axis < 0) {
+            $axis = $this->ndim + $axis;
+        }
+
+        // Validate axis
+        if ($axis < 0 || $axis >= $this->ndim) {
+            throw new ShapeException("Axis $axis is out of bounds for array with {$this->ndim} dimensions");
+        }
+
+        $status = $ffi->ndarray_invert_axis(
+            $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
+            $axis,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new NDArray($outHandle, $this->shape, $this->dtype);
+    }
+
+    /**
+     * Insert a new axis at the specified position.
+     *
+     * The new axis always has length 1.
+     *
+     * @param int $axis Position where new axis is inserted
+     * @return NDArray
+     */
+    public function insertAxis(int $axis): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        // Handle negative axis
+        if ($axis < 0) {
+            $axis = $this->ndim + $axis + 1;
+        }
+
+        // Validate axis
+        if ($axis < 0 || $axis > $this->ndim) {
+            throw new ShapeException("Axis $axis is out of bounds for array with {$this->ndim} dimensions");
+        }
+
+        $status = $ffi->ndarray_insert_axis(
+            $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
+            $axis,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        // Compute new shape
+        $newShape = $this->shape;
+        array_splice($newShape, $axis, 0, [1]);
 
         return new NDArray($outHandle, $newShape, $this->dtype);
     }
@@ -258,37 +349,7 @@ trait HasShapeOps
      */
     public function expandDims(int $axis): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-
-        // Handle negative axis
-        $ndim = count($this->shape);
-        if ($axis < 0) {
-            $axis = $ndim + $axis + 1;
-        }
-
-        // Validate axis
-        if ($axis < 0 || $axis > $ndim) {
-            throw new ShapeException("Axis $axis is out of bounds for array with $ndim dimensions");
-        }
-
-        $status = $ffi->ndarray_expand_dims(
-            $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createCArray('size_t', $this->strides),
-            $this->ndim,
-            $axis,
-            Lib::addr($outHandle)
-        );
-
-        Lib::checkStatus($status);
-
-        // Compute new shape
-        $newShape = $this->shape;
-        array_splice($newShape, $axis, 0, [1]);
-
-        return new NDArray($outHandle, $newShape, $this->dtype);
+        return $this->insertAxis($axis);
     }
 
     /**

@@ -1,4 +1,4 @@
-//! Transpose operations.
+//! Insert axis operations.
 
 use crate::core::view_helpers::{
     extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
@@ -6,23 +6,25 @@ use crate::core::view_helpers::{
 };
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
-use crate::error::{self, ERR_GENERIC, SUCCESS};
+use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::NdArrayHandle;
+use ndarray::Axis;
 use parking_lot::RwLock;
 use std::slice;
 use std::sync::Arc;
 
-/// Transpose array (swap all axes).
+/// Insert new array axis at axis and return the result.
 ///
-/// For a 2D array, this swaps rows and columns.
-/// For nD arrays, reverses the order of all axes.
+/// The new axis always has length 1.
+/// Panics if the axis is out of bounds.
 #[no_mangle]
-pub unsafe extern "C" fn ndarray_transpose(
+pub unsafe extern "C" fn ndarray_insert_axis(
     handle: *const NdArrayHandle,
     offset: usize,
     shape: *const usize,
     strides: *const usize,
     ndim: usize,
+    axis: usize,
     out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
     if handle.is_null() || out_handle.is_null() || shape.is_null() {
@@ -34,7 +36,15 @@ pub unsafe extern "C" fn ndarray_transpose(
         let shape_slice = slice::from_raw_parts(shape, ndim);
         let strides_slice = slice::from_raw_parts(strides, ndim);
 
-        // Match on dtype, extract view, transpose, and create result wrapper
+        // Validate axis - can be from 0 to ndim (inclusive, for appending)
+        if axis > ndim {
+            error::set_last_error(format!(
+                "Axis {} out of bounds for array with {} dimensions",
+                axis, ndim
+            ));
+            return ERR_SHAPE;
+        }
+
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
@@ -42,11 +52,7 @@ pub unsafe extern "C" fn ndarray_transpose(
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
-                let data: Vec<f64> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
-                    .expect("Failed to create transposed array");
+                let result = view.insert_axis(Axis(axis)).to_owned();
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
                     dtype: DType::Float64,
@@ -58,11 +64,7 @@ pub unsafe extern "C" fn ndarray_transpose(
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
-                let data: Vec<f32> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
-                    .expect("Failed to create transposed array");
+                let result = view.insert_axis(Axis(axis)).to_owned();
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
                     dtype: DType::Float32,
@@ -74,11 +76,7 @@ pub unsafe extern "C" fn ndarray_transpose(
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
-                let data: Vec<i64> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
-                    .expect("Failed to create transposed array");
+                let result = view.insert_axis(Axis(axis)).to_owned();
                 NDArrayWrapper {
                     data: ArrayData::Int64(Arc::new(RwLock::new(result))),
                     dtype: DType::Int64,
@@ -90,11 +88,7 @@ pub unsafe extern "C" fn ndarray_transpose(
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
-                let data: Vec<i32> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
-                    .expect("Failed to create transposed array");
+                let result = view.insert_axis(Axis(axis)).to_owned();
                 NDArrayWrapper {
                     data: ArrayData::Int32(Arc::new(RwLock::new(result))),
                     dtype: DType::Int32,
@@ -106,11 +100,7 @@ pub unsafe extern "C" fn ndarray_transpose(
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
-                let data: Vec<i16> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
-                    .expect("Failed to create transposed array");
+                let result = view.insert_axis(Axis(axis)).to_owned();
                 NDArrayWrapper {
                     data: ArrayData::Int16(Arc::new(RwLock::new(result))),
                     dtype: DType::Int16,
@@ -122,11 +112,7 @@ pub unsafe extern "C" fn ndarray_transpose(
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
-                let data: Vec<i8> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
-                    .expect("Failed to create transposed array");
+                let result = view.insert_axis(Axis(axis)).to_owned();
                 NDArrayWrapper {
                     data: ArrayData::Int8(Arc::new(RwLock::new(result))),
                     dtype: DType::Int8,
@@ -138,11 +124,7 @@ pub unsafe extern "C" fn ndarray_transpose(
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
-                let data: Vec<u64> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
-                    .expect("Failed to create transposed array");
+                let result = view.insert_axis(Axis(axis)).to_owned();
                 NDArrayWrapper {
                     data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint64,
@@ -154,11 +136,7 @@ pub unsafe extern "C" fn ndarray_transpose(
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
-                let data: Vec<u32> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
-                    .expect("Failed to create transposed array");
+                let result = view.insert_axis(Axis(axis)).to_owned();
                 NDArrayWrapper {
                     data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint32,
@@ -170,11 +148,7 @@ pub unsafe extern "C" fn ndarray_transpose(
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
-                let data: Vec<u16> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
-                    .expect("Failed to create transposed array");
+                let result = view.insert_axis(Axis(axis)).to_owned();
                 NDArrayWrapper {
                     data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint16,
@@ -186,18 +160,14 @@ pub unsafe extern "C" fn ndarray_transpose(
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
-                let data: Vec<u8> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
-                    .expect("Failed to create transposed array");
+                let result = view.insert_axis(Axis(axis)).to_owned();
                 NDArrayWrapper {
                     data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint8,
                 }
             }
             DType::Bool => {
-                error::set_last_error("transpose() not supported for Bool type".to_string());
+                error::set_last_error("insert_axis() not supported for Bool type".to_string());
                 return ERR_GENERIC;
             }
         };
