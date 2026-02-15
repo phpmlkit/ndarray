@@ -147,6 +147,10 @@ trait HasShapeOps
 
         $status = $ffi->ndarray_flatten(
             $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
             Lib::addr($outHandle)
         );
 
@@ -172,6 +176,10 @@ trait HasShapeOps
 
         $status = $ffi->ndarray_ravel(
             $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
             $orderCode,
             Lib::addr($outHandle)
         );
