@@ -160,8 +160,7 @@ interface Bindings
     // Serialization
     // =========================================================================
 
-    public function ndarray_to_json(CData $handle, CData $out_ptr, CData $out_len, int $precision): int;
-    public function ndarray_view_to_json(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $precision, CData $out_ptr, CData $out_len): int;
+    public function ndarray_to_json(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_ptr, CData $out_len): int;
     public function ndarray_free_string(CData $ptr): void;
 
     // =========================================================================

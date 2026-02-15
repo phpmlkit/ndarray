@@ -10,15 +10,15 @@ use NDArray\FFI\Lib;
 /**
  * Conversion methods for transforming NDArray data into PHP types.
  *
- * Handles both root arrays and strided views.
+ * Handles both root arrays and strided views using a unified FFI interface.
  */
 trait HasConversion
 {
     /**
      * Convert to PHP array.
      *
-     * Uses strided view serialization when this is a view,
-     * or full array serialization for root arrays.
+     * Serializes the array or view to JSON using optimized ndarray view
+     * extraction, then decodes to PHP array structure.
      *
      * @return array|float|int Returns array for N-dimensional arrays, scalar for 0-dimensional
      */
@@ -26,18 +26,20 @@ trait HasConversion
     {
         $ffi = Lib::get();
 
-        if ($this->base !== null) {
-            return $this->viewToArray($ffi);
-        }
+        $cShape = Lib::createShapeArray($this->shape);
+        $cStrides = Lib::createShapeArray($this->strides);
 
         $outPtr = $ffi->new("char*");
-        $outLen = $ffi->new("size_t");
+        $outLen = Lib::createBox("size_t");
 
         $status = $ffi->ndarray_to_json(
             $this->handle,
+            $this->offset,
+            $cShape,
+            $cStrides,
+            $this->ndim,
             Lib::addr($outPtr),
             Lib::addr($outLen),
-            17
         );
 
         Lib::checkStatus($status);
@@ -75,47 +77,6 @@ trait HasConversion
 
         Lib::checkStatus($status);
 
-        // Copy is always contiguous, so compute standard strides
-        // But constructor computes them if passed empty/null?
-        // Constructor takes strides. If I pass [], it computes contiguous strides.
         return new self($outHandle, $this->shape, $this->dtype);
-    }
-
-    // =========================================================================
-    // Private Helpers
-    // =========================================================================
-
-    /**
-     * Serialize a view to a PHP array using strided JSON serialization.
-     *
-     * @param FFI $ffi
-     * @return array
-     */
-    private function viewToArray(FFI $ffi): array
-    {
-        $cShape = Lib::createShapeArray($this->shape);
-        $cStrides = Lib::createShapeArray($this->strides);
-
-        $outPtr = $ffi->new("char*");
-        $outLen = $ffi->new("size_t");
-
-        $status = $ffi->ndarray_view_to_json(
-            $this->handle,
-            $this->offset,
-            $cShape,
-            $cStrides,
-            $this->ndim,
-            17,
-            Lib::addr($outPtr),
-            Lib::addr($outLen),
-        );
-
-        Lib::checkStatus($status);
-
-        $json = FFI::string($outPtr, $outLen->cdata);
-
-        $ffi->ndarray_free_string($outPtr);
-
-        return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
     }
 }

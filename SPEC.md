@@ -192,6 +192,7 @@ The primary array type representing N-dimensional arrays.
 - [ ] 6.2.2: `$array->T` property - 2D transpose shorthand
 - [x] 6.2.3: `$array->swapaxes($axis1, $axis2)` - Swap two axes
 - [x] 6.2.4: `$array->moveaxis($source, $destination)` - Move axis position
+- [x] 6.2.5: `$array->permuteAxes($axes)` - Explicit axis permutation
 
 ### 6.3 Dimension Manipulation (REQ-6.3)
 **Priority**: HIGH
@@ -201,6 +202,9 @@ The primary array type representing N-dimensional arrays.
 - [x] 6.3.2: `$array->expandDims($axis)` - Add dimension
 - [ ] 6.3.3: `NDArray::newaxis` constant for adding dimensions
 - [ ] 6.3.4: `$array->broadcast_to($shape)` - Broadcast to shape
+- [x] 6.3.5: `$array->insertAxis($axis)` - Insert new axis at position
+- [x] 6.3.6: `$array->mergeAxes($take, $into)` - Merge two axes together
+- [x] 6.3.7: `$array->invertAxis($axis)` - Reverse stride of axis
 
 ### 6.4 Joining and Splitting (REQ-6.4)
 **Priority**: MEDIUM

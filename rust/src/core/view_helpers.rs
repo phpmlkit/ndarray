@@ -46,6 +46,7 @@ define_extract_view!(extract_view_u64, ArrayData::Uint64, u64);
 define_extract_view!(extract_view_u32, ArrayData::Uint32, u32);
 define_extract_view!(extract_view_u16, ArrayData::Uint16, u16);
 define_extract_view!(extract_view_u8, ArrayData::Uint8, u8);
+define_extract_view!(extract_view_bool, ArrayData::Bool, u8);
 
 // Macro to generate `extract_view_as` functions for type conversion.
 macro_rules! define_extract_view_as {

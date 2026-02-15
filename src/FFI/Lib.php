@@ -177,6 +177,17 @@ final class Lib
     }
 
     /**
+     * Create a C box of the given type.
+     *
+     * @param string $type C type (e.g., 'char', 'size_t', 'struct NdArrayHandle*')
+     * @return CData&Box
+     */
+    public static function createBox(string $type): CData
+    {
+        return self::get()->new($type);
+    }
+
+    /**
      * Cast a C pointer to the specified type.
      *
      * @param string $type Target type
