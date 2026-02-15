@@ -174,6 +174,7 @@ interface Bindings
     public function ndarray_merge_axes(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $take, int $into, CData $out_handle): int;
     public function ndarray_invert_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $out_handle): int;
     public function ndarray_insert_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $out_handle): int;
+    public function ndarray_permute_axes(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $axes, int $num_axes, CData $out_handle): int;
     public function ndarray_flatten(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
     public function ndarray_ravel(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $order, CData $out_handle): int;
     public function ndarray_squeeze(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $axes, int $num_axes, CData $out_handle): int;

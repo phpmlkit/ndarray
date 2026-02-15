@@ -116,6 +116,64 @@ trait HasShapeOps
     }
 
     /**
+     * Permute axes of the array.
+     *
+     * Reorders the axes according to the given permutation.
+     * For example, permuteAxes([1, 0]) on a 2D array is equivalent to transpose().
+     *
+     * @param array<int> $axes New order of axes
+     * @return NDArray
+     */
+    public function permuteAxes(array $axes): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        // Validate axes
+        if (count($axes) !== $this->ndim) {
+            throw new ShapeException("permute_axes requires {$this->ndim} axes, got " . count($axes));
+        }
+
+        // Convert to 0-indexed if negative indices provided
+        $normalizedAxes = [];
+        foreach ($axes as $axis) {
+            if ($axis < 0) {
+                $axis = $this->ndim + $axis;
+            }
+            if ($axis < 0 || $axis >= $this->ndim) {
+                throw new ShapeException("Axis $axis is out of bounds for array with {$this->ndim} dimensions");
+            }
+            $normalizedAxes[] = $axis;
+        }
+
+        // Check for duplicates
+        if (count(array_unique($normalizedAxes)) !== count($normalizedAxes)) {
+            throw new ShapeException("Duplicate axes in permutation");
+        }
+
+        $status = $ffi->ndarray_permute_axes(
+            $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
+            Lib::createShapeArray($normalizedAxes),
+            count($normalizedAxes),
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        // Compute new shape
+        $newShape = [];
+        foreach ($normalizedAxes as $axis) {
+            $newShape[] = $this->shape[$axis];
+        }
+
+        return new NDArray($outHandle, $newShape, $this->dtype);
+    }
+
+    /**
      * Merge axes by combining take into into.
      *
      * If possible, merge in the axis take to into. Returns the merged array.

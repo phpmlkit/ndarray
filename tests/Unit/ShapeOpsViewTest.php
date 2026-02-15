@@ -349,8 +349,93 @@ final class ShapeOpsViewTest extends TestCase
         ], DType::Float64);
         $view = $a->slice(['::2', '::2']); // [[1, 3], [9, 11]]
         $result = $view->transpose();
-        
+
         $this->assertSame([2, 2], $result->shape());
         $this->assertEqualsWithDelta([[1, 9], [3, 11]], $result->toArray(), 0.0001);
+    }
+
+    // ========================================================================
+    // Permute Axes on Views Tests
+    // ========================================================================
+
+    public function testViewPermuteAxes(): void
+    {
+        $a = NDArray::array([
+            [[1, 2], [3, 4], [5, 6]],
+            [[7, 8], [9, 10], [11, 12]]
+        ], DType::Float64);
+        $view = $a->slice(['0:1', ':', ':']); // First row only
+        $result = $view->permuteAxes([1, 0, 2]);
+
+        // Original view shape: [1, 3, 2]
+        // After permute: [3, 1, 2]
+        $this->assertSame([3, 1, 2], $result->shape());
+        $this->assertEqualsWithDelta([
+            [[1, 2]],
+            [[3, 4]],
+            [[5, 6]]
+        ], $result->toArray(), 0.0001);
+    }
+
+    public function testViewPermuteAxesThenFlatten(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
+        $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
+        $result = $view->permuteAxes([1, 0])->flatten();
+
+        $this->assertSame([6], $result->shape());
+        $this->assertEqualsWithDelta([1, 4, 2, 5, 3, 6], $result->toArray(), 0.0001);
+    }
+
+    public function testStridedViewPermuteAxes(): void
+    {
+        $a = NDArray::array([
+            [[1, 2], [3, 4]],
+            [[5, 6], [7, 8]],
+            [[9, 10], [11, 12]],
+            [[13, 14], [15, 16]]
+        ], DType::Float64);
+        $view = $a->slice(['::2', ':', ':']); // [[[1,2],[3,4]], [[9,10],[11,12]]]
+        $result = $view->permuteAxes([2, 0, 1]);
+
+        // Original view shape: [2, 2, 2]
+        // After permute [2, 0, 1]: [2, 2, 2]
+        // permuteAxes([2,0,1]): new axis 0 = old axis 2, new axis 1 = old axis 0, new axis 2 = old axis 1
+        $this->assertSame([2, 2, 2], $result->shape());
+        $this->assertEqualsWithDelta([
+            [[1, 3], [9, 11]],
+            [[2, 4], [10, 12]]
+        ], $result->toArray(), 0.0001);
+    }
+
+    public function testViewPermuteAxesChaining(): void
+    {
+        $a = NDArray::array([
+            [[1, 2, 3], [4, 5, 6]],
+            [[7, 8, 9], [10, 11, 12]]
+        ], DType::Float64);
+        $view = $a->slice(['0:1', ':', '1:3']); // [[[2, 3], [5, 6]]]
+
+        // Chain: permute -> insertAxis -> flatten
+        $result = $view
+            ->permuteAxes([2, 1, 0])
+            ->insertAxis(0)
+            ->flatten();
+
+        $this->assertSame([4], $result->shape());
+        // After permute [2,1,0]: [[[2],[5]],[[3],[6]]], after insertAxis and flatten
+        $this->assertEqualsWithDelta([2, 5, 3, 6], $result->toArray(), 0.0001);
+    }
+
+    public function testViewPermuteAxesWithSqueeze(): void
+    {
+        $a = NDArray::array([[[[1, 2]], [[3, 4]]], [[[5, 6]], [[7, 8]]]], DType::Float64);
+        $view = $a->slice(['0:1', ':', ':', ':']); // [[[[1,2]],[[3,4]]]]
+        $permuted = $view->permuteAxes([3, 2, 1, 0]);
+        $squeezed = $permuted->squeeze();
+
+        // Shape after permute: [2, 1, 2, 1]
+        // After squeeze: [2, 2]
+        $this->assertSame([2, 2], $squeezed->shape());
     }
 }
