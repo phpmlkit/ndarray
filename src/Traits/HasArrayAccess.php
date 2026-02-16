@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NDArray\Traits;
 
 use NDArray\Exceptions\IndexException;
+use NDArray\NDArray;
 
 /**
  * ArrayAccess interface implementation for bracket-style element access.
@@ -81,6 +82,11 @@ trait HasArrayAccess
      */
     public function offsetSet(mixed $offset, mixed $value): void
     {
+        // Convert PHP arrays to NDArray with matching dtype
+        if (is_array($value)) {
+            $value = NDArray::array($value, $this->dtype);
+        }
+
         if ($this->isSlice($offset)) {
             $view = $this->slice($this->parseSelectors($offset));
             $view->assign($value);
@@ -123,7 +129,7 @@ trait HasArrayAccess
      */
     private function isSlice(mixed $offset): bool
     {
-        return is_string($offset) && str_contains($offset, ':');
+        return is_string($offset) && (str_contains($offset, ':') || str_contains($offset, '...'));
     }
 
     /**
@@ -161,17 +167,19 @@ trait HasArrayAccess
     /**
      * Parse a slice string into selectors (int or string).
      *
-     * @param string $offset e.g. "0:5, 1"
+     * @param string $offset e.g. "0:5, 1" or "..., 1:3"
      * @return array<int|string>
      */
     private function parseSelectors(string $offset): array
     {
         $parts = explode(',', $offset);
         $selectors = [];
-        
+
         foreach ($parts as $part) {
             $part = trim($part);
-            if (str_contains($part, ':')) {
+            if ($part === '...' || $part === '…') {
+                $selectors[] = '...';
+            } elseif (str_contains($part, ':')) {
                 $selectors[] = $part;
             } elseif (is_numeric($part)) {
                 $selectors[] = (int)$part;

@@ -15,30 +15,22 @@ use PHPUnit\Framework\TestCase;
  */
 final class SlicingTest extends TestCase
 {
-    // =========================================================================
-    // Basic Slicing
-    // =========================================================================
-
     public function testSlice1D(): void
     {
-        $arr = NDArray::arange(0, 10); // [0, 1, ..., 9]
+        $arr = NDArray::arange(0, 10);
 
-        // 0:5
         $slice = $arr->slice(['0:5']);
         $this->assertSame([5], $slice->shape());
         $this->assertSame([0, 1, 2, 3, 4], $slice->toArray());
 
-        // 2: (to end)
         $slice = $arr->slice(['2:']);
         $this->assertSame([8], $slice->shape());
         $this->assertSame([2, 3, 4, 5, 6, 7, 8, 9], $slice->toArray());
 
-        // :3 (from start)
         $slice = $arr->slice([':3']);
         $this->assertSame([3], $slice->shape());
         $this->assertSame([0, 1, 2], $slice->toArray());
 
-        // : (all)
         $slice = $arr->slice([':']);
         $this->assertSame([10], $slice->shape());
         $this->assertSame($arr->toArray(), $slice->toArray());
@@ -50,9 +42,8 @@ final class SlicingTest extends TestCase
             [1, 2, 3, 4],
             [5, 6, 7, 8],
             [9, 10, 11, 12],
-        ]); // Shape [3, 4]
+        ]);
 
-        // Row slice 0:2 -> rows 0, 1
         $slice = $arr->slice(['0:2']);
         $this->assertSame([2, 4], $slice->shape());
         $this->assertSame([
@@ -60,7 +51,6 @@ final class SlicingTest extends TestCase
             [5, 6, 7, 8],
         ], $slice->toArray());
 
-        // Col slice :2 -> cols 0, 1 for all rows
         $slice = $arr->slice([':', '0:2']);
         $this->assertSame([3, 2], $slice->shape());
         $this->assertSame([
@@ -69,7 +59,6 @@ final class SlicingTest extends TestCase
             [9, 10],
         ], $slice->toArray());
 
-        // Sub-block 1:3, 1:3
         $slice = $arr->slice(['1:3', '1:3']);
         $this->assertSame([2, 2], $slice->shape());
         $this->assertSame([
@@ -78,25 +67,18 @@ final class SlicingTest extends TestCase
         ], $slice->toArray());
     }
 
-    // =========================================================================
-    // Step Slicing
-    // =========================================================================
-
     public function testSliceStep1D(): void
     {
         $arr = NDArray::arange(0, 10);
 
-        // ::2 (evens)
         $slice = $arr->slice(['::2']);
         $this->assertSame([5], $slice->shape());
         $this->assertSame([0, 2, 4, 6, 8], $slice->toArray());
 
-        // 1::2 (odds)
         $slice = $arr->slice(['1::2']);
         $this->assertSame([5], $slice->shape());
         $this->assertSame([1, 3, 5, 7, 9], $slice->toArray());
 
-        // 1:8:3 (1, 4, 7)
         $slice = $arr->slice(['1:8:3']);
         $this->assertSame([3], $slice->shape());
         $this->assertSame([1, 4, 7], $slice->toArray());
@@ -111,7 +93,6 @@ final class SlicingTest extends TestCase
             [13, 14, 15, 16],
         ]);
 
-        // Rows ::2, Cols ::2
         $slice = $arr->slice(['::2', '::2']);
         $this->assertSame([2, 2], $slice->shape());
         $this->assertSame([
@@ -119,10 +100,6 @@ final class SlicingTest extends TestCase
             [9, 11],
         ], $slice->toArray());
     }
-
-    // =========================================================================
-    // Mixed Indexing (Int + Slice)
-    // =========================================================================
 
     public function testMixedIndexing(): void
     {
@@ -132,31 +109,23 @@ final class SlicingTest extends TestCase
             [7, 8, 9],
         ]);
 
-        // Row 1, Cols 0:2
         $slice = $arr->slice([1, '0:2']);
         $this->assertSame([2], $slice->shape());
         $this->assertSame([4, 5], $slice->toArray());
 
-        // Rows 0:2, Col 1
         $slice = $arr->slice(['0:2', 1]);
         $this->assertSame([2], $slice->shape());
         $this->assertSame([2, 5], $slice->toArray());
     }
 
-    // =========================================================================
-    // ArrayAccess Syntax
-    // =========================================================================
-
     public function testArrayAccessSlice(): void
     {
         $arr = NDArray::arange(10);
 
-        // $arr['0:3']
         $slice = $arr['0:3'];
         $this->assertInstanceOf(NDArray::class, $slice);
         $this->assertSame([0, 1, 2], $slice->toArray());
 
-        // $arr['::3']
         $slice = $arr['::3'];
         $this->assertSame([0, 3, 6, 9], $slice->toArray());
     }
@@ -168,44 +137,31 @@ final class SlicingTest extends TestCase
             [4, 5, 6],
         ]);
 
-        // $arr[':, 1'] -> column 1
         $col = $arr[':, 1'];
         $this->assertSame([2], $col->shape());
         $this->assertSame([2, 5], $col->toArray());
 
-        // $arr['0, 1:'] -> row 0, cols 1:
         $sub = $arr['0, 1:'];
         $this->assertSame([2], $sub->shape());
         $this->assertSame([2, 3], $sub->toArray());
     }
 
-    // =========================================================================
-    // Negative Indices
-    // =========================================================================
-
     public function testSliceNegativeIndices(): void
     {
         $arr = NDArray::arange(10);
 
-        // :-1 (all except last)
         $slice = $arr->slice([':-1']);
         $this->assertSame([9], $slice->shape());
         $this->assertSame([0, 1, 2, 3, 4, 5, 6, 7, 8], $slice->toArray());
 
-        // -3: (last 3)
         $slice = $arr->slice(['-3:']);
         $this->assertSame([3], $slice->shape());
         $this->assertSame([7, 8, 9], $slice->toArray());
 
-        // -3:-1
         $slice = $arr->slice(['-3:-1']);
         $this->assertSame([2], $slice->shape());
         $this->assertSame([7, 8], $slice->toArray());
     }
-
-    // =========================================================================
-    // Assignment (assign)
-    // =========================================================================
 
     public function testAssignScalarToSlice(): void
     {
@@ -215,20 +171,19 @@ final class SlicingTest extends TestCase
         $this->assertSame([0.0, 9.0, 9.0, 9.0, 0.0], $arr->toArray());
     }
 
-    public function testAssignArrayToSlice(): void
+    public function testAssignNDArrayToSlice(): void
     {
         $arr = NDArray::zeros([5]);
-        $arr->slice(['1:4'])->assign([10, 20, 30]);
+        $arr->slice(['1:4'])->assign(NDArray::array([10.0, 20.0, 30.0]));
 
         $this->assertSame([0.0, 10.0, 20.0, 30.0, 0.0], $arr->toArray());
     }
 
-    public function testAssignArrayTo2DSlice(): void
+    public function testAssignNDArrayTo2DSlice(): void
     {
         $arr = NDArray::zeros([3, 3]);
-        // Set center to 1
         $arr->slice(['1:2', '1:2'])->assign(1);
-        
+
         $expected = [
             [0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0],
@@ -237,7 +192,7 @@ final class SlicingTest extends TestCase
         $this->assertSame($expected, $arr->toArray());
 
         // Set top-left 2x2 to [[1,2],[3,4]]
-        $arr->slice([':2', ':2'])->assign([[1, 2], [3, 4]]);
+        $arr->slice([':2', ':2'])->assign(NDArray::array([[1.0, 2.0], [3.0, 4.0]]));
         $expected2 = [
             [1.0, 2.0, 0.0],
             [3.0, 4.0, 0.0],
@@ -249,20 +204,20 @@ final class SlicingTest extends TestCase
     public function testArrayAccessSliceAssignment(): void
     {
         $arr = NDArray::zeros([5], DType::Int32);
-        
+
         $arr['1:3'] = 5;
         $this->assertSame([0, 5, 5, 0, 0], $arr->toArray());
 
-        $arr['3:'] = [8, 9];
+        $arr['3:'] = NDArray::array([8, 9], DType::Int32);
         $this->assertSame([0, 5, 5, 8, 9], $arr->toArray());
     }
 
     public function testArrayAccessPartialAssignment(): void
     {
         $arr = NDArray::zeros([2, 2], DType::Int32);
-        
-        $arr[0] = [1, 2];
-        
+
+        $arr[0] = NDArray::array([1, 2], DType::Int32);
+
         $this->assertSame([
             [1, 2],
             [0, 0],
@@ -270,11 +225,142 @@ final class SlicingTest extends TestCase
 
         // $arr[1] = 9 (scalar broadcast)
         $arr[1] = 9;
-        
+
         $this->assertSame([
             [1, 2],
             [9, 9],
         ], $arr->toArray());
+    }
+
+    public function testEllipsisBasic(): void
+    {
+        $arr = NDArray::array([
+            [[1, 2, 3], [4, 5, 6]],
+            [[7, 8, 9], [10, 11, 12]],
+        ]); // Shape [2, 2, 3]
+
+        // ... should expand to cover all dimensions (same as arr[:])
+        $slice = $arr->slice(['...']);
+        $this->assertSame([2, 2, 3], $slice->shape());
+        $this->assertSame($arr->toArray(), $slice->toArray());
+    }
+
+    public function testEllipsisAtEnd(): void
+    {
+        $arr = NDArray::array([
+            [[1, 2, 3], [4, 5, 6]],
+            [[7, 8, 9], [10, 11, 12]],
+        ]); // Shape [2, 2, 3]
+
+        // 0, ... -> first element of first dim, all remaining dims
+        $slice = $arr->slice([0, '...']);
+        $this->assertSame([2, 3], $slice->shape());
+        $this->assertSame([[1, 2, 3], [4, 5, 6]], $slice->toArray());
+    }
+
+    public function testEllipsisAtBeginning(): void
+    {
+        $arr = NDArray::array([
+            [[1, 2, 3], [4, 5, 6]],
+            [[7, 8, 9], [10, 11, 12]],
+        ]); // Shape [2, 2, 3]
+
+        // ..., 1:2 -> all leading dims, then slice last dim
+        $slice = $arr->slice(['...', '1:2']);
+        $this->assertSame([2, 2, 1], $slice->shape());
+        $this->assertSame([[[2], [5]], [[8], [11]]], $slice->toArray());
+    }
+
+    public function testEllipsisInMiddle(): void
+    {
+        $arr = NDArray::zeros([2, 3, 4, 5]); // 4D array
+
+        // 0, ..., 1:3 -> first element of first dim, all middle dims, slice last dim
+        $slice = $arr->slice([0, '...', '1:3']);
+        $this->assertSame([3, 4, 2], $slice->shape());
+    }
+
+    public function testEllipsisWithMultipleSelectors(): void
+    {
+        $arr = NDArray::array([
+            [[1, 2, 3], [4, 5, 6]],
+            [[7, 8, 9], [10, 11, 12]],
+        ]);
+
+        // 0, ..., 1 -> first element of first dim, all middle dims, second element of last dim
+        $slice = $arr->slice([0, '...', 1]);
+        $this->assertSame([2], $slice->shape());
+        $this->assertSame([2, 5], $slice->toArray());
+    }
+
+    public function testEllipsisInArrayAccess(): void
+    {
+        $arr = NDArray::array([
+            [[1, 2, 3], [4, 5, 6]],
+            [[7, 8, 9], [10, 11, 12]],
+        ]);
+
+        // Test via ArrayAccess string syntax
+        $slice = $arr['0, ..., 1:'];
+        $this->assertSame([2, 2], $slice->shape());
+        $this->assertSame([[2, 3], [5, 6]], $slice->toArray());
+    }
+
+    public function testEllipsisWithStep(): void
+    {
+        $arr = NDArray::array([
+            [[1, 2, 3, 4], [5, 6, 7, 8]],
+            [[9, 10, 11, 12], [13, 14, 15, 16]],
+        ]); // Shape [2, 2, 4]
+
+        // ::2, ..., 0:4:2
+        $slice = $arr->slice(['::2', '...', '0:4:2']);
+        $this->assertSame([1, 2, 2], $slice->shape());
+        $this->assertSame([[[1, 3], [5, 7]]], $slice->toArray());
+    }
+
+    public function testEllipsisMultipleEllipsisThrows(): void
+    {
+        $arr = NDArray::zeros([2, 3, 4]);
+
+        $this->expectException(IndexException::class);
+        $this->expectExceptionMessage('Only one ellipsis');
+
+        $arr->slice(['...', 0, '...']);
+    }
+
+    public function testEllipsisTooManyIndicesThrows(): void
+    {
+        $arr = NDArray::zeros([2, 3, 4]);
+
+        $this->expectException(IndexException::class);
+        $this->expectExceptionMessage('Too many indices');
+
+        // 5 explicit indices + ellipsis = way too many
+        $arr->slice([0, 0, 0, 0, 0, '...']);
+    }
+
+    public function testEllipsis4DArray(): void
+    {
+        $arr = NDArray::arange(120)->reshape([2, 3, 4, 5]); // 2x3x4x5
+
+        // ..., 2:4 should select last two elements of last dimension for all
+        $slice = $arr->slice(['...', '2:4']);
+        $this->assertSame([2, 3, 4, 2], $slice->shape());
+    }
+
+    public function testEllipsisAssignment(): void
+    {
+        $arr = NDArray::zeros([2, 2, 3]);
+
+        // Assign scalar through ellipsis slice
+        $arr->slice([0, '...'])->assign(5);
+
+        $expected = [
+            [[5.0, 5.0, 5.0], [5.0, 5.0, 5.0]],
+            [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+        ];
+        $this->assertSame($expected, $arr->toArray());
     }
 
     // =========================================================================
@@ -284,30 +370,40 @@ final class SlicingTest extends TestCase
     public function testAssignShapeMismatchThrows(): void
     {
         $arr = NDArray::zeros([5]);
-        
+
         $this->expectException(ShapeException::class);
         $this->expectExceptionMessage('Cannot assign array of size 2 to view of size 3');
-        
-        $arr->slice(['0:3'])->assign([1, 2]);
+
+        $arr->slice(['0:3'])->assign(NDArray::array([1, 2]));
     }
 
     public function testSliceStepZeroThrows(): void
     {
         $arr = NDArray::zeros([5]);
-        
+
         $this->expectException(IndexException::class);
         $this->expectExceptionMessage('step cannot be zero');
-        
+
         $arr->slice(['::0']);
     }
 
     public function testInvalidSelectorThrows(): void
     {
         $arr = NDArray::zeros([5]);
-        
+
         $this->expectException(IndexException::class);
         $this->expectExceptionMessage('Invalid slice component');
-        
+
         $arr['invalid:selector'];
+    }
+
+    public function testAssignPHPArrayThrows(): void
+    {
+        $arr = NDArray::zeros([5]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Assignment value must be scalar or NDArray');
+
+        $arr->slice(['0:3'])->assign([1, 2, 3]);
     }
 }

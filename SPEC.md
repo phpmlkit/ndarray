@@ -118,7 +118,7 @@ The primary array type representing N-dimensional arrays.
 - [x] 4.2.2: Step slicing: `$array->slice(['::2'])`
 - [x] 4.2.3: Multi-dimensional slicing: `$array->slice([':', '0:5'])`
 - [x] 4.2.4: Negative indices in slices: `$array->slice(['-5:'])`
-- [ ] 4.2.5: Ellipsis support: `$array->slice(['...', 0])`
+- [x] 4.2.5: Ellipsis support: `$array->slice(['...', 0])`
 
 ### 4.3 Advanced Indexing (REQ-4.3)
 **Priority**: MEDIUM

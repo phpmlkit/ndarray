@@ -30,13 +30,40 @@ trait HasSlicing
     public function slice(array $selection): self
     {
         $count = count($selection);
+        
+        $ellipsisPos = null;
+        foreach ($selection as $i => $sel) {
+            if ($sel === '...' || $sel === '…') {
+                if ($ellipsisPos !== null) {
+                    throw new IndexException('Only one ellipsis (...) allowed per slice');
+                }
+                $ellipsisPos = $i;
+            }
+        }
+        
+        if ($ellipsisPos !== null) {
+            $nonEllipsisCount = $count - 1;
+            $ellipsisDims = $this->ndim - $nonEllipsisCount;
+            
+            if ($ellipsisDims < 0) {
+                throw new IndexException(
+                    "Too many indices for slice: ellipsis expansion would exceed {$this->ndim} dimensions"
+                );
+            }
+            
+            $before = array_slice($selection, 0, $ellipsisPos);
+            $ellipsisFill = array_fill(0, $ellipsisDims, ':');
+            $after = array_slice($selection, $ellipsisPos + 1);
+            $selection = array_merge($before, $ellipsisFill, $after);
+            $count = count($selection);
+        }
+        
         if ($count > $this->ndim) {
             throw new IndexException(
                 "Too many indices for slice: got $count, expected <= {$this->ndim}"
             );
         }
 
-        // Pad selection with full slices for missing dimensions
         if ($count < $this->ndim) {
             $selection = array_merge(
                 $selection,
@@ -53,7 +80,6 @@ trait HasSlicing
             $stride = $this->strides[$dim];
 
             if (is_int($selector)) {
-                // Integer index: reduces dimension
                 if ($selector < 0) {
                     $selector += $dimSize;
                 }
@@ -64,7 +90,6 @@ trait HasSlicing
                 }
                 $newOffset += $selector * $stride;
             } elseif (is_string($selector)) {
-                // Slice string: keeps dimension (potentially resized)
                 $slice = Slice::parse($selector);
                 $res = $slice->resolve($dimSize);
 
@@ -78,7 +103,6 @@ trait HasSlicing
             }
         }
 
-        // Determine base: if this is already a view, use its base; otherwise this is the base
         $root = $this->base ?? $this;
 
         return new self(
@@ -110,18 +134,15 @@ trait HasSlicing
             return;
         }
 
-        if (is_array($value)) {
-            $this->assignFromArray($value);
-            return;
-        }
-
         throw new \InvalidArgumentException(
-            "Unsupported value type for assignment: " . get_debug_type($value)
+            "Assignment value must be scalar or NDArray, got " . get_debug_type($value)
         );
     }
 
     /**
-     * Fill the array with a scalar value using efficient Rust backend.
+     * Fill the array with a scalar value.
+     *
+     * @param mixed $value Scalar value
      */
     private function fill(mixed $value): void
     {
@@ -130,7 +151,6 @@ trait HasSlicing
         $cShape = Lib::createCArray('size_t', $this->shape);
         $cStrides = Lib::createCArray('size_t', $this->strides);
 
-        // Create C value of appropriate type
         $cValue = match ($this->dtype) {
             DType::Int8 => $ffi->new('int8_t'),
             DType::Int16 => $ffi->new('int16_t'),
@@ -145,7 +165,6 @@ trait HasSlicing
             DType::Bool => $ffi->new('uint8_t'),
         };
 
-        // Set the value
         if ($this->dtype === DType::Bool) {
             $cValue->cdata = $value ? 1 : 0;
         } else {
@@ -165,7 +184,9 @@ trait HasSlicing
     }
 
     /**
-     * Assign from another NDArray using efficient Rust backend.
+     * Assign values from an NDArray to the current array/view.
+     *
+     * @param NDArray $value Source NDArray
      */
     private function assignFromNDArray(NDArray $value): void
     {
@@ -175,28 +196,16 @@ trait HasSlicing
             );
         }
 
-        // FFI call
         $ffi = Lib::get();
 
         $dstShape = Lib::createCArray('size_t', $this->shape);
         $dstStrides = Lib::createCArray('size_t', $this->strides);
 
-        // If shapes differ but sizes match, we treat source as if reshaped to destination shape
-        // For strict correctness, we pass source shape/strides as is, but our Rust `impl_assign_slice`
-        // assumes it can iterate/zip. If we want flattened assignment, we need to handle that.
-        // But `ndarray` assign requires broadcast compatibility.
-        // If shapes match, great. If not, we might need to reshape the source view temporarily?
-        // Actually, if we just want to copy data in order, we can reshape source to destination shape locally.
-        
         $src = $value;
         if ($src->shape() !== $this->shape) {
-            // Try to reshape source to match destination shape (if size matches, which we checked)
-            // If source is not contiguous, reshape might fail/copy.
-            // But we need compatible shapes for `assign`.
             if ($src->isContiguous()) {
                 $src = $src->reshape($this->shape);
             } else {
-                // If not contiguous, we copy to make it reshape-able
                 $src = $src->copy()->reshape($this->shape);
             }
         }
@@ -217,17 +226,5 @@ trait HasSlicing
         );
 
         Lib::checkStatus($status);
-    }
-
-    /**
-     * Assign from PHP array by converting to temporary NDArray.
-     */
-    private function assignFromArray(array $value): void
-    {
-        // Create temporary array
-        $tmp = NDArray::array($value, $this->dtype);
-        
-        // Use NDArray assignment
-        $this->assignFromNDArray($tmp);
     }
 }
