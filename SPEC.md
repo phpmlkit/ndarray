@@ -210,13 +210,13 @@ The primary array type representing N-dimensional arrays.
 **Priority**: MEDIUM
 
 **Requirements**:
-- [ ] 6.4.1: `NDArray::concatenate($arrays, $axis = 0)` - Join arrays
-- [ ] 6.4.2: `NDArray::stack($arrays, $axis = 0)` - Stack arrays along new axis
-- [ ] 6.4.3: `NDArray::vstack($arrays)` - Vertical stack
-- [ ] 6.4.4: `NDArray::hstack($arrays)` - Horizontal stack
-- [ ] 6.4.5: `$array->split($indices_or_sections, $axis = 0)` - Split array
-- [ ] 6.4.6: `$array->vsplit($indices)` - Vertical split
-- [ ] 6.4.7: `$array->hsplit($indices)` - Horizontal split
+- [x] 6.4.1: `NDArray::concatenate($arrays, $axis = 0)` - Join arrays
+- [x] 6.4.2: `NDArray::stack($arrays, $axis = 0)` - Stack arrays along new axis
+- [x] 6.4.3: `NDArray::vstack($arrays)` - Vertical stack
+- [x] 6.4.4: `NDArray::hstack($arrays)` - Horizontal stack
+- [x] 6.4.5: `$array->split($indices_or_sections, $axis = 0)` - Split array
+- [x] 6.4.6: `$array->vsplit($indices)` - Vertical split
+- [x] 6.4.7: `$array->hsplit($indices)` - Horizontal split
 
 ---
 
@@ -656,4 +656,5 @@ The primary array type representing N-dimensional arrays.
 |---------|------|---------|
 | 1.0 | 2026-02-09 | Initial specification |
 | 1.1 | 2026-02-13 | Marked 91 implemented features with checkboxes; completed Linear Algebra operations (dot, matmul, trace, diagonal); added clamp operation; added ln, ln1p, toDegrees, toRadians, powi, powf math functions |
+| 1.2 | 2026-02-16 | Completed Joining and Splitting (REQ-6.4): concatenate, stack, vstack, hstack, split, vsplit, hsplit; ndim validation for concatenate/stack |
 

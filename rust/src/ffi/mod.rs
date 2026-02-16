@@ -14,6 +14,7 @@ pub mod math;
 pub mod reductions;
 pub mod shape_ops;
 pub mod special;
+pub mod stacking;
 mod types;
 
 pub use types::NdArrayHandle;
@@ -31,3 +32,4 @@ pub use math::*;
 pub use reductions::*;
 pub use shape_ops::*;
 pub use special::*;
+pub use stacking::*;

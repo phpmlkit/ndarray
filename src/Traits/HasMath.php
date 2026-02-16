@@ -597,6 +597,21 @@ trait HasMath
     }
 
     /**
+     * Clip array values to a specified range.
+     * 
+     * Alias for clamp().
+     *
+     * @param float $min Minimum value
+     * @param float $max Maximum value
+     * @return NDArray
+     * @throws \InvalidArgumentException If min > max
+     */
+    public function clip(float|int $min, float|int $max): NDArray
+    {
+        return $this->clamp($min, $max);
+    }
+
+    /**
      * Perform a binary operation with another array.
      *
      * @param string $funcName FFI function name

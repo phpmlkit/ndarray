@@ -17,6 +17,7 @@ use NDArray\Traits\HasMath;
 use NDArray\Traits\HasReductions;
 use NDArray\Traits\HasShapeOps;
 use NDArray\Traits\HasSlicing;
+use NDArray\Traits\HasStacking;
 use NDArray\Traits\HasStringable;
 
 /**
@@ -38,6 +39,7 @@ class NDArray implements ArrayAccess
     use HasMath;
     use HasReductions;
     use HasShapeOps;
+    use HasStacking;
     use HasComparison;
     use HasStringable;
     use HasSlicing;

@@ -223,4 +223,12 @@ interface Bindings
     public function ndarray_matmul(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle): int;
     public function ndarray_diagonal(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
     public function ndarray_trace(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
+
+    // =========================================================================
+    // Stacking (Joining and Splitting)
+    // =========================================================================
+
+    public function ndarray_concatenate(CData $handles, CData $offsets, CData $shapes, CData $strides, int $num_arrays, int $ndim, int $axis, CData $out_handle): int;
+    public function ndarray_stack(CData $handles, CData $offsets, CData $shapes, CData $strides, int $num_arrays, int $ndim, int $axis, CData $out_handle): int;
+    public function ndarray_split(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $indices, int $num_indices, CData $out_offsets, CData $out_shapes, CData $out_strides): int;
 }
