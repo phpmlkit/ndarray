@@ -239,12 +239,12 @@ The primary array type representing N-dimensional arrays.
 **Priority**: HIGH
 
 **Requirements**:
-- [ ] 7.2.1: Equal: `$a == $b`, `$a->eq($b)`
-- [ ] 7.2.2: Not equal: `$a != $b`, `$a->ne($b)`
-- [ ] 7.2.3: Greater: `$a > $b`, `$a->gt($b)`
-- [ ] 7.2.4: Greater or equal: `$a >= $b`, `$a->gte($b)`
-- [ ] 7.2.5: Less: `$a < $b`, `$a->lt($b)`
-- [ ] 7.2.6: Less or equal: `$a <= $b`, `$a->lte($b)`
+- [x] 7.2.1: Equal: `$a == $b`, `$a->eq($b)`
+- [x] 7.2.2: Not equal: `$a != $b`, `$a->ne($b)`
+- [x] 7.2.3: Greater: `$a > $b`, `$a->gt($b)`
+- [x] 7.2.4: Greater or equal: `$a >= $b`, `$a->gte($b)`
+- [x] 7.2.5: Less: `$a < $b`, `$a->lt($b)`
+- [x] 7.2.6: Less or equal: `$a <= $b`, `$a->lte($b)`
 
 ### 7.3 Element-wise Mathematical Functions (REQ-7.3)
 **Priority**: HIGH

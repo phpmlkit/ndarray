@@ -267,3 +267,30 @@ define_extract_view_as!(
         (extract_view_f64, |x: f64| if x != 0.0 { 1 } else { 0 }),
     ]
 );
+
+/// Compute the broadcast shape for two arrays using NumPy-compatible rules.
+///
+/// Compares shapes from the right; dimensions are compatible if equal or one is 1.
+/// Returns `None` if shapes are incompatible.
+pub fn broadcast_shape(shape_a: &[usize], shape_b: &[usize]) -> Option<Vec<usize>> {
+    let na = shape_a.len();
+    let nb = shape_b.len();
+    let ndim = na.max(nb);
+    let mut out = vec![0; ndim];
+    for i in 0..ndim {
+        let ia = na as isize - ndim as isize + i as isize;
+        let ib = nb as isize - ndim as isize + i as isize;
+        let dim_a = if ia >= 0 { shape_a[ia as usize] } else { 1 };
+        let dim_b = if ib >= 0 { shape_b[ib as usize] } else { 1 };
+        out[i] = if dim_a == dim_b {
+            dim_a
+        } else if dim_a == 1 {
+            dim_b
+        } else if dim_b == 1 {
+            dim_a
+        } else {
+            return None;
+        };
+    }
+    Some(out)
+}

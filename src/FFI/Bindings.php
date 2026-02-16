@@ -83,6 +83,23 @@ interface Bindings
     public function ndarray_hypot(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $b, CData $out_handle): int;
 
     // =========================================================================
+    // Comparison Operations
+    // =========================================================================
+
+    public function ndarray_eq(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
+    public function ndarray_eq_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
+    public function ndarray_ne(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
+    public function ndarray_ne_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
+    public function ndarray_gt(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
+    public function ndarray_gt_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
+    public function ndarray_gte(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
+    public function ndarray_gte_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
+    public function ndarray_lt(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
+    public function ndarray_lt_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
+    public function ndarray_lte(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
+    public function ndarray_lte_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
+
+    // =========================================================================
     // Bitwise Operations
     // =========================================================================
 

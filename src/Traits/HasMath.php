@@ -27,7 +27,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_add', $other);
         }
-        return $this->scalarOp('ndarray_add_scalar', $other);
+        return $this->scalarOp('ndarray_add_scalar', null, $other);
     }
 
     /**
@@ -41,7 +41,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_sub', $other);
         }
-        return $this->scalarOp('ndarray_sub_scalar', $other);
+        return $this->scalarOp('ndarray_sub_scalar', null, $other);
     }
 
     /**
@@ -55,7 +55,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_mul', $other);
         }
-        return $this->scalarOp('ndarray_mul_scalar', $other);
+        return $this->scalarOp('ndarray_mul_scalar', null, $other);
     }
 
     /**
@@ -69,7 +69,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_div', $other);
         }
-        return $this->scalarOp('ndarray_div_scalar', $other);
+        return $this->scalarOp('ndarray_div_scalar', null, $other);
     }
 
     /**
@@ -83,10 +83,10 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_rem', $other);
         }
-        return $this->scalarOp('ndarray_rem_scalar', $other);
+        return $this->scalarOp('ndarray_rem_scalar', null, $other);
     }
 
-  /**
+    /**
      * Compute modulo with another array or scalar.
      * 
      * Alias for rem().
@@ -99,7 +99,91 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_rem', $other);
         }
-        return $this->scalarOp('ndarray_rem_scalar', $other);
+        return $this->scalarOp('ndarray_rem_scalar', null, $other);
+    }
+
+    /**
+     * Element-wise equal comparison. Returns Bool array.
+     *
+     * @param NDArray|float|int $other Array or scalar to compare
+     * @return NDArray Bool array
+     */
+    public function eq(NDArray|float|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_eq', $other, DType::Bool);
+        }
+        return $this->scalarOp('ndarray_eq_scalar', DType::Bool, $other);
+    }
+
+    /**
+     * Element-wise not-equal comparison. Returns Bool array.
+     *
+     * @param NDArray|float|int $other Array or scalar to compare
+     * @return NDArray Bool array
+     */
+    public function ne(NDArray|float|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_ne', $other, DType::Bool);
+        }
+        return $this->scalarOp('ndarray_ne_scalar', DType::Bool, $other);
+    }
+
+    /**
+     * Element-wise greater-than comparison. Returns Bool array.
+     *
+     * @param NDArray|float|int $other Array or scalar to compare
+     * @return NDArray Bool array
+     */
+    public function gt(NDArray|float|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_gt', $other, DType::Bool);
+        }
+        return $this->scalarOp('ndarray_gt_scalar', DType::Bool, $other);
+    }
+
+    /**
+     * Element-wise greater-or-equal comparison. Returns Bool array.
+     *
+     * @param NDArray|float|int $other Array or scalar to compare
+     * @return NDArray Bool array
+     */
+    public function gte(NDArray|float|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_gte', $other, DType::Bool);
+        }
+        return $this->scalarOp('ndarray_gte_scalar', DType::Bool, $other);
+    }
+
+    /**
+     * Element-wise less-than comparison. Returns Bool array.
+     *
+     * @param NDArray|float|int $other Array or scalar to compare
+     * @return NDArray Bool array
+     */
+    public function lt(NDArray|float|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_lt', $other, DType::Bool);
+        }
+        return $this->scalarOp('ndarray_lt_scalar', DType::Bool, $other);
+    }
+
+    /**
+     * Element-wise less-or-equal comparison. Returns Bool array.
+     *
+     * @param NDArray|float|int $other Array or scalar to compare
+     * @return NDArray Bool array
+     */
+    public function lte(NDArray|float|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_lte', $other, DType::Bool);
+        }
+        return $this->scalarOp('ndarray_lte_scalar', DType::Bool, $other);
     }
 
     /**
@@ -397,7 +481,7 @@ trait HasMath
      */
     public function powi(int $exp): NDArray
     {
-        return $this->scalarOp('ndarray_powi', $exp);
+        return $this->scalarOp('ndarray_powi', null, $exp);
     }
 
     /**
@@ -408,7 +492,7 @@ trait HasMath
      */
     public function powf(float $exp): NDArray
     {
-        return $this->scalarOp('ndarray_powf', $exp);
+        return $this->scalarOp('ndarray_powf', null, $exp);
     }
 
     /**
@@ -419,7 +503,7 @@ trait HasMath
      */
     public function hypot(float $other): NDArray
     {
-        return $this->scalarOp('ndarray_hypot', $other);
+        return $this->scalarOp('ndarray_hypot', null, $other);
     }
 
     /**
@@ -433,7 +517,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_bitand', $other);
         }
-        return $this->scalarOp('ndarray_bitand_scalar', $other);
+        return $this->scalarOp('ndarray_bitand_scalar', null, $other);
     }
 
     /**
@@ -447,7 +531,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_bitor', $other);
         }
-        return $this->scalarOp('ndarray_bitor_scalar', $other);
+        return $this->scalarOp('ndarray_bitor_scalar', null, $other);
     }
 
     /**
@@ -461,7 +545,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_bitxor', $other);
         }
-        return $this->scalarOp('ndarray_bitxor_scalar', $other);
+        return $this->scalarOp('ndarray_bitxor_scalar', null, $other);
     }
 
     /**
@@ -475,7 +559,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_left_shift', $other);
         }
-        return $this->scalarOp('ndarray_left_shift_scalar', $other);
+        return $this->scalarOp('ndarray_left_shift_scalar', null, $other);
     }
 
     /**
@@ -489,7 +573,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_right_shift', $other);
         }
-        return $this->scalarOp('ndarray_right_shift_scalar', $other);
+        return $this->scalarOp('ndarray_right_shift_scalar', null, $other);
     }
 
     /**
@@ -509,7 +593,7 @@ trait HasMath
             throw new \InvalidArgumentException("Clamp requires min <= max");
         }
 
-        return $this->scalarOp('ndarray_clamp', $min, $max);
+        return $this->scalarOp('ndarray_clamp', null, $min, $max);
     }
 
     /**
@@ -517,9 +601,10 @@ trait HasMath
      *
      * @param string $funcName FFI function name
      * @param NDArray $other Other array
+     * @param DType|null $outDtype Output dtype; if null, uses DType::promote of inputs
      * @return NDArray
      */
-    private function binaryOp(string $funcName, NDArray $other): NDArray
+    private function binaryOp(string $funcName, NDArray $other, ?DType $outDtype = null): NDArray
     {
         $ffi = Lib::get();
         $outHandle = $ffi->new("struct NdArrayHandle*");
@@ -552,7 +637,7 @@ trait HasMath
         $ndim = $outNdim->cdata;
         $outShape = Lib::extractShapeFromPointer($outShapePtr, $ndim);
 
-        $outDtype = DType::promote($this->dtype, $other->dtype);
+        $outDtype ??= DType::promote($this->dtype, $other->dtype);
 
         return new NDArray($outHandle, $outShape, $outDtype);
     }
@@ -561,10 +646,11 @@ trait HasMath
      * Perform a scalar operation.
      *
      * @param string $funcName FFI function name
+     * @param DType|null $outDtype Output dtype; if null, preserves input dtype
      * @param float|int ...$scalars Scalar values (variadic for operations like clamp)
      * @return NDArray
      */
-    private function scalarOp(string $funcName, float|int ...$scalars): NDArray
+    private function scalarOp(string $funcName, ?DType $outDtype = null, float|int ...$scalars): NDArray
     {
         $ffi = Lib::get();
         $outHandle = $ffi->new("struct NdArrayHandle*");
@@ -586,7 +672,9 @@ trait HasMath
 
         Lib::checkStatus($status);
 
-        return new NDArray($outHandle, $this->shape, $this->dtype);
+        $outDtype ??= $this->dtype;
+
+        return new NDArray($outHandle, $this->shape, $outDtype);
     }
 
     /**
