@@ -411,49 +411,4 @@ final class ReductionsTest extends TestCase
         $this->assertEqualsWithDelta([[3, 7], [11, 15]], $result->toArray(), 0.0001);
     }
 
-    // =========================================================================
-    // Static Method Tests
-    // =========================================================================
-
-    public function testStaticSumArray(): void
-    {
-        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = NDArray::sumArray($a);
-        $this->assertEquals(21.0, $result);
-    }
-
-    public function testStaticMeanArray(): void
-    {
-        $a = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
-        $result = NDArray::meanArray($a);
-        $this->assertEqualsWithDelta(3.0, $result, 0.0001);
-    }
-
-    public function testStaticMinArray(): void
-    {
-        $a = NDArray::array([5, 2, 8, 1, 9], DType::Float64);
-        $result = NDArray::minArray($a);
-        $this->assertEquals(1.0, $result);
-    }
-
-    public function testStaticMaxArray(): void
-    {
-        $a = NDArray::array([5, 2, 8, 1, 9], DType::Float64);
-        $result = NDArray::maxArray($a);
-        $this->assertEquals(9.0, $result);
-    }
-
-    public function testStaticCumsumArray(): void
-    {
-        $a = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
-        $result = NDArray::cumsumArray($a);
-        $this->assertEqualsWithDelta([1, 3, 6, 10, 15], $result->toArray(), 0.0001);
-    }
-
-    public function testStaticCumprodArray(): void
-    {
-        $a = NDArray::array([1, 2, 3, 4], DType::Float64);
-        $result = NDArray::cumprodArray($a);
-        $this->assertEqualsWithDelta([1, 2, 6, 24], $result->toArray(), 0.0001);
-    }
 }

@@ -155,27 +155,27 @@ interface Bindings
     // Reductions
     // =========================================================================
 
-    public function ndarray_sum(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
+    public function ndarray_sum(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_value, CData $out_dtype): int;
     public function ndarray_sum_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, CData $out_handle): int;
-    public function ndarray_mean(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
+    public function ndarray_mean(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_value, CData $out_dtype): int;
     public function ndarray_mean_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, CData $out_handle): int;
-    public function ndarray_min(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
+    public function ndarray_min(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_value, CData $out_dtype): int;
     public function ndarray_min_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, CData $out_handle): int;
-    public function ndarray_max(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
+    public function ndarray_max(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_value, CData $out_dtype): int;
     public function ndarray_max_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, CData $out_handle): int;
-    public function ndarray_argmin(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
+    public function ndarray_argmin(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_value, CData $out_dtype): int;
     public function ndarray_argmin_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, CData $out_handle): int;
-    public function ndarray_argmax(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
+    public function ndarray_argmax(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_value, CData $out_dtype): int;
     public function ndarray_argmax_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, CData $out_handle): int;
-    public function ndarray_product(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
+    public function ndarray_product(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_value, CData $out_dtype): int;
     public function ndarray_product_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, CData $out_handle): int;
     public function ndarray_cumsum(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
     public function ndarray_cumsum_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $out_handle): int;
     public function ndarray_cumprod(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
     public function ndarray_cumprod_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $out_handle): int;
-    public function ndarray_var(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, float $ddof, CData $out_handle): int;
+    public function ndarray_var(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, float $ddof, CData $out_value, CData $out_dtype): int;
     public function ndarray_var_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, float $ddof, CData $out_handle): int;
-    public function ndarray_std(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, float $ddof, CData $out_handle): int;
+    public function ndarray_std(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, float $ddof, CData $out_value, CData $out_dtype): int;
     public function ndarray_std_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, float $ddof, CData $out_handle): int;
 
     // =========================================================================

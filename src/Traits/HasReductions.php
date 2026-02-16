@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace NDArray\Traits;
 
+use FFI;
+use FFI\CData;
 use NDArray\DType;
 use NDArray\NDArray;
 use NDArray\FFI\Lib;
@@ -26,10 +28,9 @@ trait HasReductions
     public function sum(?int $axis = null, bool $keepdims = false): NDArray|float
     {
         if ($axis === null) {
-            $result = $this->performScalarReduction('ndarray_sum', $this->dtype);
-            return $this->extractScalarValue($result);
+            return $this->scalarReductionOp('ndarray_sum', $this->dtype);
         }
-        return $this->performAxisReduction('ndarray_sum_axis', $axis, $keepdims, $this->dtype);
+        return $this->axisReductionOp('ndarray_sum_axis', $axis, $keepdims, $this->dtype);
     }
 
     /**
@@ -42,10 +43,9 @@ trait HasReductions
     public function mean(?int $axis = null, bool $keepdims = false): NDArray|float
     {
         if ($axis === null) {
-            $result = $this->performScalarReduction('ndarray_mean', DType::Float64);
-            return $this->extractScalarValue($result);
+            return $this->scalarReductionOp('ndarray_mean', DType::Float64);
         }
-        return $this->performAxisReduction('ndarray_mean_axis', $axis, $keepdims, DType::Float64);
+        return $this->axisReductionOp('ndarray_mean_axis', $axis, $keepdims, DType::Float64);
     }
 
     /**
@@ -58,10 +58,9 @@ trait HasReductions
     public function min(?int $axis = null, bool $keepdims = false): NDArray|float
     {
         if ($axis === null) {
-            $result = $this->performScalarReduction('ndarray_min', $this->dtype);
-            return $this->extractScalarValue($result);
+            return $this->scalarReductionOp('ndarray_min', $this->dtype);
         }
-        return $this->performAxisReduction('ndarray_min_axis', $axis, $keepdims, $this->dtype);
+        return $this->axisReductionOp('ndarray_min_axis', $axis, $keepdims, $this->dtype);
     }
 
     /**
@@ -74,10 +73,9 @@ trait HasReductions
     public function max(?int $axis = null, bool $keepdims = false): NDArray|float
     {
         if ($axis === null) {
-            $result = $this->performScalarReduction('ndarray_max', $this->dtype);
-            return $this->extractScalarValue($result);
+            return $this->scalarReductionOp('ndarray_max', $this->dtype);
         }
-        return $this->performAxisReduction('ndarray_max_axis', $axis, $keepdims, $this->dtype);
+        return $this->axisReductionOp('ndarray_max_axis', $axis, $keepdims, $this->dtype);
     }
 
     /**
@@ -90,10 +88,9 @@ trait HasReductions
     public function argmin(?int $axis = null, bool $keepdims = false): NDArray|int
     {
         if ($axis === null) {
-            $result = $this->performScalarReduction('ndarray_argmin', DType::Int64);
-            return (int) $this->extractScalarValue($result);
+            return (int) $this->scalarReductionOp('ndarray_argmin', DType::Int64);
         }
-        return $this->performAxisReduction('ndarray_argmin_axis', $axis, $keepdims, DType::Int64);
+        return $this->axisReductionOp('ndarray_argmin_axis', $axis, $keepdims, DType::Int64);
     }
 
     /**
@@ -106,10 +103,9 @@ trait HasReductions
     public function argmax(?int $axis = null, bool $keepdims = false): NDArray|int
     {
         if ($axis === null) {
-            $result = $this->performScalarReduction('ndarray_argmax', DType::Int64);
-            return (int) $this->extractScalarValue($result);
+            return (int) $this->scalarReductionOp('ndarray_argmax', DType::Int64);
         }
-        return $this->performAxisReduction('ndarray_argmax_axis', $axis, $keepdims, DType::Int64);
+        return $this->axisReductionOp('ndarray_argmax_axis', $axis, $keepdims, DType::Int64);
     }
 
     /**
@@ -122,10 +118,9 @@ trait HasReductions
     public function product(?int $axis = null, bool $keepdims = false): NDArray|float
     {
         if ($axis === null) {
-            $result = $this->performScalarReduction('ndarray_product', $this->dtype);
-            return $this->extractScalarValue($result);
+            return $this->scalarReductionOp('ndarray_product', $this->dtype);
         }
-        return $this->performAxisReduction('ndarray_product_axis', $axis, $keepdims, $this->dtype);
+        return $this->axisReductionOp('ndarray_product_axis', $axis, $keepdims, $this->dtype);
     }
 
     /**
@@ -137,9 +132,9 @@ trait HasReductions
     public function cumsum(?int $axis = null): NDArray
     {
         if ($axis === null) {
-            return $this->performCumulativeReduction('ndarray_cumsum');
+            return $this->cumulativeReductionOp('ndarray_cumsum');
         }
-        return $this->performCumulativeReductionAxis('ndarray_cumsum_axis', $axis);
+        return $this->cumulativeReductionAxisOp('ndarray_cumsum_axis', $axis);
     }
 
     /**
@@ -151,9 +146,9 @@ trait HasReductions
     public function cumprod(?int $axis = null): NDArray
     {
         if ($axis === null) {
-            return $this->performCumulativeReduction('ndarray_cumprod');
+            return $this->cumulativeReductionOp('ndarray_cumprod');
         }
-        return $this->performCumulativeReductionAxis('ndarray_cumprod_axis', $axis);
+        return $this->cumulativeReductionAxisOp('ndarray_cumprod_axis', $axis);
     }
 
     /**
@@ -167,10 +162,9 @@ trait HasReductions
     public function var(?int $axis = null, int $ddof = 0, bool $keepdims = false): NDArray|float
     {
         if ($axis === null) {
-            $result = $this->performScalarReductionDdof('ndarray_var', DType::Float64, $ddof);
-            return $this->extractScalarValue($result);
+            return $this->scalarReductionDdofOp('ndarray_var', DType::Float64, $ddof);
         }
-        return $this->performAxisReductionDdof('ndarray_var_axis', $axis, $keepdims, DType::Float64, $ddof);
+        return $this->axisReductionDdofOp('ndarray_var_axis', $axis, $keepdims, DType::Float64, $ddof);
     }
 
     /**
@@ -184,36 +178,23 @@ trait HasReductions
     public function std(?int $axis = null, int $ddof = 0, bool $keepdims = false): NDArray|float
     {
         if ($axis === null) {
-            $result = $this->performScalarReductionDdof('ndarray_std', DType::Float64, $ddof);
-            return $this->extractScalarValue($result);
+            return $this->scalarReductionDdofOp('ndarray_std', DType::Float64, $ddof);
         }
-        return $this->performAxisReductionDdof('ndarray_std_axis', $axis, $keepdims, DType::Float64, $ddof);
+        return $this->axisReductionDdofOp('ndarray_std_axis', $axis, $keepdims, DType::Float64, $ddof);
     }
 
     /**
-     * Extract scalar value from a 0-dimensional array.
-     *
-     * @param NDArray $array 0-dimensional array
-     * @return float|int
-     */
-    private function extractScalarValue(NDArray $array): float|int
-    {
-        // For 0-dimensional arrays, toArray() returns the scalar directly
-        $value = $array->toArray();
-        return is_array($value) ? ($value[0] ?? 0) : $value;
-    }
-
-    /**
-     * Perform a scalar reduction and return the resulting 0-dimensional array.
+     * Perform a scalar reduction and return the value directly (no NDArray allocation).
      *
      * @param string $funcName FFI function name
      * @param DType $dtype Expected dtype of result
-     * @return NDArray
+     * @return float|int
      */
-    private function performScalarReduction(string $funcName, DType $dtype): NDArray
+    private function scalarReductionOp(string $funcName, DType $dtype): float|int
     {
         $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $outValue = $ffi->new('double');
+        $outDtype = $ffi->new('uint8_t');
 
         $shape = Lib::createShapeArray($this->shape);
         $strides = Lib::createShapeArray($this->strides);
@@ -224,13 +205,13 @@ trait HasReductions
             $shape,
             $strides,
             count($this->shape),
-            Lib::addr($outHandle)
+            FFI::addr($outValue),
+            Lib::addr($outDtype)
         );
 
         Lib::checkStatus($status);
 
-        // Result is 0-dimensional (scalar)
-        return new NDArray($outHandle, [], $dtype);
+        return $this->interpretScalarFromBuffer($ffi, $outValue, DType::from($outDtype->cdata));
     }
 
     /**
@@ -239,12 +220,13 @@ trait HasReductions
      * @param string $funcName FFI function name
      * @param DType $dtype Expected dtype of result
      * @param int $ddof Delta degrees of freedom
-     * @return NDArray
+     * @return float|int
      */
-    private function performScalarReductionDdof(string $funcName, DType $dtype, int $ddof): NDArray
+    private function scalarReductionDdofOp(string $funcName, DType $dtype, int $ddof): float|int
     {
         $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $outValue = $ffi->new('double');
+        $outDtype = $ffi->new('uint8_t');
 
         $shape = Lib::createShapeArray($this->shape);
         $strides = Lib::createShapeArray($this->strides);
@@ -256,12 +238,32 @@ trait HasReductions
             $strides,
             count($this->shape),
             (float) $ddof,
-            Lib::addr($outHandle)
+            FFI::addr($outValue),
+            Lib::addr($outDtype)
         );
 
         Lib::checkStatus($status);
 
-        return new NDArray($outHandle, [], $dtype);
+        return $this->interpretScalarFromBuffer($ffi, $outValue, DType::from($outDtype->cdata));
+    }
+
+    /**
+     * Interpret 8-byte buffer as scalar based on dtype.
+     *
+     * @param FFI $ffi FFI instance
+     * @param CData $outValue 8-byte buffer (allocated as double)
+     * @param DType $dtype Result dtype from Rust
+     * @return float|int
+     */
+    private function interpretScalarFromBuffer(FFI $ffi, CData $outValue, DType $dtype): float|int
+    {
+        $addr = FFI::addr($outValue);
+        return match ($dtype) {
+            DType::Float64, DType::Float32 => $outValue->cdata,
+            DType::Int64, DType::Int32, DType::Int16, DType::Int8 => $ffi->cast('int64_t*', $addr)[0],
+            DType::Uint64, DType::Uint32, DType::Uint16, DType::Uint8 => $ffi->cast('uint64_t*', $addr)[0],
+            default => 0,
+        };
     }
 
     /**
@@ -273,7 +275,7 @@ trait HasReductions
      * @param DType $dtype Output dtype
      * @return NDArray
      */
-    private function performAxisReduction(string $funcName, int $axis, bool $keepdims, DType $dtype): NDArray
+    private function axisReductionOp(string $funcName, int $axis, bool $keepdims, DType $dtype): NDArray
     {
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
@@ -308,7 +310,7 @@ trait HasReductions
      * @param int $ddof Delta degrees of freedom
      * @return NDArray
      */
-    private function performAxisReductionDdof(string $funcName, int $axis, bool $keepdims, DType $dtype, int $ddof): NDArray
+    private function axisReductionDdofOp(string $funcName, int $axis, bool $keepdims, DType $dtype, int $ddof): NDArray
     {
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
@@ -340,7 +342,7 @@ trait HasReductions
      * @param string $funcName FFI function name (ndarray_cumsum or ndarray_cumprod)
      * @return NDArray
      */
-    private function performCumulativeReduction(string $funcName): NDArray
+    private function cumulativeReductionOp(string $funcName): NDArray
     {
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
@@ -370,7 +372,7 @@ trait HasReductions
      * @param int $axis Axis to reduce along
      * @return NDArray
      */
-    private function performCumulativeReductionAxis(string $funcName, int $axis): NDArray
+    private function cumulativeReductionAxisOp(string $funcName, int $axis): NDArray
     {
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
@@ -413,64 +415,5 @@ trait HasReductions
         }
 
         return array_values(array_filter($shape, fn($i) => $i !== $axis, ARRAY_FILTER_USE_KEY));
-    }
-
-    // =========================================================================
-    // Static Methods
-    // =========================================================================
-
-    public static function sumArray(NDArray $arr, ?int $axis = null, bool $keepdims = false): NDArray|float
-    {
-        return $arr->sum($axis, $keepdims);
-    }
-
-    public static function meanArray(NDArray $arr, ?int $axis = null, bool $keepdims = false): NDArray|float
-    {
-        return $arr->mean($axis, $keepdims);
-    }
-
-    public static function minArray(NDArray $arr, ?int $axis = null, bool $keepdims = false): NDArray|float
-    {
-        return $arr->min($axis, $keepdims);
-    }
-
-    public static function maxArray(NDArray $arr, ?int $axis = null, bool $keepdims = false): NDArray|float
-    {
-        return $arr->max($axis, $keepdims);
-    }
-
-    public static function argminArray(NDArray $arr, ?int $axis = null, bool $keepdims = false): NDArray|int
-    {
-        return $arr->argmin($axis, $keepdims);
-    }
-
-    public static function argmaxArray(NDArray $arr, ?int $axis = null, bool $keepdims = false): NDArray|int
-    {
-        return $arr->argmax($axis, $keepdims);
-    }
-
-    public static function productArray(NDArray $arr, ?int $axis = null, bool $keepdims = false): NDArray|float
-    {
-        return $arr->product($axis, $keepdims);
-    }
-
-    public static function cumsumArray(NDArray $arr, ?int $axis = null): NDArray
-    {
-        return $arr->cumsum($axis);
-    }
-
-    public static function cumprodArray(NDArray $arr, ?int $axis = null): NDArray
-    {
-        return $arr->cumprod($axis);
-    }
-
-    public static function varArray(NDArray $arr, ?int $axis = null, int $ddof = 0, bool $keepdims = false): NDArray|float
-    {
-        return $arr->var($axis, $ddof, $keepdims);
-    }
-
-    public static function stdArray(NDArray $arr, ?int $axis = null, int $ddof = 0, bool $keepdims = false): NDArray|float
-    {
-        return $arr->std($axis, $ddof, $keepdims);
     }
 }

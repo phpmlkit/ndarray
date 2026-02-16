@@ -1,13 +1,15 @@
 //! Scalar mean reduction using ndarray's mean() method.
 
+use std::ffi::c_void;
+
 use crate::core::view_helpers::{
     extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
     extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
-use crate::core::NDArrayWrapper;
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
+use crate::ffi::reductions::helpers::write_scalar;
 use std::slice;
 
 /// Compute the mean of all elements in the array (scalar reduction).
@@ -20,9 +22,10 @@ pub unsafe extern "C" fn ndarray_mean(
     shape: *const usize,
     strides: *const usize,
     ndim: usize,
-    out_handle: *mut *mut NdArrayHandle,
+    out_value: *mut c_void,
+    out_dtype: *mut u8,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() {
+    if handle.is_null() || out_value.is_null() || out_dtype.is_null() || shape.is_null() {
         return ERR_GENERIC;
     }
 
@@ -31,7 +34,6 @@ pub unsafe extern "C" fn ndarray_mean(
         let shape_slice = slice::from_raw_parts(shape, ndim);
         let strides_slice = slice::from_raw_parts(strides, ndim);
 
-        // Match on dtype, extract view, compute mean, and create result wrapper
         let mean_result = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
@@ -119,9 +121,7 @@ pub unsafe extern "C" fn ndarray_mean(
             }
         };
 
-        let result_wrapper = NDArrayWrapper::create_scalar_wrapper(mean_result, DType::Float64);
-        *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
-
+        write_scalar(out_value, out_dtype, mean_result, DType::Float64);
         SUCCESS
     })
 }
