@@ -177,6 +177,22 @@ final class Lib
     }
 
     /**
+     * Extract shape array from FFI output pointer.
+     *
+     * @param CData $shapePtr Pointer to size_t array from FFI
+     * @param int $ndim Number of dimensions
+     * @return array<int> Shape dimensions
+     */
+    public static function extractShapeFromPointer(CData $shapePtr, int $ndim): array
+    {
+        $shape = [];
+        for ($i = 0; $i < $ndim; $i++) {
+            $shape[] = $shapePtr[$i];
+        }
+        return $shape;
+    }
+
+    /**
      * Create a C box of the given type.
      *
      * @param string $type C type (e.g., 'char', 'size_t', 'struct NdArrayHandle*')

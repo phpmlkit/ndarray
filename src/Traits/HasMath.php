@@ -371,14 +371,14 @@ trait HasMath
     }
 
     /**
-     * Compute hypotenuse sqrt(a^2 + b^2) element-wise.
+     * Compute hypotenuse element-wise.
      *
-     * @param NDArray $other Other array
+     * @param float $other Scalar value
      * @return NDArray
      */
-    public function hypot(NDArray $other): NDArray
+    public function hypot(float $other): NDArray
     {
-        return $this->binaryOp('ndarray_hypot', $other);
+        return $this->scalarOp('ndarray_hypot', $other);
     }
 
     /**
@@ -392,6 +392,8 @@ trait HasMath
     {
         $ffi = Lib::get();
         $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outShapePtr = $ffi->new("size_t*");
+        $outNdim = $ffi->new("size_t");
 
         // Get view metadata for both arrays
         $aShape = Lib::createShapeArray($this->shape);
@@ -399,28 +401,27 @@ trait HasMath
         $bShape = Lib::createShapeArray($other->shape);
         $bStrides = Lib::createShapeArray($other->strides);
 
-        // Use the maximum ndim for broadcasting
-        $ndim = max(count($this->shape), count($other->shape));
-
         $status = $ffi->$funcName(
             $this->handle,
             $this->offset,
             $aShape,
             $aStrides,
+            count($this->shape),
             $other->handle,
             $other->offset,
             $bShape,
             $bStrides,
-            $ndim,
-            Lib::addr($outHandle)
+            count($other->shape),
+            Lib::addr($outHandle),
+            Lib::addr($outShapePtr),
+            Lib::addr($outNdim)
         );
 
         Lib::checkStatus($status);
 
-        // Determine output shape based on broadcasting rules
-        $outShape = $this->broadcastShapes($this->shape, $other->shape);
+        $ndim = $outNdim->cdata;
+        $outShape = Lib::extractShapeFromPointer($outShapePtr, $ndim);
 
-        // Determine output dtype via type promotion
         $outDtype = DType::promote($this->dtype, $other->dtype);
 
         return new NDArray($outHandle, $outShape, $outDtype);

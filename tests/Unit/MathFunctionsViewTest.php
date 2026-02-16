@@ -309,15 +309,13 @@ final class MathFunctionsViewTest extends TestCase
 
     public function testHypotOnViews(): void
     {
-        $a = NDArray::array([3, 4, 5, 6, 7, 8], DType::Float64);
-        $b = NDArray::array([4, 3, 12, 5, 24, 10], DType::Float64);
+        $a = NDArray::array([3.0, 4.0, 5.0, 6.0, 7.0, 8.0], DType::Float64);
         $view_a = $a->slice(['0:3']); // [3, 4, 5]
-        $view_b = $b->slice(['0:3']); // [4, 3, 12]
         
-        $result = $view_a->hypot($view_b);
+        $result = $view_a->hypot(4.0);
         
         $this->assertSame([3], $result->shape());
-        $this->assertEqualsWithDelta([5, 5, 13], $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta([5.0, 5.657, 6.403], $result->toArray(), 0.001);
     }
 
     // ========================================================================

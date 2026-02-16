@@ -218,10 +218,9 @@ final class MathFunctionsTest extends TestCase
 
     public function testHypot(): void
     {
-        $a = NDArray::array([3, 5], DType::Float64);
-        $b = NDArray::array([4, 12], DType::Float64);
-        $result = $a->hypot($b);
-        $this->assertEqualsWithDelta([5, 13], $result->toArray(), 0.0001);
+        $a = NDArray::array([3.0, 5.0], DType::Float64);
+        $result = $a->hypot(4.0);
+        $this->assertEqualsWithDelta([5.0, 6.4031], $result->toArray(), 0.0001);
     }
 
     public function testMathOperationsPreserveShape(): void

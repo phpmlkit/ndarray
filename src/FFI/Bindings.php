@@ -71,10 +71,10 @@ interface Bindings
     // =========================================================================
 
     // Binary operations (array-array)
-    public function ndarray_add(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
-    public function ndarray_sub(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
-    public function ndarray_mul(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
-    public function ndarray_div(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_add(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
+    public function ndarray_sub(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
+    public function ndarray_mul(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
+    public function ndarray_div(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
 
     // Binary operations (array-scalar)
     public function ndarray_add_scalar(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $scalar, CData $out_handle): int;
@@ -119,7 +119,7 @@ interface Bindings
     public function ndarray_clamp(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $min_val, float $max_val, CData $out_handle): int;
 
     // Binary math operations
-    public function ndarray_hypot(CData $a, int $a_offset, CData $a_shape, CData $a_strides, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_hypot(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $b, CData $out_handle): int;
 
     // =========================================================================
     // Reductions

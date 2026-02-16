@@ -14,6 +14,7 @@ $b = $a->reshape([1000, 1000])
     ->add($a->reshape([1000, 1000]))
     ->log()
     ->mean(0)
+    ->astype(DType::Int32)
     ->toArray();
 
 dump($b);

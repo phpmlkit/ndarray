@@ -1,31 +1,52 @@
-//! Addition operations.
+//! Optimized addition operation using ndarray's native broadcasting.
+//!
+//! This implementation extracts views as the target type and lets ndarray
+//! handle broadcasting automatically through standard operators.
 
-use crate::core::math_helpers::{
-    binary_op_f32, binary_op_f64, binary_op_i16, binary_op_i32, binary_op_i64, binary_op_i8,
-    binary_op_u16, binary_op_u32, binary_op_u64, binary_op_u8, scalar_op_f32, scalar_op_f64,
-    scalar_op_i16, scalar_op_i32, scalar_op_i64, scalar_op_i8, scalar_op_u16, scalar_op_u32,
-    scalar_op_u64, scalar_op_u8,
+use crate::binary_op_arm;
+use crate::core::view_helpers::{
+    extract_view_as_f32, extract_view_as_f64, extract_view_as_i16, extract_view_as_i32,
+    extract_view_as_i64, extract_view_as_i8, extract_view_as_u16, extract_view_as_u32,
+    extract_view_as_u64, extract_view_as_u8, extract_view_f32, extract_view_f64, extract_view_i16,
+    extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32,
+    extract_view_u64, extract_view_u8,
 };
+use crate::core::ArrayData;
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
+use crate::scalar_op_arm;
+
 use std::slice;
 
-/// Add two arrays element-wise.
+/// Optimized addition with proper broadcasting support.
+///
+/// Uses extract_view_as_* to convert inputs to the promoted dtype,
+/// then performs addition with ndarray's native broadcasting.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_add(
     a: *const NdArrayHandle,
     a_offset: usize,
     a_shape: *const usize,
     a_strides: *const usize,
+    a_ndim: usize,
     b: *const NdArrayHandle,
     b_offset: usize,
     b_shape: *const usize,
     b_strides: *const usize,
-    ndim: usize,
+    b_ndim: usize,
     out: *mut *mut NdArrayHandle,
+    out_shape: *mut *mut usize,
+    out_ndim: *mut usize,
 ) -> i32 {
-    if a.is_null() || b.is_null() || out.is_null() || a_shape.is_null() || b_shape.is_null() {
+    if a.is_null()
+        || b.is_null()
+        || out.is_null()
+        || out_shape.is_null()
+        || out_ndim.is_null()
+        || a_shape.is_null()
+        || b_shape.is_null()
+    {
         return ERR_GENERIC;
     }
 
@@ -33,134 +54,79 @@ pub unsafe extern "C" fn ndarray_add(
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
         let b_wrapper = NdArrayHandle::as_wrapper(b as *mut _);
 
-        let a_shape_slice = slice::from_raw_parts(a_shape, ndim);
-        let b_shape_slice = slice::from_raw_parts(b_shape, ndim);
-        let a_strides_slice = slice::from_raw_parts(a_strides, ndim);
-        let b_strides_slice = slice::from_raw_parts(b_strides, ndim);
+        let a_shape_slice = slice::from_raw_parts(a_shape, a_ndim);
+        let b_shape_slice = slice::from_raw_parts(b_shape, b_ndim);
+        let a_strides_slice = slice::from_raw_parts(a_strides, a_ndim);
+        let b_strides_slice = slice::from_raw_parts(b_strides, b_ndim);
 
         let out_dtype = DType::promote(a_wrapper.dtype, b_wrapper.dtype);
 
-        let result = match out_dtype {
-            DType::Float64 => binary_op_f64(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                b_wrapper,
-                b_offset,
-                b_shape_slice,
-                b_strides_slice,
-                |a, b| a + b,
+        let (result_wrapper, result_shape) = match out_dtype {
+            DType::Float64 => binary_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                b_wrapper, b_offset, b_shape_slice, b_strides_slice,
+                DType::Float64, extract_view_as_f64, ArrayData::Float64, +
             ),
-            DType::Float32 => binary_op_f32(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                b_wrapper,
-                b_offset,
-                b_shape_slice,
-                b_strides_slice,
-                |a, b| a + b,
+            DType::Float32 => binary_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                b_wrapper, b_offset, b_shape_slice, b_strides_slice,
+                DType::Float32, extract_view_as_f32, ArrayData::Float32, +
             ),
-            DType::Int64 => binary_op_i64(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                b_wrapper,
-                b_offset,
-                b_shape_slice,
-                b_strides_slice,
-                |a, b| a + b,
+            DType::Int64 => binary_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                b_wrapper, b_offset, b_shape_slice, b_strides_slice,
+                DType::Int64, extract_view_as_i64, ArrayData::Int64, +
             ),
-            DType::Int32 => binary_op_i32(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                b_wrapper,
-                b_offset,
-                b_shape_slice,
-                b_strides_slice,
-                |a, b| a + b,
+            DType::Int32 => binary_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                b_wrapper, b_offset, b_shape_slice, b_strides_slice,
+                DType::Int32, extract_view_as_i32, ArrayData::Int32, +
             ),
-            DType::Int16 => binary_op_i16(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                b_wrapper,
-                b_offset,
-                b_shape_slice,
-                b_strides_slice,
-                |a, b| a + b,
+            DType::Int16 => binary_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                b_wrapper, b_offset, b_shape_slice, b_strides_slice,
+                DType::Int16, extract_view_as_i16, ArrayData::Int16, +
             ),
-            DType::Int8 => binary_op_i8(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                b_wrapper,
-                b_offset,
-                b_shape_slice,
-                b_strides_slice,
-                |a, b| a + b,
+            DType::Int8 => binary_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                b_wrapper, b_offset, b_shape_slice, b_strides_slice,
+                DType::Int8, extract_view_as_i8, ArrayData::Int8, +
             ),
-            DType::Uint64 => binary_op_u64(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                b_wrapper,
-                b_offset,
-                b_shape_slice,
-                b_strides_slice,
-                |a, b| a + b,
+            DType::Uint64 => binary_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                b_wrapper, b_offset, b_shape_slice, b_strides_slice,
+                DType::Uint64, extract_view_as_u64, ArrayData::Uint64, +
             ),
-            DType::Uint32 => binary_op_u32(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                b_wrapper,
-                b_offset,
-                b_shape_slice,
-                b_strides_slice,
-                |a, b| a + b,
+            DType::Uint32 => binary_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                b_wrapper, b_offset, b_shape_slice, b_strides_slice,
+                DType::Uint32, extract_view_as_u32, ArrayData::Uint32, +
             ),
-            DType::Uint16 => binary_op_u16(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                b_wrapper,
-                b_offset,
-                b_shape_slice,
-                b_strides_slice,
-                |a, b| a + b,
+            DType::Uint16 => binary_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                b_wrapper, b_offset, b_shape_slice, b_strides_slice,
+                DType::Uint16, extract_view_as_u16, ArrayData::Uint16, +
             ),
-            DType::Uint8 => binary_op_u8(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                b_wrapper,
-                b_offset,
-                b_shape_slice,
-                b_strides_slice,
-                |a, b| a + b,
+            DType::Uint8 => binary_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                b_wrapper, b_offset, b_shape_slice, b_strides_slice,
+                DType::Uint8, extract_view_as_u8, ArrayData::Uint8, +
             ),
-            DType::Bool => Err("Addition not supported for Bool type".to_string()),
+            DType::Bool => {
+                crate::error::set_last_error("Addition not supported for Bool type".to_string());
+                return ERR_GENERIC;
+            }
         };
 
-        match result {
-            Ok(wrapper) => {
-                *out = NdArrayHandle::from_wrapper(Box::new(wrapper));
-                SUCCESS
-            }
-            Err(_) => ERR_GENERIC,
-        }
+        let ndim = result_shape.len();
+        let shape_box: Box<[usize]> = result_shape.into_boxed_slice();
+        let shape_ptr = Box::into_raw(shape_box) as *mut usize;
+
+        *out_ndim = ndim;
+        *out_shape = shape_ptr;
+        *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
+
+        SUCCESS
     })
 }
 
@@ -184,96 +150,54 @@ pub unsafe extern "C" fn ndarray_add_scalar(
         let a_shape_slice = slice::from_raw_parts(a_shape, ndim);
         let a_strides_slice = slice::from_raw_parts(a_strides, ndim);
 
-        let result = match a_wrapper.dtype {
-            DType::Float64 => scalar_op_f64(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                scalar as f64,
-                |a, b| a + b,
+        let result_wrapper = match a_wrapper.dtype {
+            DType::Float64 => scalar_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                scalar as f64, DType::Float64, extract_view_f64, ArrayData::Float64, +
             ),
-            DType::Float32 => scalar_op_f32(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                scalar as f32,
-                |a, b| a + b,
+            DType::Float32 => scalar_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                scalar as f32, DType::Float32, extract_view_f32, ArrayData::Float32, +
             ),
-            DType::Int64 => scalar_op_i64(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                scalar as i64,
-                |a, b| a + b,
+            DType::Int64 => scalar_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                scalar as i64, DType::Int64, extract_view_i64, ArrayData::Int64, +
             ),
-            DType::Int32 => scalar_op_i32(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                scalar as i32,
-                |a, b| a + b,
+            DType::Int32 => scalar_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                scalar as i32, DType::Int32, extract_view_i32, ArrayData::Int32, +
             ),
-            DType::Int16 => scalar_op_i16(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                scalar as i16,
-                |a, b| a + b,
+            DType::Int16 => scalar_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                scalar as i16, DType::Int16, extract_view_i16, ArrayData::Int16, +
             ),
-            DType::Int8 => scalar_op_i8(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                scalar as i8,
-                |a, b| a + b,
+            DType::Int8 => scalar_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                scalar as i8, DType::Int8, extract_view_i8, ArrayData::Int8, +
             ),
-            DType::Uint64 => scalar_op_u64(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                scalar as u64,
-                |a, b| a + b,
+            DType::Uint64 => scalar_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                scalar as u64, DType::Uint64, extract_view_u64, ArrayData::Uint64, +
             ),
-            DType::Uint32 => scalar_op_u32(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                scalar as u32,
-                |a, b| a + b,
+            DType::Uint32 => scalar_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                scalar as u32, DType::Uint32, extract_view_u32, ArrayData::Uint32, +
             ),
-            DType::Uint16 => scalar_op_u16(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                scalar as u16,
-                |a, b| a + b,
+            DType::Uint16 => scalar_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                scalar as u16, DType::Uint16, extract_view_u16, ArrayData::Uint16, +
             ),
-            DType::Uint8 => scalar_op_u8(
-                a_wrapper,
-                a_offset,
-                a_shape_slice,
-                a_strides_slice,
-                scalar as u8,
-                |a, b| a + b,
+            DType::Uint8 => scalar_op_arm!(
+                a_wrapper, a_offset, a_shape_slice, a_strides_slice,
+                scalar as u8, DType::Uint8, extract_view_u8, ArrayData::Uint8, +
             ),
-            DType::Bool => Err("Addition not supported for Bool type".to_string()),
+            DType::Bool => {
+                crate::error::set_last_error("Addition not supported for Bool type".to_string());
+                return ERR_GENERIC;
+            }
         };
 
-        match result {
-            Ok(wrapper) => {
-                *out = NdArrayHandle::from_wrapper(Box::new(wrapper));
-                SUCCESS
-            }
-            Err(_) => ERR_GENERIC,
-        }
+        *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
+        SUCCESS
     })
 }
