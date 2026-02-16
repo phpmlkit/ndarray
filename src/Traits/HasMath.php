@@ -73,6 +73,36 @@ trait HasMath
     }
 
     /**
+     * Compute remainder (modulo) with another array or scalar.
+     *
+     * @param NDArray|float|int $other Array or scalar
+     * @return NDArray New array with result
+     */
+    public function rem(NDArray|float|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_rem', $other);
+        }
+        return $this->scalarOp('ndarray_rem_scalar', $other);
+    }
+
+  /**
+     * Compute modulo with another array or scalar.
+     * 
+     * Alias for rem().
+     *
+     * @param NDArray|float|int $other Array or scalar
+     * @return NDArray New array with result
+     */
+    public function mod(NDArray|float|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_rem', $other);
+        }
+        return $this->scalarOp('ndarray_rem_scalar', $other);
+    }
+
+    /**
      * Compute absolute value element-wise.
      *
      * @return NDArray
@@ -379,6 +409,76 @@ trait HasMath
     public function hypot(float $other): NDArray
     {
         return $this->scalarOp('ndarray_hypot', $other);
+    }
+
+    /**
+     * Bitwise AND with another array or scalar.
+     *
+     * @param NDArray|int $other Array or scalar
+     * @return NDArray New array with result
+     */
+    public function bitand(NDArray|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_bitand', $other);
+        }
+        return $this->scalarOp('ndarray_bitand_scalar', $other);
+    }
+
+    /**
+     * Bitwise OR with another array or scalar.
+     *
+     * @param NDArray|int $other Array or scalar
+     * @return NDArray New array with result
+     */
+    public function bitor(NDArray|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_bitor', $other);
+        }
+        return $this->scalarOp('ndarray_bitor_scalar', $other);
+    }
+
+    /**
+     * Bitwise XOR with another array or scalar.
+     *
+     * @param NDArray|int $other Array or scalar
+     * @return NDArray New array with result
+     */
+    public function bitxor(NDArray|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_bitxor', $other);
+        }
+        return $this->scalarOp('ndarray_bitxor_scalar', $other);
+    }
+
+    /**
+     * Left shift by another array or scalar.
+     *
+     * @param NDArray|int $other Array or scalar (number of bits)
+     * @return NDArray New array with result
+     */
+    public function leftShift(NDArray|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_left_shift', $other);
+        }
+        return $this->scalarOp('ndarray_left_shift_scalar', $other);
+    }
+
+    /**
+     * Right shift by another array or scalar.
+     *
+     * @param NDArray|int $other Array or scalar (number of bits)
+     * @return NDArray New array with result
+     */
+    public function rightShift(NDArray|int $other): NDArray
+    {
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_right_shift', $other);
+        }
+        return $this->scalarOp('ndarray_right_shift_scalar', $other);
     }
 
     /**

@@ -231,7 +231,7 @@ The primary array type representing N-dimensional arrays.
 - [x] 7.1.3: Multiplication: `$a * $b`, `$a->multiply($b)`
 - [x] 7.1.4: Division: `$a / $b`, `$a->divide($b)`
 - [ ] 7.1.5: Floor division: `$a->floorDivide($b)`
-- [ ] 7.1.6: Modulo: `$a % $b`, `$a->mod($b)`
+- [x] 7.1.6: Modulo: `$a % $b`, `$a->mod($b)`
 - [ ] 7.1.7: Power: `$a->power($b)`, `$a ** $b`
 - [ ] 7.1.8: Negation: `-$a`, `$a->negative()`
 
@@ -239,12 +239,12 @@ The primary array type representing N-dimensional arrays.
 **Priority**: HIGH
 
 **Requirements**:
-- [ ] 7.2.1: Equal: `$a == $b`, `$a->equal($b)`
-- [ ] 7.2.2: Not equal: `$a != $b`, `$a->notEqual($b)`
-- [ ] 7.2.3: Greater: `$a > $b`, `$a->greater($b)`
-- [ ] 7.2.4: Greater or equal: `$a >= $b`, `$a->greaterEqual($b)`
-- [ ] 7.2.5: Less: `$a < $b`, `$a->less($b)`
-- [ ] 7.2.6: Less or equal: `$a <= $b`, `$a->lessEqual($b)`
+- [ ] 7.2.1: Equal: `$a == $b`, `$a->eq($b)`
+- [ ] 7.2.2: Not equal: `$a != $b`, `$a->ne($b)`
+- [ ] 7.2.3: Greater: `$a > $b`, `$a->gt($b)`
+- [ ] 7.2.4: Greater or equal: `$a >= $b`, `$a->gte($b)`
+- [ ] 7.2.5: Less: `$a < $b`, `$a->lt($b)`
+- [ ] 7.2.6: Less or equal: `$a <= $b`, `$a->lte($b)`
 
 ### 7.3 Element-wise Mathematical Functions (REQ-7.3)
 **Priority**: HIGH
