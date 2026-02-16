@@ -164,6 +164,12 @@ interface Bindings
     public function ndarray_free_string(CData $ptr): void;
 
     // =========================================================================
+    // Type Casting
+    // =========================================================================
+
+    public function ndarray_astype(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $target_dtype, CData $out_handle): int;
+
+    // =========================================================================
     // Shape Operations
     // =========================================================================
 

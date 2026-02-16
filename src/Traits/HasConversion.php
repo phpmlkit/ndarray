@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NDArray\Traits;
 
 use FFI;
+use NDArray\DType;
 use NDArray\FFI\Lib;
 
 /**
@@ -78,5 +79,41 @@ trait HasConversion
         Lib::checkStatus($status);
 
         return new self($outHandle, $this->shape, $this->dtype);
+    }
+
+    /**
+     * Cast array to a different data type.
+     *
+     * Returns a new array with the specified dtype. If the target dtype
+     * is the same as the current dtype, this is equivalent to copy().
+     *
+     * @param DType $dtype Target data type
+     * @return self New array with converted data
+     */
+    public function astype(DType $dtype): self
+    {
+        if ($this->dtype === $dtype) {
+            return $this->copy();
+        }
+
+        $ffi = Lib::get();
+
+        $cShape = Lib::createShapeArray($this->shape);
+        $cStrides = Lib::createShapeArray($this->strides);
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+
+        $status = $ffi->ndarray_astype(
+            $this->handle,
+            $this->offset,
+            $cShape,
+            $cStrides,
+            $this->ndim,
+            $dtype->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new self($outHandle, $this->shape, $dtype);
     }
 }

@@ -84,6 +84,7 @@ define_extract_view_as!(
         (extract_view_u32, |x: u32| x as f64),
         (extract_view_u16, |x: u16| x as f64),
         (extract_view_u8, |x: u8| x as f64),
+        (extract_view_bool, |x: u8| (x != 0) as i32 as f64),
     ]
 );
 
@@ -101,6 +102,7 @@ define_extract_view_as!(
         (extract_view_u8, |x: u8| x as f32),
         (extract_view_i64, |x: i64| x as f32),
         (extract_view_u64, |x: u64| x as f32),
+        (extract_view_bool, |x: u8| (x != 0) as i32 as f32),
     ]
 );
 
@@ -118,6 +120,7 @@ define_extract_view_as!(
         (extract_view_u8, |x: u8| x as i64),
         (extract_view_f64, |x: f64| x as i64),
         (extract_view_f32, |x: f32| x as i64),
+        (extract_view_bool, |x: u8| (x != 0) as i64),
     ]
 );
 
@@ -135,6 +138,7 @@ define_extract_view_as!(
         (extract_view_f64, |x: f64| x as i32),
         (extract_view_f32, |x: f32| x as i32),
         (extract_view_u64, |x: u64| x as i32),
+        (extract_view_bool, |x: u8| (x != 0) as i32),
     ]
 );
 
@@ -152,6 +156,7 @@ define_extract_view_as!(
         (extract_view_u64, |x: u64| x as i16),
         (extract_view_f64, |x: f64| x as i16),
         (extract_view_f32, |x: f32| x as i16),
+        (extract_view_bool, |x: u8| (x != 0) as i16),
     ]
 );
 
@@ -169,6 +174,7 @@ define_extract_view_as!(
         (extract_view_u64, |x: u64| x as i8),
         (extract_view_f64, |x: f64| x as i8),
         (extract_view_f32, |x: f32| x as i8),
+        (extract_view_bool, |x: u8| (x != 0) as i8),
     ]
 );
 
@@ -186,6 +192,7 @@ define_extract_view_as!(
         (extract_view_i8, |x: i8| x as u64),
         (extract_view_f64, |x: f64| x as u64),
         (extract_view_f32, |x: f32| x as u64),
+        (extract_view_bool, |x: u8| (x != 0) as u64),
     ]
 );
 
@@ -203,6 +210,7 @@ define_extract_view_as!(
         (extract_view_f32, |x: f32| x as u32),
         (extract_view_u64, |x: u64| x as u32),
         (extract_view_i64, |x: i64| x as u32),
+        (extract_view_bool, |x: u8| (x != 0) as u32),
     ]
 );
 
@@ -220,6 +228,7 @@ define_extract_view_as!(
         (extract_view_i64, |x: i64| x as u16),
         (extract_view_f64, |x: f64| x as u16),
         (extract_view_f32, |x: f32| x as u16),
+        (extract_view_bool, |x: u8| (x != 0) as u16),
     ]
 );
 
@@ -237,5 +246,24 @@ define_extract_view_as!(
         (extract_view_i64, |x: i64| x as u8),
         (extract_view_f64, |x: f64| x as u8),
         (extract_view_f32, |x: f32| x as u8),
+        (extract_view_bool, |x: u8| x),
+    ]
+);
+
+define_extract_view_as!(
+    extract_view_as_bool,
+    u8,
+    [
+        (extract_view_bool, |x: u8| x),
+        (extract_view_u8, |x: u8| if x != 0 { 1 } else { 0 }),
+        (extract_view_i8, |x: i8| if x != 0 { 1 } else { 0 }),
+        (extract_view_u16, |x: u16| if x != 0 { 1 } else { 0 }),
+        (extract_view_i16, |x: i16| if x != 0 { 1 } else { 0 }),
+        (extract_view_u32, |x: u32| if x != 0 { 1 } else { 0 }),
+        (extract_view_i32, |x: i32| if x != 0 { 1 } else { 0 }),
+        (extract_view_u64, |x: u64| if x != 0 { 1 } else { 0 }),
+        (extract_view_i64, |x: i64| if x != 0 { 1 } else { 0 }),
+        (extract_view_f32, |x: f32| if x != 0.0 { 1 } else { 0 }),
+        (extract_view_f64, |x: f64| if x != 0.0 { 1 } else { 0 }),
     ]
 );

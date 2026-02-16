@@ -4,6 +4,7 @@
 
 pub mod arithmetic;
 pub mod array;
+pub mod cast;
 pub mod generators;
 pub mod indexing;
 pub mod linalg;
@@ -16,6 +17,7 @@ pub use types::NdArrayHandle;
 // Re-export all FFI functions for lib.rs
 pub use arithmetic::*;
 pub use array::*;
+pub use cast::*;
 pub use generators::*;
 pub use indexing::*;
 pub use linalg::*;

@@ -157,7 +157,7 @@ The primary array type representing N-dimensional arrays.
 
 **Requirements**:
 - [x] 5.2.1: `$array->copy()` - Deep copy
-- [ ] 5.2.2: `$array->astype($dtype)` - Copy with type conversion
+- [x] 5.2.2: `$array->astype($dtype)` - Copy with type conversion
 - [x] 5.2.3: Copies are independent of parent
 - [x] 5.2.4: Contiguous memory for copies
 
@@ -384,7 +384,7 @@ The primary array type representing N-dimensional arrays.
 **Priority**: HIGH
 
 **Requirements**:
-- [ ] 11.1.1: `$array->astype($dtype)` - Convert data type
+- [x] 11.1.1: `$array->astype($dtype)` - Convert data type
 - [x] 11.1.2: `$array->toArray()` - Convert to PHP array
 - [ ] 11.1.3: `$array->toList()` - Convert to PHP list (alias for toArray)
 - [ ] 11.1.4: `$array->toScalar()` - Convert 0-d array to scalar
