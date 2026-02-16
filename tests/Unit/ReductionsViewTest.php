@@ -71,6 +71,57 @@ final class ReductionsViewTest extends TestCase
         $this->assertEquals(15.0, $result); // 1*3*5 = 15
     }
 
+    public function testCumsumOn1DSlice(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
+        $slice = $a->slice(['2:5']); // [3, 4, 5]
+        
+        $result = $slice->cumsum();
+        
+        $this->assertSame([3], $result->shape());
+        $this->assertEqualsWithDelta([3, 7, 12], $result->toArray(), 0.0001);
+    }
+
+    public function testCumprodOn1DSlice(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
+        $slice = $a->slice(['1:4']); // [2, 3, 4]
+        
+        $result = $slice->cumprod();
+        
+        $this->assertSame([3], $result->shape());
+        $this->assertEqualsWithDelta([2, 6, 24], $result->toArray(), 0.0001);
+    }
+
+    public function testCumsumAxisOn2DView(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Float64);
+        $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
+        
+        $result = $view->cumsum(axis: 1);
+        
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[1, 3, 6], [4, 9, 15]], $result->toArray(), 0.0001);
+    }
+
+    public function testCumprodAxisOn2DView(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6]
+        ], DType::Float64);
+        $view = $a->slice([':', '0:2']); // [[1, 2], [4, 5]]
+        
+        $result = $view->cumprod(axis: 0);
+        
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertEqualsWithDelta([[1, 2], [4, 10]], $result->toArray(), 0.0001);
+    }
+
     public function testArgminOnView(): void
     {
         $a = NDArray::array([[5, 2, 8], [1, 9, 3], [4, 6, 7]], DType::Float64);

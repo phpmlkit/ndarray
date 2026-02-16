@@ -207,6 +207,70 @@ final class ReductionsTest extends TestCase
         $this->assertEqualsWithDelta([6, 120], $result->toArray(), 0.0001);
     }
 
+    public function testCumsumScalar(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
+        $result = $a->cumsum();
+        $this->assertSame([5], $result->shape());
+        $this->assertEqualsWithDelta([1, 3, 6, 10, 15], $result->toArray(), 0.0001);
+    }
+
+    public function testCumsumScalar2D(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $result = $a->cumsum();
+        $this->assertSame([6], $result->shape());
+        $this->assertEqualsWithDelta([1, 3, 6, 10, 15, 21], $result->toArray(), 0.0001);
+    }
+
+    public function testCumsumAxis0(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $result = $a->cumsum(axis: 0);
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[1, 2, 3], [5, 7, 9]], $result->toArray(), 0.0001);
+    }
+
+    public function testCumsumAxis1(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $result = $a->cumsum(axis: 1);
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[1, 3, 6], [4, 9, 15]], $result->toArray(), 0.0001);
+    }
+
+    public function testCumprodScalar(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4], DType::Float64);
+        $result = $a->cumprod();
+        $this->assertSame([4], $result->shape());
+        $this->assertEqualsWithDelta([1, 2, 6, 24], $result->toArray(), 0.0001);
+    }
+
+    public function testCumprodScalar2D(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Float64);
+        $result = $a->cumprod();
+        $this->assertSame([4], $result->shape());
+        $this->assertEqualsWithDelta([1, 2, 6, 24], $result->toArray(), 0.0001);
+    }
+
+    public function testCumprodAxis0(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $result = $a->cumprod(axis: 0);
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[1, 2, 3], [4, 10, 18]], $result->toArray(), 0.0001);
+    }
+
+    public function testCumprodAxis1(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $result = $a->cumprod(axis: 1);
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[1, 2, 6], [4, 20, 120]], $result->toArray(), 0.0001);
+    }
+
     public function testVarAxis0(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
@@ -377,5 +441,19 @@ final class ReductionsTest extends TestCase
         $a = NDArray::array([5, 2, 8, 1, 9], DType::Float64);
         $result = NDArray::maxArray($a);
         $this->assertEquals(9.0, $result);
+    }
+
+    public function testStaticCumsumArray(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
+        $result = NDArray::cumsumArray($a);
+        $this->assertEqualsWithDelta([1, 3, 6, 10, 15], $result->toArray(), 0.0001);
+    }
+
+    public function testStaticCumprodArray(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4], DType::Float64);
+        $result = NDArray::cumprodArray($a);
+        $this->assertEqualsWithDelta([1, 2, 6, 24], $result->toArray(), 0.0001);
     }
 }

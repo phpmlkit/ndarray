@@ -129,6 +129,34 @@ trait HasReductions
     }
 
     /**
+     * Cumulative sum of array elements.
+     *
+     * @param int|null $axis Axis along which to compute cumulative sum. If null, flatten and return 1D.
+     * @return NDArray
+     */
+    public function cumsum(?int $axis = null): NDArray
+    {
+        if ($axis === null) {
+            return $this->performCumulativeReduction('ndarray_cumsum');
+        }
+        return $this->performCumulativeReductionAxis('ndarray_cumsum_axis', $axis);
+    }
+
+    /**
+     * Cumulative product of array elements.
+     *
+     * @param int|null $axis Axis along which to compute cumulative product. If null, flatten and return 1D.
+     * @return NDArray
+     */
+    public function cumprod(?int $axis = null): NDArray
+    {
+        if ($axis === null) {
+            return $this->performCumulativeReduction('ndarray_cumprod');
+        }
+        return $this->performCumulativeReductionAxis('ndarray_cumprod_axis', $axis);
+    }
+
+    /**
      * Variance of array elements over a given axis.
      *
      * @param int|null $axis Axis along which to compute variance. If null, compute variance of all elements.
@@ -307,6 +335,65 @@ trait HasReductions
     }
 
     /**
+     * Perform a cumulative reduction over flattened array. Returns 1D array.
+     *
+     * @param string $funcName FFI function name (ndarray_cumsum or ndarray_cumprod)
+     * @return NDArray
+     */
+    private function performCumulativeReduction(string $funcName): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $shape = Lib::createShapeArray($this->shape);
+        $strides = Lib::createShapeArray($this->strides);
+
+        $status = $ffi->$funcName(
+            $this->handle,
+            $this->offset,
+            $shape,
+            $strides,
+            count($this->shape),
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        $size = (int) array_product($this->shape);
+        return new NDArray($outHandle, [$size], $this->dtype);
+    }
+
+    /**
+     * Perform a cumulative reduction along an axis. Returns same shape as input.
+     *
+     * @param string $funcName FFI function name (ndarray_cumsum_axis or ndarray_cumprod_axis)
+     * @param int $axis Axis to reduce along
+     * @return NDArray
+     */
+    private function performCumulativeReductionAxis(string $funcName, int $axis): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $shape = Lib::createShapeArray($this->shape);
+        $strides = Lib::createShapeArray($this->strides);
+
+        $status = $ffi->$funcName(
+            $this->handle,
+            $this->offset,
+            $shape,
+            $strides,
+            count($this->shape),
+            $axis,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new NDArray($outHandle, $this->shape, $this->dtype);
+    }
+
+    /**
      * Compute the output shape after reducing along an axis.
      *
      * @param array<int> $shape Input shape
@@ -365,6 +452,16 @@ trait HasReductions
     public static function productArray(NDArray $arr, ?int $axis = null, bool $keepdims = false): NDArray|float
     {
         return $arr->product($axis, $keepdims);
+    }
+
+    public static function cumsumArray(NDArray $arr, ?int $axis = null): NDArray
+    {
+        return $arr->cumsum($axis);
+    }
+
+    public static function cumprodArray(NDArray $arr, ?int $axis = null): NDArray
+    {
+        return $arr->cumprod($axis);
     }
 
     public static function varArray(NDArray $arr, ?int $axis = null, int $ddof = 0, bool $keepdims = false): NDArray|float

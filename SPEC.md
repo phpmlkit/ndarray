@@ -310,8 +310,8 @@ The primary array type representing N-dimensional arrays.
 **Priority**: MEDIUM
 
 **Requirements**:
-- [ ] 8.4.1: `$array->cumsum($axis = null)` - Cumulative sum
-- [ ] 8.4.2: `$array->cumprod($axis = null)` - Cumulative product
+- [x] 8.4.1: `$array->cumsum($axis = null)` - Cumulative sum
+- [x] 8.4.2: `$array->cumprod($axis = null)` - Cumulative product
 
 ---
 
