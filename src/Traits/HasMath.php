@@ -27,7 +27,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_add', $other);
         }
-        return $this->scalarOp('ndarray_add_scalar', (float) $other);
+        return $this->scalarOp('ndarray_add_scalar', $other);
     }
 
     /**
@@ -41,7 +41,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_sub', $other);
         }
-        return $this->scalarOp('ndarray_sub_scalar', (float) $other);
+        return $this->scalarOp('ndarray_sub_scalar', $other);
     }
 
     /**
@@ -55,7 +55,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_mul', $other);
         }
-        return $this->scalarOp('ndarray_mul_scalar', (float) $other);
+        return $this->scalarOp('ndarray_mul_scalar', $other);
     }
 
     /**
@@ -69,7 +69,7 @@ trait HasMath
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_div', $other);
         }
-        return $this->scalarOp('ndarray_div_scalar', (float) $other);
+        return $this->scalarOp('ndarray_div_scalar', $other);
     }
 
     /**
@@ -382,6 +382,26 @@ trait HasMath
     }
 
     /**
+     * Clamp (clip) array values to a specified range.
+     *
+     * Similar to NumPy's clip function. Values outside [min, max] are set
+     * to the nearest boundary.
+     *
+     * @param float $min Minimum value
+     * @param float $max Maximum value
+     * @return NDArray
+     * @throws \InvalidArgumentException If min > max
+     */
+    public function clamp(float|int $min, float|int $max): NDArray
+    {
+        if ($min > $max) {
+            throw new \InvalidArgumentException("Clamp requires min <= max");
+        }
+
+        return $this->scalarOp('ndarray_clamp', $min, $max);
+    }
+
+    /**
      * Perform a binary operation with another array.
      *
      * @param string $funcName FFI function name
@@ -395,7 +415,6 @@ trait HasMath
         $outShapePtr = $ffi->new("size_t*");
         $outNdim = $ffi->new("size_t");
 
-        // Get view metadata for both arrays
         $aShape = Lib::createShapeArray($this->shape);
         $aStrides = Lib::createShapeArray($this->strides);
         $bShape = Lib::createShapeArray($other->shape);
@@ -406,12 +425,12 @@ trait HasMath
             $this->offset,
             $aShape,
             $aStrides,
-            count($this->shape),
+            $this->ndim,
             $other->handle,
             $other->offset,
             $bShape,
             $bStrides,
-            count($other->shape),
+            $other->ndim,
             Lib::addr($outHandle),
             Lib::addr($outShapePtr),
             Lib::addr($outNdim)
@@ -431,10 +450,10 @@ trait HasMath
      * Perform a scalar operation.
      *
      * @param string $funcName FFI function name
-     * @param float $scalar Scalar value
+     * @param float|int ...$scalars Scalar values (variadic for operations like clamp)
      * @return NDArray
      */
-    private function scalarOp(string $funcName, float $scalar): NDArray
+    private function scalarOp(string $funcName, float|int ...$scalars): NDArray
     {
         $ffi = Lib::get();
         $outHandle = $ffi->new("struct NdArrayHandle*");
@@ -442,15 +461,17 @@ trait HasMath
         $aShape = Lib::createShapeArray($this->shape);
         $aStrides = Lib::createShapeArray($this->strides);
 
-        $status = $ffi->$funcName(
+        $args = [
             $this->handle,
             $this->offset,
             $aShape,
             $aStrides,
-            count($this->shape),
-            $scalar,
+            $this->ndim,
+            ...$scalars,
             Lib::addr($outHandle)
-        );
+        ];
+
+        $status = $ffi->$funcName(...$args);
 
         Lib::checkStatus($status);
 
@@ -476,149 +497,12 @@ trait HasMath
             $this->offset,
             $aShape,
             $aStrides,
-            count($this->shape),
+            $this->ndim,
             Lib::addr($outHandle)
         );
 
         Lib::checkStatus($status);
 
         return new NDArray($outHandle, $this->shape, $this->dtype);
-    }
-
-    /**
-     * Clamp (clip) array values to a specified range.
-     *
-     * Similar to NumPy's clip function. Values outside [min, max] are set
-     * to the nearest boundary.
-     *
-     * @param float $min Minimum value
-     * @param float $max Maximum value
-     * @return NDArray
-     * @throws \InvalidArgumentException If min > max
-     */
-    public function clamp(float $min, float $max): NDArray
-    {
-        if ($min > $max) {
-            throw new \InvalidArgumentException("Clamp requires min <= max");
-        }
-
-        $ffi = Lib::get();
-        $out = $ffi->new('void*');
-
-        $ndim = count($this->shape);
-        $shapeC = $ffi->new('size_t[' . $ndim . ']', false);
-        $stridesC = $ffi->new('size_t[' . $ndim . ']', false);
-
-        foreach ($this->shape as $i => $dim) {
-            $shapeC[$i] = $dim;
-        }
-        foreach ($this->strides as $i => $stride) {
-            $stridesC[$i] = $stride;
-        }
-
-        $status = $ffi->ndarray_clamp(
-            $this->handle,
-            $this->offset,
-            $shapeC,
-            $stridesC,
-            $ndim,
-            $min,
-            $max,
-            \FFI::addr($out)
-        );
-
-        Lib::checkStatus($status);
-
-        return new NDArray($out, $this->shape, $this->dtype);
-    }
-
-    /**
-     * Compute the broadcasted shape of two arrays.
-     *
-     * @param array<int> $shapeA
-     * @param array<int> $shapeB
-     * @return array<int>
-     */
-    private function broadcastShapes(array $shapeA, array $shapeB): array
-    {
-        $ndimA = count($shapeA);
-        $ndimB = count($shapeB);
-        $maxNdim = max($ndimA, $ndimB);
-
-        // Pad shorter shape with 1s on the left
-        $paddedA = array_merge(array_fill(0, $maxNdim - $ndimA, 1), $shapeA);
-        $paddedB = array_merge(array_fill(0, $maxNdim - $ndimB, 1), $shapeB);
-
-        $result = [];
-        for ($i = 0; $i < $maxNdim; $i++) {
-            $dimA = $paddedA[$i];
-            $dimB = $paddedB[$i];
-
-            if ($dimA === 1) {
-                $result[] = $dimB;
-            } elseif ($dimB === 1) {
-                $result[] = $dimA;
-            } elseif ($dimA === $dimB) {
-                $result[] = $dimA;
-            } else {
-                throw new \NDArray\Exceptions\ShapeException(
-                    "Cannot broadcast shapes " . json_encode($shapeA) . " and " . json_encode($shapeB)
-                );
-            }
-        }
-
-        return $result;
-    }
-
-    // =========================================================================
-    // Static Methods
-    // =========================================================================
-
-    /**
-     * Add two arrays element-wise.
-     *
-     * @param NDArray $a
-     * @param NDArray|float|int $b
-     * @return NDArray
-     */
-    public static function addArrays(NDArray $a, NDArray|float|int $b): NDArray
-    {
-        return $a->add($b);
-    }
-
-    /**
-     * Subtract two arrays element-wise.
-     *
-     * @param NDArray $a
-     * @param NDArray|float|int $b
-     * @return NDArray
-     */
-    public static function subtractArrays(NDArray $a, NDArray|float|int $b): NDArray
-    {
-        return $a->subtract($b);
-    }
-
-    /**
-     * Multiply two arrays element-wise.
-     *
-     * @param NDArray $a
-     * @param NDArray|float|int $b
-     * @return NDArray
-     */
-    public static function multiplyArrays(NDArray $a, NDArray|float|int $b): NDArray
-    {
-        return $a->multiply($b);
-    }
-
-    /**
-     * Divide two arrays element-wise.
-     *
-     * @param NDArray $a
-     * @param NDArray|float|int $b
-     * @return NDArray
-     */
-    public static function divideArrays(NDArray $a, NDArray|float|int $b): NDArray
-    {
-        return $a->divide($b);
     }
 }
