@@ -113,6 +113,17 @@ trait HasMath
     }
 
     /**
+     * Compute negation element-wise (-$a).
+     * Not supported for unsigned integers or bool.
+     *
+     * @return NDArray
+     */
+    public function negative(): NDArray
+    {
+        return $this->unaryOp('ndarray_neg');
+    }
+
+    /**
      * Compute square root element-wise.
      *
      * @return NDArray

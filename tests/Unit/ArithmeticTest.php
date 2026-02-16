@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace NDArray\Tests\Unit;
 
 use NDArray\DType;
+use NDArray\Exceptions\DTypeException;
 use NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests for arithmetic operations (add, subtract, multiply, divide)
+ * Tests for arithmetic operations (add, subtract, multiply, divide, negative)
  */
 final class ArithmeticTest extends TestCase
 {
@@ -125,5 +126,26 @@ final class ArithmeticTest extends TestCase
         
         $this->assertSame([2, 2], $result->shape());
         $this->assertEqualsWithDelta([[6, 8], [10, 12]], $result->toArray(), 0.0001);
+    }
+
+    public function testNegativeFloat(): void
+    {
+        $a = NDArray::array([1.0, -2.0, 3.5], DType::Float64);
+        $result = $a->negative();
+        $this->assertEqualsWithDelta([-1.0, 2.0, -3.5], $result->toArray(), 0.0001);
+    }
+
+    public function testNegativeInt(): void
+    {
+        $a = NDArray::array([1, -2, 3], DType::Int32);
+        $result = $a->negative();
+        $this->assertEquals([-1, 2, -3], $result->toArray());
+    }
+
+    public function testNegativeUnsignedShouldError(): void
+    {
+        $this->expectException(DTypeException::class);
+        $a = NDArray::array([1, 2, 3], DType::Uint32);
+        $a->negative();
     }
 }

@@ -127,6 +127,7 @@ interface Bindings
     public function ndarray_signum(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_recip(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_ln_1p(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_neg(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_to_degrees(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_to_radians(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
     public function ndarray_powi(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, int $exp, CData $out_handle): int;

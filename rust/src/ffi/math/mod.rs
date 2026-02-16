@@ -41,6 +41,7 @@ pub mod round;
 
 // Absolute value and sign
 pub mod abs;
+pub mod neg;
 pub mod signum;
 
 // Re-export all FFI functions
@@ -59,6 +60,7 @@ pub use hypot::*;
 pub use ln::*;
 pub use ln_1p::*;
 pub use log::*;
+pub use neg::*;
 pub use log10::*;
 pub use log2::*;
 pub use pow2::*;

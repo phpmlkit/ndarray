@@ -233,7 +233,7 @@ The primary array type representing N-dimensional arrays.
 - [ ] 7.1.5: Floor division: `$a->floorDivide($b)`
 - [x] 7.1.6: Modulo: `$a % $b`, `$a->mod($b)`
 - [ ] 7.1.7: Power: `$a->power($b)`, `$a ** $b`
-- [ ] 7.1.8: Negation: `-$a`, `$a->negative()`
+- [x] 7.1.8: Negation: `-$a`, `$a->negative()`
 
 ### 7.2 Element-wise Comparison (REQ-7.2)
 **Priority**: HIGH
