@@ -193,6 +193,7 @@ interface Bindings
 
     public function ndarray_to_json(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_ptr, CData $out_len): int;
     public function ndarray_free_string(CData $ptr): void;
+    public function ndarray_scalar(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_value): int;
 
     // =========================================================================
     // Type Casting

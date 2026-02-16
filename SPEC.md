@@ -387,7 +387,7 @@ The primary array type representing N-dimensional arrays.
 - [x] 11.1.1: `$array->astype($dtype)` - Convert data type
 - [x] 11.1.2: `$array->toArray()` - Convert to PHP array
 - [ ] 11.1.3: `$array->toList()` - Convert to PHP list (alias for toArray)
-- [ ] 11.1.4: `$array->toScalar()` - Convert 0-d array to scalar
+- [x] 11.1.4: `$array->toScalar()` - Convert 0-d array to scalar
 - [x] 11.1.5: Automatic type inference from PHP arrays
 
 ### 11.2 Serialization (REQ-11.2)

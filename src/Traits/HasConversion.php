@@ -6,6 +6,7 @@ namespace NDArray\Traits;
 
 use FFI;
 use NDArray\DType;
+use NDArray\Exceptions\ShapeException;
 use NDArray\FFI\Lib;
 
 /**
@@ -15,6 +16,49 @@ use NDArray\FFI\Lib;
  */
 trait HasConversion
 {
+    /**
+     * Convert 0-dimensional array to scalar.
+     *
+     * Returns float, int, or bool depending on the array's dtype.
+     * Throws if the array is not 0-dimensional.
+     *
+     * @return float|int|bool
+     */
+    public function toScalar(): float|int|bool
+    {
+        if ($this->ndim !== 0) {
+            throw new ShapeException(
+                'toScalar requires a 0-dimensional array, got array with ' . $this->ndim . ' dimensions'
+            );
+        }
+
+        $ffi = Lib::get();
+
+        $cShape = Lib::createShapeArray($this->shape);
+        $cStrides = Lib::createShapeArray($this->strides);
+
+        $out = $ffi->new($this->dtype->ffiType());
+
+        $status = $ffi->ndarray_scalar(
+            $this->handle,
+            $this->offset,
+            $cShape,
+            $cStrides,
+            $this->ndim,
+            FFI::addr($out),
+        );
+
+        Lib::checkStatus($status);
+
+        $raw = $out->cdata;
+
+        return match ($this->dtype) {
+            DType::Float64, DType::Float32 => (float) $raw,
+            DType::Bool => (bool) $raw,
+            default => (int) $raw,
+        };
+    }
+
     /**
      * Convert to PHP array.
      *
