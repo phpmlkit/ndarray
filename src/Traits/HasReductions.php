@@ -8,6 +8,7 @@ use FFI;
 use FFI\CData;
 use NDArray\DType;
 use NDArray\NDArray;
+use NDArray\SortKind;
 use NDArray\FFI\Lib;
 
 /**
@@ -106,6 +107,36 @@ trait HasReductions
             return (int) $this->scalarReductionOp('ndarray_argmax', DType::Int64);
         }
         return $this->axisReductionOp('ndarray_argmax_axis', $axis, $keepdims, DType::Int64);
+    }
+
+    /**
+     * Return a sorted copy of the array.
+     *
+     * @param int|null $axis Axis along which to sort. If null, sort flattened data.
+     * @param SortKind $kind Sorting algorithm.
+     * @return NDArray
+     */
+    public function sort(?int $axis = -1, SortKind $kind = SortKind::QuickSort): NDArray
+    {
+        if ($axis === null) {
+            return $this->sortFlatOp('ndarray_sort_flat', $kind, $this->dtype);
+        }
+        return $this->sortAxisOp('ndarray_sort_axis', $axis, $kind, $this->dtype);
+    }
+
+    /**
+     * Return indices that would sort the array.
+     *
+     * @param int|null $axis Axis along which to argsort. If null, argsort flattened data.
+     * @param SortKind $kind Sorting algorithm.
+     * @return NDArray Int64 indices array.
+     */
+    public function argsort(?int $axis = -1, SortKind $kind = SortKind::QuickSort): NDArray
+    {
+        if ($axis === null) {
+            return $this->sortFlatOp('ndarray_argsort_flat', $kind, DType::Int64);
+        }
+        return $this->sortAxisOp('ndarray_argsort_axis', $axis, $kind, DType::Int64);
     }
 
     /**
@@ -393,6 +424,71 @@ trait HasReductions
         Lib::checkStatus($status);
 
         return new NDArray($outHandle, $this->shape, $this->dtype);
+    }
+
+    /**
+     * Perform sort/argsort along an axis. Returns same shape as input.
+     *
+     * @param string $funcName FFI function name (ndarray_sort_axis or ndarray_argsort_axis)
+     * @param int $axis Axis to sort along
+     * @param SortKind $kind Sorting algorithm
+     * @param DType $dtype Output dtype
+     * @return NDArray
+     */
+    private function sortAxisOp(string $funcName, int $axis, SortKind $kind, DType $dtype): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $shape = Lib::createShapeArray($this->shape);
+        $strides = Lib::createShapeArray($this->strides);
+
+        $status = $ffi->$funcName(
+            $this->handle,
+            $this->offset,
+            $shape,
+            $strides,
+            count($this->shape),
+            $axis,
+            $kind->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new NDArray($outHandle, $this->shape, $dtype);
+    }
+
+    /**
+     * Perform flattened sort/argsort. Returns 1D array.
+     *
+     * @param string $funcName FFI function name (ndarray_sort_flat or ndarray_argsort_flat)
+     * @param SortKind $kind Sorting algorithm
+     * @param DType $dtype Output dtype
+     * @return NDArray
+     */
+    private function sortFlatOp(string $funcName, SortKind $kind, DType $dtype): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $shape = Lib::createShapeArray($this->shape);
+        $strides = Lib::createShapeArray($this->strides);
+
+        $status = $ffi->$funcName(
+            $this->handle,
+            $this->offset,
+            $shape,
+            $strides,
+            count($this->shape),
+            $kind->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        $size = (int) array_product($this->shape);
+        return new NDArray($outHandle, [$size], $dtype);
     }
 
     /**

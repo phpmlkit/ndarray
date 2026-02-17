@@ -305,8 +305,15 @@ The primary array type representing N-dimensional arrays.
 **Requirements**:
 - [x] 8.3.1: `$array->argmin($axis = null)` - Index of minimum
 - [x] 8.3.2: `$array->argmax($axis = null)` - Index of maximum
-- [ ] 8.3.3: `$array->argsort($axis = -1)` - Indices that would sort
-- [ ] 8.3.4: `$array->nonzero()` - Indices of non-zero elements
+- [x] 8.3.3: `$array->argsort($axis = -1, $kind = SortKind::QuickSort)` - Indices that would sort
+- [x] 8.3.4: `$array->sort($axis = -1, $kind = SortKind::QuickSort)` - Return sorted copy
+- [ ] 8.3.5: `$array->nonzero()` - Indices of non-zero elements
+
+Sort kind selection is enum-based via `SortKind`:
+- `SortKind::QuickSort`
+- `SortKind::MergeSort`
+- `SortKind::HeapSort`
+- `SortKind::Stable`
 
 ### 8.4 Cumulative Operations (REQ-8.4)
 **Priority**: MEDIUM

@@ -179,6 +179,10 @@ interface Bindings
     public function ndarray_var_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, float $ddof, CData $out_handle): int;
     public function ndarray_std(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, float $ddof, CData $out_value, CData $out_dtype): int;
     public function ndarray_std_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, float $ddof, CData $out_handle): int;
+    public function ndarray_sort_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, int $kind, CData $out_handle): int;
+    public function ndarray_sort_flat(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $kind, CData $out_handle): int;
+    public function ndarray_argsort_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, int $kind, CData $out_handle): int;
+    public function ndarray_argsort_flat(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $kind, CData $out_handle): int;
 
     // =========================================================================
     // Properties

@@ -13,7 +13,8 @@ $b = $a->reshape([1000, 1000])
     ->transpose()
     ->add($a->reshape([1000, 1000]))
     ->log()
-    ->mean(0)
+    // ->mean(0)
+    ->softmax()
     ->astype(DType::Int32)
     ->toArray();
 
