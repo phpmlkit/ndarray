@@ -14,7 +14,7 @@ use NDArray\FFI\Lib;
 /**
  * Static factory methods for creating NDArray instances.
  *
- * Provides array(), zeros(), ones(), full(), and eye().
+ * Provides array(), empty(), zeros(), ones(), full(), and eye().
  */
 trait CreatesArrays
 {
@@ -96,6 +96,26 @@ trait CreatesArrays
         Lib::checkStatus($status);
 
         return new self($outHandle, $shape, $dtype);
+    }
+
+     /**
+     * Create an empty array for the given shape and dtype.
+     *
+     * This is intended for preallocation APIs where shape metadata matters,
+     * including zero-size shapes such as [3, 0, 1]. The current implementation
+     * uses the same safe allocation path as zeros().
+     *
+     * @param array<int> $shape Array shape
+     * @param DType|null $dtype Data type (default: Float64)
+     * @return self
+     */
+    public static function empty(array $shape, ?DType $dtype = null): self
+    {
+        if (!in_array(0, $shape, true)) {
+            throw new ShapeException("empty() requires a zero-size shape (at least one dimension must be 0)");
+        }
+
+        return self::zeros($shape, $dtype);
     }
 
     /**

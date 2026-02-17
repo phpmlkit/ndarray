@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 
 final class CreationTest extends TestCase
 {
+  
+
     public function testZeros(): void
     {
         $arr = NDArray::zeros([2, 3], DType::Float64);
@@ -72,6 +74,33 @@ final class CreationTest extends TestCase
             [0.0, 1.0, 0.0],
             [0.0, 0.0, 1.0],
         ], $arr->toArray());
+    }
+
+    public function testEmptyWithZeroSizeShape(): void
+    {
+        $arr = NDArray::empty([3, 0, 1], DType::Float64);
+
+        $this->assertSame([3, 0, 1], $arr->shape());
+        $this->assertSame(DType::Float64, $arr->dtype());
+        $this->assertSame(0, $arr->size());
+        $this->assertSame([], $arr->toArray());
+        $this->assertSame([], $arr->toFlatArray());
+    }
+
+    public function testEmptyWithZeroSizeShapeBool(): void
+    {
+        $arr = NDArray::empty([0], DType::Bool);
+
+        $this->assertSame([0], $arr->shape());
+        $this->assertSame(DType::Bool, $arr->dtype());
+        $this->assertSame(0, $arr->size());
+        $this->assertSame([], $arr->toArray());
+    }
+
+    public function testEmptyRequiresZeroSizeShapeThrows(): void
+    {
+        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        NDArray::empty([2, 3], DType::Float64);
     }
 
     public function testEyeRectangle(): void
