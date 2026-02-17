@@ -139,7 +139,7 @@ The primary array type representing N-dimensional arrays.
 **Requirements**:
 - [x] 4.4.1: Scalar assignment: `$array[0] = 5`
 - [x] 4.4.2: Array assignment: `$array['0:5'] = $other_array`
-- [ ] 4.4.3: Broadcast assignment: `$array[':', 0] = 5`
+- [x] 4.4.3: Broadcast assignment: `$array[':', 0] = 5`
 - [ ] 4.4.4: Boolean mask assignment: `$array->set($mask, $value)`
 - [x] 4.4.5: Scatter write by flat indices: `$array->put($indices, $values, $mode = 'raise')`
 - [x] 4.4.6: Scatter write along axis: `$array->putAlongAxis($indices, $values, $axis)`

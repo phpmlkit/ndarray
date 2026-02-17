@@ -212,6 +212,23 @@ final class SlicingTest extends TestCase
         $this->assertSame([0, 5, 5, 8, 9], $arr->toArray());
     }
 
+    public function testArrayAccessBroadcastAssignmentToColumnSlice(): void
+    {
+        $arr = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ], DType::Int32);
+
+        $arr[':, 0'] = 5;
+
+        $this->assertSame([
+            [5, 2, 3],
+            [5, 5, 6],
+            [5, 8, 9],
+        ], $arr->toArray());
+    }
+
     public function testArrayAccessPartialAssignment(): void
     {
         $arr = NDArray::zeros([2, 2], DType::Int32);
