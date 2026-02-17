@@ -150,6 +150,8 @@ interface Bindings
     public function ndarray_powi(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, int $exp, CData $out_handle): int;
     public function ndarray_powf(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $exp, CData $out_handle): int;
     public function ndarray_clamp(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, float $min_val, float $max_val, CData $out_handle): int;
+    public function ndarray_sigmoid(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $ndim, CData $out_handle): int;
+    public function ndarray_softmax(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $out_handle): int;
 
     // =========================================================================
     // Reductions

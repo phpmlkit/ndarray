@@ -262,6 +262,8 @@ The primary array type representing N-dimensional arrays.
 - [x] 7.3.10: `$array->floor()`, `ceil()`, `round()` - Rounding
 - [x] 7.3.11: `$array->sign()` - Sign function
 - [x] 7.3.12: `$array->clip($min, $max)` - Clip values
+- [x] 7.3.13: `$array->sigmoid()` - Sigmoid: 1 / (1 + exp(-x))
+- [x] 7.3.14: `$array->softmax($axis = -1)` - Softmax along axis (numerically stable)
 
 ### 7.4 Broadcasting (REQ-7.4)
 **Priority**: CRITICAL

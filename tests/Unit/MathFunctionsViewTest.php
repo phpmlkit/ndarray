@@ -186,6 +186,44 @@ final class MathFunctionsViewTest extends TestCase
         $this->assertEqualsWithDelta([tanh(1), tanh(2)], $result->toArray(), 0.0001);
     }
 
+    public function testSigmoidOnView(): void
+    {
+        $a = NDArray::array([0, 1, 2], DType::Float64);
+        $view = $a->slice(['1:3']); // [1, 2]
+        
+        $result = $view->sigmoid();
+        
+        $this->assertSame([2], $result->shape());
+        $this->assertEqualsWithDelta([1 / (1 + exp(-1)), 1 / (1 + exp(-2))], $result->toArray(), 0.0001);
+    }
+
+    public function testSoftmaxOnView(): void
+    {
+        $a = NDArray::array([1.0, 2.0, 3.0, 4.0], DType::Float64);
+        $view = $a->slice(['1:4']); // [2, 3, 4]
+        
+        $result = $view->softmax();
+        
+        $this->assertSame([3], $result->shape());
+        $expSum = exp(2) + exp(3) + exp(4);
+        $expected = [exp(2) / $expSum, exp(3) / $expSum, exp(4) / $expSum];
+        $this->assertEqualsWithDelta($expected, $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta(1.0, array_sum($result->toArray()), 0.0001);
+    }
+
+    public function testSoftmaxOn2DView(): void
+    {
+        $a = NDArray::array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]], DType::Float64);
+        $view = $a->slice(['1:3', ':']); // [[3, 4], [5, 6]]
+        
+        $result = $view->softmax(axis: -1);
+        
+        $this->assertSame([2, 2], $result->shape());
+        foreach ($result->toArray() as $row) {
+            $this->assertEqualsWithDelta(1.0, array_sum($row), 0.0001);
+        }
+    }
+
     public function testAsinOnView(): void
     {
         $a = NDArray::array([0, 0.5, 1], DType::Float64);

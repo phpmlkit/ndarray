@@ -309,6 +309,8 @@ trait HasMath
         return $this->unaryOp('ndarray_tanh');
     }
 
+
+
     /**
      * Compute arc sine element-wise.
      *
@@ -609,6 +611,29 @@ trait HasMath
     public function clip(float|int $min, float|int $max): NDArray
     {
         return $this->clamp($min, $max);
+    }
+
+     /**
+     * Compute sigmoid element-wise: 1 / (1 + exp(-x)).
+     *
+     * @return NDArray
+     */
+    public function sigmoid(): NDArray
+    {
+        return $this->unaryOp('ndarray_sigmoid');
+    }
+
+    /**
+     * Compute softmax along axis: exp(x - max) / sum(exp(x - max)).
+     *
+     * Numerically stable. Default axis -1 (last axis) for typical logits.
+     *
+     * @param int $axis Axis along which to compute softmax
+     * @return NDArray
+     */
+    public function softmax(int $axis = -1): NDArray
+    {
+        return $this->scalarOp('ndarray_softmax', $this->dtype, $axis);
     }
 
     /**

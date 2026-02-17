@@ -125,6 +125,50 @@ final class MathFunctionsTest extends TestCase
         $this->assertEqualsWithDelta([0, tanh(1)], $result->toArray(), 0.0001);
     }
 
+    public function testSigmoid(): void
+    {
+        $a = NDArray::array([0, 1], DType::Float64);
+        $result = $a->sigmoid();
+        $this->assertEqualsWithDelta([0.5, 1 / (1 + exp(-1))], $result->toArray(), 0.0001);
+    }
+
+    public function testSoftmax(): void
+    {
+        $a = NDArray::array([1.0, 2.0, 3.0], DType::Float64);
+        $result = $a->softmax();
+        $expSum = exp(1) + exp(2) + exp(3);
+        $expected = [exp(1) / $expSum, exp(2) / $expSum, exp(3) / $expSum];
+        $this->assertEqualsWithDelta($expected, $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta(1.0, array_sum($result->toArray()), 0.0001);
+    }
+
+    public function testSoftmaxAlongAxis(): void
+    {
+        $a = NDArray::array([[1.0, 2.0], [3.0, 4.0]], DType::Float64);
+        $result = $a->softmax(axis: -1);
+        $this->assertSame([2, 2], $result->shape());
+        // axis -1 = last axis (rows); each row sums to 1 (NumPy semantics)
+        foreach ($result->toArray() as $row) {
+            $this->assertEqualsWithDelta(1.0, array_sum($row), 0.0001);
+        }
+    }
+
+    public function testSoftmax3D(): void
+    {
+        $a = NDArray::array([
+            [[1.0, 2.0], [3.0, 4.0]],
+            [[0.0, 1.0], [2.0, 3.0]],
+        ], DType::Float64);
+        $result = $a->softmax(axis: -1);
+        $this->assertSame([2, 2, 2], $result->shape());
+        $arr = $result->toArray();
+        foreach ($arr as $batch) {
+            foreach ($batch as $row) {
+                $this->assertEqualsWithDelta(1.0, array_sum($row), 0.0001);
+            }
+        }
+    }
+
     public function testAsin(): void
     {
         $a = NDArray::array([0, 1], DType::Float64);

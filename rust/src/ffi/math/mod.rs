@@ -42,7 +42,9 @@ pub mod round;
 // Absolute value and sign
 pub mod abs;
 pub mod neg;
+pub mod sigmoid;
 pub mod signum;
+pub mod softmax;
 
 // Re-export all FFI functions
 pub use abs::*;
@@ -68,7 +70,9 @@ pub use powf::*;
 pub use powi::*;
 pub use recip::*;
 pub use round::*;
+pub use sigmoid::*;
 pub use signum::*;
+pub use softmax::*;
 pub use sin::*;
 pub use sinh::*;
 pub use sqrt::*;
