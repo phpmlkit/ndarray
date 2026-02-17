@@ -135,4 +135,63 @@ final class SortTest extends TestCase
         $this->expectException(\NDArray\Exceptions\NDArrayException::class);
         $a->sort(axis: 2);
     }
+
+    public function testTopkDefaultLargestAlongLastAxis(): void
+    {
+        $a = NDArray::array([[1, 7, 3, 5], [9, 2, 8, 4]], DType::Int32);
+        $topk = $a->topk(2);
+
+        $this->assertSame([2, 2], $topk['values']->shape());
+        $this->assertSame([[7, 5], [9, 8]], $topk['values']->toArray());
+        $this->assertSame([[1, 3], [0, 2]], $topk['indices']->toArray());
+        $this->assertSame(DType::Int64, $topk['indices']->dtype());
+    }
+
+    public function testTopkSmallestAlongAxis(): void
+    {
+        $a = NDArray::array([[1, 7, 3, 5], [9, 2, 8, 4]], DType::Int32);
+        $topk = $a->topk(2, axis: 1, largest: false, kind: SortKind::MergeSort);
+
+        $this->assertSame([[1, 3], [2, 4]], $topk['values']->toArray());
+        $this->assertSame([[0, 2], [1, 3]], $topk['indices']->toArray());
+    }
+
+    public function testTopkFlattened(): void
+    {
+        $a = NDArray::array([[1, 7, 3], [5, 9, 2]], DType::Int32);
+        $topk = $a->topk(3, axis: null, kind: SortKind::HeapSort);
+
+        $this->assertSame([3], $topk['values']->shape());
+        $this->assertSame([9, 7, 5], $topk['values']->toArray());
+        $this->assertSame([4, 1, 3], $topk['indices']->toArray());
+    }
+
+    public function testTopkAllKindsConsistentValues(): void
+    {
+        $a = NDArray::array([4, 1, 7, 3, 6, 2], DType::Int32);
+        $expected = [7, 6, 4];
+        $kinds = [SortKind::QuickSort, SortKind::MergeSort, SortKind::HeapSort, SortKind::Stable];
+
+        foreach ($kinds as $kind) {
+            $topk = $a->topk(3, axis: null, kind: $kind);
+            $this->assertSame($expected, $topk['values']->toArray(), "kind={$kind->name} failed");
+        }
+    }
+
+    public function testTopkSortedFalseReturnsSelectionInInputOrder(): void
+    {
+        $a = NDArray::array([4, 1, 7, 3, 6, 2], DType::Int32);
+        $topk = $a->topk(3, axis: null, largest: true, sorted: false);
+
+        // top-3 set is {7, 6, 4}; sorted=false returns them in source index order
+        $this->assertSame([4, 7, 6], $topk['values']->toArray());
+        $this->assertSame([0, 2, 4], $topk['indices']->toArray());
+    }
+
+    public function testTopkOutOfBoundsThrows(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Int32);
+        $this->expectException(\NDArray\Exceptions\NDArrayException::class);
+        $a->topk(4);
+    }
 }

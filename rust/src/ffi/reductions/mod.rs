@@ -23,7 +23,6 @@ pub mod cumsum_axis;
 pub mod mean_axis;
 pub mod min_max_axis;
 pub mod product_axis;
-pub mod sort;
 pub mod std_var_axis;
 pub mod sum_axis;
 
@@ -41,7 +40,6 @@ pub use min_max_axis::*;
 pub use min_max_scalar::*;
 pub use product_axis::*;
 pub use product_scalar::*;
-pub use sort::*;
 pub use std_var_axis::*;
 pub use std_var_scalar::*;
 pub use sum_axis::*;

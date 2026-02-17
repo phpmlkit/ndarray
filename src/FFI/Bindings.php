@@ -190,6 +190,8 @@ interface Bindings
     public function ndarray_sort_flat(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $kind, CData $out_handle): int;
     public function ndarray_argsort_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, int $kind, CData $out_handle): int;
     public function ndarray_argsort_flat(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $kind, CData $out_handle): int;
+    public function ndarray_topk_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, int $k, bool $largest, bool $sorted, int $kind, CData $out_values, CData $out_indices): int;
+    public function ndarray_topk_flat(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $k, bool $largest, bool $sorted, int $kind, CData $out_values, CData $out_indices): int;
 
     // =========================================================================
     // Properties

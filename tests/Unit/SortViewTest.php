@@ -88,4 +88,16 @@ final class SortViewTest extends TestCase
 
         $this->assertSame([false, false, true, true], $result->toArray());
     }
+
+    public function testTopkOnStridedView(): void
+    {
+        $a = NDArray::array([10, 3, 8, 1, 5, 2], DType::Int32);
+        $view = $a->slice(['1:6:2']); // [3, 1, 2]
+
+        $topk = $view->topk(2, axis: null);
+
+        $this->assertSame([2], $topk['values']->shape());
+        $this->assertSame([3, 2], $topk['values']->toArray());
+        $this->assertSame([0, 2], $topk['indices']->toArray());
+    }
 }

@@ -318,6 +318,7 @@ The primary array type representing N-dimensional arrays.
 - [x] 8.3.4: `$array->sort($axis = -1, $kind = SortKind::QuickSort)` - Return sorted copy
 - [ ] 8.3.5: `$array->nonzero()` - Indices of non-zero elements
 - [x] 8.3.6: `$array->bincount($minlength = null)` - Histogram of non-negative integer values
+- [x] 8.3.7: `$array->topk($k, $axis = -1, $largest = true, $sorted = true, $kind = SortKind::QuickSort)` - Top-k values and indices
 
 Sort kind selection is enum-based via `SortKind`:
 - `SortKind::QuickSort`

@@ -140,6 +140,34 @@ trait HasReductions
     }
 
     /**
+     * Return top-k values and indices like PyTorch topk.
+     *
+     * @param int $k Number of elements to select
+     * @param int|null $axis Axis along which to select. If null, flatten first.
+     * @param bool $largest If true, select largest values; otherwise smallest values
+     * @param bool $sorted If true, keep selected values sorted by rank
+     * @param SortKind $kind Sorting algorithm
+     * @return array{values: NDArray, indices: NDArray}
+     */
+    public function topk(
+        int $k,
+        ?int $axis = -1,
+        bool $largest = true,
+        bool $sorted = true,
+        SortKind $kind = SortKind::QuickSort
+    ): array {
+        if ($k < 0) {
+            throw new \InvalidArgumentException('k must be >= 0');
+        }
+
+        if ($axis === null) {
+            return $this->topkFlatOp($k, $largest, $sorted, $kind);
+        }
+
+        return $this->topkAxisOp($k, $axis, $largest, $sorted, $kind);
+    }
+
+    /**
      * Product of array elements over a given axis.
      *
      * @param int|null $axis Axis along which to compute product. If null, compute product of all elements.
@@ -524,6 +552,83 @@ trait HasReductions
 
         $size = (int) array_product($this->shape);
         return new NDArray($outHandle, [$size], $dtype);
+    }
+
+    /**
+     * Perform topk along axis.
+     *
+     * @return array{values: NDArray, indices: NDArray}
+     */
+    private function topkAxisOp(int $k, int $axis, bool $largest, bool $sorted, SortKind $kind): array
+    {
+        $ffi = Lib::get();
+        $outValuesHandle = $ffi->new('struct NdArrayHandle*');
+        $outIndicesHandle = $ffi->new('struct NdArrayHandle*');
+
+        $shape = Lib::createShapeArray($this->shape);
+        $strides = Lib::createShapeArray($this->strides);
+
+        $status = $ffi->ndarray_topk_axis(
+            $this->handle,
+            $this->offset,
+            $shape,
+            $strides,
+            count($this->shape),
+            $axis,
+            $k,
+            $largest,
+            $sorted,
+            $kind->value,
+            Lib::addr($outValuesHandle),
+            Lib::addr($outIndicesHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        $axisNorm = $axis < 0 ? count($this->shape) + $axis : $axis;
+        $outShape = $this->shape;
+        $outShape[$axisNorm] = $k;
+
+        return [
+            'values' => new NDArray($outValuesHandle, $outShape, $this->dtype),
+            'indices' => new NDArray($outIndicesHandle, $outShape, DType::Int64),
+        ];
+    }
+
+    /**
+     * Perform topk over flattened array.
+     *
+     * @return array{values: NDArray, indices: NDArray}
+     */
+    private function topkFlatOp(int $k, bool $largest, bool $sorted, SortKind $kind): array
+    {
+        $ffi = Lib::get();
+        $outValuesHandle = $ffi->new('struct NdArrayHandle*');
+        $outIndicesHandle = $ffi->new('struct NdArrayHandle*');
+
+        $shape = Lib::createShapeArray($this->shape);
+        $strides = Lib::createShapeArray($this->strides);
+
+        $status = $ffi->ndarray_topk_flat(
+            $this->handle,
+            $this->offset,
+            $shape,
+            $strides,
+            count($this->shape),
+            $k,
+            $largest,
+            $sorted,
+            $kind->value,
+            Lib::addr($outValuesHandle),
+            Lib::addr($outIndicesHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return [
+            'values' => new NDArray($outValuesHandle, [$k], $this->dtype),
+            'indices' => new NDArray($outIndicesHandle, [$k], DType::Int64),
+        ];
     }
 
     /**
