@@ -14,6 +14,90 @@ use PHPUnit\Framework\TestCase;
  */
 final class ConversionTest extends TestCase
 {
+    public function testItemsizeAndNbytes(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], DType::Float64);
+
+        $this->assertSame(8, $a->itemsize());
+        $this->assertSame(48, $a->nbytes());
+    }
+
+    public function testTobytesUint8(): void
+    {
+        $a = NDArray::array([1, 2, 255], DType::Uint8);
+        $bytes = $a->tobytes();
+
+        $this->assertSame(3, strlen($bytes));
+        $this->assertSame("\x01\x02\xff", $bytes);
+    }
+
+    public function testTobytesBool(): void
+    {
+        $a = NDArray::array([true, false, true], DType::Bool);
+        $bytes = $a->tobytes();
+
+        $this->assertSame(3, strlen($bytes));
+        $this->assertSame("\x01\x00\x01", $bytes);
+    }
+
+    public function testTobytesFloat64RoundTripWithUnpack(): void
+    {
+        $a = NDArray::array([1.5, -2.25, 3.75], DType::Float64);
+        $bytes = $a->tobytes();
+
+        $this->assertSame(24, strlen($bytes)); // 3 * 8 bytes
+
+        // Use machine-endian unpack for stable round-trip on this platform.
+        $decoded = array_values(unpack('d*', $bytes));
+
+        $this->assertCount(3, $decoded);
+        $this->assertEqualsWithDelta(1.5, $decoded[0], 0.0000001);
+        $this->assertEqualsWithDelta(-2.25, $decoded[1], 0.0000001);
+        $this->assertEqualsWithDelta(3.75, $decoded[2], 0.0000001);
+    }
+
+    public function testCopyToBufferTypedInt32(): void
+    {
+        $a = NDArray::array([10, 20, 30, 40], DType::Int32);
+        $ffi = \NDArray\FFI\Lib::get();
+        $dst = $ffi->new('int32_t[4]');
+
+        $copied = $a->copyToBuffer($dst);
+
+        $this->assertSame(4, $copied);
+        $this->assertSame(10, $dst[0]);
+        $this->assertSame(20, $dst[1]);
+        $this->assertSame(30, $dst[2]);
+        $this->assertSame(40, $dst[3]);
+    }
+
+    public function testCopyToBufferOnView(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Int32);
+        $view = $a->slice([':', '1:3']); // [[2,3],[5,6]]
+        $ffi = \NDArray\FFI\Lib::get();
+        $dst = $ffi->new('int32_t[4]');
+
+        $copied = $view->copyToBuffer($dst);
+
+        $this->assertSame(4, $copied);
+        $this->assertSame(2, $dst[0]);
+        $this->assertSame(3, $dst[1]);
+        $this->assertSame(5, $dst[2]);
+        $this->assertSame(6, $dst[3]);
+    }
+
+    public function testCopyToBufferTooSmallThrows(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Int32);
+        $ffi = \NDArray\FFI\Lib::get();
+        $dst = $ffi->new('int32_t[2]');
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('Destination buffer too small');
+        $a->copyToBuffer($dst, 2);
+    }
+
     public function testToArrayForAllDTypes1D(): void
     {
         $cases = [

@@ -66,7 +66,7 @@ The primary array type representing N-dimensional arrays.
 - [x] 3.1.2: `NDArray::zeros($shape, $dtype = 'float64')` - Array of zeros
 - [x] 3.1.3: `NDArray::ones($shape, $dtype = 'float64')` - Array of ones
 - [x] 3.1.4: `NDArray::full($shape, $fill_value, $dtype = null)` - Filled array
-- [x] 3.1.5: `NDArray::empty($shape, $dtype = 'float64')` - Uninitialized array
+- [ ] 3.1.5: `NDArray::empty($shape, $dtype = 'float64')` - Uninitialized array
 - [x] 3.1.6: `NDArray::eye($n, $m = null, $k = 0, $dtype = 'float64')` - Identity matrix
 
 ### 3.2 Range and Sequence Creation (REQ-3.2)
@@ -398,6 +398,11 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 11.1.3: `$array->toList()` - Convert to PHP list (alias for toArray)
 - [x] 11.1.4: `$array->toScalar()` - Convert 0-d array to scalar
 - [x] 11.1.5: Automatic type inference from PHP arrays
+- [x] 11.1.6: `$array->toFlatArray()` - Convert to flat PHP array (C-order)
+- [x] 11.1.7: `$array->itemsize()` - Bytes per element
+- [x] 11.1.8: `$array->nbytes()` - Total bytes in array/view
+- [x] 11.1.9: `$array->copyToBuffer($dst, $maxElements = null)` - Bulk copy to caller C buffer
+- [x] 11.1.10: `$array->tobytes()` - Raw bytes in C-order
 
 ### 11.2 Serialization (REQ-11.2)
 **Priority**: MEDIUM

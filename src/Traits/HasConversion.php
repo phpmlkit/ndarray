@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NDArray\Traits;
 
 use FFI;
+use FFI\CData;
 use NDArray\DType;
 use NDArray\Exceptions\ShapeException;
 use NDArray\FFI\Lib;
@@ -16,6 +17,65 @@ use NDArray\FFI\Lib;
  */
 trait HasConversion
 {
+    /**
+     * Copy flattened C-order data into a caller-allocated C buffer.
+     *
+     * @param CData $dst Destination typed C buffer
+     * @param int|null $maxElements Maximum elements the destination can hold
+     * @return int Number of elements copied
+     */
+    public function copyToBuffer(CData $dst, ?int $maxElements = null): int
+    {
+        $size = $this->size;
+        if ($size === 0) {
+            return 0;
+        }
+
+        $maxElements ??= $size;
+        if ($maxElements < $size) {
+            throw new ShapeException(
+                "Destination buffer too small: requires {$size} elements, got {$maxElements}"
+            );
+        }
+
+        $ffi = Lib::get();
+        $cShape = Lib::createShapeArray($this->shape);
+        $cStrides = Lib::createShapeArray($this->strides);
+        $outLen = Lib::createBox('size_t');
+
+        $status = $ffi->ndarray_get_data(
+            $this->handle,
+            $this->offset,
+            $cShape,
+            $cStrides,
+            $this->ndim,
+            $dst,
+            $maxElements,
+            Lib::addr($outLen),
+        );
+
+        Lib::checkStatus($status);
+
+        return (int) min((int) $outLen->cdata, $maxElements);
+    }
+
+    /**
+     * Return raw bytes of the array/view in C-order.
+     */
+    public function tobytes(): string
+    {
+        $nbytes = $this->nbytes();
+        if ($nbytes === 0) {
+            return '';
+        }
+
+        $ffi = Lib::get();
+        $buffer = $ffi->new("uint8_t[{$nbytes}]");
+        $this->copyToBuffer($buffer, $this->size);
+
+        return FFI::string($buffer, $nbytes);
+    }
+
     /**
      * Convert 0-dimensional array to scalar.
      *
