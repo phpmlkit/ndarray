@@ -60,40 +60,137 @@ trait HasConversion
     }
 
     /**
-     * Convert to PHP array.
+     * Convert to flat PHP data in C-order.
      *
-     * Serializes the array or view to JSON using optimized ndarray view
-     * extraction, then decodes to PHP array structure.
+     * For 0-dimensional arrays, returns a scalar.
      *
-     * @return array|float|int Returns array for N-dimensional arrays, scalar for 0-dimensional
+     * @return array|float|int|bool
      */
-    public function toArray(): array|float|int
+    public function toFlatArray(): array|float|int|bool
+    {
+        if ($this->ndim === 0) {
+            return $this->toScalar();
+        }
+
+        return $this->fetchFlatData();
+    }
+
+    /**
+     * Convert to nested PHP array shape.
+     *
+     * Uses flat typed extraction from Rust + iterative nesting in PHP.
+     *
+     * @return array|float|int|bool Returns array for N-dimensional arrays, scalar for 0-dimensional
+     */
+    public function toArray(): array|float|int|bool
+    {
+        if ($this->ndim === 0) {
+            return $this->toScalar();
+        }
+
+        $flat = $this->fetchFlatData();
+        if ($this->ndim === 1) {
+            return $flat;
+        }
+
+        return $this->nestFromFlatIterative($flat, $this->shape);
+    }
+
+    /**
+     * Fetch flattened view data from Rust using a single FFI call.
+     *
+     * @return array<int|float|bool>
+     */
+    private function fetchFlatData(): array
     {
         $ffi = Lib::get();
+        $size = $this->size;
+        $allocLen = max(1, $size);
 
         $cShape = Lib::createShapeArray($this->shape);
         $cStrides = Lib::createShapeArray($this->strides);
+        $outLen = Lib::createBox('size_t');
 
-        $outPtr = $ffi->new("char*");
-        $outLen = Lib::createBox("size_t");
+        $ctype = match ($this->dtype) {
+            DType::Bool => 'uint8_t',
+            default => $this->dtype->ffiType(),
+        };
+        $buffer = $ffi->new("{$ctype}[{$allocLen}]");
 
-        $status = $ffi->ndarray_to_json(
+        $status = $ffi->ndarray_get_data(
             $this->handle,
             $this->offset,
             $cShape,
             $cStrides,
             $this->ndim,
-            Lib::addr($outPtr),
+            $buffer,
+            $size,
             Lib::addr($outLen),
         );
 
         Lib::checkStatus($status);
 
-        $json = FFI::string($outPtr, $outLen->cdata);
+        $len = min((int) $outLen->cdata, $size);
+        if ($len === 0) {
+            return [];
+        }
 
-        $ffi->ndarray_free_string($outPtr);
+        $out = [];
 
-        return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        switch ($this->dtype) {
+            case DType::Float64:
+            case DType::Float32:
+                for ($i = 0; $i < $len; $i++) {
+                    $out[] = (float) $buffer[$i];
+                }
+                break;
+            case DType::Bool:
+                for ($i = 0; $i < $len; $i++) {
+                    $out[] = ((int) $buffer[$i]) !== 0;
+                }
+                break;
+            default:
+                for ($i = 0; $i < $len; $i++) {
+                    $out[] = (int) $buffer[$i];
+                }
+                break;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Build nested arrays from a flat C-order vector using iterative chunking.
+     *
+     * @param array<int|float|bool> $flat
+     * @param array<int> $shape
+     * @return array
+     */
+    private function nestFromFlatIterative(array $flat, array $shape): array
+    {
+        $level = $flat;
+        $ndim = count($shape);
+
+        for ($dim = $ndim - 1; $dim >= 1; $dim--) {
+            $chunkSize = $shape[$dim];
+            if ($chunkSize <= 0) {
+                return [];
+            }
+
+            $next = [];
+            $count = count($level);
+            $idx = 0;
+            while ($idx < $count) {
+                $chunk = [];
+                for ($j = 0; $j < $chunkSize; $j++) {
+                    $chunk[] = $level[$idx++];
+                }
+                $next[] = $chunk;
+            }
+            $level = $next;
+        }
+
+        return $level;
     }
 
     /**

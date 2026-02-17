@@ -57,7 +57,7 @@ interface Bindings
 
     public function ndarray_get_element(CData $handle, int $flat_index, CData $out_value): int;
     public function ndarray_set_element(CData $handle, int $flat_index, CData $value): int;
-    public function ndarray_get_data(CData $handle, CData $out_data, int $max_len, CData $out_len): int;
+    public function ndarray_get_data(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_data, int $max_len, CData $out_len): int;
 
     // =========================================================================
     // Slice Operations

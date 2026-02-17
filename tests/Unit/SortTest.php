@@ -103,9 +103,8 @@ final class SortTest extends TestCase
         $this->assertSame([4], $result->shape());
         $this->assertEqualsWithDelta(1.0, $out[0], 0.0001);
         $this->assertEqualsWithDelta(2.0, $out[1], 0.0001);
-        // JSON conversion maps NaN to null in toArray().
-        $this->assertNull($out[2]);
-        $this->assertNull($out[3]);
+        $this->assertTrue(is_nan($out[2]));
+        $this->assertTrue(is_nan($out[3]));
     }
 
     public function testBoolSortOrdering(): void

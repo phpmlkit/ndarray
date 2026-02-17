@@ -75,9 +75,8 @@ final class SortViewTest extends TestCase
 
         $this->assertEqualsWithDelta(1.0, $result[0], 0.0001);
         $this->assertEqualsWithDelta(2.0, $result[1], 0.0001);
-        // JSON conversion maps NaN to null in toArray().
-        $this->assertNull($result[2]);
-        $this->assertNull($result[3]);
+        $this->assertTrue(is_nan($result[2]));
+        $this->assertTrue(is_nan($result[3]));
     }
 
     public function testBoolSortOnView(): void
