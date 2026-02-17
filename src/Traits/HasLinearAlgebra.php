@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NDArray\Traits;
 
+use NDArray\DType;
 use NDArray\NDArray;
 use NDArray\FFI\Lib;
 
@@ -15,6 +16,73 @@ use NDArray\FFI\Lib;
  */
 trait HasLinearAlgebra
 {
+    /**
+     * Compute vector or matrix norm.
+     *
+     * Supported orders:
+     * - 1
+     * - 2
+     * - INF
+     * - -INF
+     * - 'fro' (matrix only, axis=null)
+     *
+     * @param int|float|string|null $ord Norm order
+     * @param int|null $axis Reduction axis. If null, reduces all elements
+     * @param bool $keepdims Keep reduced axis with size 1 (axis mode only)
+     * @return NDArray|float
+     */
+    public function norm(int|float|string|null $ord = null, ?int $axis = null, bool $keepdims = false): NDArray|float
+    {
+        $ffi = Lib::get();
+        $ordCode = $this->normalizeNormOrder($ord, $axis);
+        $ndim = count($this->shape);
+
+        if ($ordCode === 5 && $ndim !== 2) {
+            throw new \InvalidArgumentException("Norm order '{$ord}' requires a 2D matrix");
+        }
+        if ($ordCode === 5 && $axis !== null) {
+            throw new \InvalidArgumentException("Norm order '{$ord}' is only supported when axis is null");
+        }
+
+        $shape = Lib::createShapeArray($this->shape);
+        $strides = Lib::createShapeArray($this->strides);
+
+        if ($axis === null) {
+            $outValue = Lib::createBox('double');
+            $outDtype = $ffi->new('uint8_t');
+            $status = $ffi->ndarray_norm(
+                $this->handle,
+                $this->offset,
+                $shape,
+                $strides,
+                $ndim,
+                $ordCode,
+                \FFI::addr($outValue),
+                Lib::addr($outDtype)
+            );
+
+            Lib::checkStatus($status);
+            return (float) $outValue->cdata;
+        }
+
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $status = $ffi->ndarray_norm_axis(
+            $this->handle,
+            $this->offset,
+            $shape,
+            $strides,
+            $ndim,
+            $axis,
+            $keepdims,
+            $ordCode,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        $outShape = $this->computeNormOutputShape($axis, $keepdims);
+        return new NDArray($outHandle, $outShape, DType::Float64);
+    }
+
     /**
      * Compute dot product of two arrays.
      *
@@ -296,5 +364,76 @@ trait HasLinearAlgebra
         
         // For other cases, try to infer
         return [$aShape[0], $bShape[count($bShape) - 1]];
+    }
+
+    /**
+     * Normalize norm order into FFI code.
+     */
+    private function normalizeNormOrder(int|float|string|null $ord, ?int $axis): int
+    {
+        if ($ord === null) {
+            if ($axis === null && count($this->shape) === 2) {
+                return 5; // fro
+            }
+            return 2;
+        }
+
+        if (is_int($ord)) {
+            return match ($ord) {
+                1 => 1,
+                2 => 2,
+                default => throw new \InvalidArgumentException("Unsupported norm order: {$ord}"),
+            };
+        }
+
+        if (is_float($ord)) {
+            if ($ord === INF) {
+                return 3;
+            }
+            if ($ord === -INF) {
+                return 4;
+            }
+            if ($ord === 1.0) {
+                return 1;
+            }
+            if ($ord === 2.0) {
+                return 2;
+            }
+            throw new \InvalidArgumentException("Unsupported norm order: {$ord}");
+        }
+
+        $normalized = strtolower(trim($ord));
+        return match ($normalized) {
+            '1' => 1,
+            '2' => 2,
+            'inf', '+inf' => 3,
+            '-inf' => 4,
+            'fro' => 5,
+            default => throw new \InvalidArgumentException("Unsupported norm order: {$ord}"),
+        };
+    }
+
+    /**
+     * Compute norm output shape for axis reduction.
+     *
+     * @return array<int>
+     */
+    private function computeNormOutputShape(int $axis, bool $keepdims): array
+    {
+        $shape = $this->shape;
+        $ndim = count($shape);
+        $axisNorm = $axis < 0 ? $ndim + $axis : $axis;
+
+        if ($keepdims) {
+            $shape[$axisNorm] = 1;
+            return $shape;
+        }
+
+        $out = array_values(array_filter(
+            $shape,
+            static fn (int $idx): bool => $idx !== $axisNorm,
+            ARRAY_FILTER_USE_KEY
+        ));
+        return $out;
     }
 }

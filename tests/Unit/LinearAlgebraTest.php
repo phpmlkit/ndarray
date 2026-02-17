@@ -131,4 +131,48 @@ class LinearAlgebraTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $a->trace();
     }
+
+    public function testNormScalarL2(): void
+    {
+        $a = NDArray::array([3, 4], DType::Float64);
+        $this->assertEqualsWithDelta(5.0, $a->norm(2), 1e-10);
+    }
+
+    public function testNormScalarL1AndInf(): void
+    {
+        $a = NDArray::array([-3, 4, -5], DType::Float64);
+        $this->assertEqualsWithDelta(12.0, $a->norm(1), 1e-10);
+        $this->assertEqualsWithDelta(5.0, $a->norm(INF), 1e-10);
+        $this->assertEqualsWithDelta(3.0, $a->norm(-INF), 1e-10);
+    }
+
+    public function testNormAxisL2(): void
+    {
+        $a = NDArray::array([[3, 4], [5, 12]], DType::Float64);
+        $result = $a->norm(2, axis: 1);
+        $this->assertEqualsWithDelta([5.0, 13.0], $result->toArray(), 1e-10);
+    }
+
+    public function testNormAxisKeepdims(): void
+    {
+        $a = NDArray::array([[1, -2, 3], [4, -5, 6]], DType::Float64);
+        $result = $a->norm(1, axis: 1, keepdims: true);
+        $this->assertSame([2, 1], $result->shape());
+        $this->assertEqualsWithDelta([[6.0], [15.0]], $result->toArray(), 1e-10);
+    }
+
+    public function testNormFrobeniusDefaultForMatrix(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Float64);
+        $expected = sqrt(1 + 4 + 9 + 16);
+        $this->assertEqualsWithDelta($expected, $a->norm(), 1e-10);
+        $this->assertEqualsWithDelta($expected, $a->norm('fro'), 1e-10);
+    }
+
+    public function testNormFroRequire2D(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Float64);
+        $this->expectException(\InvalidArgumentException::class);
+        $a->norm('fro');
+    }
 }

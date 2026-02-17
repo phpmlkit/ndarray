@@ -7,6 +7,7 @@ namespace NDArray\Traits;
 use FFI;
 use FFI\CData;
 use NDArray\DType;
+use NDArray\FFI\Box;
 use NDArray\NDArray;
 use NDArray\SortKind;
 use NDArray\FFI\Lib;
@@ -269,8 +270,8 @@ trait HasReductions
 
         Lib::checkStatus($status);
 
-        // Output shape is dynamic; retrieve length from produced array.
-        $outLen = $ffi->new('size_t');
+        $outLen = Lib::createBox('size_t');
+        
         $statusLen = $ffi->ndarray_len($outHandle, Lib::addr($outLen));
         Lib::checkStatus($statusLen);
 
@@ -287,8 +288,8 @@ trait HasReductions
     private function scalarReductionOp(string $funcName, DType $dtype): float|int
     {
         $ffi = Lib::get();
-        $outValue = $ffi->new('double');
-        $outDtype = $ffi->new('uint8_t');
+        $outValue = Lib::createBox('double');
+        $outDtype = Lib::createBox('uint8_t');
 
         $shape = Lib::createShapeArray($this->shape);
         $strides = Lib::createShapeArray($this->strides);
@@ -319,8 +320,8 @@ trait HasReductions
     private function scalarReductionDdofOp(string $funcName, DType $dtype, int $ddof): float|int
     {
         $ffi = Lib::get();
-        $outValue = $ffi->new('double');
-        $outDtype = $ffi->new('uint8_t');
+        $outValue = Lib::createBox('double');
+        $outDtype = Lib::createBox('uint8_t');
 
         $shape = Lib::createShapeArray($this->shape);
         $strides = Lib::createShapeArray($this->strides);
@@ -345,7 +346,7 @@ trait HasReductions
      * Interpret 8-byte buffer as scalar based on dtype.
      *
      * @param FFI $ffi FFI instance
-     * @param CData $outValue 8-byte buffer (allocated as double)
+     * @param CData&Box $outValue 8-byte buffer (allocated as double)
      * @param DType $dtype Result dtype from Rust
      * @return float|int
      */

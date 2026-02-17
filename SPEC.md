@@ -363,7 +363,7 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 9.3.1: `$array->det()` - Determinant
 - [ ] 9.3.2: `$array->inv()` - Matrix inverse
 - [ ] 9.3.3: `$array->pinv()` - Pseudo-inverse
-- [ ] 9.3.4: `$array->norm($ord = null, $axis = null)` - Matrix/vector norm
+- [x] 9.3.4: `$array->norm($ord = null, $axis = null, $keepdims = false)` - Matrix/vector norm (supports 1, 2, inf, -inf, fro)
 - [ ] 9.3.5: `$array->cond($p = null)` - Condition number
 - [ ] 9.3.6: `$array->rank()` - Matrix rank
 

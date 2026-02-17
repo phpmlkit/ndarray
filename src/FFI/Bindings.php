@@ -240,6 +240,8 @@ interface Bindings
     public function ndarray_matmul(CData $a, int $a_offset, CData $a_shape, CData $a_strides, int $a_ndim, CData $b, int $b_offset, CData $b_shape, CData $b_strides, int $b_ndim, CData $out_handle): int;
     public function ndarray_diagonal(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
     public function ndarray_trace(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
+    public function ndarray_norm(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $ord, CData $out_value, CData $out_dtype): int;
+    public function ndarray_norm_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, int $ord, CData $out_handle): int;
 
     // =========================================================================
     // Stacking (Joining and Splitting)
