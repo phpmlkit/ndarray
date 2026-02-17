@@ -50,6 +50,11 @@ interface Bindings
     public function ndarray_linspace(float $start, float $stop, int $num, bool $endpoint, int $dtype, CData $out_handle): int;
     public function ndarray_logspace(float $start, float $stop, int $num, float $base, int $dtype, CData $out_handle): int;
     public function ndarray_geomspace(float $start, float $stop, int $num, int $dtype, CData $out_handle): int;
+    public function ndarray_random(CData $shape, int $ndim, int $dtype, bool $has_seed, int $seed, CData $out_handle): int;
+    public function ndarray_random_int(int $low, int $high, CData $shape, int $ndim, int $dtype, bool $has_seed, int $seed, CData $out_handle): int;
+    public function ndarray_randn(CData $shape, int $ndim, int $dtype, bool $has_seed, int $seed, CData $out_handle): int;
+    public function ndarray_normal(float $mean, float $std, CData $shape, int $ndim, int $dtype, bool $has_seed, int $seed, CData $out_handle): int;
+    public function ndarray_uniform(float $low, float $high, CData $shape, int $ndim, int $dtype, bool $has_seed, int $seed, CData $out_handle): int;
 
     // =========================================================================
     // Element Access & Mutation

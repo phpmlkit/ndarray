@@ -82,11 +82,11 @@ The primary array type representing N-dimensional arrays.
 **Priority**: HIGH
 
 **Requirements**:
-- [ ] 3.3.1: `NDArray::random($shape, $dtype = 'float64')` - Uniform [0, 1)
-- [ ] 3.3.2: `NDArray::randomInt($low, $high, $shape, $dtype = 'int64')` - Random integers
-- [ ] 3.3.3: `NDArray::randn($shape, $dtype = 'float64')` - Standard normal distribution
-- [ ] 3.3.4: `NDArray::normal($mean, $std, $shape, $dtype = 'float64')` - Normal distribution
-- [ ] 3.3.5: `NDArray::uniform($low, $high, $shape, $dtype = 'float64')` - Uniform distribution
+- [x] 3.3.1: `NDArray::random($shape, $dtype = 'float64')` - Uniform [0, 1)
+- [x] 3.3.2: `NDArray::randomInt($low, $high, $shape, $dtype = 'int64')` - Random integers
+- [x] 3.3.3: `NDArray::randn($shape, $dtype = 'float64')` - Standard normal distribution
+- [x] 3.3.4: `NDArray::normal($mean, $std, $shape, $dtype = 'float64')` - Normal distribution
+- [x] 3.3.5: `NDArray::uniform($low, $high, $shape, $dtype = 'float64')` - Uniform distribution
 
 ### 3.4 Like Functions (REQ-3.4)
 **Priority**: MEDIUM

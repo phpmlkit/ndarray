@@ -396,4 +396,123 @@ final class CreationTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         NDArray::geomspace(1.0, 100.0, 5, DType::Int32);
     }
+
+    // =========================================================================
+    // Random Array Creation Tests (REQ-3.3)
+    // =========================================================================
+
+    public function testRandomBasicAndRange(): void
+    {
+        $arr = NDArray::random([2, 3], DType::Float64, seed: 1234);
+        $this->assertSame([2, 3], $arr->shape());
+        $this->assertSame(DType::Float64, $arr->dtype());
+
+        foreach ($arr->toFlatArray() as $v) {
+            $this->assertGreaterThanOrEqual(0.0, $v);
+            $this->assertLessThan(1.0, $v);
+        }
+    }
+
+    public function testRandomSeedDeterministic(): void
+    {
+        $a = NDArray::random([8], DType::Float32, seed: 7)->toArray();
+        $b = NDArray::random([8], DType::Float32, seed: 7)->toArray();
+        $c = NDArray::random([8], DType::Float32, seed: 8)->toArray();
+
+        $this->assertSame($a, $b);
+        $this->assertNotSame($a, $c);
+    }
+
+    public function testRandomFloatOnlyThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        NDArray::random([4], DType::Int32);
+    }
+
+    public function testRandomIntRangeAndDtype(): void
+    {
+        $arr = NDArray::randomInt(10, 20, [100], DType::Int32, seed: 42);
+        $this->assertSame([100], $arr->shape());
+        $this->assertSame(DType::Int32, $arr->dtype());
+
+        foreach ($arr->toFlatArray() as $v) {
+            $this->assertGreaterThanOrEqual(10, $v);
+            $this->assertLessThan(20, $v);
+        }
+    }
+
+    public function testRandomIntSeedDeterministic(): void
+    {
+        $a = NDArray::randomInt(0, 100, [12], DType::Int64, seed: 11)->toArray();
+        $b = NDArray::randomInt(0, 100, [12], DType::Int64, seed: 11)->toArray();
+        $this->assertSame($a, $b);
+    }
+
+    public function testRandomIntRejectsInvalidArgs(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        NDArray::randomInt(5, 5, [2], DType::Int64);
+    }
+
+    public function testRandnStatisticalSanity(): void
+    {
+        $arr = NDArray::randn([20000], DType::Float64, seed: 77);
+        $flat = $arr->toFlatArray();
+
+        $mean = array_sum($flat) / count($flat);
+        $variance = array_sum(array_map(
+            static fn (float $x): float => ($x - $mean) ** 2,
+            $flat
+        )) / count($flat);
+        $std = sqrt($variance);
+
+        $this->assertEqualsWithDelta(0.0, $mean, 0.05);
+        $this->assertEqualsWithDelta(1.0, $std, 0.08);
+    }
+
+    public function testNormalStatisticalSanity(): void
+    {
+        $meanTarget = 3.5;
+        $stdTarget = 2.0;
+        $arr = NDArray::normal($meanTarget, $stdTarget, [20000], DType::Float64, seed: 91);
+        $flat = $arr->toFlatArray();
+
+        $mean = array_sum($flat) / count($flat);
+        $variance = array_sum(array_map(
+            static fn (float $x): float => ($x - $mean) ** 2,
+            $flat
+        )) / count($flat);
+        $std = sqrt($variance);
+
+        $this->assertEqualsWithDelta($meanTarget, $mean, 0.1);
+        $this->assertEqualsWithDelta($stdTarget, $std, 0.1);
+    }
+
+    public function testNormalRequiresPositiveStd(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        NDArray::normal(0.0, 0.0, [4]);
+    }
+
+    public function testUniformRangeAndMeanSanity(): void
+    {
+        $low = -2.0;
+        $high = 6.0;
+        $arr = NDArray::uniform($low, $high, [20000], DType::Float64, seed: 123);
+        $flat = $arr->toFlatArray();
+
+        foreach ($flat as $v) {
+            $this->assertGreaterThanOrEqual($low, $v);
+            $this->assertLessThan($high, $v);
+        }
+
+        $mean = array_sum($flat) / count($flat);
+        $this->assertEqualsWithDelta(($low + $high) / 2.0, $mean, 0.08);
+    }
+
+    public function testUniformRequiresHighGreaterThanLow(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        NDArray::uniform(1.0, 1.0, [4]);
+    }
 }

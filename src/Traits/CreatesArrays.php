@@ -356,6 +356,169 @@ trait CreatesArrays
         return new self($outHandle, [$num], $dtype);
     }
 
+    /**
+     * Create random samples from a uniform distribution over [0, 1).
+     *
+     * @param array<int> $shape Output shape
+     * @param DType|null $dtype Float dtype (default: Float64)
+     * @param int|null $seed Optional seed for deterministic output
+     * @return self
+     */
+    public static function random(array $shape, ?DType $dtype = null, ?int $seed = null): self
+    {
+        $dtype ??= DType::Float64;
+        self::assertFloatDtype($dtype, 'random');
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $status = $ffi->ndarray_random(
+            Lib::createShapeArray($shape),
+            count($shape),
+            $dtype->value,
+            $seed !== null,
+            $seed ?? 0,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        return new self($outHandle, $shape, $dtype);
+    }
+
+    /**
+     * Create random integer samples from [low, high).
+     *
+     * @param int $low Inclusive lower bound
+     * @param int $high Exclusive upper bound
+     * @param array<int> $shape Output shape
+     * @param DType|null $dtype Integer dtype (default: Int64)
+     * @param int|null $seed Optional seed for deterministic output
+     * @return self
+     */
+    public static function randomInt(int $low, int $high, array $shape, ?DType $dtype = null, ?int $seed = null): self
+    {
+        $dtype ??= DType::Int64;
+        if (!$dtype->isInteger()) {
+            throw new \InvalidArgumentException('randomInt only supports integer dtypes');
+        }
+        if ($high <= $low) {
+            throw new \InvalidArgumentException("randomInt requires high > low, got [$low, $high)");
+        }
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $status = $ffi->ndarray_random_int(
+            $low,
+            $high,
+            Lib::createShapeArray($shape),
+            count($shape),
+            $dtype->value,
+            $seed !== null,
+            $seed ?? 0,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        return new self($outHandle, $shape, $dtype);
+    }
+
+    /**
+     * Create random samples from a standard normal distribution N(0, 1).
+     *
+     * @param array<int> $shape Output shape
+     * @param DType|null $dtype Float dtype (default: Float64)
+     * @param int|null $seed Optional seed for deterministic output
+     * @return self
+     */
+    public static function randn(array $shape, ?DType $dtype = null, ?int $seed = null): self
+    {
+        $dtype ??= DType::Float64;
+        self::assertFloatDtype($dtype, 'randn');
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $status = $ffi->ndarray_randn(
+            Lib::createShapeArray($shape),
+            count($shape),
+            $dtype->value,
+            $seed !== null,
+            $seed ?? 0,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        return new self($outHandle, $shape, $dtype);
+    }
+
+    /**
+     * Create random samples from a normal distribution N(mean, std).
+     *
+     * @param float $mean Mean of the distribution
+     * @param float $std Standard deviation (must be > 0)
+     * @param array<int> $shape Output shape
+     * @param DType|null $dtype Float dtype (default: Float64)
+     * @param int|null $seed Optional seed for deterministic output
+     * @return self
+     */
+    public static function normal(float $mean, float $std, array $shape, ?DType $dtype = null, ?int $seed = null): self
+    {
+        $dtype ??= DType::Float64;
+        self::assertFloatDtype($dtype, 'normal');
+        if (!($std > 0.0)) {
+            throw new \InvalidArgumentException("normal requires std > 0, got $std");
+        }
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $status = $ffi->ndarray_normal(
+            $mean,
+            $std,
+            Lib::createShapeArray($shape),
+            count($shape),
+            $dtype->value,
+            $seed !== null,
+            $seed ?? 0,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        return new self($outHandle, $shape, $dtype);
+    }
+
+    /**
+     * Create random samples from a uniform distribution over [low, high).
+     *
+     * @param float $low Inclusive lower bound
+     * @param float $high Exclusive upper bound
+     * @param array<int> $shape Output shape
+     * @param DType|null $dtype Float dtype (default: Float64)
+     * @param int|null $seed Optional seed for deterministic output
+     * @return self
+     */
+    public static function uniform(float $low, float $high, array $shape, ?DType $dtype = null, ?int $seed = null): self
+    {
+        $dtype ??= DType::Float64;
+        self::assertFloatDtype($dtype, 'uniform');
+        if ($high <= $low) {
+            throw new \InvalidArgumentException("uniform requires high > low, got [$low, $high)");
+        }
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $status = $ffi->ndarray_uniform(
+            $low,
+            $high,
+            Lib::createShapeArray($shape),
+            count($shape),
+            $dtype->value,
+            $seed !== null,
+            $seed ?? 0,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        return new self($outHandle, $shape, $dtype);
+    }
+
     // =========================================================================
     // Private Helpers
     // =========================================================================
@@ -431,5 +594,15 @@ trait CreatesArrays
         Lib::checkStatus($status);
 
         return $outHandle;
+    }
+
+    /**
+     * Ensure method only accepts floating-point dtypes.
+     */
+    private static function assertFloatDtype(DType $dtype, string $method): void
+    {
+        if (!$dtype->isFloat()) {
+            throw new \InvalidArgumentException("$method only supports Float32 and Float64 dtypes");
+        }
     }
 }
