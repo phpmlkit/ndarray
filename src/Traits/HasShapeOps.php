@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NDArray\Traits;
 
+use NDArray\PadMode;
 use NDArray\Exceptions\ShapeException;
 use NDArray\FFI\Lib;
 use NDArray\NDArray;
@@ -16,6 +17,61 @@ use NDArray\NDArray;
  */
 trait HasShapeOps
 {
+    /**
+     * Pad an array.
+     *
+     * Supported modes:
+     * - Constant (default)
+     * - Symmetric
+     * - Reflect
+     *
+     * @param int|array<int>|array<array<int>> $padWidth
+     * @param PadMode $mode
+     * @param int|float|bool|array<int|float|bool> $constantValues
+     * @return NDArray
+     */
+    public function pad(
+        int|array $padWidth,
+        PadMode $mode = PadMode::Constant,
+        int|float|bool|array $constantValues = 0
+    ): NDArray {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $normalizedPad = $this->normalizePadWidth($padWidth);
+        $padFlat = [];
+        foreach ($normalizedPad as [$before, $after]) {
+            $padFlat[] = $before;
+            $padFlat[] = $after;
+        }
+
+        $constants = $this->normalizePadConstants($constantValues, $mode);
+        $constantsC = Lib::createCArray('double', $constants);
+
+        $status = $ffi->ndarray_pad(
+            $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
+            Lib::createShapeArray($padFlat),
+            $mode->value,
+            $constantsC,
+            count($constants),
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        $newShape = [];
+        foreach ($this->shape as $axis => $dim) {
+            [$before, $after] = $normalizedPad[$axis];
+            $newShape[] = $dim + $before + $after;
+        }
+
+        return new NDArray($outHandle, $newShape, $this->dtype);
+    }
+
     /**
      * Reshape the array to a new shape.
      *
@@ -425,5 +481,115 @@ trait HasShapeOps
             $stride *= $shape[$i];
         }
         return $strides;
+    }
+
+    /**
+     * Normalize pad width to [[before, after], ...] for each axis.
+     *
+     * @param int|array $padWidth
+     * @return array<array{0:int,1:int}>
+     */
+    private function normalizePadWidth(int|array $padWidth): array
+    {
+        if (is_int($padWidth)) {
+            if ($padWidth < 0) {
+                throw new ShapeException('padWidth must be non-negative');
+            }
+            return array_fill(0, $this->ndim, [$padWidth, $padWidth]);
+        }
+
+        if ($this->ndim === 0) {
+            throw new ShapeException('pad() requires at least 1 dimension');
+        }
+
+        if (count($padWidth) === 2 && isset($padWidth[0], $padWidth[1]) && !is_array($padWidth[0])) {
+            $before = (int) $padWidth[0];
+            $after = (int) $padWidth[1];
+            if ($before < 0 || $after < 0) {
+                throw new ShapeException('padWidth values must be non-negative');
+            }
+            return array_fill(0, $this->ndim, [$before, $after]);
+        }
+
+        if (count($padWidth) === $this->ndim) {
+            $normalized = [];
+            foreach ($padWidth as $axis => $entry) {
+                if (is_int($entry)) {
+                    if ($entry < 0) {
+                        throw new ShapeException("padWidth for axis $axis must be non-negative");
+                    }
+                    $normalized[] = [$entry, $entry];
+                    continue;
+                }
+
+                if (!is_array($entry) || count($entry) !== 2) {
+                    throw new ShapeException("padWidth for axis $axis must be int or [before, after]");
+                }
+
+                $before = (int) $entry[0];
+                $after = (int) $entry[1];
+                if ($before < 0 || $after < 0) {
+                    throw new ShapeException("padWidth for axis $axis must be non-negative");
+                }
+                $normalized[] = [$before, $after];
+            }
+            return $normalized;
+        }
+
+        throw new ShapeException(
+            "padWidth must be an int, [before, after], or per-axis list of length {$this->ndim}"
+        );
+    }
+
+    /**
+     * Normalize constants passed to pad.
+     *
+     * Rust accepts:
+     * - [v] for scalar constant
+     * - [before, after] global pair
+     * - [b0, a0, b1, a1, ...] per-axis pairs
+     *
+     * @param int|float|bool|array<int|float|bool> $constantValues
+     * @param PadMode $mode
+     * @return array<float>
+     */
+    private function normalizePadConstants(int|float|bool|array $constantValues, PadMode $mode): array
+    {
+        if ($mode !== PadMode::Constant) {
+            return [0.0];
+        }
+
+        if (!is_array($constantValues)) {
+            return [(float) $constantValues];
+        }
+
+        if (count($constantValues) === 0) {
+            return [0.0];
+        }
+
+        if (count($constantValues) === 2 && !is_array($constantValues[0])) {
+            return [(float) $constantValues[0], (float) $constantValues[1]];
+        }
+
+        $flat = [];
+        foreach ($constantValues as $entry) {
+            if (is_array($entry)) {
+                if (count($entry) !== 2) {
+                    throw new ShapeException('constantValues per-axis entries must be [before, after]');
+                }
+                $flat[] = (float) $entry[0];
+                $flat[] = (float) $entry[1];
+            } else {
+                $flat[] = (float) $entry;
+            }
+        }
+
+        if (count($flat) !== 1 && count($flat) !== 2 && count($flat) !== $this->ndim * 2) {
+            throw new ShapeException(
+                "constantValues must be scalar, [before, after], or per-axis pairs of length " . ($this->ndim * 2)
+            );
+        }
+
+        return $flat;
     }
 }

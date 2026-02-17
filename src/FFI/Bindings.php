@@ -58,6 +58,12 @@ interface Bindings
     public function ndarray_get_element(CData $handle, int $flat_index, CData $out_value): int;
     public function ndarray_set_element(CData $handle, int $flat_index, CData $value): int;
     public function ndarray_get_data(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_data, int $max_len, CData $out_len): int;
+    public function ndarray_take_flat(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $indices, int $indices_len, CData $indices_shape, int $indices_ndim, CData $out_handle): int;
+    public function ndarray_take_along_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $indices_handle, int $indices_offset, CData $indices_shape, CData $indices_strides, int $indices_ndim, int $axis, CData $out_handle): int;
+    public function ndarray_put_flat(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $indices, int $indices_len, CData $values, int $values_len, float $scalar_value, bool $has_scalar, CData $out_handle): int;
+    public function ndarray_put_along_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $indices_handle, int $indices_offset, CData $indices_shape, CData $indices_strides, int $indices_ndim, int $axis, CData $values, int $values_len, float $scalar_value, bool $has_scalar, CData $out_handle): int;
+    public function ndarray_where(CData $cond_handle, int $cond_offset, CData $cond_shape, CData $cond_strides, int $cond_ndim, CData $x_handle, int $x_offset, CData $x_shape, CData $x_strides, int $x_ndim, CData $y_handle, int $y_offset, CData $y_shape, CData $y_strides, int $y_ndim, CData $out_handle, CData $out_shape, CData $out_ndim): int;
+    public function ndarray_scatter_add_flat(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $indices, int $indices_len, CData $updates, int $updates_len, float $scalar_update, bool $has_scalar, CData $out_handle): int;
 
     // =========================================================================
     // Slice Operations
@@ -179,6 +185,7 @@ interface Bindings
     public function ndarray_var_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, float $ddof, CData $out_handle): int;
     public function ndarray_std(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, float $ddof, CData $out_value, CData $out_dtype): int;
     public function ndarray_std_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, bool $keepdims, float $ddof, CData $out_handle): int;
+    public function ndarray_bincount(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $minlength, CData $out_handle): int;
     public function ndarray_sort_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, int $kind, CData $out_handle): int;
     public function ndarray_sort_flat(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $kind, CData $out_handle): int;
     public function ndarray_argsort_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, int $kind, CData $out_handle): int;
@@ -221,6 +228,7 @@ interface Bindings
     public function ndarray_flatten(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
     public function ndarray_ravel(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $order, CData $out_handle): int;
     public function ndarray_squeeze(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $axes, int $num_axes, CData $out_handle): int;
+    public function ndarray_pad(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $pad_width, int $mode, CData $constant_values, int $constant_values_len, CData $out_handle): int;
 
     // =========================================================================
     // Linear Algebra Operations

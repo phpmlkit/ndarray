@@ -128,6 +128,10 @@ The primary array type representing N-dimensional arrays.
 - [ ] 4.3.2: Integer array indexing: `$array->at([0, 2, 4])`
 - [ ] 4.3.3: Fancy indexing with multiple arrays
 - [ ] 4.3.4: Return views where possible, copies when necessary
+- [x] 4.3.5: Flat scalar indexing write: `$array->setAt($flatIndex, $value)`
+- [x] 4.3.6: Gather by flat indices: `$array->take($indices, $axis = null)`
+- [x] 4.3.7: Gather along axis: `$array->takeAlongAxis($indices, $axis)`
+- [x] 4.3.8: Conditional select: `NDArray::where($condition, $x, $y)`
 
 ### 4.4 Assignment (REQ-4.4)
 **Priority**: CRITICAL
@@ -137,6 +141,9 @@ The primary array type representing N-dimensional arrays.
 - [x] 4.4.2: Array assignment: `$array['0:5'] = $other_array`
 - [ ] 4.4.3: Broadcast assignment: `$array[':', 0] = 5`
 - [ ] 4.4.4: Boolean mask assignment: `$array->set($mask, $value)`
+- [x] 4.4.5: Scatter write by flat indices: `$array->put($indices, $values, $mode = 'raise')`
+- [x] 4.4.6: Scatter write along axis: `$array->putAlongAxis($indices, $values, $axis)`
+- [x] 4.4.7: Accumulating scatter add: `$array->scatterAdd($indices, $updates)`
 
 ---
 
@@ -205,6 +212,8 @@ The primary array type representing N-dimensional arrays.
 - [x] 6.3.5: `$array->insertAxis($axis)` - Insert new axis at position
 - [x] 6.3.6: `$array->mergeAxes($take, $into)` - Merge two axes together
 - [x] 6.3.7: `$array->invertAxis($axis)` - Reverse stride of axis
+- [x] 6.3.8: `$array->pad($padWidth, $mode = PadMode::Constant, $constantValues = 0)` - Pad array
+- [x] 6.3.9: Pad modes enum via `PadMode::{Constant, Symmetric, Reflect}`
 
 ### 6.4 Joining and Splitting (REQ-6.4)
 **Priority**: MEDIUM
@@ -308,6 +317,7 @@ The primary array type representing N-dimensional arrays.
 - [x] 8.3.3: `$array->argsort($axis = -1, $kind = SortKind::QuickSort)` - Indices that would sort
 - [x] 8.3.4: `$array->sort($axis = -1, $kind = SortKind::QuickSort)` - Return sorted copy
 - [ ] 8.3.5: `$array->nonzero()` - Indices of non-zero elements
+- [x] 8.3.6: `$array->bincount($minlength = null)` - Histogram of non-negative integer values
 
 Sort kind selection is enum-based via `SortKind`:
 - `SortKind::QuickSort`

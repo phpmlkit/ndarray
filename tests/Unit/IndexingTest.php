@@ -184,6 +184,41 @@ final class IndexingTest extends TestCase
         $this->assertSame([1, 99, 3], $arr->toArray());
     }
 
+    public function testSetAtScalar1D(): void
+    {
+        $arr = NDArray::array([10, 20, 30, 40], DType::Int64);
+        $arr->setAt(2, 99);
+
+        $this->assertSame([10, 20, 99, 40], $arr->toArray());
+    }
+
+    public function testSetAtNegativeIndex(): void
+    {
+        $arr = NDArray::array([10, 20, 30, 40], DType::Int64);
+        $arr->setAt(-1, 77);
+
+        $this->assertSame([10, 20, 30, 77], $arr->toArray());
+    }
+
+    public function testSetAtOnViewUsesLogicalOrder(): void
+    {
+        $arr = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ], DType::Int64);
+
+        $view = $arr->slice(['::2', ':']); // rows 0 and 2, shape [2, 3]
+        $view->setAt(4, 99); // logical flat index 4 => row 1 col 1 inside view => arr[2,1]
+
+        $this->assertSame(99, $arr->get(2, 1));
+        $this->assertSame([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 99, 9],
+        ], $arr->toArray());
+    }
+
     public function testSetScalar2D(): void
     {
         $arr = NDArray::array([
@@ -435,6 +470,128 @@ final class IndexingTest extends TestCase
         // Set first element of last row
         $arr->set([-1, 0], 77);
         $this->assertSame(77, $arr->get(2, 0));
+    }
+
+    public function testSetAtOutOfBoundsThrows(): void
+    {
+        $arr = NDArray::array([1, 2, 3], DType::Int64);
+
+        $this->expectException(IndexException::class);
+        $this->expectExceptionMessage('out of bounds');
+
+        $arr->setAt(3, 10);
+    }
+
+    // =========================================================================
+    // take / takeAlongAxis
+    // =========================================================================
+
+    public function testTakeFlatArrayIndices(): void
+    {
+        $arr = NDArray::array([[10, 20, 30], [40, 50, 60]], DType::Int64);
+        $result = $arr->take([0, 2, -1]);
+
+        $this->assertSame([3], $result->shape());
+        $this->assertSame([10, 30, 60], $result->toArray());
+    }
+
+    public function testTakeFlatNestedIndicesPreservesShape(): void
+    {
+        $arr = NDArray::array([1, 2, 3, 4, 5, 6], DType::Int64);
+        $result = $arr->take([[0, 1], [4, 5]]);
+
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertSame([[1, 2], [5, 6]], $result->toArray());
+    }
+
+    public function testTakeAlongAxis(): void
+    {
+        $arr = NDArray::array([[10, 20, 30], [40, 50, 60]], DType::Int64);
+        $indices = NDArray::array([[2, 1], [0, 2]], DType::Int64);
+        $result = $arr->takeAlongAxis($indices, 1);
+
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertSame([[30, 20], [40, 60]], $result->toArray());
+    }
+
+    public function testTakeOnView(): void
+    {
+        $arr = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ], DType::Int64);
+        $view = $arr->slice(['::2', ':']); // [[1,2,3],[7,8,9]]
+        $result = $view->take([1, 4, 5]);
+
+        $this->assertSame([3], $result->shape());
+        $this->assertSame([2, 8, 9], $result->toArray());
+    }
+
+    // =========================================================================
+    // put / putAlongAxis / scatterAdd
+    // =========================================================================
+
+    public function testPutFlatScalar(): void
+    {
+        $arr = NDArray::array([1, 2, 3, 4], DType::Int64);
+        $result = $arr->put([1, -1], 9);
+
+        $this->assertSame([1, 9, 3, 9], $result->toArray());
+        $this->assertSame([1, 2, 3, 4], $arr->toArray());
+    }
+
+    public function testPutFlatCyclesValues(): void
+    {
+        $arr = NDArray::array([10, 20, 30, 40], DType::Int64);
+        $vals = NDArray::array([1, 2], DType::Int64);
+        $result = $arr->put([0, 1, 2, 3], $vals);
+
+        $this->assertSame([1, 2, 1, 2], $result->toArray());
+    }
+
+    public function testPutAlongAxis(): void
+    {
+        $arr = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Int64);
+        $indices = NDArray::array([[0, 2], [1, 0]], DType::Int64);
+        $values = NDArray::array([[9, 8], [7, 6]], DType::Int64);
+        $result = $arr->putAlongAxis($indices, $values, 1);
+
+        $this->assertSame([[9, 2, 8], [6, 7, 6]], $result->toArray());
+    }
+
+    public function testScatterAddFlat(): void
+    {
+        $arr = NDArray::array([1, 2, 3, 4], DType::Int64);
+        $result = $arr->scatterAdd([1, 1, 3], NDArray::array([5, 6, 7], DType::Int64));
+
+        $this->assertSame([1, 13, 3, 11], $result->toArray());
+    }
+
+    // =========================================================================
+    // Static where
+    // =========================================================================
+
+    public function testStaticWhereArrayCondition(): void
+    {
+        $cond = NDArray::array([true, false, true], DType::Bool);
+        $x = NDArray::array([1, 2, 3], DType::Int64);
+        $y = NDArray::array([10, 20, 30], DType::Int64);
+
+        $result = NDArray::where($cond, $x, $y);
+        $this->assertSame([1, 20, 3], $result->toArray());
+    }
+
+    public function testStaticWhereScalarConditionBroadcasts(): void
+    {
+        $x = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $y = NDArray::array([[10, 20], [30, 40]], DType::Int64);
+
+        $resultTrue = NDArray::where(true, $x, $y);
+        $this->assertSame([[1, 2], [3, 4]], $resultTrue->toArray());
+
+        $resultFalse = NDArray::where(false, $x, $y);
+        $this->assertSame([[10, 20], [30, 40]], $resultFalse->toArray());
     }
 
     public function testArrayAccessNegativeIndex(): void

@@ -215,6 +215,41 @@ trait HasReductions
     }
 
     /**
+     * Count occurrences of non-negative integer values in flattened input.
+     *
+     * @param int|null $minlength Minimum output length
+     * @return NDArray Int64 counts array
+     */
+    public function bincount(?int $minlength = null): NDArray
+    {
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $minlength ??= 0;
+        if ($minlength < 0) {
+            throw new \InvalidArgumentException('minlength must be >= 0');
+        }
+
+        $status = $ffi->ndarray_bincount(
+            $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createShapeArray($this->strides),
+            count($this->shape),
+            $minlength,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        // Output shape is dynamic; retrieve length from produced array.
+        $outLen = $ffi->new('size_t');
+        $statusLen = $ffi->ndarray_len($outHandle, Lib::addr($outLen));
+        Lib::checkStatus($statusLen);
+
+        return new NDArray($outHandle, [$outLen->cdata], DType::Int64);
+    }
+
+    /**
      * Perform a scalar reduction and return the value directly (no NDArray allocation).
      *
      * @param string $funcName FFI function name

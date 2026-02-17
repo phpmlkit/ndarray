@@ -411,4 +411,21 @@ final class ReductionsTest extends TestCase
         $this->assertEqualsWithDelta([[3, 7], [11, 15]], $result->toArray(), 0.0001);
     }
 
+    public function testBincountInt64(): void
+    {
+        $a = NDArray::array([0, 1, 1, 2, 4, 4, 4], DType::Int64);
+        $result = $a->bincount();
+
+        $this->assertSame([1, 2, 1, 0, 3], $result->toArray());
+        $this->assertSame(DType::Int64, $result->dtype());
+    }
+
+    public function testBincountWithMinLength(): void
+    {
+        $a = NDArray::array([1, 3], DType::Int64);
+        $result = $a->bincount(6);
+
+        $this->assertSame([0, 1, 0, 1, 0, 0], $result->toArray());
+    }
+
 }

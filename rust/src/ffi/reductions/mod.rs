@@ -7,6 +7,7 @@ pub(crate) mod helpers;
 
 // Scalar reductions
 pub mod argminmax_scalar;
+pub mod bincount;
 pub mod cumprod;
 pub mod cumsum;
 pub mod mean_scalar;
@@ -29,6 +30,7 @@ pub mod sum_axis;
 // Re-export all FFI functions
 pub use argminmax_axis::*;
 pub use argminmax_scalar::*;
+pub use bincount::*;
 pub use cumprod::*;
 pub use cumprod_axis::*;
 pub use cumsum::*;

@@ -6,6 +6,7 @@ namespace NDArray\Tests\Unit;
 
 use NDArray\DType;
 use NDArray\NDArray;
+use NDArray\PadMode;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,6 +14,78 @@ use PHPUnit\Framework\TestCase;
  */
 final class ShapeOpsTest extends TestCase
 {
+    // =========================================================================
+    // Pad Tests
+    // =========================================================================
+
+    public function testPadConstant1D(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Int64);
+        $result = $a->pad(2);
+
+        $this->assertSame([7], $result->shape());
+        $this->assertSame([0, 0, 1, 2, 3, 0, 0], $result->toArray());
+    }
+
+    public function testPadConstant2DWithPerAxisWidth(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = $a->pad([[1, 0], [0, 1]], PadMode::Constant, 9);
+
+        $this->assertSame([3, 3], $result->shape());
+        $this->assertSame([
+            [9, 9, 9],
+            [1, 2, 9],
+            [3, 4, 9],
+        ], $result->toArray());
+    }
+
+    public function testPadSymmetric1D(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Int64);
+        $result = $a->pad([2, 1], PadMode::Symmetric);
+
+        $this->assertSame([6], $result->shape());
+        $this->assertSame([2, 1, 1, 2, 3, 3], $result->toArray());
+    }
+
+    public function testPadReflect1D(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Int64);
+        $result = $a->pad([2, 1], PadMode::Reflect);
+
+        $this->assertSame([6], $result->shape());
+        $this->assertSame([3, 2, 1, 2, 3, 2], $result->toArray());
+    }
+
+    public function testPadBool(): void
+    {
+        $a = NDArray::array([[true, false]], DType::Bool);
+        $result = $a->pad([[0, 1], [1, 0]], PadMode::Constant, false);
+
+        $this->assertSame([[false, true, false], [false, false, false]], $result->toArray());
+    }
+
+    public function testPadOnView(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ], DType::Int64);
+
+        $view = $a->slice(['::2', '1:']); // [[2,3], [8,9]]
+        $result = $view->pad(1, PadMode::Reflect);
+
+        $this->assertSame([4, 4], $result->shape());
+        $this->assertSame([
+            [9, 8, 9, 8],
+            [3, 2, 3, 2],
+            [9, 8, 9, 8],
+            [3, 2, 3, 2],
+        ], $result->toArray());
+    }
+
     // =========================================================================
     // Reshape Tests
     // =========================================================================

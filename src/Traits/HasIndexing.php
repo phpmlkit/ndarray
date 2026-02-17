@@ -9,6 +9,7 @@ use NDArray\DType;
 use NDArray\Exceptions\IndexException;
 use NDArray\FFI\Bindings;
 use NDArray\FFI\Lib;
+use NDArray\NDArray;
 
 /**
  * Element indexing: get(), set(), and view creation.
@@ -94,6 +95,208 @@ trait HasIndexing
         $this->setScalar($flatIndex, $value);
     }
 
+    /**
+     * Set a scalar value using a logical flat index (C-order) for this array/view.
+     *
+     * Supports negative indices: -1 refers to the last logical element.
+     *
+     * @param int $flatIndex Logical flat index into this array/view
+     * @param int|float|bool $value Value to set
+     */
+    public function setAt(int $flatIndex, int|float|bool $value): void
+    {
+        $normalized = $this->normalizeFlatIndex($flatIndex);
+        $storageFlatIndex = $this->logicalFlatToStorageIndex($normalized);
+        $this->setScalar($storageFlatIndex, $value);
+    }
+
+    /**
+     * Gather values by indices.
+     *
+     * If axis is null, gathers from logical flattened view (C-order).
+     * If axis is provided, delegates to takeAlongAxis semantics.
+     *
+     * @param array<int|array>|self $indices
+     * @param int|null $axis
+     * @return self
+     */
+    public function take(array|self $indices, ?int $axis = null): self
+    {
+        if ($axis !== null) {
+            $idxArray = $indices instanceof self ? $indices : NDArray::array($indices, DType::Int64);
+            return $this->takeAlongAxis($idxArray, $axis);
+        }
+
+        [$flatIndices, $indicesShape] = $this->prepareIndicesInput($indices);
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_take_flat(
+            $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
+            Lib::createCArray('int64_t', $flatIndices),
+            count($flatIndices),
+            Lib::createShapeArray($indicesShape),
+            count($indicesShape),
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        return new self($outHandle, $indicesShape, $this->dtype);
+    }
+
+    /**
+     * Gather values along an axis using per-position indices.
+     *
+     * @param self $indices Int64 indices array
+     * @param int $axis
+     * @return self
+     */
+    public function takeAlongAxis(self $indices, int $axis): self
+    {
+        if ($indices->dtype !== DType::Int64) {
+            throw new \InvalidArgumentException('takeAlongAxis indices must have Int64 dtype');
+        }
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_take_along_axis(
+            $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
+            $indices->handle,
+            $indices->offset,
+            Lib::createShapeArray($indices->shape),
+            Lib::createCArray('size_t', $indices->strides),
+            $indices->ndim,
+            $axis,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        return new self($outHandle, $indices->shape, $this->dtype);
+    }
+
+    /**
+     * Scatter values by flattened indices and return a mutated copy.
+     *
+     * @param array<int|array>|self $indices
+     * @param int|float|bool|self $values
+     * @param string $mode Currently supports only 'raise'
+     * @return self
+     */
+    public function put(array|self $indices, int|float|bool|self $values, string $mode = 'raise'): self
+    {
+        if ($mode !== 'raise') {
+            throw new \InvalidArgumentException("put mode '$mode' is not supported yet. Use 'raise'.");
+        }
+
+        [$flatIndices] = $this->prepareIndicesInput($indices);
+        [$valuesBuffer, $valuesLen, $scalarValue, $hasScalar] = $this->prepareValuesBuffer($values);
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_put_flat(
+            $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
+            Lib::createCArray('int64_t', $flatIndices),
+            count($flatIndices),
+            $valuesBuffer,
+            $valuesLen,
+            $scalarValue,
+            $hasScalar,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        return new self($outHandle, $this->shape, $this->dtype);
+    }
+
+    /**
+     * Scatter values along an axis and return a mutated copy.
+     *
+     * @param self $indices Int64 indices array
+     * @param self|int|float|bool $values
+     * @param int $axis
+     * @return self
+     */
+    public function putAlongAxis(self $indices, self|int|float|bool $values, int $axis): self
+    {
+        if ($indices->dtype !== DType::Int64) {
+            throw new \InvalidArgumentException('putAlongAxis indices must have Int64 dtype');
+        }
+
+        [$valuesBuffer, $valuesLen, $scalarValue, $hasScalar] = $this->prepareValuesBuffer($values);
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_put_along_axis(
+            $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
+            $indices->handle,
+            $indices->offset,
+            Lib::createShapeArray($indices->shape),
+            Lib::createCArray('size_t', $indices->strides),
+            $indices->ndim,
+            $axis,
+            $valuesBuffer,
+            $valuesLen,
+            $scalarValue,
+            $hasScalar,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        return new self($outHandle, $this->shape, $this->dtype);
+    }
+
+    /**
+     * Add updates by flattened indices and return a mutated copy.
+     *
+     * @param array<int|array>|self $indices
+     * @param self|int|float|bool $updates
+     * @return self
+     */
+    public function scatterAdd(array|self $indices, self|int|float|bool $updates): self
+    {
+        [$flatIndices] = $this->prepareIndicesInput($indices);
+        [$updatesBuffer, $updatesLen, $scalarUpdate, $hasScalar] = $this->prepareValuesBuffer($updates);
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_scatter_add_flat(
+            $this->handle,
+            $this->offset,
+            Lib::createShapeArray($this->shape),
+            Lib::createCArray('size_t', $this->strides),
+            $this->ndim,
+            Lib::createCArray('int64_t', $flatIndices),
+            count($flatIndices),
+            $updatesBuffer,
+            $updatesLen,
+            $scalarUpdate,
+            $hasScalar,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+        return new self($outHandle, $this->shape, $this->dtype);
+    }
+
     // =========================================================================
     // Private Helpers
     // =========================================================================
@@ -114,6 +317,52 @@ trait HasIndexing
         }
 
         return $flatIndex;
+    }
+
+    /**
+     * Normalize a logical flat index (supports negative indexing).
+     *
+     * @param int $flatIndex
+     * @return int
+     */
+    private function normalizeFlatIndex(int $flatIndex): int
+    {
+        if ($flatIndex < 0) {
+            $flatIndex += $this->size;
+        }
+
+        if ($flatIndex < 0 || $flatIndex >= $this->size) {
+            throw new IndexException(
+                "Flat index $flatIndex is out of bounds for array/view of size {$this->size}"
+            );
+        }
+
+        return $flatIndex;
+    }
+
+    /**
+     * Convert a logical C-order flat index to the underlying storage flat index.
+     *
+     * @param int $logicalFlatIndex
+     * @return int
+     */
+    private function logicalFlatToStorageIndex(int $logicalFlatIndex): int
+    {
+        if ($this->ndim === 1) {
+            return $this->offset + ($logicalFlatIndex * $this->strides[0]);
+        }
+
+        $storageIndex = $this->offset;
+        $remaining = $logicalFlatIndex;
+
+        for ($dim = $this->ndim - 1; $dim >= 0; $dim--) {
+            $dimSize = $this->shape[$dim];
+            $idxInDim = $remaining % $dimSize;
+            $remaining = intdiv($remaining, $dimSize);
+            $storageIndex += $idxInDim * $this->strides[$dim];
+        }
+
+        return $storageIndex;
     }
 
     /**
@@ -216,6 +465,84 @@ trait HasIndexing
         Lib::checkStatus($status);
 
         return $outValue->cdata;
+    }
+
+    /**
+     * @param array<int|array>|self $indices
+     * @return array{0: array<int>, 1: array<int>}
+     */
+    private function prepareIndicesInput(array|self $indices): array
+    {
+        if ($indices instanceof self) {
+            if (!$indices->dtype->isInteger()) {
+                throw new \InvalidArgumentException('indices NDArray must have an integer dtype');
+            }
+            $flat = $indices->toFlatArray();
+            $flat = is_array($flat) ? $flat : [$flat];
+            return [array_map(static fn ($v) => (int) $v, $flat), $indices->shape];
+        }
+
+        $shape = $this->inferNestedShape($indices);
+        $flat = $this->flattenNestedArray($indices);
+        return [array_map(static fn ($v) => (int) $v, $flat), $shape];
+    }
+
+    /**
+     * Build a typed values buffer for put/scatter operations.
+     *
+     * @param self|int|float|bool $values
+     * @return array{0: \FFI\CData, 1: int, 2: float, 3: bool}
+     */
+    private function prepareValuesBuffer(self|int|float|bool $values): array
+    {
+        if (is_int($values) || is_float($values) || is_bool($values)) {
+            $dummy = Lib::createCArray($this->dtype->ffiType(), [0]);
+            return [$dummy, 0, (float) $values, true];
+        }
+
+        $valuesNd = $values->dtype === $this->dtype ? $values : $values->astype($this->dtype);
+        $flat = $valuesNd->toFlatArray();
+        $flat = is_array($flat) ? $flat : [$flat];
+        if ($this->dtype === DType::Bool) {
+            $flat = array_map(static fn ($v) => $v ? 1 : 0, $flat);
+        }
+        $buffer = Lib::createCArray($this->dtype->ffiType(), $flat);
+        return [$buffer, count($flat), 0.0, false];
+    }
+
+    /**
+     * Infer shape from nested PHP arrays.
+     *
+     * @param array $data
+     * @return array<int>
+     */
+    private function inferNestedShape(array $data): array
+    {
+        $shape = [];
+        $current = $data;
+        while (is_array($current)) {
+            $shape[] = count($current);
+            if (empty($current)) {
+                break;
+            }
+            $current = $current[0];
+        }
+        return $shape === [] ? [count($data)] : $shape;
+    }
+
+    /**
+     * Flatten nested PHP arrays.
+     *
+     * @param array $data
+     * @return array<int|float|bool>
+     */
+    private function flattenNestedArray(array $data): array
+    {
+        $out = [];
+        array_walk_recursive($data, static function ($v) use (&$out): void {
+            $out[] = $v;
+        });
+        return $out;
     }
 
     /**

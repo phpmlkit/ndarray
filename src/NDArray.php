@@ -177,6 +177,55 @@ class NDArray implements ArrayAccess
         return $this->strides === $expected;
     }
 
+    /**
+     * Select values from x and y based on a boolean condition.
+     *
+     * @param self|int|float|bool $condition Bool NDArray or scalar condition
+     * @param self|int|float|bool $x Values where condition is true
+     * @param self|int|float|bool $y Values where condition is false
+     * @return self
+     */
+    public static function where(self|int|float|bool $condition, self|int|float|bool $x, self|int|float|bool $y): self
+    {
+        $condArray = self::coerceWhereOperand($condition, DType::Bool);
+        $xArray = self::coerceWhereOperand($x, null);
+        $yArray = self::coerceWhereOperand($y, null);
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $outShapePtr = $ffi->new('size_t*');
+        $outNdim = $ffi->new('size_t');
+
+        $status = $ffi->ndarray_where(
+            $condArray->handle,
+            $condArray->offset,
+            Lib::createShapeArray($condArray->shape),
+            Lib::createCArray('size_t', $condArray->strides),
+            $condArray->ndim,
+            $xArray->handle,
+            $xArray->offset,
+            Lib::createShapeArray($xArray->shape),
+            Lib::createCArray('size_t', $xArray->strides),
+            $xArray->ndim,
+            $yArray->handle,
+            $yArray->offset,
+            Lib::createShapeArray($yArray->shape),
+            Lib::createCArray('size_t', $yArray->strides),
+            $yArray->ndim,
+            Lib::addr($outHandle),
+            Lib::addr($outShapePtr),
+            Lib::addr($outNdim)
+        );
+
+        Lib::checkStatus($status);
+
+        $ndim = $outNdim->cdata;
+        $shape = Lib::extractShapeFromPointer($outShapePtr, $ndim);
+        $dtype = DType::promote($xArray->dtype, $yArray->dtype);
+
+        return new self($outHandle, $shape, $dtype);
+    }
+
     // =========================================================================
     // Private Helpers
     // =========================================================================
@@ -202,5 +251,21 @@ class NDArray implements ArrayAccess
         }
 
         return $strides;
+    }
+
+    /**
+     * @param self|int|float|bool $value
+     */
+    private static function coerceWhereOperand(self|int|float|bool $value, ?DType $forceDtype): self
+    {
+        if ($value instanceof self) {
+            if ($forceDtype !== null && $value->dtype !== $forceDtype) {
+                return $value->astype($forceDtype);
+            }
+            return $value;
+        }
+
+        $dtype = $forceDtype ?? DType::fromValue($value);
+        return self::array([$value], $dtype);
     }
 }
