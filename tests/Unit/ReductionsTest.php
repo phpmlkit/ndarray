@@ -115,7 +115,7 @@ final class ReductionsTest extends TestCase
 
     public function testSumAxis1(): void
     {
-        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Int16);
         $result = $a->sum(axis: 1);
         $this->assertEqualsWithDelta([6, 15], $result->toArray(), 0.0001);
         $this->assertSame([2], $result->shape());

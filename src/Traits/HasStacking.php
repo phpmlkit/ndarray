@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NDArray\Traits;
 
+use NDArray\DType;
 use NDArray\Exceptions\ShapeException;
 use NDArray\FFI\Lib;
 use NDArray\NDArray;
@@ -64,6 +65,9 @@ trait HasStacking
         }
 
         $outHandle = $ffi->new('struct NdArrayHandle*');
+        $outNdimBuf = $ffi->new('size_t');
+        $outShapeBuf = Lib::createCArray('size_t', array_fill(0, Lib::MAX_NDIM, 0));
+
         $status = $ffi->ndarray_concatenate(
             $cHandles,
             $cOffsets,
@@ -72,18 +76,18 @@ trait HasStacking
             $numArrays,
             $ndim,
             $axisResolved,
-            Lib::addr($outHandle)
+            Lib::addr($outHandle),
+            Lib::addr($outNdimBuf),
+            $outShapeBuf,
+            Lib::MAX_NDIM
         );
 
         Lib::checkStatus($status);
 
-        $newShape = $arrays[0]->shape;
-        $newShape[$axisResolved] = 0;
-        foreach ($arrays as $arr) {
-            $newShape[$axisResolved] += $arr->shape[$axisResolved];
-        }
+        $outNdim = (int) $outNdimBuf->cdata;
+        $outShape = Lib::extractShapeFromPointer($outShapeBuf, $outNdim);
 
-        return new self($outHandle, $newShape, $arrays[0]->dtype);
+        return new self($outHandle, $outShape, $arrays[0]->dtype);
     }
 
     /**
@@ -135,6 +139,9 @@ trait HasStacking
         }
 
         $outHandle = $ffi->new('struct NdArrayHandle*');
+        $outNdimBuf = $ffi->new('size_t');
+        $outShapeBuf = Lib::createCArray('size_t', array_fill(0, Lib::MAX_NDIM, 0));
+
         $status = $ffi->ndarray_stack(
             $cHandles,
             $cOffsets,
@@ -143,15 +150,18 @@ trait HasStacking
             $numArrays,
             $ndim,
             $axisResolved,
-            Lib::addr($outHandle)
+            Lib::addr($outHandle),
+            Lib::addr($outNdimBuf),
+            $outShapeBuf,
+            Lib::MAX_NDIM
         );
 
         Lib::checkStatus($status);
 
-        $newShape = $arrays[0]->shape;
-        array_splice($newShape, $axisResolved, 0, [$numArrays]);
+        $outNdim = (int) $outNdimBuf->cdata;
+        $outShape = Lib::extractShapeFromPointer($outShapeBuf, $outNdim);
 
-        return new self($outHandle, $newShape, $arrays[0]->dtype);
+        return new self($outHandle, $outShape, $arrays[0]->dtype);
     }
 
     /**

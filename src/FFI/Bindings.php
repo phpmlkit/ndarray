@@ -226,16 +226,16 @@ interface Bindings
     // =========================================================================
 
     public function ndarray_reshape(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $new_shape, int $new_ndim, int $order, CData $out_handle): int;
-    public function ndarray_transpose(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
-    public function ndarray_swap_axes(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis1, int $axis2, CData $out_handle): int;
-    public function ndarray_merge_axes(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $take, int $into, CData $out_handle): int;
-    public function ndarray_invert_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $out_handle): int;
-    public function ndarray_insert_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $out_handle): int;
-    public function ndarray_permute_axes(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $axes, int $num_axes, CData $out_handle): int;
-    public function ndarray_flatten(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle): int;
-    public function ndarray_ravel(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $order, CData $out_handle): int;
-    public function ndarray_squeeze(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $axes, int $num_axes, CData $out_handle): int;
-    public function ndarray_pad(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $pad_width, int $mode, CData $constant_values, int $constant_values_len, CData $out_handle): int;
+    public function ndarray_transpose(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_swap_axes(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis1, int $axis2, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_merge_axes(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $take, int $into, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_invert_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_insert_axis(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_permute_axes(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_flatten(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_ravel(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $order, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_squeeze(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_pad(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $pad_width, int $mode, CData $constant_values, int $constant_values_len, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     // =========================================================================
     // Linear Algebra Operations
@@ -252,7 +252,7 @@ interface Bindings
     // Stacking (Joining and Splitting)
     // =========================================================================
 
-    public function ndarray_concatenate(CData $handles, CData $offsets, CData $shapes, CData $strides, int $num_arrays, int $ndim, int $axis, CData $out_handle): int;
-    public function ndarray_stack(CData $handles, CData $offsets, CData $shapes, CData $strides, int $num_arrays, int $ndim, int $axis, CData $out_handle): int;
+    public function ndarray_concatenate(CData $handles, CData $offsets, CData $shapes, CData $strides, int $num_arrays, int $ndim, int $axis, CData $out_handle, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_stack(CData $handles, CData $offsets, CData $shapes, CData $strides, int $num_arrays, int $ndim, int $axis, CData $out_handle, CData $out_ndim, CData $out_shape, int $max_ndim): int;
     public function ndarray_split(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $indices, int $num_indices, CData $out_offsets, CData $out_shapes, CData $out_strides): int;
 }

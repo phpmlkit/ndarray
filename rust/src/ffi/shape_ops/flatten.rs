@@ -7,6 +7,7 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, SUCCESS};
+use crate::ffi::write_output_metadata;
 use crate::ffi::NdArrayHandle;
 use ndarray::Order;
 use parking_lot::RwLock;
@@ -22,8 +23,18 @@ pub unsafe extern "C" fn ndarray_flatten(
     strides: *const usize,
     ndim: usize,
     out_handle: *mut *mut NdArrayHandle,
+    out_dtype: *mut u8,
+    out_ndim: *mut usize,
+    out_shape: *mut usize,
+    max_ndim: usize,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() {
+    if handle.is_null()
+        || out_handle.is_null()
+        || shape.is_null()
+        || out_dtype.is_null()
+        || out_shape.is_null()
+        || out_ndim.is_null()
+    {
         return ERR_GENERIC;
     }
 
@@ -168,6 +179,13 @@ pub unsafe extern "C" fn ndarray_flatten(
             }
         };
 
+        if let Err(e) =
+            write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
+        {
+            error::set_last_error(e);
+            return ERR_GENERIC;
+        }
+
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
         SUCCESS
     })
@@ -186,8 +204,18 @@ pub unsafe extern "C" fn ndarray_ravel(
     ndim: usize,
     order: i32,
     out_handle: *mut *mut NdArrayHandle,
+    out_dtype: *mut u8,
+    out_ndim: *mut usize,
+    out_shape: *mut usize,
+    max_ndim: usize,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() {
+    if handle.is_null()
+        || out_handle.is_null()
+        || shape.is_null()
+        || out_dtype.is_null()
+        || out_shape.is_null()
+        || out_ndim.is_null()
+    {
         return ERR_GENERIC;
     }
 
@@ -337,6 +365,13 @@ pub unsafe extern "C" fn ndarray_ravel(
                 }
             }
         };
+
+        if let Err(e) =
+            write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
+        {
+            error::set_last_error(e);
+            return ERR_GENERIC;
+        }
 
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
         SUCCESS

@@ -16,8 +16,8 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::NdArrayHandle;
 use crate::ffi::stacking::helpers::resolve_axis_for_stack;
+use crate::ffi::{write_output_metadata, NdArrayHandle};
 
 /// Stack N arrays along a new axis.
 ///
@@ -35,12 +35,17 @@ pub unsafe extern "C" fn ndarray_stack(
     ndim: usize,
     axis: i32,
     out_handle: *mut *mut NdArrayHandle,
+    out_ndim: *mut usize,
+    out_shape: *mut usize,
+    max_ndim: usize,
 ) -> i32 {
     if handles.is_null()
         || offsets.is_null()
         || shapes.is_null()
         || strides.is_null()
         || out_handle.is_null()
+        || out_shape.is_null()
+        || out_ndim.is_null()
         || num_arrays == 0
     {
         return ERR_GENERIC;
@@ -376,6 +381,17 @@ pub unsafe extern "C" fn ndarray_stack(
                 }
             }
         };
+
+        if let Err(e) = write_output_metadata(
+            &result_wrapper,
+            std::ptr::null_mut(),
+            out_ndim,
+            out_shape,
+            max_ndim,
+        ) {
+            set_last_error(e);
+            return ERR_GENERIC;
+        }
 
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
         SUCCESS
