@@ -1,15 +1,18 @@
-//! Diagonal extraction with view support.
+//! Diagonal extraction.
 
-use ndarray::IxDyn;
-
-use crate::core::NDArrayWrapper;
+use crate::core::view_helpers::{
+    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
+    extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
+    extract_view_u8,
+};
+use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::{write_output_metadata, NdArrayHandle};
+use parking_lot::RwLock;
+use std::sync::Arc;
 
-/// Extract diagonal elements from a 2D array view.
-///
-/// Accepts offset, shape, and strides to properly handle views.
+/// Extract diagonal elements.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_diagonal(
     handle: *const NdArrayHandle,
@@ -23,7 +26,13 @@ pub unsafe extern "C" fn ndarray_diagonal(
     out_shape: *mut usize,
     max_ndim: usize,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() || out_dtype.is_null() || out_ndim.is_null() || out_shape.is_null() {
+    if handle.is_null()
+        || out_handle.is_null()
+        || shape.is_null()
+        || out_dtype.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
+    {
         return ERR_GENERIC;
     }
 
@@ -37,106 +46,135 @@ pub unsafe extern "C" fn ndarray_diagonal(
             return ERR_SHAPE;
         }
 
-        let result = diagonal_impl(wrapper, offset, shape_slice, strides_slice);
-
-        match result {
-            Ok(new_wrapper) => {
-                if let Err(e) = write_output_metadata(&new_wrapper, out_dtype, out_ndim, out_shape, max_ndim) {
-                    error::set_last_error(e);
+        let result = match wrapper.dtype {
+            DType::Float64 => {
+                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float64,
                 }
-                *out_handle = NdArrayHandle::from_wrapper(Box::new(new_wrapper));
-                SUCCESS
             }
-            Err(e) => {
-                error::set_last_error(format!("Diagonal extraction failed: {}", e));
-                ERR_SHAPE
+            DType::Float32 => {
+                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract f32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float32,
+                }
             }
+            DType::Int64 => {
+                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract i64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int64,
+                }
+            }
+            DType::Int32 => {
+                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract i32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int32,
+                }
+            }
+            DType::Int16 => {
+                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract i16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int16,
+                }
+            }
+            DType::Int8 => {
+                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract i8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int8,
+                }
+            }
+            DType::Uint64 => {
+                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract u64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint64,
+                }
+            }
+            DType::Uint32 => {
+                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract u32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint32,
+                }
+            }
+            DType::Uint16 => {
+                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract u16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint16,
+                }
+            }
+            DType::Uint8 => {
+                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract u8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint8,
+                }
+            }
+            DType::Bool => {
+                let Some(view) = extract_view_bool(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract bool view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.diag().to_owned().into_dyn();
+                NDArrayWrapper {
+                    data: ArrayData::Bool(Arc::new(RwLock::new(result))),
+                    dtype: DType::Bool,
+                }
+            }
+        };
+
+        if let Err(e) = write_output_metadata(&result, out_dtype, out_ndim, out_shape, max_ndim) {
+            error::set_last_error(e);
+            return ERR_GENERIC;
         }
+        *out_handle = NdArrayHandle::from_wrapper(Box::new(result));
+        SUCCESS
     })
-}
-
-/// Extract diagonal from a view
-fn diagonal_impl(
-    wrapper: &NDArrayWrapper,
-    offset: usize,
-    shape: &[usize],
-    strides: &[usize],
-) -> Result<NDArrayWrapper, String> {
-    use crate::core::view_helpers::extract_view_f64;
-
-    unsafe {
-        // Try to extract f64 view first
-        if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
-            // view is ArrayD, use diag() method
-            let diag_view = view.diag();
-            let diag_data: Vec<f64> = diag_view.iter().cloned().collect();
-            let diag_shape = vec![diag_view.len()];
-
-            return NDArrayWrapper::from_slice_f64(&diag_data, &diag_shape);
-        }
-    }
-
-    // Fall back: extract data as f64 and use ArrayD
-    let flat_data = wrapper.to_f64_vec();
-    let arr = ndarray::ArrayD::<f64>::from_shape_vec(IxDyn(shape), flat_data)
-        .map_err(|e| format!("Failed to create array: {}", e))?;
-
-    let diag_view = arr.diag();
-    let diag_data: Vec<f64> = diag_view.iter().cloned().collect();
-    let diag_shape = vec![diag_view.len()];
-
-    create_wrapper_from_f64(&diag_data, &diag_shape, wrapper.dtype)
-}
-
-/// Helper to create wrapper from f64 data preserving dtype
-fn create_wrapper_from_f64(
-    data: &[f64],
-    shape: &[usize],
-    dtype: DType,
-) -> Result<NDArrayWrapper, String> {
-    match dtype {
-        DType::Float64 => NDArrayWrapper::from_slice_f64(data, shape),
-        DType::Float32 => NDArrayWrapper::from_slice_f32(
-            &data.iter().map(|x| *x as f32).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int64 => NDArrayWrapper::from_slice_i64(
-            &data.iter().map(|x| *x as i64).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int32 => NDArrayWrapper::from_slice_i32(
-            &data.iter().map(|x| *x as i32).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int16 => NDArrayWrapper::from_slice_i16(
-            &data.iter().map(|x| *x as i16).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int8 => {
-            NDArrayWrapper::from_slice_i8(&data.iter().map(|x| *x as i8).collect::<Vec<_>>(), shape)
-        }
-        DType::Uint64 => NDArrayWrapper::from_slice_u64(
-            &data.iter().map(|x| *x as u64).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Uint32 => NDArrayWrapper::from_slice_u32(
-            &data.iter().map(|x| *x as u32).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Uint16 => NDArrayWrapper::from_slice_u16(
-            &data.iter().map(|x| *x as u16).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Uint8 => {
-            NDArrayWrapper::from_slice_u8(&data.iter().map(|x| *x as u8).collect::<Vec<_>>(), shape)
-        }
-        DType::Bool => NDArrayWrapper::from_slice_bool(
-            &data
-                .iter()
-                .map(|x| if *x != 0.0 { 1 } else { 0 })
-                .collect::<Vec<_>>(),
-            shape,
-        ),
-    }
 }

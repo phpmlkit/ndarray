@@ -1,15 +1,16 @@
-//! Trace computation with view support.
+//! Trace computation.
 
-use ndarray::IxDyn;
-
+use crate::core::view_helpers::{
+    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
+    extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
+    extract_view_u8,
+};
 use crate::core::NDArrayWrapper;
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::{write_output_metadata, NdArrayHandle};
 
-/// Compute trace (sum of diagonal elements) from a 2D array view.
-///
-/// Accepts offset, shape, and strides to properly handle views.
+/// Compute trace (sum of diagonal elements).
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_trace(
     handle: *const NdArrayHandle,
@@ -23,7 +24,13 @@ pub unsafe extern "C" fn ndarray_trace(
     out_shape: *mut usize,
     max_ndim: usize,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() || out_dtype.is_null() || out_ndim.is_null() || out_shape.is_null() {
+    if handle.is_null()
+        || out_handle.is_null()
+        || shape.is_null()
+        || out_dtype.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
+    {
         return ERR_GENERIC;
     }
 
@@ -37,104 +44,102 @@ pub unsafe extern "C" fn ndarray_trace(
             return ERR_SHAPE;
         }
 
-        let result = trace_impl(wrapper, offset, shape_slice, strides_slice);
-
-        match result {
-            Ok(new_wrapper) => {
-                if let Err(e) = write_output_metadata(&new_wrapper, out_dtype, out_ndim, out_shape, max_ndim) {
-                    error::set_last_error(e);
+        let result = match wrapper.dtype {
+            DType::Float64 => {
+                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
-                }
-                *out_handle = NdArrayHandle::from_wrapper(Box::new(new_wrapper));
-                SUCCESS
+                };
+                let trace_sum: f64 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_f64(&[trace_sum], &[]).unwrap()
             }
-            Err(e) => {
-                error::set_last_error(format!("Trace computation failed: {}", e));
-                ERR_SHAPE
+            DType::Float32 => {
+                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract f32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: f32 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_f32(&[trace_sum], &[]).unwrap()
             }
+            DType::Int64 => {
+                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract i64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: i64 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_i64(&[trace_sum], &[]).unwrap()
+            }
+            DType::Int32 => {
+                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract i32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: i32 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_i32(&[trace_sum], &[]).unwrap()
+            }
+            DType::Int16 => {
+                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract i16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: i16 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_i16(&[trace_sum], &[]).unwrap()
+            }
+            DType::Int8 => {
+                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract i8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: i8 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_i8(&[trace_sum], &[]).unwrap()
+            }
+            DType::Uint64 => {
+                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract u64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: u64 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_u64(&[trace_sum], &[]).unwrap()
+            }
+            DType::Uint32 => {
+                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract u32 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: u32 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_u32(&[trace_sum], &[]).unwrap()
+            }
+            DType::Uint16 => {
+                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract u16 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: u16 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_u16(&[trace_sum], &[]).unwrap()
+            }
+            DType::Uint8 => {
+                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract u8 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: u8 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_u8(&[trace_sum], &[]).unwrap()
+            }
+            DType::Bool => {
+                let Some(view) = extract_view_bool(wrapper, offset, shape_slice, strides_slice) else {
+                    error::set_last_error("Failed to extract bool view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: u8 = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_bool(&[trace_sum], &[]).unwrap()
+            }
+        };
+
+        if let Err(e) = write_output_metadata(&result, out_dtype, out_ndim, out_shape, max_ndim) {
+            error::set_last_error(e);
+            return ERR_GENERIC;
         }
+        *out_handle = NdArrayHandle::from_wrapper(Box::new(result));
+        SUCCESS
     })
-}
-
-/// Compute trace from a view
-fn trace_impl(
-    wrapper: &NDArrayWrapper,
-    offset: usize,
-    shape: &[usize],
-    strides: &[usize],
-) -> Result<NDArrayWrapper, String> {
-    use crate::core::view_helpers::extract_view_f64;
-
-    let trace_sum: f64;
-
-    unsafe {
-        // Try to extract f64 view first
-        if let Some(view) = extract_view_f64(wrapper, offset, shape, strides) {
-            let diag_view = view.diag();
-            trace_sum = diag_view.iter().sum();
-            return NDArrayWrapper::from_slice_f64(&[trace_sum], &[]);
-        }
-    }
-
-    // Fall back: extract data as f64 and use ArrayD
-    let flat_data = wrapper.to_f64_vec();
-    let arr = ndarray::ArrayD::<f64>::from_shape_vec(IxDyn(shape), flat_data)
-        .map_err(|e| format!("Failed to create array: {}", e))?;
-
-    let diag_view = arr.diag();
-    trace_sum = diag_view.iter().sum();
-
-    create_wrapper_from_f64(&[trace_sum], &[], wrapper.dtype)
-}
-
-/// Helper to create wrapper from f64 data preserving dtype
-fn create_wrapper_from_f64(
-    data: &[f64],
-    shape: &[usize],
-    dtype: DType,
-) -> Result<NDArrayWrapper, String> {
-    match dtype {
-        DType::Float64 => NDArrayWrapper::from_slice_f64(data, shape),
-        DType::Float32 => NDArrayWrapper::from_slice_f32(
-            &data.iter().map(|x| *x as f32).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int64 => NDArrayWrapper::from_slice_i64(
-            &data.iter().map(|x| *x as i64).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int32 => NDArrayWrapper::from_slice_i32(
-            &data.iter().map(|x| *x as i32).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int16 => NDArrayWrapper::from_slice_i16(
-            &data.iter().map(|x| *x as i16).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Int8 => {
-            NDArrayWrapper::from_slice_i8(&data.iter().map(|x| *x as i8).collect::<Vec<_>>(), shape)
-        }
-        DType::Uint64 => NDArrayWrapper::from_slice_u64(
-            &data.iter().map(|x| *x as u64).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Uint32 => NDArrayWrapper::from_slice_u32(
-            &data.iter().map(|x| *x as u32).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Uint16 => NDArrayWrapper::from_slice_u16(
-            &data.iter().map(|x| *x as u16).collect::<Vec<_>>(),
-            shape,
-        ),
-        DType::Uint8 => {
-            NDArrayWrapper::from_slice_u8(&data.iter().map(|x| *x as u8).collect::<Vec<_>>(), shape)
-        }
-        DType::Bool => NDArrayWrapper::from_slice_bool(
-            &data
-                .iter()
-                .map(|x| if *x != 0.0 { 1 } else { 0 })
-                .collect::<Vec<_>>(),
-            shape,
-        ),
-    }
 }
