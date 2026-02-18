@@ -2,19 +2,19 @@
 
 use std::ffi::c_void;
 
-use crate::core::{ArrayData, NDArrayWrapper};
 use crate::core::view_helpers::{
     extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
     extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
+use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{NdArrayHandle, write_output_metadata};
-use crate::ffi::reductions::helpers::write_scalar;
-use std::slice;
+use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
+use crate::ffi::reductions::helpers::write_scalar;
+use crate::ffi::{write_output_metadata, NdArrayHandle};
 use ndarray::Axis;
 use parking_lot::RwLock;
+use std::slice;
 use std::sync::Arc;
 
 /// Compute the maximum of all elements in the array.
@@ -199,7 +199,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
             Ok(a) => a,
             Err(e) => {
                 crate::error::set_last_error(e);
-                return ERR_GENERIC;
+                return ERR_SHAPE;
             }
         };
 
@@ -217,7 +217,8 @@ pub unsafe extern "C" fn ndarray_max_axis(
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), f64::NEG_INFINITY, |acc, &x| acc.max(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), f64::NEG_INFINITY, |acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -234,7 +235,8 @@ pub unsafe extern "C" fn ndarray_max_axis(
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), f32::NEG_INFINITY, |acc, &x| acc.max(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), f32::NEG_INFINITY, |acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -251,7 +253,8 @@ pub unsafe extern "C" fn ndarray_max_axis(
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), i64::MIN as i64, |&acc, &x| acc.max(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), i64::MIN as i64, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -268,7 +271,8 @@ pub unsafe extern "C" fn ndarray_max_axis(
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), i32::MIN as i32, |&acc, &x| acc.max(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), i32::MIN as i32, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -285,7 +289,8 @@ pub unsafe extern "C" fn ndarray_max_axis(
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), i16::MIN as i16, |&acc, &x| acc.max(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), i16::MIN as i16, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -319,7 +324,8 @@ pub unsafe extern "C" fn ndarray_max_axis(
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), u64::MIN as u64, |&acc, &x| acc.max(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), u64::MIN as u64, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -336,7 +342,8 @@ pub unsafe extern "C" fn ndarray_max_axis(
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), u32::MIN as u32, |&acc, &x| acc.max(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), u32::MIN as u32, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -353,7 +360,8 @@ pub unsafe extern "C" fn ndarray_max_axis(
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), u16::MIN as u16, |&acc, &x| acc.max(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), u16::MIN as u16, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {

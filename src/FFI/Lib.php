@@ -6,7 +6,13 @@ namespace NDArray\FFI;
 
 use FFI;
 use FFI\CData;
-use RuntimeException;
+use NDArray\Exceptions\NDArrayException;
+use NDArray\Exceptions\ShapeException;
+use NDArray\Exceptions\DTypeException;
+use NDArray\Exceptions\AllocationException;
+use NDArray\Exceptions\PanicException;
+use NDArray\Exceptions\IndexException;
+use NDArray\Exceptions\MathException;
 
 /**
  * Singleton wrapper for the FFI library.
@@ -42,13 +48,13 @@ final class Lib
         $headerPath = dirname(__DIR__, 2) . '/lib/ndarray_php.h';
 
         if (!file_exists($headerPath)) {
-            throw new RuntimeException(
+            throw new NDArrayException(
                 "Header file not found: $headerPath. Did you build the Rust library?"
             );
         }
 
         if (!file_exists(self::$libraryPath)) {
-            throw new RuntimeException(
+            throw new NDArrayException(
                 "Library not found: " . self::$libraryPath
             );
         }
@@ -120,7 +126,7 @@ final class Lib
      * Check the status code returned by an FFI function.
      *
      * @param int $code
-     * @throws RuntimeException
+     * @throws NDArrayException
      */
     public static function checkStatus(int $code): void
     {
@@ -131,14 +137,14 @@ final class Lib
         $message = self::getLastError();
 
         match ($code) {
-            1 => throw new \NDArray\Exceptions\NDArrayException($message), // Generic
-            2 => throw new \NDArray\Exceptions\ShapeException($message), // Shape
-            3 => throw new \NDArray\Exceptions\DTypeException($message), // DType
-            4 => throw new \RuntimeException("Allocation error: $message"), // Alloc
-            5 => throw new \RuntimeException("Rust panic: $message"), // Panic
-            6 => throw new \NDArray\Exceptions\IndexException($message), // Index
-            7 => throw new \NDArray\Exceptions\MathException($message), // Math
-            default => throw new \RuntimeException("Unknown error ($code): $message"),
+            1 => throw new NDArrayException($message), // Generic
+            2 => throw new ShapeException($message), // Shape
+            3 => throw new DTypeException($message), // DType
+            4 => throw new AllocationException($message), // Alloc
+            5 => throw new PanicException($message), // Panic
+            6 => throw new IndexException($message), // Index
+            7 => throw new MathException($message), // Math
+            default => throw new NDArrayException($message),
         };
     }
 

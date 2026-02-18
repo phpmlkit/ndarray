@@ -236,7 +236,7 @@ class NDArray implements ArrayAccess
         $ndim = (int) $outNdimBuf->cdata;
         $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
         if ($dtype === null) {
-            throw new \RuntimeException('Invalid dtype returned from Rust for where()');
+            throw new \NDArray\Exceptions\NDArrayException('Invalid dtype returned from Rust for where()');
         }
 
         return new self($outHandle, $shape, $dtype);

@@ -5,7 +5,7 @@
 use crate::core::view_helpers::{extract_view_f32, extract_view_f64};
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, SUCCESS};
+use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
 use crate::ffi::{write_output_metadata, NdArrayHandle};
 use ndarray::Axis;
@@ -28,7 +28,13 @@ pub unsafe extern "C" fn ndarray_softmax(
     out_shape: *mut usize,
     max_ndim: usize,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() || out_dtype.is_null() || out_ndim.is_null() || out_shape.is_null() {
+    if handle.is_null()
+        || out_handle.is_null()
+        || shape.is_null()
+        || out_dtype.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
+    {
         return ERR_GENERIC;
     }
 
@@ -41,7 +47,7 @@ pub unsafe extern "C" fn ndarray_softmax(
             Ok(a) => a,
             Err(e) => {
                 crate::error::set_last_error(e);
-                return ERR_GENERIC;
+                return ERR_SHAPE;
             }
         };
 
@@ -54,25 +60,23 @@ pub unsafe extern "C" fn ndarray_softmax(
                 };
                 let mut result = view.to_owned();
                 for (in_lane, mut out_lane) in view
-                        .lanes(Axis(axis_usize))
-                        .into_iter()
-                        .zip(result.lanes_mut(Axis(axis_usize)))
-                    {
-                        let max = in_lane
-                            .iter()
-                            .fold(f64::NEG_INFINITY, |a, &b| a.max(b));
-                        let sum_exp: f64 = in_lane.iter().map(|&x| (x - max).exp()).sum();
-                        if sum_exp > 0.0 && sum_exp.is_finite() {
-                            for (i, &x) in in_lane.iter().enumerate() {
-                                out_lane[i] = (x - max).exp() / sum_exp;
-                            }
-                        } else {
-                            let n = in_lane.len() as f64;
-                            for i in 0..in_lane.len() {
-                                out_lane[i] = 1.0 / n;
-                            }
+                    .lanes(Axis(axis_usize))
+                    .into_iter()
+                    .zip(result.lanes_mut(Axis(axis_usize)))
+                {
+                    let max = in_lane.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
+                    let sum_exp: f64 = in_lane.iter().map(|&x| (x - max).exp()).sum();
+                    if sum_exp > 0.0 && sum_exp.is_finite() {
+                        for (i, &x) in in_lane.iter().enumerate() {
+                            out_lane[i] = (x - max).exp() / sum_exp;
+                        }
+                    } else {
+                        let n = in_lane.len() as f64;
+                        for i in 0..in_lane.len() {
+                            out_lane[i] = 1.0 / n;
                         }
                     }
+                }
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
                     dtype: DType::Float64,
@@ -86,25 +90,23 @@ pub unsafe extern "C" fn ndarray_softmax(
                 };
                 let mut result = view.to_owned();
                 for (in_lane, mut out_lane) in view
-                        .lanes(Axis(axis_usize))
-                        .into_iter()
-                        .zip(result.lanes_mut(Axis(axis_usize)))
-                    {
-                        let max = in_lane
-                            .iter()
-                            .fold(f32::NEG_INFINITY, |a, &b| a.max(b));
-                        let sum_exp: f32 = in_lane.iter().map(|&x| (x - max).exp()).sum();
-                        if sum_exp > 0.0 && sum_exp.is_finite() {
-                            for (i, &x) in in_lane.iter().enumerate() {
-                                out_lane[i] = (x - max).exp() / sum_exp;
-                            }
-                        } else {
-                            let n = in_lane.len() as f32;
-                            for i in 0..in_lane.len() {
-                                out_lane[i] = 1.0_f32 / n;
-                            }
+                    .lanes(Axis(axis_usize))
+                    .into_iter()
+                    .zip(result.lanes_mut(Axis(axis_usize)))
+                {
+                    let max = in_lane.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
+                    let sum_exp: f32 = in_lane.iter().map(|&x| (x - max).exp()).sum();
+                    if sum_exp > 0.0 && sum_exp.is_finite() {
+                        for (i, &x) in in_lane.iter().enumerate() {
+                            out_lane[i] = (x - max).exp() / sum_exp;
+                        }
+                    } else {
+                        let n = in_lane.len() as f32;
+                        for i in 0..in_lane.len() {
+                            out_lane[i] = 1.0_f32 / n;
                         }
                     }
+                }
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
                     dtype: DType::Float32,
@@ -118,7 +120,9 @@ pub unsafe extern "C" fn ndarray_softmax(
             }
         };
 
-        if let Err(e) = write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim) {
+        if let Err(e) =
+            write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
+        {
             crate::error::set_last_error(e);
             return ERR_GENERIC;
         }

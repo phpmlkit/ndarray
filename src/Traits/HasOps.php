@@ -60,7 +60,7 @@ trait HasOps
 
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
         if ($dtype === null) {
-            throw new \RuntimeException('Invalid dtype returned from Rust');
+            throw new \NDArray\Exceptions\NDArrayException('Invalid dtype returned from Rust');
         }
 
         $ndim = (int) $outNdimBuf->cdata;
@@ -109,7 +109,7 @@ trait HasOps
 
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
         if ($dtype === null) {
-            throw new \RuntimeException('Invalid dtype returned from Rust');
+            throw new \NDArray\Exceptions\NDArrayException('Invalid dtype returned from Rust');
         }
 
         $ndim = (int) $outNdimBuf->cdata;
@@ -150,7 +150,7 @@ trait HasOps
 
         $dtype = DType::tryFrom((int) $outDtype->cdata);
         if ($dtype === null) {
-            throw new \RuntimeException('Invalid dtype returned from Rust scalar reduction');
+            throw new \NDArray\Exceptions\NDArrayException('Invalid dtype returned from Rust scalar reduction');
         }
 
         return $this->interpretScalarValue($ffi, $outValue, $dtype);

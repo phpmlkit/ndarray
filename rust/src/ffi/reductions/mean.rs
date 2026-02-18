@@ -8,9 +8,9 @@ use crate::core::view_helpers::{
 };
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, SUCCESS};
+use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::{compute_axis_output_shape, validate_axis, write_scalar};
-use crate::ffi::{NdArrayHandle, write_output_metadata};
+use crate::ffi::{write_output_metadata, NdArrayHandle};
 use ndarray::Axis;
 use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
@@ -167,7 +167,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
             Ok(a) => a,
             Err(e) => {
                 crate::error::set_last_error(e);
-                return ERR_GENERIC;
+                return ERR_SHAPE;
             }
         };
 

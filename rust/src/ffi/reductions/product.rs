@@ -6,15 +6,15 @@ use crate::core::view_helpers::{
     extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
     extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
+use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{NdArrayHandle, write_output_metadata};
+use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::{validate_axis, write_scalar};
-use std::slice;
+use crate::ffi::{write_output_metadata, NdArrayHandle};
 use ndarray::Axis;
 use parking_lot::RwLock;
+use std::slice;
 use std::sync::Arc;
-use crate::core::{ArrayData, NDArrayWrapper};
 
 /// Compute the product of all elements in the array.
 #[no_mangle]
@@ -164,7 +164,7 @@ pub unsafe extern "C" fn ndarray_product_axis(
             Ok(a) => a,
             Err(e) => {
                 crate::error::set_last_error(e);
-                return ERR_GENERIC;
+                return ERR_SHAPE;
             }
         };
 

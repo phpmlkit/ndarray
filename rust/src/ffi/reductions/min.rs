@@ -8,12 +8,12 @@ use crate::core::view_helpers::{
 };
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{NdArrayHandle, write_output_metadata};
+use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::{validate_axis, write_scalar};
-use std::slice;
+use crate::ffi::{write_output_metadata, NdArrayHandle};
 use ndarray::Axis;
 use parking_lot::RwLock;
+use std::slice;
 use std::sync::Arc;
 
 /// Compute the minimum of all elements in the array.
@@ -198,7 +198,7 @@ pub unsafe extern "C" fn ndarray_min_axis(
             Ok(a) => a,
             Err(e) => {
                 crate::error::set_last_error(e);
-                return ERR_GENERIC;
+                return ERR_SHAPE;
             }
         };
 
@@ -250,7 +250,8 @@ pub unsafe extern "C" fn ndarray_min_axis(
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), i64::MAX as i64, |&acc, &x| acc.min(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), i64::MAX as i64, |&acc, &x| acc.min(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -267,7 +268,8 @@ pub unsafe extern "C" fn ndarray_min_axis(
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), i32::MAX as i32, |&acc, &x| acc.min(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), i32::MAX as i32, |&acc, &x| acc.min(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -284,7 +286,8 @@ pub unsafe extern "C" fn ndarray_min_axis(
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), i16::MAX as i16, |&acc, &x| acc.min(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), i16::MAX as i16, |&acc, &x| acc.min(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -318,7 +321,8 @@ pub unsafe extern "C" fn ndarray_min_axis(
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), u64::MAX as u64, |&acc, &x| acc.min(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), u64::MAX as u64, |&acc, &x| acc.min(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -335,7 +339,8 @@ pub unsafe extern "C" fn ndarray_min_axis(
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), u32::MAX as u32, |&acc, &x| acc.min(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), u32::MAX as u32, |&acc, &x| acc.min(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -352,7 +357,8 @@ pub unsafe extern "C" fn ndarray_min_axis(
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), u16::MAX as u16, |&acc, &x| acc.min(x));
+                let result =
+                    view.fold_axis(Axis(axis_usize), u16::MAX as u16, |&acc, &x| acc.min(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {

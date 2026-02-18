@@ -7,10 +7,11 @@ use crate::core::view_helpers::{
 };
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, SUCCESS};
+use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
 use crate::ffi::sorting::helpers::{
-    argsort_axis_generic, argsort_flat_generic, cmp_f32_asc_nan_last, cmp_f64_asc_nan_last, SortKind,
+    argsort_axis_generic, argsort_flat_generic, cmp_f32_asc_nan_last, cmp_f64_asc_nan_last,
+    SortKind,
 };
 use crate::ffi::{write_output_metadata, NdArrayHandle};
 use parking_lot::RwLock;
@@ -52,7 +53,7 @@ pub unsafe extern "C" fn ndarray_argsort_axis(
             Ok(a) => a,
             Err(e) => {
                 crate::error::set_last_error(e);
-                return ERR_GENERIC;
+                return ERR_SHAPE;
             }
         };
 
