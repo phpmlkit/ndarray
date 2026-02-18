@@ -24,7 +24,7 @@ trait HasReductions
      * @param bool $keepdims If true, the reduced axis is retained with size 1.
      * @return NDArray|float Scalar if axis is null, otherwise an NDArray.
      */
-    public function sum(?int $axis = null, bool $keepdims = false): NDArray|float
+    public function sum(?int $axis = null, bool $keepdims = false): NDArray|float|int
     {
         if ($axis === null) {
             return $this->scalarReductionOp('ndarray_sum');
@@ -54,7 +54,7 @@ trait HasReductions
      * @param bool $keepdims If true, the reduced axis is retained with size 1.
      * @return NDArray|float Scalar if axis is null, otherwise an NDArray.
      */
-    public function min(?int $axis = null, bool $keepdims = false): NDArray|float
+    public function min(?int $axis = null, bool $keepdims = false): NDArray|float|int
     {
         if ($axis === null) {
             return $this->scalarReductionOp('ndarray_min');
@@ -69,7 +69,7 @@ trait HasReductions
      * @param bool $keepdims If true, the reduced axis is retained with size 1.
      * @return NDArray|float Scalar if axis is null, otherwise an NDArray.
      */
-    public function max(?int $axis = null, bool $keepdims = false): NDArray|float
+    public function max(?int $axis = null, bool $keepdims = false): NDArray|float|int
     {
         if ($axis === null) {
             return $this->scalarReductionOp('ndarray_max');
@@ -172,7 +172,7 @@ trait HasReductions
      * @param bool $keepdims If true, the reduced axis is retained with size 1.
      * @return NDArray|float Scalar if axis is null, otherwise an NDArray.
      */
-    public function product(?int $axis = null, bool $keepdims = false): NDArray|float
+    public function product(?int $axis = null, bool $keepdims = false): NDArray|float|int
     {
         if ($axis === null) {
             return $this->scalarReductionOp('ndarray_product');
