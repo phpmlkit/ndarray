@@ -144,7 +144,7 @@ final class ReductionsTest extends TestCase
 
     public function testMinAxis1(): void
     {
-        $a = NDArray::array([[5, 2, 8], [1, 9, 3]], DType::Float64);
+        $a = NDArray::array([[5, 2, 8], [1, 9, 3]], DType::Uint16);
         $result = $a->min(axis: 1);
         $this->assertEqualsWithDelta([2, 1], $result->toArray(), 0.0001);
     }
@@ -158,7 +158,7 @@ final class ReductionsTest extends TestCase
 
     public function testMaxAxis1(): void
     {
-        $a = NDArray::array([[5, 2, 8], [1, 9, 3]], DType::Float64);
+        $a = NDArray::array([[5, 2, 8], [1, 9, 3]], DType::Int16);
         $result = $a->max(axis: 1);
         $this->assertEqualsWithDelta([8, 9], $result->toArray(), 0.0001);
     }

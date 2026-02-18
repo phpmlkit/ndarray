@@ -5,42 +5,29 @@
 
 pub(crate) mod helpers;
 
-// Scalar reductions
-pub mod argminmax_scalar;
+pub mod argmax;
+pub mod argmin;
 pub mod bincount;
 pub mod cumprod;
 pub mod cumsum;
-pub mod mean_scalar;
-pub mod min_max_scalar;
-pub mod product_scalar;
-pub mod std_var_scalar;
-pub mod sum_scalar;
-
-// Axis reductions
-pub mod argminmax_axis;
-pub mod cumprod_axis;
-pub mod cumsum_axis;
-pub mod mean_axis;
-pub mod min_max_axis;
-pub mod product_axis;
-pub mod std_var_axis;
-pub mod sum_axis;
+pub mod mean;
+pub mod max;
+pub mod min;
+pub mod product;
+pub mod var;
+pub mod std;
+pub mod sum;
 
 // Re-export all FFI functions
-pub use argminmax_axis::*;
-pub use argminmax_scalar::*;
+pub use argmax::*;
+pub use argmin::*;
 pub use bincount::*;
 pub use cumprod::*;
-pub use cumprod_axis::*;
 pub use cumsum::*;
-pub use cumsum_axis::*;
-pub use mean_axis::*;
-pub use mean_scalar::*;
-pub use min_max_axis::*;
-pub use min_max_scalar::*;
-pub use product_axis::*;
-pub use product_scalar::*;
-pub use std_var_axis::*;
-pub use std_var_scalar::*;
-pub use sum_axis::*;
-pub use sum_scalar::*;
+pub use mean::*;
+pub use max::*;
+pub use min::*;
+pub use product::*;
+pub use std::*;
+pub use var::*;
+pub use sum::*;
