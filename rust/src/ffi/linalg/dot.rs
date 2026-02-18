@@ -3,7 +3,7 @@
 use crate::core::view_helpers::{extract_view_as_f64, extract_view_f32, extract_view_f64};
 use crate::core::NDArrayWrapper;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::NdArrayHandle;
+use crate::ffi::{write_output_metadata, NdArrayHandle};
 
 /// Compute dot product of two arrays with full view support.
 ///
@@ -21,8 +21,19 @@ pub unsafe extern "C" fn ndarray_dot(
     b_strides: *const usize,
     b_ndim: usize,
     out_handle: *mut *mut NdArrayHandle,
+    out_dtype_ptr: *mut u8,
+    out_ndim: *mut usize,
+    out_shape: *mut usize,
+    max_ndim: usize,
 ) -> i32 {
-    if a.is_null() || b.is_null() || out_handle.is_null() || a_shape.is_null() || b_shape.is_null()
+    if a.is_null()
+        || b.is_null()
+        || out_handle.is_null()
+        || a_shape.is_null()
+        || b_shape.is_null()
+        || out_dtype_ptr.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
     {
         return ERR_GENERIC;
     }
@@ -49,6 +60,10 @@ pub unsafe extern "C" fn ndarray_dot(
 
         match result {
             Ok(new_wrapper) => {
+                if let Err(e) = write_output_metadata(&new_wrapper, out_dtype_ptr, out_ndim, out_shape, max_ndim) {
+                    error::set_last_error(e);
+                    return ERR_GENERIC;
+                }
                 *out_handle = NdArrayHandle::from_wrapper(Box::new(new_wrapper));
                 SUCCESS
             }

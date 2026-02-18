@@ -8,7 +8,7 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::reductions::helpers::{compute_axis_output_shape, validate_axis};
-use crate::ffi::NdArrayHandle;
+use crate::ffi::{write_output_metadata, NdArrayHandle};
 use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
 use std::slice;
@@ -25,8 +25,18 @@ pub unsafe extern "C" fn ndarray_argmin_axis(
     axis: i32,
     keepdims: bool,
     out_handle: *mut *mut NdArrayHandle,
+    out_dtype: *mut u8,
+    out_ndim: *mut usize,
+    out_shape: *mut usize,
+    max_ndim: usize,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() {
+    if handle.is_null()
+        || out_handle.is_null()
+        || shape.is_null()
+        || out_dtype.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
+    {
         return ERR_GENERIC;
     }
 
@@ -202,9 +212,9 @@ pub unsafe extern "C" fn ndarray_argmin_axis(
         };
 
         // Handle keepdims
-        let out_shape = compute_axis_output_shape(shape_slice, axis_usize, keepdims);
+        let result_shape = compute_axis_output_shape(shape_slice, axis_usize, keepdims);
         let final_arr = if keepdims {
-            ArrayD::from_shape_vec(IxDyn(&out_shape), result_arr.iter().cloned().collect())
+            ArrayD::from_shape_vec(IxDyn(&result_shape), result_arr.iter().cloned().collect())
                 .expect("Failed to reshape argmin result")
         } else {
             result_arr
@@ -216,6 +226,12 @@ pub unsafe extern "C" fn ndarray_argmin_axis(
             dtype: DType::Int64,
         };
 
+        if let Err(e) =
+            write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
+        {
+            crate::error::set_last_error(e);
+            return ERR_GENERIC;
+        }
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
         SUCCESS
     })
@@ -232,8 +248,18 @@ pub unsafe extern "C" fn ndarray_argmax_axis(
     axis: i32,
     keepdims: bool,
     out_handle: *mut *mut NdArrayHandle,
+    out_dtype: *mut u8,
+    out_ndim: *mut usize,
+    out_shape: *mut usize,
+    max_ndim: usize,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() {
+    if handle.is_null()
+        || out_handle.is_null()
+        || shape.is_null()
+        || out_dtype.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
+    {
         return ERR_GENERIC;
     }
 
@@ -409,9 +435,9 @@ pub unsafe extern "C" fn ndarray_argmax_axis(
         };
 
         // Handle keepdims
-        let out_shape = compute_axis_output_shape(shape_slice, axis_usize, keepdims);
+        let result_shape = compute_axis_output_shape(shape_slice, axis_usize, keepdims);
         let final_arr = if keepdims {
-            ArrayD::from_shape_vec(IxDyn(&out_shape), result_arr.iter().cloned().collect())
+            ArrayD::from_shape_vec(IxDyn(&result_shape), result_arr.iter().cloned().collect())
                 .expect("Failed to reshape argmax result")
         } else {
             result_arr
@@ -423,6 +449,12 @@ pub unsafe extern "C" fn ndarray_argmax_axis(
             dtype: DType::Int64,
         };
 
+        if let Err(e) =
+            write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
+        {
+            crate::error::set_last_error(e);
+            return ERR_GENERIC;
+        }
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
         SUCCESS
     })

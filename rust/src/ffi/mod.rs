@@ -17,8 +17,10 @@ pub mod shape_ops;
 pub mod special;
 pub mod stacking;
 mod types;
+mod output_meta;
 
 pub use types::NdArrayHandle;
+pub use output_meta::write_output_metadata;
 
 // Re-export all FFI functions for lib.rs
 pub use arithmetic::*;

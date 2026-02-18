@@ -82,7 +82,6 @@ trait HasArrayAccess
      */
     public function offsetSet(mixed $offset, mixed $value): void
     {
-        // Convert PHP arrays to NDArray with matching dtype
         if (is_array($value)) {
             $value = NDArray::array($value, $this->dtype);
         }

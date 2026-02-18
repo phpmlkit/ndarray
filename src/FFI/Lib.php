@@ -13,6 +13,9 @@ use RuntimeException;
  */
 final class Lib
 {
+    /** Maximum number of dimensions for output shape buffer (caller-allocated). */
+    public const MAX_NDIM = 32;
+
     /** @var (FFI&Bindings)|null */
     private static ?FFI $ffi = null;
     
@@ -177,9 +180,9 @@ final class Lib
     }
 
     /**
-     * Extract shape array from FFI output pointer.
+     * Extract shape array from FFI output pointer or caller-allocated buffer.
      *
-     * @param CData $shapePtr Pointer to size_t array from FFI
+     * @param CData $shapePtr Pointer to size_t array from FFI (or buffer)
      * @param int $ndim Number of dimensions
      * @return array<int> Shape dimensions
      */
@@ -187,9 +190,24 @@ final class Lib
     {
         $shape = [];
         for ($i = 0; $i < $ndim; $i++) {
-            $shape[] = $shapePtr[$i];
+            $shape[] = (int) $shapePtr[$i];
         }
         return $shape;
+    }
+
+    /**
+     * Allocate caller-provided output metadata buffers for Rust FFI (dtype, ndim, shape).
+     *
+     * @return array{0: CData, 1: CData, 2: CData} [out_dtype (uint8_t), out_ndim (size_t), out_shape (size_t[MAX_NDIM])]
+     */
+    public static function createOutputMetadataBuffers(): array
+    {
+        $ffi = self::get();
+        return [
+            $ffi->new('uint8_t'),
+            $ffi->new('size_t'),
+            $ffi->new('size_t[' . self::MAX_NDIM . ']'),
+        ];
     }
 
     /**

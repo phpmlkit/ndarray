@@ -460,7 +460,7 @@ trait HasIndexing
      */
     private function getTypedScalar(FFI $ffi, string $cType, int $flatIndex): int|float
     {
-        $outValue = $ffi->new($cType);
+        $outValue = Lib::createBox($cType);
         $status = $ffi->ndarray_get_element($this->handle, $flatIndex, Lib::addr($outValue));
         Lib::checkStatus($status);
 

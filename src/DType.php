@@ -280,45 +280,4 @@ enum DType: int
             self::Bool => 1,
         };
     }
-
-    /**
-     * Determine the result dtype when two dtypes are combined.
-     *
-     * Follows NumPy type promotion rules.
-     */
-    public static function promote(self $a, self $b): self
-    {
-        if ($a === $b) {
-            return $a;
-        }
-
-        if ($a === self::Float64 || $b === self::Float64) {
-            return self::Float64;
-        }
-
-        if ($a === self::Float32 || $b === self::Float32) {
-            return self::Float32;
-        }
-
-        if ($a === self::Int64 || $b === self::Int64) {
-            return self::Int64;
-        }
-
-        if (($a === self::Uint64 && $b->isSigned()) || ($b === self::Uint64 && $a->isSigned())) {
-            return self::Float64;
-        }
-
-        $sizes = [
-            self::Bool->value => 0,
-            self::Int8->value => 1, self::Uint8->value => 1,
-            self::Int16->value => 2, self::Uint16->value => 2,
-            self::Int32->value => 4, self::Uint32->value => 4,
-            self::Int64->value => 8, self::Uint64->value => 8,
-        ];
-
-        $sizeA = $sizes[$a->value] ?? 8;
-        $sizeB = $sizes[$b->value] ?? 8;
-
-        return $sizeA >= $sizeB ? $a : $b;
-    }
 }

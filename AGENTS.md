@@ -19,13 +19,6 @@ Agents must consult these files before making architectural or behavioral decisi
 	- implementing new operations
 	- deciding between view vs copy behavior
 	- handling edge cases (broadcasting, slicing, dtype rules)
-- ARCHITECTURE.md
-  → Defines how the system is structured across PHP, FFI, and Rust.
-  → Always check this when:
-	- touching FFI boundaries
-	- adding Rust exports
-	- changing memory ownership or lifetimes
-	- modifying build, testing, or performance strategies
 
 If there is a conflict between intuition and these documents, the documents win.
 
@@ -197,7 +190,6 @@ Agents must not:
 If uncertain about:
 
 - Semantics → Check SPEC.md
-- Architecture → Check ARCHITECTURE.md
 - Performance → Favor correctness
 - Memory → Assume danger and verify
 - API design → Favor explicitness
@@ -210,7 +202,7 @@ When tradeoffs exist, document the decision clearly in code comments.
 
 Agents must follow these rules for code comments and docblocks:
 
-- Never reference SPEC.md, ARCHITECTURE.md, or any specification documents in code
+- Never reference SPEC.md, or any specification documents in code
 - Never include requirement IDs (e.g., "REQ-2.2") in source files
 - Write docblocks that describe what the code does, not what document it implements
 - Comments should be self-contained and understandable without external references

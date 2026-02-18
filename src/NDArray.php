@@ -14,6 +14,7 @@ use NDArray\Traits\HasConversion;
 use NDArray\Traits\HasIndexing;
 use NDArray\Traits\HasLinearAlgebra;
 use NDArray\Traits\HasMath;
+use NDArray\Traits\HasOps;
 use NDArray\Traits\HasReductions;
 use NDArray\Traits\HasShapeOps;
 use NDArray\Traits\HasSlicing;
@@ -36,6 +37,7 @@ class NDArray implements ArrayAccess
     use HasArrayAccess;
     use HasConversion;
     use HasLinearAlgebra;
+    use HasOps;
     use HasMath;
     use HasReductions;
     use HasShapeOps;
@@ -161,6 +163,16 @@ class NDArray implements ArrayAccess
     }
 
     /**
+     * Get view offset relative to root storage.
+     *
+     * @internal
+     */
+    public function getOffset(): int
+    {
+        return $this->offset;
+    }
+
+    /**
      * Whether this array is a view of another array.
      */
     public function isView(): bool
@@ -193,8 +205,7 @@ class NDArray implements ArrayAccess
 
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
-        $outShapePtr = $ffi->new('size_t*');
-        $outNdim = $ffi->new('size_t');
+        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
 
         $status = $ffi->ndarray_where(
             $condArray->handle,
@@ -213,15 +224,20 @@ class NDArray implements ArrayAccess
             Lib::createCArray('size_t', $yArray->strides),
             $yArray->ndim,
             Lib::addr($outHandle),
-            Lib::addr($outShapePtr),
-            Lib::addr($outNdim)
+            Lib::addr($outDtypeBuf),
+            Lib::addr($outNdimBuf),
+            $outShapeBuf,
+            Lib::MAX_NDIM
         );
 
         Lib::checkStatus($status);
 
-        $ndim = $outNdim->cdata;
-        $shape = Lib::extractShapeFromPointer($outShapePtr, $ndim);
-        $dtype = DType::promote($xArray->dtype, $yArray->dtype);
+        $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
+        $ndim = (int) $outNdimBuf->cdata;
+        $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+        if ($dtype === null) {
+            throw new \RuntimeException('Invalid dtype returned from Rust for where()');
+        }
 
         return new self($outHandle, $shape, $dtype);
     }

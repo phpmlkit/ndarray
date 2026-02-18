@@ -8,7 +8,7 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::NdArrayHandle;
+use crate::ffi::{write_output_metadata, NdArrayHandle};
 use ndarray::Axis;
 use parking_lot::RwLock;
 use std::slice;
@@ -26,8 +26,18 @@ pub unsafe extern "C" fn ndarray_var_axis(
     keepdims: bool,
     ddof: f64,
     out_handle: *mut *mut NdArrayHandle,
+    out_dtype: *mut u8,
+    out_ndim: *mut usize,
+    out_shape: *mut usize,
+    max_ndim: usize,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() {
+    if handle.is_null()
+        || out_handle.is_null()
+        || shape.is_null()
+        || out_dtype.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
+    {
         return ERR_GENERIC;
     }
 
@@ -153,6 +163,12 @@ pub unsafe extern "C" fn ndarray_var_axis(
             dtype: DType::Float64,
         };
 
+        if let Err(e) =
+            write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
+        {
+            crate::error::set_last_error(e);
+            return ERR_GENERIC;
+        }
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
         SUCCESS
     })
@@ -170,8 +186,18 @@ pub unsafe extern "C" fn ndarray_std_axis(
     keepdims: bool,
     ddof: f64,
     out_handle: *mut *mut NdArrayHandle,
+    out_dtype: *mut u8,
+    out_ndim: *mut usize,
+    out_shape: *mut usize,
+    max_ndim: usize,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() {
+    if handle.is_null()
+        || out_handle.is_null()
+        || shape.is_null()
+        || out_dtype.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
+    {
         return ERR_GENERIC;
     }
 
@@ -298,6 +324,12 @@ pub unsafe extern "C" fn ndarray_std_axis(
             dtype: DType::Float64,
         };
 
+        if let Err(e) =
+            write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
+        {
+            crate::error::set_last_error(e);
+            return ERR_GENERIC;
+        }
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
         SUCCESS
     })

@@ -8,7 +8,7 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::NdArrayHandle;
+use crate::ffi::{write_output_metadata, NdArrayHandle};
 use ndarray::{ArrayD, ArrayViewD, IxDyn};
 use parking_lot::RwLock;
 use std::slice;
@@ -69,8 +69,10 @@ pub unsafe extern "C" fn ndarray_where(
     y_strides: *const usize,
     y_ndim: usize,
     out_handle: *mut *mut NdArrayHandle,
-    out_shape: *mut *mut usize,
+    out_dtype_ptr: *mut u8,
     out_ndim: *mut usize,
+    out_shape: *mut usize,
+    max_ndim: usize,
 ) -> i32 {
     if cond_handle.is_null()
         || cond_shape.is_null()
@@ -82,8 +84,9 @@ pub unsafe extern "C" fn ndarray_where(
         || y_shape.is_null()
         || y_strides.is_null()
         || out_handle.is_null()
-        || out_shape.is_null()
+        || out_dtype_ptr.is_null()
         || out_ndim.is_null()
+        || out_shape.is_null()
     {
         return ERR_GENERIC;
     }
@@ -384,12 +387,11 @@ pub unsafe extern "C" fn ndarray_where(
             }
         };
 
-        let ndim_out = result_shape_vec.len();
-        let shape_box: Box<[usize]> = result_shape_vec.into_boxed_slice();
-        let shape_ptr = Box::into_raw(shape_box) as *mut usize;
-
-        *out_ndim = ndim_out;
-        *out_shape = shape_ptr;
+        let _ = result_shape_vec;
+        if let Err(e) = write_output_metadata(&result_wrapper, out_dtype_ptr, out_ndim, out_shape, max_ndim) {
+            error::set_last_error(e);
+            return ERR_GENERIC;
+        }
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
         SUCCESS
     })

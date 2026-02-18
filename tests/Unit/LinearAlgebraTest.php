@@ -59,7 +59,7 @@ class LinearAlgebraTest extends TestCase
         $a = NDArray::array([1, 2, 3], DType::Float64);
         $b = NDArray::array([4, 5], DType::Float64);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(\NDArray\Exceptions\ShapeException::class);
         $a->dot($b);
     }
 
@@ -77,7 +77,7 @@ class LinearAlgebraTest extends TestCase
         $a = NDArray::array([1, 2, 3], DType::Float64);
         $b = NDArray::array([[1, 2], [3, 4]], DType::Float64);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(\NDArray\Exceptions\ShapeException::class);
         $a->matmul($b);
     }
 
@@ -102,7 +102,7 @@ class LinearAlgebraTest extends TestCase
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(\NDArray\Exceptions\ShapeException::class);
         $a->diagonal();
     }
 
@@ -128,7 +128,7 @@ class LinearAlgebraTest extends TestCase
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(\NDArray\Exceptions\ShapeException::class);
         $a->trace();
     }
 

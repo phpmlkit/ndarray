@@ -5,7 +5,7 @@ use ndarray::IxDyn;
 use crate::core::NDArrayWrapper;
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::NdArrayHandle;
+use crate::ffi::{write_output_metadata, NdArrayHandle};
 
 /// Compute trace (sum of diagonal elements) from a 2D array view.
 ///
@@ -18,8 +18,12 @@ pub unsafe extern "C" fn ndarray_trace(
     strides: *const usize,
     ndim: usize,
     out_handle: *mut *mut NdArrayHandle,
+    out_dtype: *mut u8,
+    out_ndim: *mut usize,
+    out_shape: *mut usize,
+    max_ndim: usize,
 ) -> i32 {
-    if handle.is_null() || out_handle.is_null() || shape.is_null() {
+    if handle.is_null() || out_handle.is_null() || shape.is_null() || out_dtype.is_null() || out_ndim.is_null() || out_shape.is_null() {
         return ERR_GENERIC;
     }
 
@@ -37,6 +41,10 @@ pub unsafe extern "C" fn ndarray_trace(
 
         match result {
             Ok(new_wrapper) => {
+                if let Err(e) = write_output_metadata(&new_wrapper, out_dtype, out_ndim, out_shape, max_ndim) {
+                    error::set_last_error(e);
+                    return ERR_GENERIC;
+                }
                 *out_handle = NdArrayHandle::from_wrapper(Box::new(new_wrapper));
                 SUCCESS
             }
