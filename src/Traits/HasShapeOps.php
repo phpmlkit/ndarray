@@ -362,4 +362,53 @@ trait HasShapeOps
 
         return $flat;
     }
+
+    /**
+     * Construct an array by repeating A the number of times given by reps.
+     *
+     * @param int|array<int>|NDArray $reps The number of repetitions of A along each axis.
+     * @return NDArray The tiled output array.
+     */
+    public function tile(int|array|NDArray $reps): NDArray
+    {
+        // Normalize reps to an array
+        if (is_int($reps)) {
+            $repsArray = [$reps];
+        } elseif ($reps instanceof NDArray) {
+            $repsArray = $reps->toArray();
+            if (!is_array($repsArray)) {
+                $repsArray = [$repsArray];
+            }
+        } else {
+            $repsArray = $reps;
+        }
+
+        return $this->unaryOp('ndarray_tile', Lib::createShapeArray($repsArray), count($repsArray));
+    }
+
+    /**
+     * Repeat elements of an array.
+     *
+     * @param int|array<int>|NDArray $repeats The number of repetitions for each element.
+     * @param int|null $axis The axis along which to repeat values. By default, use the flattened input array.
+     * @return NDArray Output array which has the same shape as a, except along the given axis.
+     */
+    public function repeat(int|array|NDArray $repeats, ?int $axis = null): NDArray
+    {
+        // Normalize repeats to an array
+        if (is_int($repeats)) {
+            $repeatsArray = [$repeats];
+        } elseif ($repeats instanceof NDArray) {
+            $repeatsArray = $repeats->toArray();
+            if (!is_array($repeatsArray)) {
+                $repeatsArray = [$repeatsArray];
+            }
+        } else {
+            $repeatsArray = $repeats;
+        }
+
+        $axisValue = $axis ?? -1;
+
+        return $this->unaryOp('ndarray_repeat', Lib::createShapeArray($repeatsArray), count($repeatsArray), $axisValue);
+    }
 }

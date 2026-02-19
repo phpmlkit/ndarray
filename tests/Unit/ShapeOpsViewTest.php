@@ -438,4 +438,351 @@ final class ShapeOpsViewTest extends TestCase
         // After squeeze: [2, 2]
         $this->assertSame([2, 2], $squeezed->shape());
     }
+
+    // ========================================================================
+    // Tile Tests on Views
+    // ========================================================================
+
+    public function testViewTile1D(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Int64);
+        $view = $a->slice(['1:4']); // [2, 3, 4]
+        $result = $view->tile(2);
+
+        $this->assertSame([6], $result->shape());
+        $this->assertSame([2, 3, 4, 2, 3, 4], $result->toArray());
+    }
+
+    public function testViewTile2DRepeatRows(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', '1:3']); // [[2, 3], [5, 6]]
+        $result = $view->tile([2, 1]);
+
+        $this->assertSame([4, 2], $result->shape());
+        $this->assertSame([
+            [2, 3],
+            [5, 6],
+            [2, 3],
+            [5, 6],
+        ], $result->toArray());
+    }
+
+    public function testViewTile2DRepeatCols(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
+        $result = $view->tile([1, 2]);
+
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertSame([
+            [1, 2, 1, 2],
+            [4, 5, 4, 5],
+        ], $result->toArray());
+    }
+
+    public function testViewTile2DRepeatBoth(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12]
+        ], DType::Int64);
+        $view = $a->slice(['::2', '1:4']); // [[2, 3, 4], [10, 11, 12]]
+        $result = $view->tile([2, 1]);
+
+        $this->assertSame([4, 3], $result->shape());
+        $this->assertSame([
+            [2, 3, 4],
+            [10, 11, 12],
+            [2, 3, 4],
+            [10, 11, 12],
+        ], $result->toArray());
+    }
+
+    public function testViewTilePreservesDtype(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4], [5, 6]], DType::Float64);
+        $view = $a->slice(['0:2', ':']); // [[1, 2], [3, 4]]
+        $result = $view->tile([1, 2]);
+
+        $this->assertSame(DType::Float64, $result->dtype());
+    }
+
+    public function testStridedViewTile(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16]
+        ], DType::Int64);
+        $view = $a->slice(['::2', '::2']); // [[1, 3], [9, 11]]
+        $result = $view->tile([1, 2]);
+
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertSame([
+            [1, 3, 1, 3],
+            [9, 11, 9, 11],
+        ], $result->toArray());
+    }
+
+    public function testViewTile3D(): void
+    {
+        $a = NDArray::array([
+            [[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
+            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]
+        ], DType::Int64);
+        $view = $a->slice(['0:1', ':', ':', ':']); // First block
+        $result = $view->tile([1, 2, 1, 1]);
+
+        $this->assertSame([1, 4, 2, 2], $result->shape());
+    }
+
+    public function testViewTileWithSlice(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10],
+            [11, 12, 13, 14, 15]
+        ], DType::Int64);
+        // Slice to get middle rows and columns
+        $view = $a->slice(['1:3', '1:4']); // [[7, 8, 9], [12, 13, 14]]
+        $result = $view->tile([2, 1]);
+
+        $this->assertSame([4, 3], $result->shape());
+        $this->assertSame([
+            [7, 8, 9],
+            [12, 13, 14],
+            [7, 8, 9],
+            [12, 13, 14],
+        ], $result->toArray());
+    }
+
+    // ========================================================================
+    // Repeat Tests on Views
+    // ========================================================================
+
+    public function testViewRepeat1D(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Int64);
+        $view = $a->slice(['1:4']); // [2, 3, 4]
+        $result = $view->repeat(2);
+
+        $this->assertSame([6], $result->shape());
+        $this->assertSame([2, 2, 3, 3, 4, 4], $result->toArray());
+    }
+
+    public function testViewRepeat2DAxis0(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', '1:3']); // [[2, 3], [5, 6]]
+        $result = $view->repeat(2, axis: 0);
+
+        $this->assertSame([4, 2], $result->shape());
+        $this->assertSame([
+            [2, 3],
+            [2, 3],
+            [5, 6],
+            [5, 6],
+        ], $result->toArray());
+    }
+
+    public function testViewRepeat2DAxis1(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
+        $result = $view->repeat(2, axis: 1);
+
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertSame([
+            [1, 1, 2, 2],
+            [4, 4, 5, 5],
+        ], $result->toArray());
+    }
+
+    public function testViewRepeatWithArrayAxis0(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
+        $result = $view->repeat([1, 2], axis: 0);
+
+        $this->assertSame([3, 3], $result->shape());
+        $this->assertSame([
+            [1, 2, 3],
+            [4, 5, 6],
+            [4, 5, 6],
+        ], $result->toArray());
+    }
+
+    public function testViewRepeatWithArrayAxis1(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
+        $result = $view->repeat([2, 1], axis: 1);
+
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertSame([
+            [1, 1, 2],
+            [4, 4, 5],
+        ], $result->toArray());
+    }
+
+    public function testViewRepeatPreservesDtype(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4], [5, 6]], DType::Float64);
+        $view = $a->slice(['0:2', ':']); // [[1, 2], [3, 4]]
+        $result = $view->repeat(2, axis: 0);
+
+        $this->assertSame(DType::Float64, $result->dtype());
+    }
+
+    public function testStridedViewRepeat(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16]
+        ], DType::Int64);
+        $view = $a->slice(['::2', '::2']); // [[1, 3], [9, 11]]
+        $result = $view->repeat(2, axis: 1);
+
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertSame([
+            [1, 1, 3, 3],
+            [9, 9, 11, 11],
+        ], $result->toArray());
+    }
+
+    public function testViewRepeat3D(): void
+    {
+        $a = NDArray::array([
+            [[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
+            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]
+        ], DType::Int64);
+        $view = $a->slice(['0:1', ':', ':', ':']); // First block
+        $result = $view->repeat(2, axis: 1);
+
+        $this->assertSame([1, 4, 2, 2], $result->shape());
+    }
+
+    public function testViewRepeatWithSlice(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10],
+            [11, 12, 13, 14, 15]
+        ], DType::Int64);
+        // Slice to get middle rows and columns
+        $view = $a->slice(['1:3', '1:4']); // [[7, 8, 9], [12, 13, 14]]
+        $result = $view->repeat(2, axis: 0);
+
+        $this->assertSame([4, 3], $result->shape());
+        $this->assertSame([
+            [7, 8, 9],
+            [7, 8, 9],
+            [12, 13, 14],
+            [12, 13, 14],
+        ], $result->toArray());
+    }
+
+    public function testViewRepeatOnceReturnsSame(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
+        $result = $view->repeat(1, axis: 0);
+
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertSame([
+            [1, 2],
+            [4, 5],
+        ], $result->toArray());
+    }
+
+    // ========================================================================
+    // Combined Operations Tests
+    // ========================================================================
+
+    public function testViewTileThenFlatten(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
+        $result = $view->tile([1, 2])->flatten();
+
+        $this->assertSame([8], $result->shape());
+        $this->assertSame([1, 2, 1, 2, 4, 5, 4, 5], $result->toArray());
+    }
+
+    public function testViewRepeatThenFlatten(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
+        $result = $view->repeat(2, axis: 1)->flatten();
+
+        $this->assertSame([8], $result->shape());
+        $this->assertSame([1, 1, 2, 2, 4, 4, 5, 5], $result->toArray());
+    }
+
+    public function testViewTileThenTranspose(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
+        $result = $view->tile([2, 1])->transpose();
+
+        $this->assertSame([2, 4], $result->shape());
+    }
+
+    public function testViewRepeatThenTranspose(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ], DType::Int64);
+        $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
+        $result = $view->repeat(2, axis: 0)->transpose();
+
+        $this->assertSame([2, 4], $result->shape());
+    }
 }

@@ -539,6 +539,41 @@ trait CreatesArrays
         return new self($outHandle, $shape, $dtype);
     }
 
+    /**
+     * Tile an array by repeating it along each axis.
+     *
+     * Static convenience method that accepts either a PHP array or NDArray.
+     *
+     * @param array<int>|self $a Input array or NDArray
+     * @param int|array<int>|self $reps The number of repetitions of A along each axis
+     * @return self The tiled output array
+     */
+    public static function tileArray(array|self $a, int|array|self $reps): self
+    {
+        if (is_array($a)) {
+            $a = self::array($a);
+        }
+        return $a->tile($reps);
+    }
+
+    /**
+     * Repeat elements of an array.
+     *
+     * Static convenience method that accepts either a PHP array or NDArray.
+     *
+     * @param array<int>|self $a Input array or NDArray
+     * @param int|array<int>|self $repeats The number of repetitions for each element
+     * @param int|null $axis The axis along which to repeat values. By default, use the flattened input array
+     * @return self Output array which has the same shape as a, except along the given axis
+     */
+    public static function repeatArray(array|self $a, int|array|self $repeats, ?int $axis = null): self
+    {
+        if (is_array($a)) {
+            $a = self::array($a);
+        }
+        return $a->repeat($repeats, $axis);
+    }
+
     // =========================================================================
     // Private Helpers
     // =========================================================================

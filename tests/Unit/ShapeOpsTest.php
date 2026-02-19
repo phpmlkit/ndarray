@@ -436,9 +436,378 @@ final class ShapeOpsTest extends TestCase
     public function testPermuteAxesWithOutOfBoundsAxis(): void
     {
         $a = NDArray::array([[1, 2], [3, 4]], DType::Float64);
-        
+
         $this->expectException(\NDArray\Exceptions\ShapeException::class);
         $a->permuteAxes([0, 5]); // Axis 5 is out of bounds
+    }
+
+    // =========================================================================
+    // Tile Tests
+    // =========================================================================
+
+    public function testTile1DScalar(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Int64);
+        $result = $a->tile(2);
+
+        $this->assertSame([6], $result->shape());
+        $this->assertSame([1, 2, 3, 1, 2, 3], $result->toArray());
+    }
+
+    public function testTile1DArray(): void
+    {
+        $a = NDArray::array([1, 2], DType::Int64);
+        $result = $a->tile([3]);
+
+        $this->assertSame([6], $result->shape());
+        $this->assertSame([1, 2, 1, 2, 1, 2], $result->toArray());
+    }
+
+    public function testTile2DRepeatRows(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = $a->tile([2, 1]);
+
+        $this->assertSame([4, 2], $result->shape());
+        $this->assertSame([
+            [1, 2],
+            [3, 4],
+            [1, 2],
+            [3, 4],
+        ], $result->toArray());
+    }
+
+    public function testTile2DRepeatCols(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = $a->tile([1, 2]);
+
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertSame([
+            [1, 2, 1, 2],
+            [3, 4, 3, 4],
+        ], $result->toArray());
+    }
+
+    public function testTile2DRepeatBoth(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = $a->tile([2, 3]);
+
+        $this->assertSame([4, 6], $result->shape());
+        $this->assertSame([
+            [1, 2, 1, 2, 1, 2],
+            [3, 4, 3, 4, 3, 4],
+            [1, 2, 1, 2, 1, 2],
+            [3, 4, 3, 4, 3, 4],
+        ], $result->toArray());
+    }
+
+    public function testTile3D(): void
+    {
+        $a = NDArray::array([[[1, 2]], [[3, 4]]], DType::Int64); // Shape [2, 1, 2]
+        $result = $a->tile([1, 2, 1]);
+
+        $this->assertSame([2, 2, 2], $result->shape());
+        $this->assertSame([
+            [[1, 2], [1, 2]],
+            [[3, 4], [3, 4]],
+        ], $result->toArray());
+    }
+
+    public function testTileWithHigherRepsThanDims(): void
+    {
+        // When reps has more dims than array, array gets padded with 1s at the beginning
+        $a = NDArray::array([1, 2], DType::Int64); // 1D
+        $result = $a->tile([2, 3]); // reps is 2D
+
+        $this->assertSame([2, 6], $result->shape());
+    }
+
+    public function testTilePreservesDtype(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Float32);
+        $result = $a->tile([2, 2]);
+
+        $this->assertSame(DType::Float32, $result->dtype());
+    }
+
+    public function testTileFloat64(): void
+    {
+        $a = NDArray::array([[1.5, 2.5], [3.5, 4.5]], DType::Float64);
+        $result = $a->tile([1, 2]);
+
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertEqualsWithDelta([
+            [1.5, 2.5, 1.5, 2.5],
+            [3.5, 4.5, 3.5, 4.5],
+        ], $result->toArray(), 0.0001);
+    }
+
+    public function testTileBool(): void
+    {
+        $a = NDArray::array([[true, false]], DType::Bool);
+        $result = $a->tile([2, 1]);
+
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertSame([
+            [true, false],
+            [true, false],
+        ], $result->toArray());
+    }
+
+    public function testTileEmptyReps(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Int64);
+        $result = $a->tile([]);
+
+        // Empty reps should return array unchanged
+        $this->assertSame([3], $result->shape());
+        $this->assertSame([1, 2, 3], $result->toArray());
+    }
+
+    public function testTileWithNDArrayReps(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $reps = NDArray::array([2, 1], DType::Int64);
+        $result = $a->tile($reps);
+
+        $this->assertSame([4, 2], $result->shape());
+    }
+
+    // =========================================================================
+    // Repeat Tests
+    // =========================================================================
+
+    public function testRepeat1DScalar(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Int64);
+        $result = $a->repeat(2);
+
+        $this->assertSame([6], $result->shape());
+        $this->assertSame([1, 1, 2, 2, 3, 3], $result->toArray());
+    }
+
+    public function testRepeat1DWithArray(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Int64);
+        $result = $a->repeat([1, 0, 2]);
+
+        $this->assertSame([3], $result->shape());
+        $this->assertSame([1, 3, 3], $result->toArray());
+    }
+
+    public function testRepeat2DFlattened(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = $a->repeat(2);
+
+        $this->assertSame([8], $result->shape());
+        $this->assertSame([1, 1, 2, 2, 3, 3, 4, 4], $result->toArray());
+    }
+
+    public function testRepeat2DAxis0(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = $a->repeat(2, axis: 0);
+
+        $this->assertSame([4, 2], $result->shape());
+        $this->assertSame([
+            [1, 2],
+            [1, 2],
+            [3, 4],
+            [3, 4],
+        ], $result->toArray());
+    }
+
+    public function testRepeat2DAxis1(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = $a->repeat(2, axis: 1);
+
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertSame([
+            [1, 1, 2, 2],
+            [3, 3, 4, 4],
+        ], $result->toArray());
+    }
+
+    public function testRepeat2DWithArrayAxis0(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4], [5, 6]], DType::Int64);
+        $result = $a->repeat([2, 1, 3], axis: 0);
+
+        $this->assertSame([6, 2], $result->shape());
+        $this->assertSame([
+            [1, 2],
+            [1, 2],
+            [3, 4],
+            [5, 6],
+            [5, 6],
+            [5, 6],
+        ], $result->toArray());
+    }
+
+    public function testRepeat2DWithArrayAxis1(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = $a->repeat([1, 2], axis: 1);
+
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertSame([
+            [1, 2, 2],
+            [3, 4, 4],
+        ], $result->toArray());
+    }
+
+    public function testRepeat3DAxis0(): void
+    {
+        $a = NDArray::array([[[1, 2]], [[3, 4]]], DType::Int64); // Shape [2, 1, 2]
+        $result = $a->repeat(2, axis: 0);
+
+        $this->assertSame([4, 1, 2], $result->shape());
+    }
+
+    public function testRepeat3DAxis1(): void
+    {
+        $a = NDArray::array([[[1, 2]], [[3, 4]]], DType::Int64); // Shape [2, 1, 2]
+        $result = $a->repeat(2, axis: 1);
+
+        $this->assertSame([2, 2, 2], $result->shape());
+        $this->assertSame([
+            [[1, 2], [1, 2]],
+            [[3, 4], [3, 4]],
+        ], $result->toArray());
+    }
+
+    public function testRepeatPreservesDtype(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Float32);
+        $result = $a->repeat(2, axis: 0);
+
+        $this->assertSame(DType::Float32, $result->dtype());
+    }
+
+    public function testRepeatFloat64(): void
+    {
+        $a = NDArray::array([[1.5, 2.5], [3.5, 4.5]], DType::Float64);
+        $result = $a->repeat(2, axis: 1);
+
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertEqualsWithDelta([
+            [1.5, 1.5, 2.5, 2.5],
+            [3.5, 3.5, 4.5, 4.5],
+        ], $result->toArray(), 0.0001);
+    }
+
+    public function testRepeatBool(): void
+    {
+        $a = NDArray::array([[true, false]], DType::Bool);
+        $result = $a->repeat(2, axis: 0);
+
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertSame([
+            [true, false],
+            [true, false],
+        ], $result->toArray());
+    }
+
+    public function testRepeatWithNDArrayRepeats(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $repeats = NDArray::array([2, 1], DType::Int64);
+        $result = $a->repeat($repeats, axis: 1);
+
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertSame([
+            [1, 1, 2],
+            [3, 3, 4],
+        ], $result->toArray());
+    }
+
+    public function testRepeatOnceReturnsSame(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = $a->repeat(1, axis: 0);
+
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertSame([
+            [1, 2],
+            [3, 4],
+        ], $result->toArray());
+    }
+
+    // =========================================================================
+    // Static Convenience Methods Tests
+    // =========================================================================
+
+    public function testTileArrayWithPlainArray(): void
+    {
+        $result = NDArray::tileArray([1, 2, 3], 2);
+
+        $this->assertSame([6], $result->shape());
+        $this->assertSame([1, 2, 3, 1, 2, 3], $result->toArray());
+    }
+
+    public function testTileArrayWithNDArray(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = NDArray::tileArray($a, [2, 1]);
+
+        $this->assertSame([4, 2], $result->shape());
+        $this->assertSame([
+            [1, 2],
+            [3, 4],
+            [1, 2],
+            [3, 4],
+        ], $result->toArray());
+    }
+
+    public function testTileArrayReturnsNDArray(): void
+    {
+        $result = NDArray::tileArray([1, 2], 2);
+
+        $this->assertInstanceOf(NDArray::class, $result);
+    }
+
+    public function testRepeatArrayWithPlainArray(): void
+    {
+        $result = NDArray::repeatArray([1, 2, 3], 2);
+
+        $this->assertSame([6], $result->shape());
+        $this->assertSame([1, 1, 2, 2, 3, 3], $result->toArray());
+    }
+
+    public function testRepeatArrayWithNDArray(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4]], DType::Int64);
+        $result = NDArray::repeatArray($a, 2, axis: 0);
+
+        $this->assertSame([4, 2], $result->shape());
+        $this->assertSame([
+            [1, 2],
+            [1, 2],
+            [3, 4],
+            [3, 4],
+        ], $result->toArray());
+    }
+
+    public function testRepeatArrayWithAxisParameter(): void
+    {
+        $result = NDArray::repeatArray([[1, 2], [3, 4]], 2, axis: 1);
+
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertSame([
+            [1, 1, 2, 2],
+            [3, 3, 4, 4],
+        ], $result->toArray());
+    }
+
+    public function testRepeatArrayReturnsNDArray(): void
+    {
+        $result = NDArray::repeatArray([1, 2], 2);
+
+        $this->assertInstanceOf(NDArray::class, $result);
     }
 
     // =========================================================================

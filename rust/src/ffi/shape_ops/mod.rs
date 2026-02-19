@@ -10,9 +10,11 @@ pub mod invert_axis;
 pub mod merge_axes;
 pub mod pad;
 pub mod permute_axes;
+pub mod repeat;
 pub mod reshape;
 pub mod squeeze;
 pub mod swap_axes;
+pub mod tile;
 pub mod transpose;
 
 // Re-export all FFI functions
@@ -23,7 +25,9 @@ pub use invert_axis::*;
 pub use merge_axes::*;
 pub use pad::*;
 pub use permute_axes::*;
+pub use repeat::*;
 pub use reshape::*;
 pub use squeeze::*;
 pub use swap_axes::*;
+pub use tile::*;
 pub use transpose::*;

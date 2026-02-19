@@ -249,4 +249,11 @@ interface Bindings
     public function ndarray_concatenate(CData $handles, CData $offsets, CData $shapes, CData $strides, int $num_arrays, int $ndim, int $axis, CData $out_handle, CData $out_ndim, CData $out_shape, int $max_ndim): int;
     public function ndarray_stack(CData $handles, CData $offsets, CData $shapes, CData $strides, int $num_arrays, int $ndim, int $axis, CData $out_handle, CData $out_ndim, CData $out_shape, int $max_ndim): int;
     public function ndarray_split(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, int $axis, CData $indices, int $num_indices, CData $out_offsets, CData $out_shapes, CData $out_strides): int;
+
+    // =========================================================================
+    // Tiling and Repeating
+    // =========================================================================
+
+    public function ndarray_tile(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $reps, int $reps_len, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_repeat(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $repeats, int $repeats_len, int $axis, CData $out_handle, CData $out_dtype, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 }
