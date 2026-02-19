@@ -7,11 +7,9 @@ use NDArray\NDArray;
 
 $starttime = microtime(true);
 
-$data = range(1, 1000000);
-$a = NDArray::array($data, dtype: DType::Float32);
-$b = $a->reshape([1000, 1000])
-    ->transpose()
-    ->add($a->reshape([1000, 1000]))
+$a = NDArray::random([2000, 2000], DType::Float32);
+$b = $a->transpose()
+    ->add($a)
     ->log()
     // ->mean(0)
     ->softmax()

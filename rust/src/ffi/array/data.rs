@@ -51,77 +51,88 @@ pub unsafe extern "C" fn ndarray_get_data(
 
         let result = match wrapper.dtype {
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract i8 view");
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, out_data as *mut i8, max_len, out_len)
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract i16 view");
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, out_data as *mut i16, max_len, out_len)
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract i32 view");
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, out_data as *mut i32, max_len, out_len)
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract i64 view");
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, out_data as *mut i64, max_len, out_len)
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract u8 view");
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, out_data as *mut u8, max_len, out_len)
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract u16 view");
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, out_data as *mut u16, max_len, out_len)
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract u32 view");
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, out_data as *mut u32, max_len, out_len)
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract u64 view");
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, out_data as *mut u64, max_len, out_len)
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract f32 view");
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, out_data as *mut f32, max_len, out_len)
             }
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract f64 view");
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, out_data as *mut f64, max_len, out_len)
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_bool(wrapper, offset, shape_slice, strides_slice)
+                else {
                     error::set_last_error("Failed to extract bool view");
                     return ERR_DTYPE;
                 };

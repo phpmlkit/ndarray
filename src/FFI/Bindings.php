@@ -207,12 +207,6 @@ interface Bindings
     public function ndarray_dtype(CData $handle, CData $out_dtype): int;
     public function ndarray_shape(CData $handle, CData $out_shape, int $max_ndim, CData $out_ndim): int;
 
-    // =========================================================================
-    // Serialization
-    // =========================================================================
-
-    public function ndarray_to_json(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_ptr, CData $out_len): int;
-    public function ndarray_free_string(CData $ptr): void;
     public function ndarray_scalar(CData $handle, int $offset, CData $shape, CData $strides, int $ndim, CData $out_value): int;
 
     // =========================================================================

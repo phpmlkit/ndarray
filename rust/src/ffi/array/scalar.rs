@@ -1,7 +1,4 @@
 //! Extract scalar value from 0-dimensional array.
-//!
-//! Simpler than ndarray_to_json for 0d: directly reads the single element
-//! at the given offset, supporting views into the underlying buffer.
 
 use std::ffi::c_void;
 use std::slice;

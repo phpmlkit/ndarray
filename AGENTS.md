@@ -101,15 +101,15 @@ Agents must follow these rules exactly:
 When implementing or modifying APIs:
 
 - Public PHP APIs must:
-- Match SPEC.md naming and behavior
-- Be discoverable and predictable
-- Avoid surprising PHP-isms that break NumPy mental models
+    - Match SPEC.md naming and behavior, unless explicitly requested
+    - Be discoverable and predictable
+    - Avoid surprising PHP-isms that break NumPy mental models
 - Internal helper methods may exist, but:
-- They must not leak into public API
-- They must not bypass validation logic
+    - They must not leak into public API
+    - They must not bypass validation logic
 - Operator overloading (+, -, *, @, etc.):
-- Must obey broadcasting rules
-- Must fail loudly on invalid shapes
+    - Must obey broadcasting rules
+    - Must fail loudly on invalid shapes
 
 ⸻
 
@@ -161,11 +161,11 @@ When adding or changing behavior, agents must:
 - Add or update PHP unit tests
 - Add Rust tests if logic lives in Rust
 - Consider:
-- shape edge cases
-- zero-dim arrays
-- broadcasting failures
-- view vs copy behavior
-- memory lifetime scenarios
+    - shape edge cases
+    - zero-dim arrays
+    - broadcasting failures
+    - view vs copy behavior
+    - memory lifetime scenarios
 
 Performance-sensitive changes should include benchmarks when feasible.
 
@@ -265,9 +265,9 @@ These functions:
 - Silently truncate values that don't fit (Rust's `as` behavior)
 
 ### File Organization
-- Keep operation-specific logic in its own file (e.g., `sum_scalar.rs`)
+- Keep operation-specific logic in its own file (e.g., `sum.rs`)
 - `view_helpers.rs` should only contain generic extraction utilities
-- Never put operation logic in view_helpers
+- Never put operation logic in helpers
 
 ## Arithmetic Operations Patterns
 

@@ -6,11 +6,9 @@ pub mod create;
 pub mod data;
 pub mod properties;
 pub mod scalar;
-pub mod serialize;
 
 // Re-export all public functions
 pub use create::*;
 pub use data::*;
 pub use properties::*;
 pub use scalar::*;
-pub use serialize::*;
