@@ -6,6 +6,7 @@ namespace NDArray\FFI;
 
 use FFI;
 use FFI\CData;
+use Codewithkyrian\PlatformPackageInstaller\Platform;
 use NDArray\Exceptions\NDArrayException;
 use NDArray\Exceptions\ShapeException;
 use NDArray\Exceptions\DTypeException;
@@ -27,6 +28,33 @@ final class Lib
     
     private static ?string $libraryPath = null;
 
+     /**
+     * Platform-specific library configurations
+     * @var array<string, array{directory: string, libraryTemplate: string}>
+     */
+    private const PLATFORM_CONFIGS = [
+        'linux-x86_64' => [
+            'directory' => 'linux-x86_64',
+            'libraryTemplate' => 'lib{name}.so.{version}',
+        ],
+        'linux-arm64' => [
+            'directory' => 'linux-arm64',
+            'libraryTemplate' => 'lib{name}.so.{version}',
+        ],
+        'darwin-x86_64' => [
+            'directory' => 'darwin-x86_64',
+            'libraryTemplate' => 'lib{name}-{version}.dylib',
+        ],
+        'darwin-arm64' => [
+            'directory' => 'darwin-arm64',
+            'libraryTemplate' => 'lib{name}-{version}.dylib',
+        ],
+        'windows-64' => [
+            'directory' => 'windows-64',
+            'libraryTemplate' => '{name}-{version}.dll',
+        ],
+    ];
+
     /**
      * Prevent instantiation.
      */
@@ -45,7 +73,7 @@ final class Lib
 
         self::$libraryPath = $libraryPath ?? self::findLibrary();
 
-        $headerPath = dirname(__DIR__, 2) . '/lib/ndarray_php.h';
+        $headerPath = dirname(__DIR__, 2) . '/include/ndarray_php.h';
 
         if (!file_exists($headerPath)) {
             throw new NDArrayException(
@@ -59,12 +87,10 @@ final class Lib
             );
         }
 
-        /** @var FFI&Bindings $ffi */
-        $ffi = FFI::cdef(
+        self::$ffi = FFI::cdef(
             file_get_contents($headerPath),
             self::$libraryPath
         );
-        self::$ffi = $ffi;
     }
 
     /**
@@ -90,18 +116,71 @@ final class Lib
         self::$libraryPath = null;
     }
 
+
     /**
-     * Find the library file based on platform.
+     * Find the library file based on platform and architecture.
+     * Uses Platform::findBestMatch() to resolve the correct platform configuration.
      */
     private static function findLibrary(): string
     {
         $baseDir = dirname(__DIR__, 2) . '/lib/';
 
-        return match (PHP_OS_FAMILY) {
-            'Windows' => $baseDir . 'ndarray_php.dll',
-            'Darwin' => $baseDir . 'libndarray_php.dylib',
-            default => $baseDir . 'libndarray_php.so',
-        };
+        $platformConfig = Platform::findBestMatch(self::PLATFORM_CONFIGS);
+
+        if ($platformConfig === false) {
+            $current = Platform::current();
+            throw new NDArrayException(
+                "Unsupported platform: {$current['os']}-{$current['arch']}. " .
+                "Supported platforms: " . implode(', ', array_keys(self::PLATFORM_CONFIGS))
+            );
+        }
+
+        $platformDir = sprintf('%s%s/', $baseDir, $platformConfig['directory']);
+
+        if (!is_dir($platformDir)) {
+            throw new NDArrayException(
+                "Platform directory not found: $platformDir. Did you build the Rust library?"
+            );
+        }
+
+        $version = self::getLibraryVersion();
+
+        $libraryName = 'ndarray_php';
+        $template = $platformConfig['libraryTemplate'];
+
+        $filename = str_replace(['{name}', '{version}'], [$libraryName, $version], $template);
+        $libraryPath = $platformDir . $filename;
+
+        if (!file_exists($libraryPath)) {
+            $pattern = str_replace(['{name}', '{version}'], [$libraryName, '*'], $template);
+            $files = glob($platformDir . $pattern);
+
+            if (empty($files)) {
+                throw new NDArrayException(
+                    "Library not found: $libraryPath. Did you build the Rust library?"
+                );
+            }
+
+            $libraryPath = $files[0];
+        }
+
+        return $libraryPath;
+    }
+
+    /**
+     * Get the library version from composer.json
+     */
+    private static function getLibraryVersion(): string
+    {
+        $composerFile = dirname(__DIR__, 2) . '/composer.json';
+
+        if (!file_exists($composerFile)) {
+            return '*';
+        }
+
+        $composer = json_decode(file_get_contents($composerFile), true);
+
+        return $composer['version'] ?? '*';
     }
 
     /**

@@ -1,0 +1,231 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-linux-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Build
+        run: |
+          cd rust
+          cargo build --release
+      
+      - name: Prepare artifact
+        run: |
+          VERSION=$(grep '^version' rust/Cargo.toml | head -1 | cut -d'"' -f2)
+          PLATFORM="linux-x86_64"
+          mkdir -p "lib/${PLATFORM}"
+          cp "rust/target/release/libndarray_php.so" "lib/${PLATFORM}/libndarray_php.so.${VERSION}"
+          mkdir -p include
+          cp lib/ndarray_php.h include/ndarray_php.h
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: linux-x86_64
+          path: |
+            lib/linux-x86_64/
+            include/
+
+  # Build on Linux ARM64
+  build-linux-arm64:
+    runs-on: ubuntu-24.04-arm  # Native ARM64 runner
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Build
+        run: |
+          cd rust
+          cargo build --release
+      
+      - name: Prepare artifact
+        run: |
+          VERSION=$(grep '^version' rust/Cargo.toml | head -1 | cut -d'"' -f2)
+          PLATFORM="linux-arm64"
+          mkdir -p "lib/${PLATFORM}"
+          cp "rust/target/release/libndarray_php.so" "lib/${PLATFORM}/libndarray_php.so.${VERSION}"
+          mkdir -p include
+          cp lib/ndarray_php.h include/ndarray_php.h
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: linux-arm64
+          path: |
+            lib/linux-arm64/
+            include/
+
+  # Build on macOS x86_64 (Intel)
+  build-darwin-x86_64:
+    runs-on: macos-13  # Intel runner
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Build
+        run: |
+          cd rust
+          cargo build --release
+      
+      - name: Prepare artifact
+        run: |
+          VERSION=$(grep '^version' rust/Cargo.toml | head -1 | cut -d'"' -f2)
+          PLATFORM="darwin-x86_64"
+          mkdir -p "lib/${PLATFORM}"
+          cp "rust/target/release/libndarray_php.dylib" "lib/${PLATFORM}/libndarray_php-${VERSION}.dylib"
+          mkdir -p include
+          cp lib/ndarray_php.h include/ndarray_php.h
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: darwin-x86_64
+          path: |
+            lib/darwin-x86_64/
+            include/
+
+  # Build on macOS ARM64 (Apple Silicon)
+  build-darwin-arm64:
+    runs-on: macos-latest  # ARM64 runner
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Build
+        run: |
+          cd rust
+          cargo build --release
+      
+      - name: Prepare artifact
+        run: |
+          VERSION=$(grep '^version' rust/Cargo.toml | head -1 | cut -d'"' -f2)
+          PLATFORM="darwin-arm64"
+          mkdir -p "lib/${PLATFORM}"
+          cp "rust/target/release/libndarray_php.dylib" "lib/${PLATFORM}/libndarray_php-${VERSION}.dylib"
+          mkdir -p include
+          cp lib/ndarray_php.h include/ndarray_php.h
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: darwin-arm64
+          path: |
+            lib/darwin-arm64/
+            include/
+
+  # Build on Windows x64
+  build-windows-64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Build
+        run: |
+          cd rust
+          cargo build --release
+      
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          VERSION=$(grep '^version' rust/Cargo.toml | head -1 | cut -d'"' -f2)
+          PLATFORM="windows-64"
+          mkdir -p "lib/${PLATFORM}"
+          cp "rust/target/release/ndarray_php.dll" "lib/${PLATFORM}/ndarray_php-${VERSION}.dll"
+          mkdir -p include
+          cp lib/ndarray_php.h include/ndarray_php.h
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows-64
+          path: |
+            lib/windows-64/
+            include/
+
+  # Assemble and release
+  assemble-and-release:
+    needs: [build-linux-x86_64, build-linux-arm64, build-darwin-x86_64, build-darwin-arm64, build-windows-64]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+      
+      - name: Assemble platform archives
+        run: |
+          VERSION=${{ github.event.release.tag_name }}
+          
+          # Create distribution archives for each platform
+          for platform in linux-x86_64 linux-arm64 darwin-x86_64 darwin-arm64 windows-64; do
+            mkdir -p "dist/lib/${platform}"
+            mkdir -p "dist/include"
+            
+            # Copy platform-specific library
+            cp -r "artifacts/${platform}/lib/${platform}/"* "dist/lib/${platform}/"
+            
+            # Copy header (same for all)
+            cp "artifacts/${platform}/include/ndarray_php.h" "dist/include/"
+            
+            # Create archive
+            if [ "$platform" = "windows-64" ]; then
+              cd dist && zip -r "../dist-${platform}.zip" lib/ include/ && cd ..
+            else
+              cd dist && tar -czf "../dist-${platform}.tar.gz" lib/ include/ && cd ..
+            fi
+            
+            # Clean up for next platform
+            rm -rf dist/lib/${platform}/*
+          done
+      
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist-*.tar.gz
+            dist-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Smoke test - verifies all builds work
+  smoke-test:
+    needs: [build-linux-x86_64, build-linux-arm64, build-darwin-x86_64, build-darwin-arm64, build-windows-64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+      
+      - name: Verify artifacts exist
+        run: |
+          for platform in linux-x86_64 linux-arm64 darwin-x86_64 darwin-arm64 windows-64; do
+            echo "Checking $platform..."
+            ls -la "artifacts/${platform}/lib/${platform}/"
+            ls -la "artifacts/${platform}/include/"
+          done

@@ -6,12 +6,12 @@ fn main() {
     let config_file = PathBuf::from(&crate_dir).join("cbindgen.toml");
     let output_file = PathBuf::from(&crate_dir)
         .join("..")
-        .join("lib")
+        .join("include")
         .join("ndarray_php.h");
 
-    // Ensure the lib directory exists
-    let lib_dir = output_file.parent().unwrap();
-    std::fs::create_dir_all(lib_dir).ok();
+    // Ensure the include directory exists
+    let include_dir = output_file.parent().unwrap();
+    std::fs::create_dir_all(include_dir).ok();
 
     // Generate bindings using config file
     if config_file.exists() {

@@ -1,11 +1,12 @@
 {
-  "name": "yourvendor/ndarray",
+  "name": "codewithkyrian/ndarray-php",
   "description": "High-performance N-dimensional arrays for PHP, powered by Rust",
-  "type": "library",
+  "type": "platform-package",
   "license": "MIT",
   "require": {
     "php": "^8.1",
-    "ext-ffi": "*"
+    "ext-ffi": "*",
+    "codewithkyrian/platform-package-installer": "^1.1"
   },
   "require-dev": {
     "phpunit/phpunit": "^10.0",
@@ -19,6 +20,20 @@
   "autoload-dev": {
     "psr-4": {
       "NDArray\\Tests\\": "tests/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "codewithkyrian/platform-package-installer": true
+    }
+  },
+  "extra": {
+    "platform-urls": {
+      "linux-x86_64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-linux-x86_64.tar.gz",
+      "linux-arm64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-linux-arm64.tar.gz",
+      "darwin-x86_64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-darwin-x86_64.tar.gz",
+      "darwin-arm64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-darwin-arm64.tar.gz",
+      "windows-64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-windows-64.zip"
     }
   }
 }

@@ -1,0 +1,41 @@
+# Platform-specific distribution configuration
+# Used by platform-package-installer to exclude incompatible files
+
+linux-x86_64:
+  exclude:
+    - lib/linux-arm64
+    - lib/darwin-*
+    - lib/windows-*
+    - "*.dylib"
+    - "*.dll"
+
+linux-arm64:
+  exclude:
+    - lib/linux-x86_64
+    - lib/darwin-*
+    - lib/windows-*
+    - "*.dylib"
+    - "*.dll"
+
+darwin-x86_64:
+  exclude:
+    - lib/linux-*
+    - lib/darwin-arm64
+    - lib/windows-*
+    - "*.so"
+    - "*.dll"
+
+darwin-arm64:
+  exclude:
+    - lib/linux-*
+    - lib/darwin-x86_64
+    - lib/windows-*
+    - "*.so"
+    - "*.dll"
+
+windows-64:
+  exclude:
+    - lib/linux-*
+    - lib/darwin-*
+    - "*.so"
+    - "*.dylib"
