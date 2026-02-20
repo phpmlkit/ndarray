@@ -85,10 +85,13 @@ final class Lib
             );
         }
 
-        self::$ffi = \FFI::cdef(
+        /** @var Bindings&\FFI $ffi */
+        $ffi = \FFI::cdef(
             file_get_contents($headerPath),
             self::$libraryPath
         );
+
+        self::$ffi = $ffi;
     }
 
     /**
@@ -158,8 +161,8 @@ final class Lib
     /**
      * Create a C array from a PHP array with the given type.
      *
-     * @param string $type C type (e.g., 'double', 'int64_t', 'size_t')
-     * @param array  $data PHP array of values
+     * @param string                $type C type (e.g., 'double', 'int64_t', 'size_t')
+     * @param array<bool|float|int> $data PHP array of values
      *
      * @return CData The allocated C array
      */
@@ -224,18 +227,6 @@ final class Lib
             $ffi->new('size_t'),
             $ffi->new('size_t['.self::MAX_NDIM.']'),
         ];
-    }
-
-    /**
-     * Create a C box of the given type.
-     *
-     * @param string $type C type (e.g., 'char', 'size_t', 'struct NdArrayHandle*')
-     *
-     * @return Box&CData
-     */
-    public static function createBox(string $type): CData
-    {
-        return self::get()->new($type);
     }
 
     /**

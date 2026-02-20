@@ -42,7 +42,7 @@ trait HasConversion
         $ffi = Lib::get();
         $cShape = Lib::createShapeArray($this->shape);
         $cStrides = Lib::createShapeArray($this->strides);
-        $outLen = Lib::createBox('size_t');
+        $outLen = $ffi->new('size_t');
 
         $status = $ffi->ndarray_get_data(
             $this->handle,
@@ -122,6 +122,8 @@ trait HasConversion
      * Convert to flat PHP data in C-order.
      *
      * For 0-dimensional arrays, returns a scalar.
+     *
+     * @return array<bool|float|int>|bool|float|int
      */
     public function toFlatArray(): array|bool|float|int
     {
@@ -137,7 +139,7 @@ trait HasConversion
      *
      * Uses flat typed extraction from Rust + iterative nesting in PHP.
      *
-     * @return array|bool|float|int Returns array for N-dimensional arrays, scalar for 0-dimensional
+     * @return array<mixed>|bool|float|int Returns array for N-dimensional arrays, scalar for 0-dimensional
      */
     public function toArray(): array|bool|float|int
     {
@@ -230,7 +232,7 @@ trait HasConversion
 
         $cShape = Lib::createShapeArray($this->shape);
         $cStrides = Lib::createShapeArray($this->strides);
-        $outLen = Lib::createBox('size_t');
+        $outLen = $ffi->new('size_t');
 
         $ctype = match ($this->dtype) {
             DType::Bool => 'uint8_t',
@@ -290,6 +292,8 @@ trait HasConversion
      *
      * @param array<bool|float|int> $flat
      * @param array<int>            $shape
+     *
+     * @return array<mixed>
      */
     private function nestFromFlatIterative(array $flat, array $shape): array
     {

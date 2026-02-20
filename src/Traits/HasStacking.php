@@ -287,6 +287,8 @@ trait HasStacking
 
     /**
      * Compute split indices for equal N-way split.
+     *
+     * @return array<int>
      */
     private static function indicesForEqualSplit(int $axisLen, int $n): array
     {

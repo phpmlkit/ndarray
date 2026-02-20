@@ -118,7 +118,7 @@ trait HasIndexing
      * If axis is null, gathers from logical flattened view (C-order).
      * If axis is provided, delegates to takeAlongAxis semantics.
      *
-     * @param array<array|int>|self $indices
+     * @param array<array<int>|int>|self $indices
      */
     public function take(array|self $indices, ?int $axis = null): self
     {
@@ -187,8 +187,8 @@ trait HasIndexing
     /**
      * Scatter values by flattened indices and return a mutated copy.
      *
-     * @param array<array|int>|self $indices
-     * @param string                $mode    Currently supports only 'raise'
+     * @param array<array<int>|int>|self $indices
+     * @param string                     $mode    Currently supports only 'raise'
      */
     public function put(array|self $indices, bool|float|int|self $values, string $mode = 'raise'): self
     {
@@ -264,7 +264,7 @@ trait HasIndexing
     /**
      * Add updates by flattened indices and return a mutated copy.
      *
-     * @param array<array|int>|self $indices
+     * @param array<array<int>|int>|self $indices
      */
     public function scatterAdd(array|self $indices, bool|float|int|self $updates): self
     {
@@ -446,7 +446,7 @@ trait HasIndexing
      */
     private function getTypedScalar(\FFI $ffi, string $cType, int $flatIndex): float|int
     {
-        $outValue = Lib::createBox($cType);
+        $outValue = $ffi->new($cType);
         $status = $ffi->ndarray_get_element($this->handle, $flatIndex, Lib::addr($outValue));
         Lib::checkStatus($status);
 
@@ -454,7 +454,7 @@ trait HasIndexing
     }
 
     /**
-     * @param array<array|int>|self $indices
+     * @param array<array<int>|int>|self $indices
      *
      * @return array{0: array<int>, 1: array<int>}
      */
@@ -470,8 +470,8 @@ trait HasIndexing
             return [array_map(static fn ($v) => (int) $v, $flat), $indices->shape];
         }
 
-        $shape = $this->inferNestedShape($indices);
-        $flat = $this->flattenNestedArray($indices);
+        $shape = self::inferShape($indices);
+        $flat = self::flattenArray($indices);
 
         return [array_map(static fn ($v) => (int) $v, $flat), $shape];
     }
@@ -498,41 +498,6 @@ trait HasIndexing
         $buffer = Lib::createCArray($this->dtype->ffiType(), $flat);
 
         return [$buffer, \count($flat), 0.0, false];
-    }
-
-    /**
-     * Infer shape from nested PHP arrays.
-     *
-     * @return array<int>
-     */
-    private function inferNestedShape(array $data): array
-    {
-        $shape = [];
-        $current = $data;
-        while (\is_array($current)) {
-            $shape[] = \count($current);
-            if (empty($current)) {
-                break;
-            }
-            $current = $current[0];
-        }
-
-        return [] === $shape ? [\count($data)] : $shape;
-    }
-
-    /**
-     * Flatten nested PHP arrays.
-     *
-     * @return array<bool|float|int>
-     */
-    private function flattenNestedArray(array $data): array
-    {
-        $out = [];
-        array_walk_recursive($data, static function ($v) use (&$out): void {
-            $out[] = $v;
-        });
-
-        return $out;
     }
 
     /**

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
-use FFI;
 use FFI\CData;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
@@ -21,8 +20,8 @@ trait CreatesArrays
     /**
      * Create array from PHP array.
      *
-     * @param array      $data  Nested PHP array
-     * @param null|DType $dtype Data type (auto-inferred if null)
+     * @param array<mixed> $data  Nested PHP array
+     * @param null|DType   $dtype Data type (auto-inferred if null)
      */
     public static function array(array $data, ?DType $dtype = null): self
     {
@@ -553,7 +552,7 @@ trait CreatesArrays
      *
      * Static convenience method that accepts either a PHP array or NDArray.
      *
-     * @param array<int>|self     $a       Input array or NDArray
+     * @param array<mixed>|self   $a       Input array or NDArray
      * @param array<int>|int|self $repeats The number of repetitions for each element
      * @param null|int            $axis    The axis along which to repeat values. By default, use the flattened input array
      *
@@ -574,6 +573,8 @@ trait CreatesArrays
 
     /**
      * Infer shape from nested PHP array.
+     *
+     * @param array<mixed> $data Nested PHP array
      *
      * @return array<int>
      */
@@ -597,6 +598,8 @@ trait CreatesArrays
     /**
      * Flatten nested PHP array.
      *
+     * @param array<mixed> $data Nested PHP array
+     *
      * @return array<mixed>
      */
     private static function flattenArray(array $data): array
@@ -615,7 +618,7 @@ trait CreatesArrays
      *
      * @param Bindings&\FFI $ffi   FFI instance
      * @param DType         $dtype Data type
-     * @param array         $data  Flat array of values
+     * @param array<mixed>  $data  Flat array of values
      * @param array<int>    $shape Array shape
      * @param int           $len   Number of elements
      *

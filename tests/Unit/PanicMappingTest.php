@@ -249,6 +249,9 @@ final class PanicMappingTest extends TestCase
         $arr->{$method}(5);
     }
 
+    /**
+     * @return array<array{string}>
+     */
     public static function reductionOperationsProvider(): array
     {
         return [

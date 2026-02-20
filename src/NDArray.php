@@ -52,7 +52,11 @@ class NDArray implements \ArrayAccess
     /** Total number of elements in this array/view */
     protected int $size;
 
-    /** Element strides per dimension (in element count, not bytes) */
+    /**
+     * Element strides per dimension (in element count, not bytes).
+     *
+     * @var array<int>
+     */
     protected readonly array $strides;
 
     /**
@@ -83,7 +87,7 @@ class NDArray implements \ArrayAccess
      */
     public function __destruct()
     {
-        if (null === $this->base && isset($this->handle)) {
+        if (null === $this->base) {
             Lib::get()->ndarray_free($this->handle);
         }
     }

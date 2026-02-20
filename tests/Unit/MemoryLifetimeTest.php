@@ -111,7 +111,7 @@ final class MemoryLifetimeTest extends TestCase
 
             return $view2d->get(0); // Get 1D view from it
             // Return only the deepest view
-              // [5, 6]
+            // [5, 6]
         })();
 
         // All intermediate views and root are out of scope
@@ -251,7 +251,7 @@ final class MemoryLifetimeTest extends TestCase
         // Create and destroy many views in a loop
         for ($i = 0; $i < 100; ++$i) {
             $view = $arr->get($i % 5);
-            $this->assertNotNull($view->toArray());
+            $this->assertNotEmpty($view->toArray());
             // View goes out of scope at end of iteration
         }
 
@@ -297,7 +297,7 @@ final class MemoryLifetimeTest extends TestCase
 
         // Verify all views are still valid
         for ($i = 0; $i < 20; ++$i) {
-            $this->assertNotNull($views[$i]->toArray());
+            $this->assertNotEmpty($views[$i]->toArray());
         }
 
         // Release references gradually
@@ -307,7 +307,7 @@ final class MemoryLifetimeTest extends TestCase
 
         // Remaining views should still work
         for ($i = 10; $i < 20; ++$i) {
-            $this->assertNotNull($views[$i]->toArray());
+            $this->assertNotEmpty($views[$i]->toArray());
         }
     }
 

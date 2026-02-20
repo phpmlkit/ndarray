@@ -47,7 +47,7 @@ trait HasLinearAlgebra
         $strides = Lib::createShapeArray($this->strides);
 
         if (null === $axis) {
-            $outValue = Lib::createBox('double');
+            $outValue = $ffi->new('double');
             $outDtype = $ffi->new('uint8_t');
             $status = $ffi->ndarray_norm(
                 $this->handle,
@@ -127,55 +127,6 @@ trait HasLinearAlgebra
     public function trace(): NDArray
     {
         return $this->unaryOp('ndarray_trace');
-    }
-
-    /**
-     * Compute output shape for dot product.
-     *
-     * @param array $aShape Shape of first array
-     * @param array $bShape Shape of second array
-     */
-    private function computeDotShape(array $aShape, array $bShape): array
-    {
-        // 1D @ 1D -> scalar (0D)
-        if (1 === \count($aShape) && 1 === \count($bShape)) {
-            return [];
-        }
-
-        // 2D @ 1D -> 1D (M)
-        if (2 === \count($aShape) && 1 === \count($bShape)) {
-            return [$aShape[0]];
-        }
-
-        // 1D @ 2D -> 1D (N)
-        if (1 === \count($aShape) && 2 === \count($bShape)) {
-            return [$bShape[1]];
-        }
-
-        // 2D @ 2D -> 2D (M x N)
-        if (2 === \count($aShape) && 2 === \count($bShape)) {
-            return [$aShape[0], $bShape[1]];
-        }
-
-        // Default to empty for other cases
-        return [];
-    }
-
-    /**
-     * Compute output shape for matrix multiplication.
-     *
-     * @param array $aShape Shape of first array
-     * @param array $bShape Shape of second array
-     */
-    private function computeMatmulShape(array $aShape, array $bShape): array
-    {
-        // Simple 2D @ 2D -> (M x K)
-        if (2 === \count($aShape) && 2 === \count($bShape)) {
-            return [$aShape[0], $bShape[1]];
-        }
-
-        // For other cases, try to infer
-        return [$aShape[0], $bShape[\count($bShape) - 1]];
     }
 
     /**

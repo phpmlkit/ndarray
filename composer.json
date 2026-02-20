@@ -12,6 +12,7 @@
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.91",
     "phpunit/phpunit": "^10.0",
+    "phpstan/phpstan": "^2.1",
     "symfony/var-dumper": "^8.0"
   },
   "autoload": {
@@ -42,6 +43,7 @@
       "test": "vendor/bin/phpunit",
       "test:pretty": "vendor/bin/phpunit --testdox",
       "cs:fix": "vendor/bin/php-cs-fixer fix",
-      "cs:check": "vendor/bin/php-cs-fixer fix --dry-run --diff"
+      "cs:check": "vendor/bin/php-cs-fixer fix --dry-run --diff",
+      "lint": "vendor/bin/phpstan analyse"
   }
 }

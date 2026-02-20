@@ -6,8 +6,8 @@ namespace PhpMlKit\NDArray\Traits;
 
 use FFI;
 use FFI\CData;
-use NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
 

@@ -93,6 +93,9 @@ final class NDArrayTest extends TestCase
     // Explicit DType Tests
     // =========================================================================
 
+    /**
+     * @param array<bool|float|int> $data
+     */
     #[DataProvider('dtypeProvider')]
     public function testCreateWithExplicitDType(DType $dtype, array $data): void
     {
@@ -102,6 +105,9 @@ final class NDArrayTest extends TestCase
         $this->assertSame($dtype->itemSize(), $arr->itemsize());
     }
 
+    /**
+     * @return array<string, array{DType, array<bool|float|int>}>
+     */
     public static function dtypeProvider(): array
     {
         return [

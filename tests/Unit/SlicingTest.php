@@ -415,7 +415,7 @@ final class SlicingTest extends TestCase
         $this->expectException(IndexException::class);
         $this->expectExceptionMessage('Invalid slice component');
 
-        $arr['invalid:selector'];
+        $slice = $arr['invalid:selector'];
     }
 
     public function testAssignPHPArrayThrows(): void

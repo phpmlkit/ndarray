@@ -195,6 +195,8 @@ enum DType: int
      * Infer dtype from a PHP array, checking all elements.
      *
      * Type promotion: float > int > bool. Empty arrays default to Float64.
+     *
+     * @param array<mixed> $data
      */
     public static function fromArray(array $data): self
     {

@@ -63,6 +63,9 @@ final class IndexingTest extends TestCase
     // Scalar Access — All DTypes
     // =========================================================================
 
+    /**
+     * @param array<bool|float|int> $data
+     */
     #[DataProvider('allDTypesProvider')]
     public function testGetScalarAllDTypes(DType $dtype, array $data, mixed $expected): void
     {
@@ -78,6 +81,9 @@ final class IndexingTest extends TestCase
         }
     }
 
+    /**
+     * @return array<string, array{DType, array<bool|float|int>, bool|float|int}>
+     */
     public static function allDTypesProvider(): array
     {
         return [

@@ -20,9 +20,12 @@ trait HasShapeOps
     /**
      * Pad an array.
      *
-     * @param array<array<int>>|array<int>|int     $padWidth       number of elements to pad on each side of each axis
-     * @param PadMode                              $mode           padding mode
-     * @param array<bool|float|int>|bool|float|int $constantValues constant value to pad with (used for PadMode::Constant)
+     * @param array<array{int,int}|int>|array{int,int}|int $padWidth       Number of elements to pad on each side of each axis.
+     *                                                                     - int: pad same amount on all sides of every axis
+     *                                                                     - array{int,int}: pad [before, after] for all axes
+     *                                                                     - array<int|array{int,int}>: per-axis pad (int or [before, after] per axis)
+     * @param PadMode                                      $mode           padding mode
+     * @param array<bool|float|int>|bool|float|int         $constantValues constant value to pad with (used for PadMode::Constant)
      *
      * @return NDArray padded array
      */
@@ -293,6 +296,8 @@ trait HasShapeOps
 
     /**
      * Normalize pad width to [[before, after], ...] for each axis.
+     *
+     * @param array<array{int,int}|int>|array{int,int}|int $padWidth number of elements to pad on each side of each axis
      *
      * @return array<array{0:int,1:int}>
      */
