@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Exceptions;
+namespace PhpMlKit\NDArray\Exceptions;
 
 /**
  * Exception for mathematical operation errors (division by zero, overflow, etc).

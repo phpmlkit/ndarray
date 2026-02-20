@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace NDArray\FFI;
+namespace PhpMlKit\NDArray\FFI;
 
 use FFI;
 use FFI\CData;
 use Codewithkyrian\PlatformPackageInstaller\Platform;
-use NDArray\Exceptions\NDArrayException;
-use NDArray\Exceptions\ShapeException;
-use NDArray\Exceptions\DTypeException;
-use NDArray\Exceptions\AllocationException;
-use NDArray\Exceptions\PanicException;
-use NDArray\Exceptions\IndexException;
-use NDArray\Exceptions\MathException;
+use PhpMlKit\NDArray\Exceptions\NDArrayException;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
+use PhpMlKit\NDArray\Exceptions\DTypeException;
+use PhpMlKit\NDArray\Exceptions\AllocationException;
+use PhpMlKit\NDArray\Exceptions\PanicException;
+use PhpMlKit\NDArray\Exceptions\IndexException;
+use PhpMlKit\NDArray\Exceptions\MathException;
 
 /**
  * Singleton wrapper for the FFI library.

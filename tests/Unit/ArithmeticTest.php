@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Tests\Unit;
+namespace PhpMlKit\NDArray\Tests\Unit;
 
-use NDArray\DType;
-use NDArray\Exceptions\DTypeException;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\DTypeException;
+use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 /**

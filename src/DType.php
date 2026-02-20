@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace NDArray;
+namespace PhpMlKit\NDArray;
 
 use InvalidArgumentException;
 

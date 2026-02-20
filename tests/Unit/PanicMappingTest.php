@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Tests\Unit;
+namespace PhpMlKit\NDArray\Tests\Unit;
 
-use NDArray\DType;
-use NDArray\Exceptions\DTypeException;
-use NDArray\Exceptions\IndexException;
-use NDArray\Exceptions\MathException;
-use NDArray\Exceptions\NDArrayException;
-use NDArray\Exceptions\ShapeException;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\DTypeException;
+use PhpMlKit\NDArray\Exceptions\IndexException;
+use PhpMlKit\NDArray\Exceptions\MathException;
+use PhpMlKit\NDArray\Exceptions\NDArrayException;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
+use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
  * These tests intentionally trigger real error conditions to verify
  * that Rust panics/errors are properly mapped to PHP exceptions.
  *
- * @covers \NDArray\FFI\Lib::checkStatus
+ * @covers \PhpMlKit\NDArray\FFI\Lib::checkStatus
  */
 final class PanicMappingTest extends TestCase
 {

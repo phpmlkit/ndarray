@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
-use NDArray\DType;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\NDArray;
 
 /**
  * Element-wise comparison operations.

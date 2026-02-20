@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Tests\Unit;
+namespace PhpMlKit\NDArray\Tests\Unit;
 
-use NDArray\DType;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -59,7 +59,7 @@ class LinearAlgebraTest extends TestCase
         $a = NDArray::array([1, 2, 3], DType::Float64);
         $b = NDArray::array([4, 5], DType::Float64);
 
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
         $a->dot($b);
     }
 
@@ -77,7 +77,7 @@ class LinearAlgebraTest extends TestCase
         $a = NDArray::array([1, 2, 3], DType::Float64);
         $b = NDArray::array([[1, 2], [3, 4]], DType::Float64);
 
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
         $a->matmul($b);
     }
 
@@ -102,7 +102,7 @@ class LinearAlgebraTest extends TestCase
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
 
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
         $a->diagonal();
     }
 
@@ -128,7 +128,7 @@ class LinearAlgebraTest extends TestCase
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
 
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
         $a->trace();
     }
 

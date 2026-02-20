@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
 use FFI;
 use FFI\CData;
-use NDArray\DType;
-use NDArray\Exceptions\ShapeException;
-use NDArray\FFI\Bindings;
-use NDArray\FFI\Lib;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
+use PhpMlKit\NDArray\FFI\Bindings;
+use PhpMlKit\NDArray\FFI\Lib;
 
 /**
  * Static factory methods for creating NDArray instances.

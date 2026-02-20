@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Tests\Unit;
+namespace PhpMlKit\NDArray\Tests\Unit;
 
-use NDArray\DType;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 final class CreationTest extends TestCase
@@ -99,7 +99,7 @@ final class CreationTest extends TestCase
 
     public function testEmptyRequiresZeroSizeShapeThrows(): void
     {
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
         NDArray::empty([2, 3], DType::Float64);
     }
 
@@ -270,7 +270,7 @@ final class CreationTest extends TestCase
 
     public function testLinspaceNegativeThrows(): void
     {
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
         NDArray::linspace(0.0, 1.0, 0);
     }
 
@@ -340,7 +340,7 @@ final class CreationTest extends TestCase
 
     public function testLogspaceNegativeThrows(): void
     {
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
         NDArray::logspace(0.0, 1.0, 0);
     }
 
@@ -416,7 +416,7 @@ final class CreationTest extends TestCase
 
     public function testGeomspaceNegativeThrows(): void
     {
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
         NDArray::geomspace(1.0, 100.0, 0);
     }
 

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace NDArray;
+namespace PhpMlKit\NDArray;
 
-use NDArray\Exceptions\IndexException;
+use PhpMlKit\NDArray\Exceptions\IndexException;
 
 /**
  * Value object representing a slice operation (start:stop:step).

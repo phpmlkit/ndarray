@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
 use FFI;
-use NDArray\DType;
-use NDArray\Exceptions\IndexException;
-use NDArray\FFI\Bindings;
-use NDArray\FFI\Lib;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\IndexException;
+use PhpMlKit\NDArray\FFI\Bindings;
+use PhpMlKit\NDArray\FFI\Lib;
+use PhpMlKit\NDArray\NDArray;
 
 /**
  * Element indexing: get(), set(), and view creation.

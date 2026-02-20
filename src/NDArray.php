@@ -2,24 +2,25 @@
 
 declare(strict_types=1);
 
-namespace NDArray;
+namespace PhpMlKit\NDArray;
 
 use ArrayAccess;
 use FFI\CData;
-use NDArray\FFI\Lib;
-use NDArray\Traits\CreatesArrays;
-use NDArray\Traits\HasArrayAccess;
-use NDArray\Traits\HasComparison;
-use NDArray\Traits\HasConversion;
-use NDArray\Traits\HasIndexing;
-use NDArray\Traits\HasLinearAlgebra;
-use NDArray\Traits\HasMath;
-use NDArray\Traits\HasOps;
-use NDArray\Traits\HasReductions;
-use NDArray\Traits\HasShapeOps;
-use NDArray\Traits\HasSlicing;
-use NDArray\Traits\HasStacking;
-use NDArray\Traits\HasStringable;
+use PhpMlKit\NDArray\FFI\Lib;
+use PhpMlKit\NDArray\Exceptions\NDArrayException;
+use PhpMlKit\NDArray\Traits\CreatesArrays;
+use PhpMlKit\NDArray\Traits\HasArrayAccess;
+use PhpMlKit\NDArray\Traits\HasComparison;
+use PhpMlKit\NDArray\Traits\HasConversion;
+use PhpMlKit\NDArray\Traits\HasIndexing;
+use PhpMlKit\NDArray\Traits\HasLinearAlgebra;
+use PhpMlKit\NDArray\Traits\HasMath;
+use PhpMlKit\NDArray\Traits\HasOps;
+use PhpMlKit\NDArray\Traits\HasReductions;
+use PhpMlKit\NDArray\Traits\HasShapeOps;
+use PhpMlKit\NDArray\Traits\HasSlicing;
+use PhpMlKit\NDArray\Traits\HasStacking;
+use PhpMlKit\NDArray\Traits\HasStringable;
 
 /**
  * N-dimensional array class with PHP-managed view metadata and Rust-managed data.
@@ -236,7 +237,7 @@ class NDArray implements ArrayAccess
         $ndim = (int) $outNdimBuf->cdata;
         $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
         if ($dtype === null) {
-            throw new \NDArray\Exceptions\NDArrayException('Invalid dtype returned from Rust for where()');
+            throw new NDArrayException('Invalid dtype returned from Rust for where()');
         }
 
         return new self($outHandle, $shape, $dtype);

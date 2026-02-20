@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
 use FFI;
 use FFI\CData;
-use NDArray\DType;
-use NDArray\NDArray;
-use NDArray\FFI\Lib;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\NDArray;
+use PhpMlKit\NDArray\FFI\Lib;
 
 /**
  * Shared operation helpers for FFI-backed unary, binary, and scalar reduction ops.

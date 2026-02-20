@@ -1,5 +1,6 @@
 {
-  "name": "codewithkyrian/ndarray-php",
+  "name": "phpmlkit/ndarray",
+  "version": "0.1.0",
   "description": "High-performance N-dimensional arrays for PHP, powered by Rust",
   "type": "platform-package",
   "license": "MIT",
@@ -14,12 +15,12 @@
   },
   "autoload": {
     "psr-4": {
-      "NDArray\\": "src/"
+      "PhpMlKit\\NDArray\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "NDArray\\Tests\\": "tests/"
+      "PhpMlKit\\NDArray\\Tests\\": "tests/"
     }
   },
   "config": {

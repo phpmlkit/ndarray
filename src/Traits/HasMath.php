@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
-use NDArray\NDArray;
+use PhpMlKit\NDArray\NDArray;
 
 /**
  * Mathematical operations trait for NDArray.

@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Tests\Unit;
+namespace PhpMlKit\NDArray\Tests\Unit;
 
-use NDArray\DType;
-use NDArray\NDArray;
-use NDArray\SortKind;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\NDArrayException;
+use PhpMlKit\NDArray\NDArray;
+use PhpMlKit\NDArray\SortKind;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -132,7 +133,7 @@ final class SortTest extends TestCase
     public function testSortAxisOutOfBoundsThrows(): void
     {
         $a = NDArray::array([[1, 2, 3]], DType::Int32);
-        $this->expectException(\NDArray\Exceptions\NDArrayException::class);
+        $this->expectException(NDArrayException::class);
         $a->sort(axis: 2);
     }
 
@@ -191,7 +192,7 @@ final class SortTest extends TestCase
     public function testTopkOutOfBoundsThrows(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Int32);
-        $this->expectException(\NDArray\Exceptions\NDArrayException::class);
+        $this->expectException(NDArrayException::class);
         $a->topk(4);
     }
 }

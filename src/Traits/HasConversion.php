@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
 use FFI;
 use FFI\CData;
-use NDArray\DType;
-use NDArray\Exceptions\ShapeException;
-use NDArray\FFI\Lib;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
+use PhpMlKit\NDArray\FFI\Lib;
 
 /**
  * Conversion methods for transforming NDArray data into PHP types.

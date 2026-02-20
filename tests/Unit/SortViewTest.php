@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Tests\Unit;
+namespace PhpMlKit\NDArray\Tests\Unit;
 
-use NDArray\DType;
-use NDArray\NDArray;
-use NDArray\SortKind;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\NDArray;
+use PhpMlKit\NDArray\SortKind;
 use PHPUnit\Framework\TestCase;
 
 /**

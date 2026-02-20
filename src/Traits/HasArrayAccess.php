@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
-use NDArray\Exceptions\IndexException;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\Exceptions\IndexException;
+use PhpMlKit\NDArray\NDArray;
 
 /**
  * ArrayAccess interface implementation for bracket-style element access.

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
-use NDArray\DType;
-use NDArray\Exceptions\IndexException;
-use NDArray\Exceptions\ShapeException;
-use NDArray\FFI\Lib;
-use NDArray\NDArray;
-use NDArray\Slice;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\IndexException;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
+use PhpMlKit\NDArray\FFI\Lib;
+use PhpMlKit\NDArray\NDArray;
+use PhpMlKit\NDArray\Slice;
 
 /**
  * Slicing operations: slice() and assign().

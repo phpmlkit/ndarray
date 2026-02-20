@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Tests\Benchmark;
+namespace PhpMlKit\NDArray\Tests\Benchmark;
 
-use NDArray\DType;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\NDArray;
 
 /**
  * Benchmark tests for view extraction performance

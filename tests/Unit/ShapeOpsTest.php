@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Tests\Unit;
+namespace PhpMlKit\NDArray\Tests\Unit;
 
-use NDArray\DType;
-use NDArray\NDArray;
-use NDArray\PadMode;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\NDArray;
+use PhpMlKit\NDArray\PadMode;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -421,7 +422,7 @@ final class ShapeOpsTest extends TestCase
     {
         $a = NDArray::array([[1, 2], [3, 4]], DType::Float64);
         
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         $a->permuteAxes([0, 1, 2]); // 3 axes for 2D array
     }
 
@@ -429,7 +430,7 @@ final class ShapeOpsTest extends TestCase
     {
         $a = NDArray::array([[1, 2], [3, 4]], DType::Float64);
         
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         $a->permuteAxes([0, 0]); // Duplicate axis
     }
 
@@ -437,7 +438,7 @@ final class ShapeOpsTest extends TestCase
     {
         $a = NDArray::array([[1, 2], [3, 4]], DType::Float64);
 
-        $this->expectException(\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         $a->permuteAxes([0, 5]); // Axis 5 is out of bounds
     }
 

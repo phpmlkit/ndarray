@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Tests\Unit;
+namespace PhpMlKit\NDArray\Tests\Unit;
 
-use NDArray\DType;
-use NDArray\Exceptions\IndexException;
-use NDArray\Exceptions\ShapeException;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\IndexException;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
+use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 /**

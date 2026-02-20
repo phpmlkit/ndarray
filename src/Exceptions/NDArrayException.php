@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Exceptions;
+namespace PhpMlKit\NDArray\Exceptions;
 
 use Exception;
 

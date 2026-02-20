@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
 use FFI;
-use NDArray\DType;
-use NDArray\PadMode;
-use NDArray\Exceptions\ShapeException;
-use NDArray\FFI\Lib;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\PadMode;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
+use PhpMlKit\NDArray\FFI\Lib;
+use PhpMlKit\NDArray\NDArray;
 
 /**
  * Shape manipulation operations.

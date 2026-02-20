@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
-use NDArray\DType;
-use NDArray\NDArray;
-use NDArray\FFI\Lib;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\NDArray;
+use PhpMlKit\NDArray\FFI\Lib;
 
 /**
  * Linear algebra operations trait.

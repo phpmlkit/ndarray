@@ -141,7 +141,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "     git push origin main"
     echo ""
     echo "  2. Create a release on GitHub:"
-    echo "     - Go to: https://github.com/phpmlkit/ndarray-php/releases/new"
+    echo "     - Go to: https://github.com/phpmlkit/ndarray/releases/new"
     echo "     - Tag version: v$NEW_VERSION"
     echo "     - Release title: v$NEW_VERSION"
     echo "     - Publish release"

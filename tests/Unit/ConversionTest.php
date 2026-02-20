@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Tests\Unit;
+namespace PhpMlKit\NDArray\Tests\Unit;
 
-use NDArray\DType;
-use NDArray\Exceptions\ShapeException;
-use NDArray\NDArray;
+use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
+use PhpMlKit\NDArray\FFI\Lib;
+use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -59,7 +60,7 @@ final class ConversionTest extends TestCase
     public function testCopyToBufferTypedInt32(): void
     {
         $a = NDArray::array([10, 20, 30, 40], DType::Int32);
-        $ffi = \NDArray\FFI\Lib::get();
+        $ffi = Lib::get();
         $dst = $ffi->new('int32_t[4]');
 
         $copied = $a->copyToBuffer($dst);
@@ -75,7 +76,7 @@ final class ConversionTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Int32);
         $view = $a->slice([':', '1:3']); // [[2,3],[5,6]]
-        $ffi = \NDArray\FFI\Lib::get();
+        $ffi = Lib::get();
         $dst = $ffi->new('int32_t[4]');
 
         $copied = $view->copyToBuffer($dst);
@@ -90,7 +91,7 @@ final class ConversionTest extends TestCase
     public function testCopyToBufferTooSmallThrows(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Int32);
-        $ffi = \NDArray\FFI\Lib::get();
+        $ffi = Lib::get();
         $dst = $ffi->new('int32_t[2]');
 
         $this->expectException(ShapeException::class);

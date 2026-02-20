@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Exceptions;
+namespace PhpMlKit\NDArray\Exceptions;
 
 /**
  * Exception thrown when a Rust panic occurs.

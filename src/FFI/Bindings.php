@@ -1,6 +1,6 @@
 <?php
 
-namespace NDArray\FFI;
+namespace PhpMlKit\NDArray\FFI;
 
 use FFI\CData;
 

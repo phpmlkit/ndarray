@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Exceptions;
+namespace PhpMlKit\NDArray\Exceptions;
 
 /**
  * Exception for data type errors (invalid dtype, type mismatch, etc).

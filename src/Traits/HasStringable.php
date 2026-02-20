@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace NDArray\Traits;
+namespace PhpMlKit\NDArray\Traits;
 
 /**
  * String representation and debugging output.
