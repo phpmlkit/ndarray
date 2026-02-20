@@ -9,9 +9,10 @@ use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::write_output_metadata;
 use crate::ffi::NdArrayHandle;
+use crate::ffi::ViewMetadata;
 use ndarray::Axis;
-use parking_lot::RwLock;
 use std::slice;
+use parking_lot::RwLock;
 use std::sync::Arc;
 
 /// Remove axes of length 1 from the array.
@@ -21,10 +22,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_squeeze(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     axes: *const usize,
     num_axes: usize,
     out_handle: *mut *mut NdArrayHandle,
@@ -34,8 +32,8 @@ pub unsafe extern "C" fn ndarray_squeeze(
     max_ndim: usize,
 ) -> i32 {
     if handle.is_null()
+        || meta.is_null()
         || out_handle.is_null()
-        || shape.is_null()
         || out_dtype.is_null()
         || out_shape.is_null()
         || out_ndim.is_null()
@@ -45,8 +43,9 @@ pub unsafe extern "C" fn ndarray_squeeze(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
+        let meta_ref = &*meta;
+        let ndim = meta_ref.ndim;
+        let shape_slice = meta_ref.shape_slice();
 
         // Determine which axes to squeeze
         let mut axes_to_squeeze: Vec<usize> = if num_axes == 0 {
@@ -93,8 +92,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
         if axes_to_squeeze.is_empty() {
             let result_wrapper = match wrapper.dtype {
                 DType::Float64 => {
-                    let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
-                    else {
+                    let Some(view) = extract_view_f64(wrapper, meta_ref) else {
                         error::set_last_error("Failed to extract f64 view".to_string());
                         return ERR_GENERIC;
                     };
@@ -104,8 +102,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                     }
                 }
                 DType::Float32 => {
-                    let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
-                    else {
+                    let Some(view) = extract_view_f32(wrapper, meta_ref) else {
                         error::set_last_error("Failed to extract f32 view".to_string());
                         return ERR_GENERIC;
                     };
@@ -115,8 +112,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                     }
                 }
                 DType::Int64 => {
-                    let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
-                    else {
+                    let Some(view) = extract_view_i64(wrapper, meta_ref) else {
                         error::set_last_error("Failed to extract i64 view".to_string());
                         return ERR_GENERIC;
                     };
@@ -126,8 +122,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                     }
                 }
                 DType::Int32 => {
-                    let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
-                    else {
+                    let Some(view) = extract_view_i32(wrapper, meta_ref) else {
                         error::set_last_error("Failed to extract i32 view".to_string());
                         return ERR_GENERIC;
                     };
@@ -137,8 +132,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                     }
                 }
                 DType::Int16 => {
-                    let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
-                    else {
+                    let Some(view) = extract_view_i16(wrapper, meta_ref) else {
                         error::set_last_error("Failed to extract i16 view".to_string());
                         return ERR_GENERIC;
                     };
@@ -148,8 +142,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                     }
                 }
                 DType::Int8 => {
-                    let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
-                    else {
+                    let Some(view) = extract_view_i8(wrapper, meta_ref) else {
                         error::set_last_error("Failed to extract i8 view".to_string());
                         return ERR_GENERIC;
                     };
@@ -159,8 +152,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                     }
                 }
                 DType::Uint64 => {
-                    let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
-                    else {
+                    let Some(view) = extract_view_u64(wrapper, meta_ref) else {
                         error::set_last_error("Failed to extract u64 view".to_string());
                         return ERR_GENERIC;
                     };
@@ -170,8 +162,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                     }
                 }
                 DType::Uint32 => {
-                    let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
-                    else {
+                    let Some(view) = extract_view_u32(wrapper, meta_ref) else {
                         error::set_last_error("Failed to extract u32 view".to_string());
                         return ERR_GENERIC;
                     };
@@ -181,8 +172,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                     }
                 }
                 DType::Uint16 => {
-                    let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
-                    else {
+                    let Some(view) = extract_view_u16(wrapper, meta_ref) else {
                         error::set_last_error("Failed to extract u16 view".to_string());
                         return ERR_GENERIC;
                     };
@@ -192,8 +182,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                     }
                 }
                 DType::Uint8 => {
-                    let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
-                    else {
+                    let Some(view) = extract_view_u8(wrapper, meta_ref) else {
                         error::set_last_error("Failed to extract u8 view".to_string());
                         return ERR_GENERIC;
                     };
@@ -220,8 +209,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
         // Match on dtype, extract view, squeeze axes, and create result wrapper
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -236,8 +224,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -251,8 +238,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -266,8 +252,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -281,8 +266,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -296,8 +280,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -311,8 +294,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -326,8 +308,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -341,8 +322,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -356,8 +336,7 @@ pub unsafe extern "C" fn ndarray_squeeze(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };

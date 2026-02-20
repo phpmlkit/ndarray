@@ -10,32 +10,27 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::{validate_axis, write_scalar};
-use crate::ffi::{write_output_metadata, NdArrayHandle};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use ndarray::Axis;
 use parking_lot::RwLock;
-use std::slice;
 use std::sync::Arc;
 
 /// Compute the variance of all elements in the array.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_var(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     ddof: f64,
     out_value: *mut c_void,
     out_dtype: *mut u8,
 ) -> i32 {
-    if handle.is_null() || out_value.is_null() || out_dtype.is_null() || shape.is_null() {
+    if handle.is_null() || meta.is_null() || out_value.is_null() || out_dtype.is_null() {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
+        let shape_slice = (*meta).shape_slice();
 
         let n = shape_slice.iter().map(|&x| x as f64).product::<f64>();
 
@@ -50,80 +45,70 @@ pub unsafe extern "C" fn ndarray_var(
         // Match on dtype, extract view, compute variance
         let var_result = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.var(ddof)
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.var(ddof as f32) as f64
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var(ddof)
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var(ddof)
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i16(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var(ddof)
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i8(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var(ddof)
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var(ddof)
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var(ddof)
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u16(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var(ddof)
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u8(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -144,10 +129,7 @@ pub unsafe extern "C" fn ndarray_var(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_var_axis(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     axis: i32,
     keepdims: bool,
     ddof: f64,
@@ -159,7 +141,6 @@ pub unsafe extern "C" fn ndarray_var_axis(
 ) -> i32 {
     if handle.is_null()
         || out_handle.is_null()
-        || shape.is_null()
         || out_dtype.is_null()
         || out_ndim.is_null()
         || out_shape.is_null()
@@ -169,8 +150,7 @@ pub unsafe extern "C" fn ndarray_var_axis(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
+        let shape_slice = (*meta).shape_slice();
 
         // Validate axis
         let axis_usize = match validate_axis(shape_slice, axis) {
@@ -194,80 +174,70 @@ pub unsafe extern "C" fn ndarray_var_axis(
         // Match on dtype, extract view, compute variance along axis, and create result wrapper
         let result = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.var_axis(Axis(axis_usize), ddof)
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var_axis(Axis(axis_usize), ddof)
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var_axis(Axis(axis_usize), ddof)
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var_axis(Axis(axis_usize), ddof)
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i16(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var_axis(Axis(axis_usize), ddof)
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i8(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var_axis(Axis(axis_usize), ddof)
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var_axis(Axis(axis_usize), ddof)
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var_axis(Axis(axis_usize), ddof)
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u16(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
                 view.mapv(|x| x as f64).var_axis(Axis(axis_usize), ddof)
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u8(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };

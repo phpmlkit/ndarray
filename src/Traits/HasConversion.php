@@ -40,16 +40,12 @@ trait HasConversion
         }
 
         $ffi = Lib::get();
-        $cShape = Lib::createShapeArray($this->shape);
-        $cStrides = Lib::createShapeArray($this->strides);
+        $meta = $this->viewMetadata()->toCData();
         $outLen = $ffi->new('size_t');
 
         $status = $ffi->ndarray_get_data(
             $this->handle,
-            $this->offset,
-            $cShape,
-            $cStrides,
-            $this->ndim,
+            Lib::addr($meta),
             $dst,
             $maxElements,
             Lib::addr($outLen),
@@ -85,25 +81,19 @@ trait HasConversion
      */
     public function toScalar(): bool|float|int
     {
-        if (0 !== $this->ndim) {
+        if (0 !== $this->ndim()) {
             throw new ShapeException(
-                'toScalar requires a 0-dimensional array, got array with '.$this->ndim.' dimensions'
+                'toScalar requires a 0-dimensional array, got array with '.$this->ndim().' dimensions'
             );
         }
 
         $ffi = Lib::get();
-
-        $cShape = Lib::createShapeArray($this->shape);
-        $cStrides = Lib::createShapeArray($this->strides);
-
+        $meta = $this->viewMetadata()->toCData();
         $out = $ffi->new($this->dtype->ffiType());
 
         $status = $ffi->ndarray_scalar(
             $this->handle,
-            $this->offset,
-            $cShape,
-            $cStrides,
-            $this->ndim,
+            Lib::addr($meta),
             \FFI::addr($out),
         );
 
@@ -127,7 +117,7 @@ trait HasConversion
      */
     public function toFlatArray(): array|bool|float|int
     {
-        if (0 === $this->ndim) {
+        if (0 === $this->ndim()) {
             return $this->toScalar();
         }
 
@@ -143,16 +133,16 @@ trait HasConversion
      */
     public function toArray(): array|bool|float|int
     {
-        if (0 === $this->ndim) {
+        if (0 === $this->ndim()) {
             return $this->toScalar();
         }
 
         $flat = $this->fetchFlatData();
-        if (1 === $this->ndim) {
+        if (1 === $this->ndim()) {
             return $flat;
         }
 
-        return $this->nestFromFlatIterative($flat, $this->shape);
+        return $this->nestFromFlatIterative($flat, $this->shape());
     }
 
     /**
@@ -164,22 +154,18 @@ trait HasConversion
     {
         $ffi = Lib::get();
 
-        $cShape = Lib::createCArray('size_t', $this->shape);
-        $cStrides = Lib::createCArray('size_t', $this->strides);
+        $meta = $this->viewMetadata()->toCData();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_copy(
             $this->handle,
-            $this->offset,
-            $cShape,
-            $cStrides,
-            $this->ndim,
+            Lib::addr($meta),
             Lib::addr($outHandle)
         );
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $this->shape, $this->dtype);
+        return new self($outHandle, $this->shape(), $this->dtype);
     }
 
     /**
@@ -199,24 +185,19 @@ trait HasConversion
         }
 
         $ffi = Lib::get();
-
-        $cShape = Lib::createShapeArray($this->shape);
-        $cStrides = Lib::createShapeArray($this->strides);
+        $meta = $this->viewMetadata()->toCData();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_astype(
             $this->handle,
-            $this->offset,
-            $cShape,
-            $cStrides,
-            $this->ndim,
+            Lib::addr($meta),
             $dtype->value,
             Lib::addr($outHandle)
         );
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $this->shape, $dtype);
+        return new self($outHandle, $this->shape(), $dtype);
     }
 
     /**
@@ -229,9 +210,7 @@ trait HasConversion
         $ffi = Lib::get();
         $size = $this->size;
         $allocLen = max(1, $size);
-
-        $cShape = Lib::createShapeArray($this->shape);
-        $cStrides = Lib::createShapeArray($this->strides);
+        $meta = $this->viewMetadata()->toCData();
         $outLen = $ffi->new('size_t');
 
         $ctype = match ($this->dtype) {
@@ -242,10 +221,7 @@ trait HasConversion
 
         $status = $ffi->ndarray_get_data(
             $this->handle,
-            $this->offset,
-            $cShape,
-            $cStrides,
-            $this->ndim,
+            Lib::addr($meta),
             $buffer,
             $size,
             Lib::addr($outLen),

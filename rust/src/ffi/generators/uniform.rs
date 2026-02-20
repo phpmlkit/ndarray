@@ -45,7 +45,10 @@ pub unsafe extern "C" fn ndarray_uniform(
         return ERR_GENERIC;
     }
     if high <= low {
-        crate::error::set_last_error(format!("uniform requires high > low, got [{}, {})", low, high));
+        crate::error::set_last_error(format!(
+            "uniform requires high > low, got [{}, {})",
+            low, high
+        ));
         return ERR_GENERIC;
     }
 

@@ -8,20 +8,16 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::{write_output_metadata, NdArrayHandle};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use ndarray::Axis;
 use parking_lot::RwLock;
-use std::slice;
 use std::sync::Arc;
 
 /// Cumulative product over flattened array. Returns 1D array.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_cumprod(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
     out_ndim: *mut usize,
@@ -30,7 +26,6 @@ pub unsafe extern "C" fn ndarray_cumprod(
 ) -> i32 {
     if handle.is_null()
         || out_handle.is_null()
-        || shape.is_null()
         || out_dtype.is_null()
         || out_ndim.is_null()
         || out_shape.is_null()
@@ -40,13 +35,10 @@ pub unsafe extern "C" fn ndarray_cumprod(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -58,8 +50,7 @@ pub unsafe extern "C" fn ndarray_cumprod(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -70,8 +61,7 @@ pub unsafe extern "C" fn ndarray_cumprod(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -82,8 +72,7 @@ pub unsafe extern "C" fn ndarray_cumprod(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -94,8 +83,7 @@ pub unsafe extern "C" fn ndarray_cumprod(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i16(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -106,8 +94,7 @@ pub unsafe extern "C" fn ndarray_cumprod(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i8(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -118,8 +105,7 @@ pub unsafe extern "C" fn ndarray_cumprod(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -130,8 +116,7 @@ pub unsafe extern "C" fn ndarray_cumprod(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -142,8 +127,7 @@ pub unsafe extern "C" fn ndarray_cumprod(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u16(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -154,8 +138,7 @@ pub unsafe extern "C" fn ndarray_cumprod(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u8(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -186,10 +169,7 @@ pub unsafe extern "C" fn ndarray_cumprod(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_cumprod_axis(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     axis: i32,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
@@ -199,7 +179,6 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
 ) -> i32 {
     if handle.is_null()
         || out_handle.is_null()
-        || shape.is_null()
         || out_dtype.is_null()
         || out_ndim.is_null()
         || out_shape.is_null()
@@ -209,8 +188,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
+        let shape_slice = (*meta).shape_slice();
 
         let axis_usize = match validate_axis(shape_slice, axis) {
             Ok(a) => a,
@@ -222,8 +200,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -234,8 +211,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -246,8 +222,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -258,8 +233,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -270,8 +244,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i16(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -282,8 +255,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i8(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -294,8 +266,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u64(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -306,8 +277,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u32(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -318,8 +288,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u16(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -330,8 +299,7 @@ pub unsafe extern "C" fn ndarray_cumprod_axis(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u8(wrapper, &(*meta)) else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };

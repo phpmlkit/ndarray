@@ -289,17 +289,12 @@ trait HasReductions
         $outValuesHandle = $ffi->new('struct NdArrayHandle*');
         $outIndicesHandle = $ffi->new('struct NdArrayHandle*');
 
-        $shape = Lib::createShapeArray($this->shape);
-        $strides = Lib::createShapeArray($this->strides);
-
+        $meta = $this->viewMetadata()->toCData();
         $outShapeBuf = Lib::createCArray('size_t', array_fill(0, Lib::MAX_NDIM, 0));
 
         $status = $ffi->ndarray_topk_axis(
             $this->handle,
-            $this->offset,
-            $shape,
-            $strides,
-            \count($this->shape),
+            Lib::addr($meta),
             $axis,
             $k,
             $largest,
@@ -313,7 +308,7 @@ trait HasReductions
 
         Lib::checkStatus($status);
 
-        $ndim = \count($this->shape);
+        $ndim = $this->ndim();
         $outShape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
 
         return [
@@ -333,17 +328,12 @@ trait HasReductions
         $outValuesHandle = $ffi->new('struct NdArrayHandle*');
         $outIndicesHandle = $ffi->new('struct NdArrayHandle*');
 
-        $shape = Lib::createShapeArray($this->shape);
-        $strides = Lib::createShapeArray($this->strides);
-
+        $meta = $this->viewMetadata()->toCData();
         $outShapeBuf = Lib::createCArray('size_t', [0]);
 
         $status = $ffi->ndarray_topk_flat(
             $this->handle,
-            $this->offset,
-            $shape,
-            $strides,
-            \count($this->shape),
+            Lib::addr($meta),
             $k,
             $largest,
             $sorted,

@@ -15,16 +15,14 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{set_last_error, ERR_GENERIC, SUCCESS};
+use crate::ffi::ViewMetadata;
 use crate::ffi::{write_output_metadata, NdArrayHandle};
 
 /// Tile an array by repeating it.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_tile(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     reps: *const usize,
     reps_len: usize,
     out_handle: *mut *mut NdArrayHandle,
@@ -34,8 +32,7 @@ pub unsafe extern "C" fn ndarray_tile(
     max_ndim: usize,
 ) -> i32 {
     if handle.is_null()
-        || shape.is_null()
-        || strides.is_null()
+        || meta.is_null()
         || reps.is_null()
         || out_handle.is_null()
         || out_dtype.is_null()
@@ -47,13 +44,12 @@ pub unsafe extern "C" fn ndarray_tile(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = std::slice::from_raw_parts(shape, ndim);
-        let strides_slice = std::slice::from_raw_parts(strides, ndim);
+        let meta_ref = &*meta;
         let reps_slice = std::slice::from_raw_parts(reps, reps_len);
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_f64(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
@@ -66,7 +62,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_f32(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
@@ -79,7 +75,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i64(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
@@ -92,7 +88,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i32(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
@@ -105,7 +101,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i16(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
@@ -118,7 +114,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i8(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
@@ -131,7 +127,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u64(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
@@ -144,7 +140,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u32(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
@@ -157,7 +153,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u16(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
@@ -170,7 +166,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u8(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
@@ -183,7 +179,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_bool(wrapper, meta_ref)
                 else {
                     set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;

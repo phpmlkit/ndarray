@@ -63,12 +63,10 @@ trait HasShapeOps
         $cShape = Lib::createShapeArray($newShape);
         $orderCode = 'F' === $order ? 1 : 0; // 0=C (RowMajor), 1=F (ColumnMajor)
 
+        $meta = $this->viewMetadata()->toCData();
         $status = $ffi->ndarray_reshape(
             $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createCArray('size_t', $this->strides),
-            $this->ndim,
+            Lib::addr($meta),
             $cShape,
             \count($newShape),
             $orderCode,
@@ -112,17 +110,17 @@ trait HasShapeOps
      */
     public function permuteAxes(array $axes): NDArray
     {
-        if (\count($axes) !== $this->ndim) {
-            throw new ShapeException("permute_axes requires {$this->ndim} axes, got ".\count($axes));
+        if (\count($axes) !== $this->ndim()) {
+            throw new ShapeException("permute_axes requires {$this->ndim()} axes, got ".\count($axes));
         }
 
         $normalizedAxes = [];
         foreach ($axes as $axis) {
             if ($axis < 0) {
-                $axis = $this->ndim + $axis;
+                $axis = $this->ndim() + $axis;
             }
-            if ($axis < 0 || $axis >= $this->ndim) {
-                throw new ShapeException("Axis {$axis} is out of bounds for array with {$this->ndim} dimensions");
+            if ($axis < 0 || $axis >= $this->ndim()) {
+                throw new ShapeException("Axis {$axis} is out of bounds for array with {$this->ndim()} dimensions");
             }
             $normalizedAxes[] = $axis;
         }
@@ -157,11 +155,11 @@ trait HasShapeOps
     public function invertAxis(int $axis): NDArray
     {
         if ($axis < 0) {
-            $axis = $this->ndim + $axis;
+            $axis = $this->ndim() + $axis;
         }
 
-        if ($axis < 0 || $axis >= $this->ndim) {
-            throw new ShapeException("Axis {$axis} is out of bounds for array with {$this->ndim} dimensions");
+        if ($axis < 0 || $axis >= $this->ndim()) {
+            throw new ShapeException("Axis {$axis} is out of bounds for array with {$this->ndim()} dimensions");
         }
 
         return $this->unaryOp('ndarray_invert_axis', $axis);
@@ -177,11 +175,11 @@ trait HasShapeOps
     public function insertAxis(int $axis): NDArray
     {
         if ($axis < 0) {
-            $axis = $this->ndim + $axis + 1;
+            $axis = $this->ndim() + $axis + 1;
         }
 
-        if ($axis < 0 || $axis > $this->ndim) {
-            throw new ShapeException("Axis {$axis} is out of bounds for array with {$this->ndim} dimensions");
+        if ($axis < 0 || $axis > $this->ndim()) {
+            throw new ShapeException("Axis {$axis} is out of bounds for array with {$this->ndim()} dimensions");
         }
 
         return $this->unaryOp('ndarray_insert_axis', $axis);
@@ -308,10 +306,10 @@ trait HasShapeOps
                 throw new ShapeException('padWidth must be non-negative');
             }
 
-            return array_fill(0, $this->ndim, [$padWidth, $padWidth]);
+            return array_fill(0, $this->ndim(), [$padWidth, $padWidth]);
         }
 
-        if (0 === $this->ndim) {
+        if (0 === $this->ndim()) {
             throw new ShapeException('pad() requires at least 1 dimension');
         }
 
@@ -322,10 +320,10 @@ trait HasShapeOps
                 throw new ShapeException('padWidth values must be non-negative');
             }
 
-            return array_fill(0, $this->ndim, [$before, $after]);
+            return array_fill(0, $this->ndim(), [$before, $after]);
         }
 
-        if (\count($padWidth) === $this->ndim) {
+        if (\count($padWidth) === $this->ndim()) {
             $normalized = [];
             foreach ($padWidth as $axis => $entry) {
                 if (\is_int($entry)) {
@@ -353,7 +351,7 @@ trait HasShapeOps
         }
 
         throw new ShapeException(
-            "padWidth must be an int, [before, after], or per-axis list of length {$this->ndim}"
+            "padWidth must be an int, [before, after], or per-axis list of length {$this->ndim()}"
         );
     }
 
@@ -400,9 +398,9 @@ trait HasShapeOps
             }
         }
 
-        if (1 !== \count($flat) && 2 !== \count($flat) && \count($flat) !== $this->ndim * 2) {
+        if (1 !== \count($flat) && 2 !== \count($flat) && \count($flat) !== $this->ndim() * 2) {
             throw new ShapeException(
-                'constantValues must be scalar, [before, after], or per-axis pairs of length '.($this->ndim * 2)
+                'constantValues must be scalar, [before, after], or per-axis pairs of length '.($this->ndim() * 2)
             );
         }
 

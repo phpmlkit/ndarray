@@ -8,9 +8,9 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::NdArrayHandle;
+use crate::ffi::ViewMetadata;
 use ndarray::IxDyn;
 use parking_lot::RwLock;
-use std::slice;
 use std::sync::Arc;
 
 /// Reshape array to new shape.
@@ -20,24 +20,21 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_reshape(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     new_shape: *const usize,
     new_ndim: usize,
     order: i32,
     out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
-    if handle.is_null() || new_shape.is_null() || out_handle.is_null() || shape.is_null() {
+    if handle.is_null() || meta.is_null() || new_shape.is_null() || out_handle.is_null() {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
-        let new_shape_slice = slice::from_raw_parts(new_shape, new_ndim);
+        let meta_ref = &*meta;
+        let shape_slice = meta_ref.shape_slice();
+        let new_shape_slice = std::slice::from_raw_parts(new_shape, new_ndim);
 
         // Validate total elements match
         let new_size: usize = new_shape_slice.iter().product();
@@ -67,8 +64,7 @@ pub unsafe extern "C" fn ndarray_reshape(
         // Match on dtype, extract view, reshape, and create result wrapper
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -85,8 +81,7 @@ pub unsafe extern "C" fn ndarray_reshape(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_f32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -103,8 +98,7 @@ pub unsafe extern "C" fn ndarray_reshape(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -121,8 +115,7 @@ pub unsafe extern "C" fn ndarray_reshape(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -139,8 +132,7 @@ pub unsafe extern "C" fn ndarray_reshape(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -157,8 +149,7 @@ pub unsafe extern "C" fn ndarray_reshape(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_i8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -175,8 +166,7 @@ pub unsafe extern "C" fn ndarray_reshape(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -193,8 +183,7 @@ pub unsafe extern "C" fn ndarray_reshape(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -211,8 +200,7 @@ pub unsafe extern "C" fn ndarray_reshape(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -229,8 +217,7 @@ pub unsafe extern "C" fn ndarray_reshape(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
-                else {
+                let Some(view) = extract_view_u8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };

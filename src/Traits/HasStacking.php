@@ -30,7 +30,7 @@ trait HasStacking
         }
 
         $numArrays = \count($arrays);
-        $ndim = $arrays[0]->ndim;
+        $ndim = $arrays[0]->ndim();
 
         $axisResolved = $axis < 0 ? $ndim + $axis : $axis;
         if ($axisResolved < 0 || $axisResolved >= $ndim) {
@@ -38,28 +38,20 @@ trait HasStacking
         }
 
         foreach ($arrays as $i => $arr) {
-            if ($arr->ndim !== $ndim) {
+            if ($arr->ndim() !== $ndim) {
                 throw new ShapeException(
-                    "concatenate requires all arrays to have the same number of dimensions (array {$i} has {$arr->ndim}, expected {$ndim})"
+                    "concatenate requires all arrays to have the same number of dimensions (array {$i} has {$arr->ndim()}, expected {$ndim})"
                 );
             }
         }
 
         $ffi = Lib::get();
-
+        $metaWrappers = array_map(static fn (NDArray $a) => $a->viewMetadata()->toCData(), $arrays);
         $cHandles = $ffi->new("struct NdArrayHandle*[{$numArrays}]");
-        $cOffsets = $ffi->new("size_t[{$numArrays}]");
-        $cShapes = $ffi->new('size_t['.($numArrays * $ndim).']');
-        $cStrides = $ffi->new('size_t['.($numArrays * $ndim).']');
-
+        $cMetas = $ffi->new("struct ViewMetadata*[{$numArrays}]");
         for ($i = 0; $i < $numArrays; ++$i) {
-            $arr = $arrays[$i];
-            $cHandles[$i] = $arr->handle;
-            $cOffsets[$i] = $arr->offset;
-            for ($d = 0; $d < $ndim; ++$d) {
-                $cShapes[$i * $ndim + $d] = $arr->shape[$d];
-                $cStrides[$i * $ndim + $d] = $arr->strides[$d];
-            }
+            $cHandles[$i] = $arrays[$i]->handle;
+            $cMetas[$i] = Lib::addr($metaWrappers[$i]);
         }
 
         $outHandle = $ffi->new('struct NdArrayHandle*');
@@ -68,11 +60,8 @@ trait HasStacking
 
         $status = $ffi->ndarray_concatenate(
             $cHandles,
-            $cOffsets,
-            $cShapes,
-            $cStrides,
+            $cMetas,
             $numArrays,
-            $ndim,
             $axisResolved,
             Lib::addr($outHandle),
             Lib::addr($outNdimBuf),
@@ -103,7 +92,7 @@ trait HasStacking
         }
 
         $numArrays = \count($arrays);
-        $ndim = $arrays[0]->ndim;
+        $ndim = $arrays[0]->ndim();
 
         $axisResolved = $axis < 0 ? $ndim + $axis + 1 : $axis;
         if ($axisResolved < 0 || $axisResolved > $ndim) {
@@ -111,28 +100,20 @@ trait HasStacking
         }
 
         foreach ($arrays as $i => $arr) {
-            if ($arr->ndim !== $ndim) {
+            if ($arr->ndim() !== $ndim) {
                 throw new ShapeException(
-                    "stack requires all arrays to have the same number of dimensions (array {$i} has {$arr->ndim}, expected {$ndim})"
+                    "stack requires all arrays to have the same number of dimensions (array {$i} has {$arr->ndim()}, expected {$ndim})"
                 );
             }
         }
 
         $ffi = Lib::get();
-
+        $metaWrappers = array_map(static fn (NDArray $a) => $a->viewMetadata()->toCData(), $arrays);
         $cHandles = $ffi->new("struct NdArrayHandle*[{$numArrays}]");
-        $cOffsets = $ffi->new("size_t[{$numArrays}]");
-        $cShapes = $ffi->new('size_t['.($numArrays * $ndim).']');
-        $cStrides = $ffi->new('size_t['.($numArrays * $ndim).']');
-
+        $cMetas = $ffi->new("struct ViewMetadata*[{$numArrays}]");
         for ($i = 0; $i < $numArrays; ++$i) {
-            $arr = $arrays[$i];
-            $cHandles[$i] = $arr->handle;
-            $cOffsets[$i] = $arr->offset;
-            for ($d = 0; $d < $ndim; ++$d) {
-                $cShapes[$i * $ndim + $d] = $arr->shape[$d];
-                $cStrides[$i * $ndim + $d] = $arr->strides[$d];
-            }
+            $cHandles[$i] = $arrays[$i]->handle;
+            $cMetas[$i] = Lib::addr($metaWrappers[$i]);
         }
 
         $outHandle = $ffi->new('struct NdArrayHandle*');
@@ -141,11 +122,8 @@ trait HasStacking
 
         $status = $ffi->ndarray_stack(
             $cHandles,
-            $cOffsets,
-            $cShapes,
-            $cStrides,
+            $cMetas,
             $numArrays,
-            $ndim,
             $axisResolved,
             Lib::addr($outHandle),
             Lib::addr($outNdimBuf),
@@ -199,14 +177,14 @@ trait HasStacking
     public function split(array|int $indicesOrSections, int $axis = 0): array
     {
         $ffi = Lib::get();
-        $ndim = $this->ndim;
+        $ndim = $this->ndim();
 
         $axisResolved = $axis < 0 ? $ndim + $axis : $axis;
         if ($axisResolved < 0 || $axisResolved >= $ndim) {
             throw new ShapeException("Axis {$axis} out of bounds for array with {$ndim} dimensions");
         }
 
-        $axisLen = $this->shape[$axisResolved];
+        $axisLen = $this->shape()[$axisResolved];
 
         $indices = \is_int($indicesOrSections)
             ? self::indicesForEqualSplit($axisLen, $indicesOrSections)
@@ -222,12 +200,10 @@ trait HasStacking
         $cOutShapes = $ffi->new('size_t['.($numParts * $ndim).']');
         $cOutStrides = $ffi->new('size_t['.($numParts * $ndim).']');
 
+        $meta = $this->viewMetadata()->toCData();
         $status = $ffi->ndarray_split(
             $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createCArray('size_t', $this->strides),
-            $ndim,
+            Lib::addr($meta),
             $axisResolved,
             $cIndices,
             \count($indices),

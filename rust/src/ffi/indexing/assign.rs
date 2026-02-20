@@ -4,40 +4,23 @@
 
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, SUCCESS};
-use crate::ffi::NdArrayHandle;
-use std::slice;
+use crate::ffi::{NdArrayHandle, ViewMetadata};
 
 /// Assign values from source view to destination view.
 ///
 /// # Arguments
 /// * `dst` - Destination array handle
-/// * `doff` - Destination offset
-/// * `dshp` - Destination shape pointer
-/// * `dstr` - Destination strides pointer
+/// * `dst_meta` - Destination view metadata
 /// * `src` - Source array handle
-/// * `soff` - Source offset
-/// * `sshp` - Source shape pointer
-/// * `sstr` - Source strides pointer
-/// * `ndim` - Number of dimensions
+/// * `src_meta` - Source view metadata
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_assign(
     dst: *const NdArrayHandle,
-    doff: usize,
-    dshp: *const usize,
-    dstr: *const usize,
+    dst_meta: *const ViewMetadata,
     src: *const NdArrayHandle,
-    soff: usize,
-    sshp: *const usize,
-    sstr: *const usize,
-    ndim: usize,
+    src_meta: *const ViewMetadata,
 ) -> i32 {
-    if dst.is_null()
-        || src.is_null()
-        || dshp.is_null()
-        || dstr.is_null()
-        || sshp.is_null()
-        || sstr.is_null()
-    {
+    if dst.is_null() || src.is_null() || dst_meta.is_null() || src_meta.is_null() {
         return ERR_GENERIC;
     }
 
@@ -45,110 +28,113 @@ pub unsafe extern "C" fn ndarray_assign(
         let dst_wrapper = NdArrayHandle::as_wrapper(dst as *mut _);
         let src_wrapper = NdArrayHandle::as_wrapper(src as *mut _);
 
-        let dst_shape = slice::from_raw_parts(dshp, ndim);
-        let dst_strides = slice::from_raw_parts(dstr, ndim);
+        let dst_meta_ref = &*dst_meta;
+        let src_meta_ref = &*src_meta;
 
-        let src_shape = slice::from_raw_parts(sshp, ndim);
-        let src_strides = slice::from_raw_parts(sstr, ndim);
+        let dst_shape = std::slice::from_raw_parts(dst_meta_ref.shape, dst_meta_ref.ndim);
+        let dst_strides = std::slice::from_raw_parts(dst_meta_ref.strides, dst_meta_ref.ndim);
+
+        let src_shape = std::slice::from_raw_parts(src_meta_ref.shape, src_meta_ref.ndim);
+        let src_strides = std::slice::from_raw_parts(src_meta_ref.strides, src_meta_ref.ndim);
 
         // Use destination dtype to determine which assign method to use
         let result = match dst_wrapper.dtype {
             DType::Int8 => dst_wrapper.assign_slice_i8(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),
             DType::Int16 => dst_wrapper.assign_slice_i16(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),
             DType::Int32 => dst_wrapper.assign_slice_i32(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),
             DType::Int64 => dst_wrapper.assign_slice_i64(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),
             DType::Uint8 => dst_wrapper.assign_slice_u8(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),
             DType::Uint16 => dst_wrapper.assign_slice_u16(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),
             DType::Uint32 => dst_wrapper.assign_slice_u32(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),
             DType::Uint64 => dst_wrapper.assign_slice_u64(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),
             DType::Float32 => dst_wrapper.assign_slice_f32(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),
             DType::Float64 => dst_wrapper.assign_slice_f64(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),
             DType::Bool => dst_wrapper.assign_slice_bool(
-                doff,
+                dst_meta_ref.offset,
                 dst_shape,
                 dst_strides,
                 src_wrapper,
-                soff,
+                src_meta_ref.offset,
                 src_shape,
                 src_strides,
             ),

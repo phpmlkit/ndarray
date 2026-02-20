@@ -12,19 +12,15 @@ use crate::ffi::reductions::helpers::validate_axis;
 use crate::ffi::sorting::helpers::{
     cmp_f32_asc_nan_last, cmp_f64_asc_nan_last, sort_axis_generic, sort_flat_generic, SortKind,
 };
-use crate::ffi::{write_output_metadata, NdArrayHandle};
+use crate::ffi::{NdArrayHandle, ViewMetadata, write_output_metadata};
 use parking_lot::RwLock;
-use std::slice;
 use std::sync::Arc;
 
 /// Compute the sort along an axis in the array.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_sort_axis(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     axis: i32,
     kind: i32,
     out_handle: *mut *mut NdArrayHandle,
@@ -35,7 +31,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
 ) -> i32 {
     if handle.is_null()
         || out_handle.is_null()
-        || shape.is_null()
+        || meta.is_null()
         || out_dtype.is_null()
         || out_ndim.is_null()
         || out_shape.is_null()
@@ -45,10 +41,9 @@ pub unsafe extern "C" fn ndarray_sort_axis(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
+        let meta_ref = &*meta;
 
-        let axis_usize = match validate_axis(shape_slice, axis) {
+        let axis_usize = match validate_axis(meta_ref.shape_slice(), axis) {
             Ok(a) => a,
             Err(e) => {
                 crate::error::set_last_error(e);
@@ -66,7 +61,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_f64(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
@@ -78,7 +73,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_f32(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
@@ -90,7 +85,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i64(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
@@ -102,7 +97,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i32(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
@@ -114,7 +109,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i16(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
@@ -126,7 +121,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i8(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
@@ -138,7 +133,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u64(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
@@ -150,7 +145,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u32(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
@@ -162,7 +157,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u16(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
@@ -174,7 +169,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u8(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
@@ -186,7 +181,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
                 }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_bool(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
@@ -214,10 +209,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_sort_flat(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     kind: i32,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
@@ -227,7 +219,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
 ) -> i32 {
     if handle.is_null()
         || out_handle.is_null()
-        || shape.is_null()
+        || meta.is_null()
         || out_dtype.is_null()
         || out_ndim.is_null()
         || out_shape.is_null()
@@ -237,8 +229,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
+        let meta_ref = &*meta;
 
         let sort_kind = match SortKind::from_i32(kind) {
             Ok(k) => k,
@@ -250,7 +241,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_f64(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
@@ -262,7 +253,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_f32(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
@@ -274,7 +265,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i64(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
@@ -286,7 +277,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i32(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
@@ -298,7 +289,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i16(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
@@ -310,7 +301,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_i8(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
@@ -322,7 +313,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u64(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
@@ -334,7 +325,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u32(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
@@ -346,7 +337,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u16(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
@@ -358,7 +349,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_u8(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
@@ -370,7 +361,7 @@ pub unsafe extern "C" fn ndarray_sort_flat(
                 }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_bool(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;

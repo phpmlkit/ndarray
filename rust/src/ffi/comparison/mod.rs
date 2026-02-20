@@ -4,15 +4,15 @@
 //! with broadcasting support.
 
 pub mod eq;
-pub mod gte;
 pub mod gt;
-pub mod lte;
+pub mod gte;
 pub mod lt;
+pub mod lte;
 pub mod ne;
 
 pub use eq::*;
-pub use gte::*;
 pub use gt::*;
-pub use lte::*;
+pub use gte::*;
 pub use lt::*;
+pub use lte::*;
 pub use ne::*;

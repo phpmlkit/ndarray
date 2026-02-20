@@ -9,10 +9,9 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::NdArrayHandle;
+use crate::ffi::{NdArrayHandle, ViewMetadata};
 use ndarray::{ArrayD, Dimension, IxDyn};
 use parking_lot::RwLock;
-use std::slice;
 use std::sync::Arc;
 
 #[inline]
@@ -89,10 +88,7 @@ fn take_along_axis_impl<T: Copy>(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_take_flat(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     indices: *const i64,
     indices_len: usize,
     indices_shape: *const usize,
@@ -100,8 +96,7 @@ pub unsafe extern "C" fn ndarray_take_flat(
     out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
     if handle.is_null()
-        || shape.is_null()
-        || strides.is_null()
+        || meta.is_null()
         || indices.is_null()
         || indices_shape.is_null()
         || out_handle.is_null()
@@ -111,14 +106,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
-        let idx_slice = slice::from_raw_parts(indices, indices_len);
-        let idx_shape_slice = slice::from_raw_parts(indices_shape, indices_ndim);
+        let meta_ref = &*meta;
+        let idx_slice = std::slice::from_raw_parts(indices, indices_len);
+        let idx_shape_slice = std::slice::from_raw_parts(indices_shape, indices_ndim);
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_f64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -129,10 +123,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Float64(Arc::new(RwLock::new(out))), dtype: DType::Float64 }
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(out))),
+                    dtype: DType::Float64,
+                }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_f32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -143,10 +140,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Float32(Arc::new(RwLock::new(out))), dtype: DType::Float32 }
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(out))),
+                    dtype: DType::Float32,
+                }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -157,10 +157,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Int64(Arc::new(RwLock::new(out))), dtype: DType::Int64 }
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(out))),
+                    dtype: DType::Int64,
+                }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -171,10 +174,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Int32(Arc::new(RwLock::new(out))), dtype: DType::Int32 }
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(out))),
+                    dtype: DType::Int32,
+                }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -185,10 +191,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Int16(Arc::new(RwLock::new(out))), dtype: DType::Int16 }
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(out))),
+                    dtype: DType::Int16,
+                }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -199,10 +208,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Int8(Arc::new(RwLock::new(out))), dtype: DType::Int8 }
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(out))),
+                    dtype: DType::Int8,
+                }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -213,10 +225,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Uint64(Arc::new(RwLock::new(out))), dtype: DType::Uint64 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(out))),
+                    dtype: DType::Uint64,
+                }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -227,10 +242,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Uint32(Arc::new(RwLock::new(out))), dtype: DType::Uint32 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(out))),
+                    dtype: DType::Uint32,
+                }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -241,10 +259,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Uint16(Arc::new(RwLock::new(out))), dtype: DType::Uint16 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(out))),
+                    dtype: DType::Uint16,
+                }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -255,10 +276,13 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Uint8(Arc::new(RwLock::new(out))), dtype: DType::Uint8 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(out))),
+                    dtype: DType::Uint8,
+                }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_bool(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
@@ -269,7 +293,10 @@ pub unsafe extern "C" fn ndarray_take_flat(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Bool(Arc::new(RwLock::new(out))), dtype: DType::Bool }
+                NDArrayWrapper {
+                    data: ArrayData::Bool(Arc::new(RwLock::new(out))),
+                    dtype: DType::Bool,
+                }
             }
         };
 
@@ -282,24 +309,16 @@ pub unsafe extern "C" fn ndarray_take_flat(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_take_along_axis(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     indices_handle: *const NdArrayHandle,
-    indices_offset: usize,
-    indices_shape: *const usize,
-    indices_strides: *const usize,
-    indices_ndim: usize,
+    indices_meta: *const ViewMetadata,
     axis: i32,
     out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
     if handle.is_null()
-        || shape.is_null()
-        || strides.is_null()
+        || meta.is_null()
         || indices_handle.is_null()
-        || indices_shape.is_null()
-        || indices_strides.is_null()
+        || indices_meta.is_null()
         || out_handle.is_null()
     {
         return ERR_GENERIC;
@@ -308,17 +327,15 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let indices_wrapper = NdArrayHandle::as_wrapper(indices_handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
-        let idx_shape_slice = slice::from_raw_parts(indices_shape, indices_ndim);
-        let idx_strides_slice = slice::from_raw_parts(indices_strides, indices_ndim);
+        let meta_ref = &*meta;
+        let indices_meta_ref = &*indices_meta;
 
         if indices_wrapper.dtype != DType::Int64 {
             error::set_last_error("takeAlongAxis indices must have Int64 dtype".to_string());
             return ERR_DTYPE;
         }
 
-        let axis_usize = match validate_axis(shape_slice, axis) {
+        let axis_usize = match validate_axis(indices_meta_ref.shape_slice(), axis) {
             Ok(v) => v,
             Err(e) => {
                 error::set_last_error(e);
@@ -326,19 +343,14 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
             }
         };
 
-        let Some(indices_view) = extract_view_i64(
-            indices_wrapper,
-            indices_offset,
-            idx_shape_slice,
-            idx_strides_slice,
-        ) else {
+        let Some(indices_view) = extract_view_i64(indices_wrapper, indices_meta_ref) else {
             error::set_last_error("Failed to extract Int64 indices view".to_string());
             return ERR_GENERIC;
         };
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_f64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -349,10 +361,13 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Float64(Arc::new(RwLock::new(out))), dtype: DType::Float64 }
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(out))),
+                    dtype: DType::Float64,
+                }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_f32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -363,10 +378,13 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Float32(Arc::new(RwLock::new(out))), dtype: DType::Float32 }
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(out))),
+                    dtype: DType::Float32,
+                }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -377,10 +395,13 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Int64(Arc::new(RwLock::new(out))), dtype: DType::Int64 }
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(out))),
+                    dtype: DType::Int64,
+                }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -391,10 +412,13 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Int32(Arc::new(RwLock::new(out))), dtype: DType::Int32 }
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(out))),
+                    dtype: DType::Int32,
+                }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -405,10 +429,13 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Int16(Arc::new(RwLock::new(out))), dtype: DType::Int16 }
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(out))),
+                    dtype: DType::Int16,
+                }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_i8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -419,10 +446,13 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Int8(Arc::new(RwLock::new(out))), dtype: DType::Int8 }
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(out))),
+                    dtype: DType::Int8,
+                }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -433,10 +463,13 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Uint64(Arc::new(RwLock::new(out))), dtype: DType::Uint64 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(out))),
+                    dtype: DType::Uint64,
+                }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -447,10 +480,13 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Uint32(Arc::new(RwLock::new(out))), dtype: DType::Uint32 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(out))),
+                    dtype: DType::Uint32,
+                }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -461,10 +497,13 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Uint16(Arc::new(RwLock::new(out))), dtype: DType::Uint16 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(out))),
+                    dtype: DType::Uint16,
+                }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_u8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -475,10 +514,13 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Uint8(Arc::new(RwLock::new(out))), dtype: DType::Uint8 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(out))),
+                    dtype: DType::Uint8,
+                }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, offset, shape_slice, strides_slice) else {
+                let Some(view) = extract_view_bool(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
@@ -489,7 +531,10 @@ pub unsafe extern "C" fn ndarray_take_along_axis(
                         return ERR_INDEX;
                     }
                 };
-                NDArrayWrapper { data: ArrayData::Bool(Arc::new(RwLock::new(out))), dtype: DType::Bool }
+                NDArrayWrapper {
+                    data: ArrayData::Bool(Arc::new(RwLock::new(out))),
+                    dtype: DType::Bool,
+                }
             }
         };
 

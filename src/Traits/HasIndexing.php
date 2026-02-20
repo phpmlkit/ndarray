@@ -40,21 +40,21 @@ trait HasIndexing
             throw new IndexException('At least one index is required');
         }
 
-        if ($count > $this->ndim) {
+        if ($count > $this->ndim()) {
             throw new IndexException(
-                "Too many indices: got {$count} for array with {$this->ndim} dimensions"
+                "Too many indices: got {$count} for array with {$this->ndim()} dimensions"
             );
         }
 
         // Normalize and validate each index
         $normalizedIndices = [];
         foreach ($indices as $dim => $index) {
-            $dimSize = $this->shape[$dim];
+            $dimSize = $this->shape()[$dim];
             $normalizedIndex = $this->normalizeIndex($index, $dimSize, $dim);
             $normalizedIndices[] = $normalizedIndex;
         }
 
-        if ($count === $this->ndim) {
+        if ($count === $this->ndim()) {
             // Full indexing — return scalar via FFI
             $flatIndex = $this->calculateFlatIndex($normalizedIndices);
 
@@ -79,16 +79,16 @@ trait HasIndexing
     {
         $count = \count($indices);
 
-        if ($count !== $this->ndim) {
+        if ($count !== $this->ndim()) {
             throw new IndexException(
-                "set() requires exactly {$this->ndim} indices, got {$count}"
+                "set() requires exactly {$this->ndim()} indices, got {$count}"
             );
         }
 
         // Normalize and validate each index
         $normalizedIndices = [];
         foreach ($indices as $dim => $index) {
-            $dimSize = $this->shape[$dim];
+            $dimSize = $this->shape()[$dim];
             $normalizedIndices[] = $this->normalizeIndex($index, $dimSize, $dim);
         }
 
@@ -132,12 +132,10 @@ trait HasIndexing
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
+        $meta = $this->viewMetadata()->toCData();
         $status = $ffi->ndarray_take_flat(
             $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createCArray('size_t', $this->strides),
-            $this->ndim,
+            Lib::addr($meta),
             Lib::createCArray('int64_t', $flatIndices),
             \count($flatIndices),
             Lib::createShapeArray($indicesShape),
@@ -164,24 +162,20 @@ trait HasIndexing
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
+        $meta = $this->viewMetadata()->toCData();
+        $indicesMeta = $indices->viewMetadata()->toCData();
         $status = $ffi->ndarray_take_along_axis(
             $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createCArray('size_t', $this->strides),
-            $this->ndim,
-            $indices->handle,
-            $indices->offset,
-            Lib::createShapeArray($indices->shape),
-            Lib::createCArray('size_t', $indices->strides),
-            $indices->ndim,
+            Lib::addr($meta),
+            $indices->handle(),
+            Lib::addr($indicesMeta),
             $axis,
             Lib::addr($outHandle)
         );
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $indices->shape, $this->dtype);
+        return new self($outHandle, $indices->shape(), $this->dtype);
     }
 
     /**
@@ -202,12 +196,10 @@ trait HasIndexing
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
+        $meta = $this->viewMetadata()->toCData();
         $status = $ffi->ndarray_put_flat(
             $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createCArray('size_t', $this->strides),
-            $this->ndim,
+            Lib::addr($meta),
             Lib::createCArray('int64_t', $flatIndices),
             \count($flatIndices),
             $valuesBuffer,
@@ -219,7 +211,7 @@ trait HasIndexing
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $this->shape, $this->dtype);
+        return new self($outHandle, $this->shape(), $this->dtype);
     }
 
     /**
@@ -237,17 +229,13 @@ trait HasIndexing
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
+        $meta = $this->viewMetadata()->toCData();
+        $indicesMeta = $indices->viewMetadata()->toCData();
         $status = $ffi->ndarray_put_along_axis(
             $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createCArray('size_t', $this->strides),
-            $this->ndim,
-            $indices->handle,
-            $indices->offset,
-            Lib::createShapeArray($indices->shape),
-            Lib::createCArray('size_t', $indices->strides),
-            $indices->ndim,
+            Lib::addr($meta),
+            $indices->handle(),
+            Lib::addr($indicesMeta),
             $axis,
             $valuesBuffer,
             $valuesLen,
@@ -258,7 +246,7 @@ trait HasIndexing
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $this->shape, $this->dtype);
+        return new self($outHandle, $this->shape(), $this->dtype);
     }
 
     /**
@@ -274,12 +262,10 @@ trait HasIndexing
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
+        $meta = $this->viewMetadata()->toCData();
         $status = $ffi->ndarray_scatter_add_flat(
             $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createCArray('size_t', $this->strides),
-            $this->ndim,
+            Lib::addr($meta),
             Lib::createCArray('int64_t', $flatIndices),
             \count($flatIndices),
             $updatesBuffer,
@@ -291,7 +277,7 @@ trait HasIndexing
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $this->shape, $this->dtype);
+        return new self($outHandle, $this->shape(), $this->dtype);
     }
 
     // =========================================================================
@@ -307,9 +293,9 @@ trait HasIndexing
      */
     private function calculateFlatIndex(array $indices): int
     {
-        $flatIndex = $this->offset;
+        $flatIndex = $this->getOffset();
         foreach ($indices as $dim => $index) {
-            $flatIndex += $index * $this->strides[$dim];
+            $flatIndex += $index * $this->strides()[$dim];
         }
 
         return $flatIndex;
@@ -338,18 +324,18 @@ trait HasIndexing
      */
     private function logicalFlatToStorageIndex(int $logicalFlatIndex): int
     {
-        if (1 === $this->ndim) {
-            return $this->offset + ($logicalFlatIndex * $this->strides[0]);
+        if (1 === $this->ndim()) {
+            return $this->getOffset() + ($logicalFlatIndex * $this->strides()[0]);
         }
 
-        $storageIndex = $this->offset;
+        $storageIndex = $this->getOffset();
         $remaining = $logicalFlatIndex;
 
-        for ($dim = $this->ndim - 1; $dim >= 0; --$dim) {
-            $dimSize = $this->shape[$dim];
+        for ($dim = $this->ndim() - 1; $dim >= 0; --$dim) {
+            $dimSize = $this->shape()[$dim];
             $idxInDim = $remaining % $dimSize;
             $remaining = intdiv($remaining, $dimSize);
-            $storageIndex += $idxInDim * $this->strides[$dim];
+            $storageIndex += $idxInDim * $this->strides()[$dim];
         }
 
         return $storageIndex;
@@ -394,14 +380,14 @@ trait HasIndexing
         $count = \count($indices);
 
         // Calculate new offset
-        $newOffset = $this->offset;
+        $newOffset = $this->getOffset();
         foreach ($indices as $dim => $index) {
-            $newOffset += $index * $this->strides[$dim];
+            $newOffset += $index * $this->strides()[$dim];
         }
 
         // Remaining dimensions become the view's shape/strides
-        $newShape = \array_slice($this->shape, $count);
-        $newStrides = \array_slice($this->strides, $count);
+        $newShape = \array_slice($this->shape(), $count);
+        $newStrides = \array_slice($this->strides(), $count);
 
         // Base is the root array (follow the chain)
         $root = $this->base ?? $this;
@@ -467,7 +453,7 @@ trait HasIndexing
             $flat = $indices->toFlatArray();
             $flat = \is_array($flat) ? $flat : [$flat];
 
-            return [array_map(static fn ($v) => (int) $v, $flat), $indices->shape];
+            return [array_map(static fn ($v) => (int) $v, $flat), $indices->shape()];
         }
 
         $shape = self::inferShape($indices);

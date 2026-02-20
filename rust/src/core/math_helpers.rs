@@ -10,16 +10,16 @@
 #[macro_export]
 macro_rules! binary_op_arm {
     (
-        $a_wrapper:expr, $a_offset:expr, $a_shape:expr, $a_strides:expr,
-        $b_wrapper:expr, $b_offset:expr, $b_shape:expr, $b_strides:expr,
+        $a_wrapper:expr, $a_meta:expr,
+        $b_wrapper:expr, $b_meta:expr,
         $dtype:path, $extract_fn:ident, $variant:path, $op:tt
     ) => {
         {
-            let Some(a_view) = $extract_fn($a_wrapper, $a_offset, $a_shape, $a_strides) else {
+            let Some(a_view) = $extract_fn($a_wrapper, $a_meta) else {
                 crate::error::set_last_error(format!("Failed to extract a as {}", stringify!($dtype)));
                 return crate::error::ERR_GENERIC;
             };
-            let Some(b_view) = $extract_fn($b_wrapper, $b_offset, $b_shape, $b_strides) else {
+            let Some(b_view) = $extract_fn($b_wrapper, $b_meta) else {
                 crate::error::set_last_error(format!("Failed to extract b as {}", stringify!($dtype)));
                 return crate::error::ERR_GENERIC;
             };
@@ -43,11 +43,11 @@ macro_rules! binary_op_arm {
 #[macro_export]
 macro_rules! scalar_op_arm {
     (
-        $wrapper:expr, $offset:expr, $shape:expr, $strides:expr,
+        $wrapper:expr, $meta:expr,
         $scalar:expr, $dtype:path, $extract_fn:ident, $variant:path, $op:tt
     ) => {
         {
-            let Some(view) = $extract_fn($wrapper, $offset, $shape, $strides) else {
+            let Some(view) = $extract_fn($wrapper, $meta) else {
                 crate::error::set_last_error(format!("Failed to extract view as {}", stringify!($dtype)));
                 return crate::error::ERR_GENERIC;
             };

@@ -33,6 +33,7 @@ trait HasOps
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
         [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
+        $meta = $this->viewMetadata()->toCData();
 
         // Normalize extra args: convert BackedEnum to their values
         $normalizedArgs = array_map(
@@ -42,10 +43,7 @@ trait HasOps
 
         $args = [
             $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createShapeArray($this->strides),
-            $this->ndim,
+            Lib::addr($meta),
             ...$normalizedArgs,
             Lib::addr($outHandle),
             Lib::addr($outDtypeBuf),
@@ -86,17 +84,13 @@ trait HasOps
         $outHandle = $ffi->new('struct NdArrayHandle*');
         [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
 
+        $aMeta = $this->viewMetadata()->toCData();
+        $bMeta = $other->viewMetadata()->toCData();
         $status = $ffi->{$funcName}(
             $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createShapeArray($this->strides),
-            $this->ndim,
-            $other->getHandle(),
-            $other->getOffset(),
-            Lib::createShapeArray($other->shape()),
-            Lib::createShapeArray($other->strides()),
-            $other->ndim(),
+            Lib::addr($aMeta),
+            $other->handle(),
+            Lib::addr($bMeta),
             Lib::addr($outHandle),
             Lib::addr($outDtypeBuf),
             Lib::addr($outNdimBuf),
@@ -132,12 +126,10 @@ trait HasOps
         $outValue = $ffi->new('double');
         $outDtype = $ffi->new('uint8_t');
 
+        $meta = $this->viewMetadata()->toCData();
         $args = [
             $this->handle,
-            $this->offset,
-            Lib::createShapeArray($this->shape),
-            Lib::createShapeArray($this->strides),
-            $this->ndim,
+            Lib::addr($meta),
             ...$extraArgs,
             Lib::addr($outValue),
             Lib::addr($outDtype),

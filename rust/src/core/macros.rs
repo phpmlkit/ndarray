@@ -313,12 +313,14 @@ macro_rules! impl_copy_view {
     ($($method:ident, $type:ty, $variant:ident, $dtype:ident);* $(;)?) => {
         impl $crate::core::NDArrayWrapper {
             $(
-                pub fn $method(
+                pub unsafe fn $method(
                     &self,
-                    offset: usize,
-                    shape: &[usize],
-                    strides: &[usize],
+                    meta: &$crate::ffi::ViewMetadata,
                 ) -> Result<$crate::core::NDArrayWrapper, String> {
+                    let shape = meta.shape_slice();
+                    let strides = meta.strides_slice();
+                    let offset = meta.offset;
+
                     if let $crate::core::ArrayData::$variant(arr) = &self.data {
                         let guard = arr.read();
                         let raw_ptr = guard.as_ptr();
@@ -362,13 +364,15 @@ macro_rules! impl_fill_slice {
     ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
         impl $crate::core::NDArrayWrapper {
             $(
-                pub fn $method(
+                pub unsafe fn $method(
                     &self,
                     value: $type,
-                    offset: usize,
-                    shape: &[usize],
-                    strides: &[usize],
+                    meta: &$crate::ffi::ViewMetadata,
                 ) -> Result<(), String> {
+                    let shape = meta.shape_slice();
+                    let strides = meta.strides_slice();
+                    let offset = meta.offset;
+
                     if let $crate::core::ArrayData::$variant(arr) = &self.data {
                         let mut guard = arr.write();
                         let raw_ptr = guard.as_mut_ptr();

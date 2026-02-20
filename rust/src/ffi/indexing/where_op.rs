@@ -8,10 +8,9 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use ndarray::{ArrayD, ArrayViewD, IxDyn};
 use parking_lot::RwLock;
-use std::slice;
 use std::sync::Arc;
 
 fn where_impl<T: Copy>(
@@ -58,20 +57,11 @@ fn where_impl<T: Copy>(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_where(
     cond_handle: *const NdArrayHandle,
-    cond_offset: usize,
-    cond_shape: *const usize,
-    cond_strides: *const usize,
-    cond_ndim: usize,
+    cond_meta: *const ViewMetadata,
     x_handle: *const NdArrayHandle,
-    x_offset: usize,
-    x_shape: *const usize,
-    x_strides: *const usize,
-    x_ndim: usize,
+    x_meta: *const ViewMetadata,
     y_handle: *const NdArrayHandle,
-    y_offset: usize,
-    y_shape: *const usize,
-    y_strides: *const usize,
-    y_ndim: usize,
+    y_meta: *const ViewMetadata,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype_ptr: *mut u8,
     out_ndim: *mut usize,
@@ -79,14 +69,11 @@ pub unsafe extern "C" fn ndarray_where(
     max_ndim: usize,
 ) -> i32 {
     if cond_handle.is_null()
-        || cond_shape.is_null()
-        || cond_strides.is_null()
+        || cond_meta.is_null()
         || x_handle.is_null()
-        || x_shape.is_null()
-        || x_strides.is_null()
+        || x_meta.is_null()
         || y_handle.is_null()
-        || y_shape.is_null()
-        || y_strides.is_null()
+        || y_meta.is_null()
         || out_handle.is_null()
         || out_dtype_ptr.is_null()
         || out_ndim.is_null()
@@ -100,24 +87,16 @@ pub unsafe extern "C" fn ndarray_where(
         let x_wrapper = NdArrayHandle::as_wrapper(x_handle as *mut _);
         let y_wrapper = NdArrayHandle::as_wrapper(y_handle as *mut _);
 
+        let cond_meta_ref = &*cond_meta;
+        let x_meta_ref = &*x_meta;
+        let y_meta_ref = &*y_meta;
+
         if cond_wrapper.dtype != DType::Bool {
             error::set_last_error("where() condition must have Bool dtype".to_string());
             return ERR_DTYPE;
         }
 
-        let cond_shape_slice = slice::from_raw_parts(cond_shape, cond_ndim);
-        let cond_strides_slice = slice::from_raw_parts(cond_strides, cond_ndim);
-        let x_shape_slice = slice::from_raw_parts(x_shape, x_ndim);
-        let x_strides_slice = slice::from_raw_parts(x_strides, x_ndim);
-        let y_shape_slice = slice::from_raw_parts(y_shape, y_ndim);
-        let y_strides_slice = slice::from_raw_parts(y_strides, y_ndim);
-
-        let Some(cond_view) = extract_view_bool(
-            cond_wrapper,
-            cond_offset,
-            cond_shape_slice,
-            cond_strides_slice,
-        ) else {
+        let Some(cond_view) = extract_view_bool(cond_wrapper, cond_meta_ref) else {
             error::set_last_error("Failed to extract Bool condition view".to_string());
             return ERR_GENERIC;
         };
@@ -126,15 +105,11 @@ pub unsafe extern "C" fn ndarray_where(
 
         let (result_wrapper, result_shape_vec) = match out_dtype {
             DType::Float64 => {
-                let Some(xv) =
-                    extract_view_as_f64(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_as_f64(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as f64".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_f64(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_as_f64(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as f64".to_string());
                     return ERR_GENERIC;
                 };
@@ -154,15 +129,11 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Float32 => {
-                let Some(xv) =
-                    extract_view_as_f32(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_as_f32(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as f32".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_f32(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_as_f32(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as f32".to_string());
                     return ERR_GENERIC;
                 };
@@ -182,15 +153,11 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Int64 => {
-                let Some(xv) =
-                    extract_view_as_i64(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_as_i64(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as i64".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_i64(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_as_i64(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as i64".to_string());
                     return ERR_GENERIC;
                 };
@@ -210,15 +177,11 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Int32 => {
-                let Some(xv) =
-                    extract_view_as_i32(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_as_i32(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as i32".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_i32(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_as_i32(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as i32".to_string());
                     return ERR_GENERIC;
                 };
@@ -238,15 +201,11 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Int16 => {
-                let Some(xv) =
-                    extract_view_as_i16(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_as_i16(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as i16".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_i16(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_as_i16(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as i16".to_string());
                     return ERR_GENERIC;
                 };
@@ -266,15 +225,11 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Int8 => {
-                let Some(xv) =
-                    extract_view_as_i8(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_as_i8(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as i8".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_i8(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_as_i8(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as i8".to_string());
                     return ERR_GENERIC;
                 };
@@ -294,15 +249,11 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Uint64 => {
-                let Some(xv) =
-                    extract_view_as_u64(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_as_u64(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as u64".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_u64(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_as_u64(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as u64".to_string());
                     return ERR_GENERIC;
                 };
@@ -322,15 +273,11 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Uint32 => {
-                let Some(xv) =
-                    extract_view_as_u32(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_as_u32(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as u32".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_u32(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_as_u32(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as u32".to_string());
                     return ERR_GENERIC;
                 };
@@ -350,15 +297,11 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Uint16 => {
-                let Some(xv) =
-                    extract_view_as_u16(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_as_u16(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as u16".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_u16(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_as_u16(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as u16".to_string());
                     return ERR_GENERIC;
                 };
@@ -378,15 +321,11 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Uint8 => {
-                let Some(xv) =
-                    extract_view_as_u8(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_as_u8(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as u8".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_u8(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_as_u8(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as u8".to_string());
                     return ERR_GENERIC;
                 };
@@ -406,15 +345,11 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Bool => {
-                let Some(xv) =
-                    extract_view_as_u8(x_wrapper, x_offset, x_shape_slice, x_strides_slice)
-                else {
+                let Some(xv) = extract_view_bool(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as bool".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) =
-                    extract_view_as_u8(y_wrapper, y_offset, y_shape_slice, y_strides_slice)
-                else {
+                let Some(yv) = extract_view_bool(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as bool".to_string());
                     return ERR_GENERIC;
                 };

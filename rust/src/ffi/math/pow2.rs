@@ -7,38 +7,39 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use parking_lot::RwLock;
-use std::slice;
 use std::sync::Arc;
 
 /// Compute x^2 element-wise.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_pow2(
     a: *const NdArrayHandle,
-    a_offset: usize,
-    a_shape: *const usize,
-    a_strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     out: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
     out_ndim: *mut usize,
     out_shape: *mut usize,
     max_ndim: usize,
 ) -> i32 {
-    if a.is_null() || out.is_null() || a_shape.is_null() || out_dtype.is_null() || out_ndim.is_null() || out_shape.is_null() {
+    if a.is_null()
+        || meta.is_null()
+        || out.is_null()
+        || out_dtype.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
+    {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
+        let meta_ref = &*meta;
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
-        let a_shape_slice = slice::from_raw_parts(a_shape, ndim);
-        let a_strides_slice = slice::from_raw_parts(a_strides, ndim);
 
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
                 let Some(view) =
-                    extract_view_f64(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                    extract_view_f64(a_wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
@@ -51,7 +52,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Float32 => {
                 let Some(view) =
-                    extract_view_f32(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                    extract_view_f32(a_wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
@@ -64,7 +65,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Int64 => {
                 let Some(view) =
-                    extract_view_i64(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                    extract_view_i64(a_wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
@@ -77,7 +78,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Int32 => {
                 let Some(view) =
-                    extract_view_i32(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                    extract_view_i32(a_wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
@@ -90,7 +91,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Int16 => {
                 let Some(view) =
-                    extract_view_i16(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                    extract_view_i16(a_wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
@@ -103,7 +104,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Int8 => {
                 let Some(view) =
-                    extract_view_i8(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                    extract_view_i8(a_wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
@@ -116,7 +117,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Uint64 => {
                 let Some(view) =
-                    extract_view_u64(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                    extract_view_u64(a_wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
@@ -129,7 +130,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Uint32 => {
                 let Some(view) =
-                    extract_view_u32(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                    extract_view_u32(a_wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
@@ -142,7 +143,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Uint16 => {
                 let Some(view) =
-                    extract_view_u16(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                    extract_view_u16(a_wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
@@ -155,7 +156,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Uint8 => {
                 let Some(view) =
-                    extract_view_u8(a_wrapper, a_offset, a_shape_slice, a_strides_slice)
+                    extract_view_u8(a_wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
@@ -172,7 +173,9 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
         };
 
-        if let Err(e) = write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim) {
+        if let Err(e) =
+            write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
+        {
             crate::error::set_last_error(e);
             return ERR_GENERIC;
         }

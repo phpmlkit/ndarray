@@ -5,11 +5,10 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::NdArrayHandle;
+use crate::ffi::{NdArrayHandle, ViewMetadata};
 use ndarray::{ArrayD, Axis, IxDyn};
 use parking_lot::RwLock;
 use std::ffi::c_void;
-use std::slice;
 use std::sync::Arc;
 
 #[repr(i32)]
@@ -39,22 +38,18 @@ impl NormOrd {
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_norm(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     ord: i32,
     out_value: *mut c_void,
     out_dtype: *mut u8,
 ) -> i32 {
-    if handle.is_null() || shape.is_null() || strides.is_null() {
+    if handle.is_null() || meta.is_null() {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
+        let meta = &*meta;
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
 
         let ord = match NormOrd::from_i32(ord) {
             Ok(o) => o,
@@ -64,7 +59,7 @@ pub unsafe extern "C" fn ndarray_norm(
             }
         };
 
-        match scalar_norm(wrapper, offset, shape_slice, strides_slice, ord) {
+        match scalar_norm(wrapper, meta, ord) {
             Ok(v) => {
                 if !out_value.is_null() {
                     *(out_value as *mut f64) = v;
@@ -86,23 +81,20 @@ pub unsafe extern "C" fn ndarray_norm(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_norm_axis(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     axis: i32,
     keepdims: bool,
     ord: i32,
     out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
-    if handle.is_null() || shape.is_null() || strides.is_null() || out_handle.is_null() {
+    if handle.is_null() || meta.is_null() || out_handle.is_null() {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
+        let meta = &*meta;
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
+        let shape_slice = meta.shape_slice();
 
         let ord = match NormOrd::from_i32(ord) {
             Ok(o) => o,
@@ -125,7 +117,7 @@ pub unsafe extern "C" fn ndarray_norm_axis(
             }
         };
 
-        match axis_norm(wrapper, offset, shape_slice, strides_slice, axis, keepdims, ord) {
+        match axis_norm(wrapper, meta, axis, keepdims, ord) {
             Ok(arr) => {
                 let out = NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(arr))),
@@ -142,23 +134,20 @@ pub unsafe extern "C" fn ndarray_norm_axis(
     })
 }
 
-fn scalar_norm(
-    wrapper: &NDArrayWrapper,
-    offset: usize,
-    shape: &[usize],
-    strides: &[usize],
-    ord: NormOrd,
-) -> Result<f64, String> {
-    let view = extract_view_as_f64(wrapper, offset, shape, strides)
+fn scalar_norm(wrapper: &NDArrayWrapper, meta: &ViewMetadata, ord: NormOrd) -> Result<f64, String> {
+    let view = extract_view_as_f64(wrapper, meta)
         .ok_or_else(|| "Failed to extract view for norm".to_string())?;
+    let shape = unsafe { meta.shape_slice() };
 
     match ord {
         NormOrd::One => Ok(view.iter().map(|x| x.abs()).sum()),
         NormOrd::Two => Ok(view.iter().map(|x| x * x).sum::<f64>().sqrt()),
-        NormOrd::Inf => Ok(view
-            .iter()
-            .map(|x| x.abs())
-            .fold(0.0_f64, |acc, v| if v > acc { v } else { acc })),
+        NormOrd::Inf => {
+            Ok(view
+                .iter()
+                .map(|x| x.abs())
+                .fold(0.0_f64, |acc, v| if v > acc { v } else { acc }))
+        }
         NormOrd::NegInf => view
             .iter()
             .map(|x| x.abs())
@@ -175,16 +164,15 @@ fn scalar_norm(
 
 fn axis_norm(
     wrapper: &NDArrayWrapper,
-    offset: usize,
-    shape: &[usize],
-    strides: &[usize],
+    meta: &ViewMetadata,
     axis: usize,
     keepdims: bool,
     ord: NormOrd,
 ) -> Result<ArrayD<f64>, String> {
-    let view = extract_view_as_f64(wrapper, offset, shape, strides)
+    let view = extract_view_as_f64(wrapper, meta)
         .ok_or_else(|| "Failed to extract view for norm".to_string())?;
 
+    let shape = unsafe { meta.shape_slice() };
     let mut out_shape = shape.to_vec();
     let lane_len = out_shape[axis];
     out_shape.remove(axis);
@@ -197,18 +185,17 @@ fn axis_norm(
         let v = match ord {
             NormOrd::One => lane.iter().map(|x| x.abs()).sum(),
             NormOrd::Two => lane.iter().map(|x| x * x).sum::<f64>().sqrt(),
-            NormOrd::Inf => lane
-                .iter()
-                .map(|x| x.abs())
-                .fold(0.0_f64, |acc, val| if val > acc { val } else { acc }),
+            NormOrd::Inf => {
+                lane.iter()
+                    .map(|x| x.abs())
+                    .fold(0.0_f64, |acc, val| if val > acc { val } else { acc })
+            }
             NormOrd::NegInf => lane
                 .iter()
                 .map(|x| x.abs())
                 .reduce(|a, b| if a < b { a } else { b })
                 .unwrap_or(0.0),
-            NormOrd::Fro => {
-                return Err("fro norm is only supported with axis=None".to_string())
-            }
+            NormOrd::Fro => return Err("fro norm is only supported with axis=None".to_string()),
         };
         out.push(v);
     }

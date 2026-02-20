@@ -6,7 +6,7 @@ use std::slice;
 use crate::core::NDArrayWrapper;
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::NdArrayHandle;
+use crate::ffi::{NdArrayHandle, ViewMetadata};
 
 /// Create an NDArray from raw data with specified dtype.
 ///
@@ -102,34 +102,29 @@ pub unsafe extern "C" fn ndarray_create(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_copy(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape_ptr: *const usize,
-    strides_ptr: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
-    if handle.is_null() || shape_ptr.is_null() || strides_ptr.is_null() || out_handle.is_null() {
+    if handle.is_null() || meta.is_null() || out_handle.is_null() {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape = slice::from_raw_parts(shape_ptr, ndim);
-        let strides = slice::from_raw_parts(strides_ptr, ndim);
-
-        use crate::dtype::DType::*;
+        let meta = &*meta;
+       
         let result = match wrapper.dtype {
-            Int8 => wrapper.copy_view_i8(offset, shape, strides),
-            Int16 => wrapper.copy_view_i16(offset, shape, strides),
-            Int32 => wrapper.copy_view_i32(offset, shape, strides),
-            Int64 => wrapper.copy_view_i64(offset, shape, strides),
-            Uint8 => wrapper.copy_view_u8(offset, shape, strides),
-            Uint16 => wrapper.copy_view_u16(offset, shape, strides),
-            Uint32 => wrapper.copy_view_u32(offset, shape, strides),
-            Uint64 => wrapper.copy_view_u64(offset, shape, strides),
-            Float32 => wrapper.copy_view_f32(offset, shape, strides),
-            Float64 => wrapper.copy_view_f64(offset, shape, strides),
-            Bool => wrapper.copy_view_bool(offset, shape, strides),
+            DType::Int8 => wrapper.copy_view_i8(meta),
+            DType::Int16 => wrapper.copy_view_i16(meta),
+            DType::Int32 => wrapper.copy_view_i32(meta),
+            DType::Int64 => wrapper.copy_view_i64(meta),
+            DType::Uint8 => wrapper.copy_view_u8(meta),
+            DType::Uint16 => wrapper.copy_view_u16(meta),
+            DType::Uint32 => wrapper.copy_view_u32(meta),
+            DType::Uint64 => wrapper.copy_view_u64(meta),
+            DType::Float32 => wrapper.copy_view_f32(meta),
+            DType::Float64 => wrapper.copy_view_f64(meta),
+            DType::Bool => wrapper.copy_view_bool(meta),
         };
 
         match result {

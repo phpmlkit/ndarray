@@ -44,11 +44,11 @@ trait HasSlicing
 
         if (null !== $ellipsisPos) {
             $nonEllipsisCount = $count - 1;
-            $ellipsisDims = $this->ndim - $nonEllipsisCount;
+            $ellipsisDims = $this->ndim() - $nonEllipsisCount;
 
             if ($ellipsisDims < 0) {
                 throw new IndexException(
-                    "Too many indices for slice: ellipsis expansion would exceed {$this->ndim} dimensions"
+                    "Too many indices for slice: ellipsis expansion would exceed {$this->ndim()} dimensions"
                 );
             }
 
@@ -59,26 +59,26 @@ trait HasSlicing
             $count = \count($selection);
         }
 
-        if ($count > $this->ndim) {
+        if ($count > $this->ndim()) {
             throw new IndexException(
-                "Too many indices for slice: got {$count}, expected <= {$this->ndim}"
+                "Too many indices for slice: got {$count}, expected <= {$this->ndim()}"
             );
         }
 
-        if ($count < $this->ndim) {
+        if ($count < $this->ndim()) {
             $selection = array_merge(
                 $selection,
-                array_fill(0, $this->ndim - $count, ':')
+                array_fill(0, $this->ndim() - $count, ':')
             );
         }
 
         $newShape = [];
         $newStrides = [];
-        $newOffset = $this->offset;
+        $newOffset = $this->getOffset();
 
         foreach ($selection as $dim => $selector) {
-            $dimSize = $this->shape[$dim];
-            $stride = $this->strides[$dim];
+            $dimSize = $this->shape()[$dim];
+            $stride = $this->strides()[$dim];
 
             if (\is_int($selector)) {
                 if ($selector < 0) {
@@ -150,10 +150,6 @@ trait HasSlicing
     private function fill(mixed $value): void
     {
         $ffi = Lib::get();
-
-        $cShape = Lib::createCArray('size_t', $this->shape);
-        $cStrides = Lib::createCArray('size_t', $this->strides);
-
         $cValue = match ($this->dtype) {
             DType::Int8 => $ffi->new('int8_t'),
             DType::Int16 => $ffi->new('int16_t'),
@@ -174,13 +170,11 @@ trait HasSlicing
             $cValue->cdata = $value;
         }
 
+        $meta = $this->viewMetadata()->toCData();
         $status = $ffi->ndarray_fill(
             $this->handle,
-            Lib::addr($cValue),
-            $this->offset,
-            $cShape,
-            $cStrides,
-            $this->ndim
+            Lib::addr($meta),
+            Lib::addr($cValue)
         );
 
         Lib::checkStatus($status);
@@ -200,32 +194,22 @@ trait HasSlicing
         }
 
         $ffi = Lib::get();
-
-        $dstShape = Lib::createCArray('size_t', $this->shape);
-        $dstStrides = Lib::createCArray('size_t', $this->strides);
-
+        $dstMeta = $this->viewMetadata()->toCData();
         $src = $value;
-        if ($src->shape() !== $this->shape) {
+        if ($src->shape() !== $this->shape()) {
             if ($src->isContiguous()) {
-                $src = $src->reshape($this->shape);
+                $src = $src->reshape($this->shape());
             } else {
-                $src = $src->copy()->reshape($this->shape);
+                $src = $src->copy()->reshape($this->shape());
             }
         }
-
-        $srcShape = Lib::createCArray('size_t', $src->shape());
-        $srcStrides = Lib::createCArray('size_t', $src->strides());
+        $srcMeta = $src->viewMetadata()->toCData();
 
         $status = $ffi->ndarray_assign(
             $this->handle,
-            $this->offset,
-            $dstShape,
-            $dstStrides,
-            $src->getHandle(),
-            $src->offset,
-            $srcShape,
-            $srcStrides,
-            $this->ndim
+            Lib::addr($dstMeta),
+            $src->handle(),
+            Lib::addr($srcMeta)
         );
 
         Lib::checkStatus($status);

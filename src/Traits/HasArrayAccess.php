@@ -37,11 +37,11 @@ trait HasArrayAccess
         }
 
         foreach ($indices as $dim => $index) {
-            if ($dim >= $this->ndim) {
+            if ($dim >= $this->ndim()) {
                 return false;
             }
             // Handle negative indices: -1 means last element
-            $dimSize = $this->shape[$dim];
+            $dimSize = $this->shape()[$dim];
             if ($index < 0) {
                 $index = $dimSize + $index;
             }
@@ -94,7 +94,7 @@ trait HasArrayAccess
 
         $indices = $this->parseOffset($offset);
 
-        if (\count($indices) === $this->ndim) {
+        if (\count($indices) === $this->ndim()) {
             if (!\is_scalar($value)) {
                 throw new IndexException('Cannot assign array to scalar index');
             }

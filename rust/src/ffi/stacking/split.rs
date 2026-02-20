@@ -3,11 +3,9 @@
 //! Returns view metadata (offset, shape, strides) for each part. No new allocations -
 //! parts are views into the original. PHP creates NDArray objects with same handle.
 
-use std::slice;
-
 use crate::error::{set_last_error, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
-use crate::ffi::NdArrayHandle;
 use crate::ffi::stacking::helpers::resolve_axis;
+use crate::ffi::{NdArrayHandle, ViewMetadata};
 
 /// Split array along axis at the given indices.
 ///
@@ -19,10 +17,7 @@ use crate::ffi::stacking::helpers::resolve_axis;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_split(
     _handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     axis: i32,
     indices: *const usize,
     num_indices: usize,
@@ -30,14 +25,20 @@ pub unsafe extern "C" fn ndarray_split(
     out_shapes: *mut usize,
     out_strides: *mut usize,
 ) -> i32 {
-    if shape.is_null() || strides.is_null() || indices.is_null() || out_offsets.is_null() || out_shapes.is_null() || out_strides.is_null() {
+    if meta.is_null()
+        || indices.is_null()
+        || out_offsets.is_null()
+        || out_shapes.is_null()
+        || out_strides.is_null()
+    {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
-        let indices_slice = slice::from_raw_parts(indices, num_indices);
+        let meta_ref = &*meta;
+        let shape_slice = std::slice::from_raw_parts(meta_ref.shape, meta_ref.ndim);
+        let strides_slice = std::slice::from_raw_parts(meta_ref.strides, meta_ref.ndim);
+        let indices_slice = std::slice::from_raw_parts(indices, num_indices);
 
         let axis_usize = match resolve_axis(shape_slice, axis) {
             Ok(a) => a,
@@ -75,18 +76,22 @@ pub unsafe extern "C" fn ndarray_split(
             let part_len = end - start;
 
             // Offset for this part: base_offset + start * axis_stride
-            let part_offset = offset + start * axis_stride;
+            let part_offset = meta_ref.offset + start * axis_stride;
             *out_offsets.add(i) = part_offset;
 
             // Shape: same as input but axis dimension = part_len
-            for d in 0..ndim {
-                let val = if d == axis_usize { part_len } else { shape_slice[d] };
-                *out_shapes.add(i * ndim + d) = val;
+            for d in 0..meta_ref.ndim {
+                let val = if d == axis_usize {
+                    part_len
+                } else {
+                    shape_slice[d]
+                };
+                *out_shapes.add(i * meta_ref.ndim + d) = val;
             }
 
             // Strides: same as input (views share strides)
-            for d in 0..ndim {
-                *out_strides.add(i * ndim + d) = strides_slice[d];
+            for d in 0..meta_ref.ndim {
+                *out_strides.add(i * meta_ref.ndim + d) = strides_slice[d];
             }
         }
 

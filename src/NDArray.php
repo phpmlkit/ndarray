@@ -46,18 +46,11 @@ class NDArray implements \ArrayAccess
     use HasStacking;
     use HasStringable;
 
-    /** Number of dimensions */
-    protected int $ndim;
+    /** View metadata (shape, strides, offset, ndim). */
+    protected readonly ViewMetadata $viewMetadata;
 
     /** Total number of elements in this array/view */
     protected int $size;
-
-    /**
-     * Element strides per dimension (in element count, not bytes).
-     *
-     * @var array<int>
-     */
-    protected readonly array $strides;
 
     /**
      * Private constructor — use factory methods.
@@ -71,15 +64,14 @@ class NDArray implements \ArrayAccess
      */
     protected function __construct(
         protected readonly CData $handle,
-        protected array $shape,
+        array $shape,
         protected readonly DType $dtype,
         array $strides = [],
-        protected readonly int $offset = 0,
+        int $offset = 0,
         protected readonly ?self $base = null,
     ) {
-        $this->ndim = \count($shape);
+        $this->viewMetadata = new ViewMetadata($shape, $strides, $offset);
         $this->size = (int) array_product($shape);
-        $this->strides = $strides ?: self::computeStrides($shape);
     }
 
     /**
@@ -103,7 +95,7 @@ class NDArray implements \ArrayAccess
      */
     public function shape(): array
     {
-        return $this->shape;
+        return $this->viewMetadata->shape;
     }
 
     /**
@@ -113,7 +105,7 @@ class NDArray implements \ArrayAccess
      */
     public function strides(): array
     {
-        return $this->strides;
+        return $this->viewMetadata->strides;
     }
 
     /**
@@ -121,7 +113,7 @@ class NDArray implements \ArrayAccess
      */
     public function ndim(): int
     {
-        return $this->ndim;
+        return $this->viewMetadata->ndim;
     }
 
     /**
@@ -161,9 +153,19 @@ class NDArray implements \ArrayAccess
      *
      * @internal
      */
-    public function getHandle(): CData
+    public function handle(): CData
     {
         return $this->handle;
+    }
+
+    /**
+     * Get view metadata (shape, strides, offset, ndim).
+     *
+     * @internal
+     */
+    public function viewMetadata(): ViewMetadata
+    {
+        return $this->viewMetadata;
     }
 
     /**
@@ -173,7 +175,7 @@ class NDArray implements \ArrayAccess
      */
     public function getOffset(): int
     {
-        return $this->offset;
+        return $this->viewMetadata->offset;
     }
 
     /**
@@ -189,9 +191,9 @@ class NDArray implements \ArrayAccess
      */
     public function isContiguous(): bool
     {
-        $expected = self::computeStrides($this->shape);
+        $expected = ViewMetadata::computeStrides($this->viewMetadata->shape);
 
-        return $this->strides === $expected;
+        return $this->viewMetadata->strides === $expected;
     }
 
     /**
@@ -211,22 +213,16 @@ class NDArray implements \ArrayAccess
         $outHandle = $ffi->new('struct NdArrayHandle*');
         [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
 
+        $condMeta = $condArray->viewMetadata()->toCData();
+        $xMeta = $xArray->viewMetadata()->toCData();
+        $yMeta = $yArray->viewMetadata()->toCData();
         $status = $ffi->ndarray_where(
             $condArray->handle,
-            $condArray->offset,
-            Lib::createShapeArray($condArray->shape),
-            Lib::createCArray('size_t', $condArray->strides),
-            $condArray->ndim,
+            Lib::addr($condMeta),
             $xArray->handle,
-            $xArray->offset,
-            Lib::createShapeArray($xArray->shape),
-            Lib::createCArray('size_t', $xArray->strides),
-            $xArray->ndim,
+            Lib::addr($xMeta),
             $yArray->handle,
-            $yArray->offset,
-            Lib::createShapeArray($yArray->shape),
-            Lib::createCArray('size_t', $yArray->strides),
-            $yArray->ndim,
+            Lib::addr($yMeta),
             Lib::addr($outHandle),
             Lib::addr($outDtypeBuf),
             Lib::addr($outNdimBuf),
@@ -244,34 +240,6 @@ class NDArray implements \ArrayAccess
         }
 
         return new self($outHandle, $shape, $dtype);
-    }
-
-    // =========================================================================
-    // Private Helpers
-    // =========================================================================
-
-    /**
-     * Compute row-major strides from shape.
-     *
-     * For shape [3, 4, 5], strides are [20, 5, 1].
-     *
-     * @param array<int> $shape
-     *
-     * @return array<int>
-     */
-    private static function computeStrides(array $shape): array
-    {
-        $ndim = \count($shape);
-        if (0 === $ndim) {
-            return [];
-        }
-
-        $strides = array_fill(0, $ndim, 1);
-        for ($i = $ndim - 2; $i >= 0; --$i) {
-            $strides[$i] = $strides[$i + 1] * $shape[$i + 1];
-        }
-
-        return $strides;
     }
 
     private static function coerceWhereOperand(bool|float|int|self $value, ?DType $forceDtype): self

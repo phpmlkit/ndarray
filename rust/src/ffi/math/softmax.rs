@@ -7,20 +7,16 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::{write_output_metadata, NdArrayHandle};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use ndarray::Axis;
 use parking_lot::RwLock;
-use std::slice;
 use std::sync::Arc;
 
 /// Softmax along axis. Numerically stable: subtract max before exp.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_softmax(
     handle: *const NdArrayHandle,
-    offset: usize,
-    shape: *const usize,
-    strides: *const usize,
-    ndim: usize,
+    meta: *const ViewMetadata,
     axis: i32,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
@@ -29,8 +25,8 @@ pub unsafe extern "C" fn ndarray_softmax(
     max_ndim: usize,
 ) -> i32 {
     if handle.is_null()
+        || meta.is_null()
         || out_handle.is_null()
-        || shape.is_null()
         || out_dtype.is_null()
         || out_ndim.is_null()
         || out_shape.is_null()
@@ -39,11 +35,10 @@ pub unsafe extern "C" fn ndarray_softmax(
     }
 
     crate::ffi_guard!({
+        let meta_ref = &*meta;
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = slice::from_raw_parts(shape, ndim);
-        let strides_slice = slice::from_raw_parts(strides, ndim);
 
-        let axis_usize = match validate_axis(shape_slice, axis) {
+        let axis_usize = match validate_axis(&meta_ref.shape_slice(), axis) {
             Ok(a) => a,
             Err(e) => {
                 crate::error::set_last_error(e);
@@ -53,7 +48,7 @@ pub unsafe extern "C" fn ndarray_softmax(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_f64(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
@@ -83,7 +78,7 @@ pub unsafe extern "C" fn ndarray_softmax(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, offset, shape_slice, strides_slice)
+                let Some(view) = extract_view_f32(wrapper, &meta_ref)
                 else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;

@@ -11,16 +11,18 @@ pub mod generators;
 pub mod indexing;
 pub mod linalg;
 pub mod math;
+pub mod metadata;
+mod output_meta;
 pub mod reductions;
-pub mod sorting;
 pub mod shape_ops;
+pub mod sorting;
 pub mod special;
 pub mod stacking;
 mod types;
-mod output_meta;
 
-pub use types::NdArrayHandle;
+pub use metadata::{HasViewMetadata, ViewMetadata};
 pub use output_meta::write_output_metadata;
+pub use types::NdArrayHandle;
 
 // Re-export all FFI functions for lib.rs
 pub use arithmetic::*;
@@ -33,7 +35,7 @@ pub use indexing::*;
 pub use linalg::*;
 pub use math::*;
 pub use reductions::*;
-pub use sorting::*;
 pub use shape_ops::*;
+pub use sorting::*;
 pub use special::*;
 pub use stacking::*;

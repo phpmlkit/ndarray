@@ -108,7 +108,12 @@ where
     }
 }
 
-pub fn sort_axis_generic<T, F>(view: ArrayViewD<'_, T>, axis: usize, kind: SortKind, cmp: F) -> ArrayD<T>
+pub fn sort_axis_generic<T, F>(
+    view: ArrayViewD<'_, T>,
+    axis: usize,
+    kind: SortKind,
+    cmp: F,
+) -> ArrayD<T>
 where
     T: Copy,
     F: Fn(&T, &T) -> Ordering + Copy,
@@ -158,7 +163,9 @@ where
     {
         idx_scratch.clear();
         idx_scratch.extend(0..lane_in.len());
-        sort_by_kind(&mut idx_scratch, kind, |a, b| cmp(&lane_in[*a], &lane_in[*b]));
+        sort_by_kind(&mut idx_scratch, kind, |a, b| {
+            cmp(&lane_in[*a], &lane_in[*b])
+        });
         for (dst, src) in lane_out.iter_mut().zip(idx_scratch.iter().copied()) {
             *dst = src as i64;
         }
@@ -210,9 +217,13 @@ where
         idx_scratch.extend(0..lane_in.len());
 
         if largest {
-            sort_by_kind(&mut idx_scratch, kind, |a, b| cmp_asc(&lane_in[*b], &lane_in[*a]));
+            sort_by_kind(&mut idx_scratch, kind, |a, b| {
+                cmp_asc(&lane_in[*b], &lane_in[*a])
+            });
         } else {
-            sort_by_kind(&mut idx_scratch, kind, |a, b| cmp_asc(&lane_in[*a], &lane_in[*b]));
+            sort_by_kind(&mut idx_scratch, kind, |a, b| {
+                cmp_asc(&lane_in[*a], &lane_in[*b])
+            });
         }
 
         if !sorted {

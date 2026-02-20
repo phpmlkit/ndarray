@@ -44,34 +44,26 @@ pub mod comparison_ops {
 #[macro_export]
 macro_rules! binary_cmp_op_arm {
     (
-        $a_wrapper:expr, $a_offset:expr, $a_shape:expr, $a_strides:expr,
-        $b_wrapper:expr, $b_offset:expr, $b_shape:expr, $b_strides:expr,
+        $a_wrapper:expr, $a_meta:expr,
+        $b_wrapper:expr, $b_meta:expr,
         $dtype:path, $extract_fn:ident, $cmp_op:ident
     ) => {{
-        let Some(a_view) = $extract_fn($a_wrapper, $a_offset, $a_shape, $a_strides) else {
-            crate::error::set_last_error(format!(
-                "Failed to extract a as {}",
-                stringify!($dtype)
-            ));
+        let Some(a_view) = $extract_fn($a_wrapper, $a_meta) else {
+            crate::error::set_last_error(format!("Failed to extract a as {}", stringify!($dtype)));
             return crate::error::ERR_GENERIC;
         };
-        let Some(b_view) = $extract_fn($b_wrapper, $b_offset, $b_shape, $b_strides) else {
-            crate::error::set_last_error(format!(
-                "Failed to extract b as {}",
-                stringify!($dtype)
-            ));
+        let Some(b_view) = $extract_fn($b_wrapper, $b_meta) else {
+            crate::error::set_last_error(format!("Failed to extract b as {}", stringify!($dtype)));
             return crate::error::ERR_GENERIC;
         };
-        let broadcast_shape = match crate::core::view_helpers::broadcast_shape(
-            a_view.shape(),
-            b_view.shape(),
-        ) {
-            Some(s) => s,
-            None => {
-                crate::error::set_last_error("incompatible shapes for comparison".to_string());
-                return crate::error::ERR_SHAPE;
-            }
-        };
+        let broadcast_shape =
+            match crate::core::view_helpers::broadcast_shape(a_view.shape(), b_view.shape()) {
+                Some(s) => s,
+                None => {
+                    crate::error::set_last_error("incompatible shapes for comparison".to_string());
+                    return crate::error::ERR_SHAPE;
+                }
+            };
         let a_bc = match a_view.broadcast(broadcast_shape.as_slice()) {
             Some(v) => v,
             None => {
@@ -109,11 +101,11 @@ macro_rules! binary_cmp_op_arm {
 #[macro_export]
 macro_rules! scalar_cmp_op_arm {
     (
-        $wrapper:expr, $offset:expr, $shape:expr, $strides:expr,
+        $wrapper:expr, $meta:expr,
         $scalar:expr, $cmp_op:tt
     ) => {{
         let Some(view) =
-            crate::core::view_helpers::extract_view_as_f64($wrapper, $offset, $shape, $strides)
+            crate::core::view_helpers::extract_view_as_f64($wrapper, $meta)
         else {
             crate::error::set_last_error("Failed to extract view for scalar comparison".to_string());
             return crate::error::ERR_GENERIC;

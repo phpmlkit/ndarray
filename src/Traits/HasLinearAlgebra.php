@@ -34,7 +34,7 @@ trait HasLinearAlgebra
     {
         $ffi = Lib::get();
         $ordCode = $this->normalizeNormOrder($ord, $axis);
-        $ndim = \count($this->shape);
+        $ndim = $this->ndim();
 
         if (5 === $ordCode && 2 !== $ndim) {
             throw new \InvalidArgumentException("Norm order '{$ord}' requires a 2D matrix");
@@ -43,18 +43,13 @@ trait HasLinearAlgebra
             throw new \InvalidArgumentException("Norm order '{$ord}' is only supported when axis is null");
         }
 
-        $shape = Lib::createShapeArray($this->shape);
-        $strides = Lib::createShapeArray($this->strides);
-
+        $meta = $this->viewMetadata()->toCData();
         if (null === $axis) {
             $outValue = $ffi->new('double');
             $outDtype = $ffi->new('uint8_t');
             $status = $ffi->ndarray_norm(
                 $this->handle,
-                $this->offset,
-                $shape,
-                $strides,
-                $ndim,
+                Lib::addr($meta),
                 $ordCode,
                 \FFI::addr($outValue),
                 Lib::addr($outDtype)
@@ -66,12 +61,10 @@ trait HasLinearAlgebra
         }
 
         $outHandle = $ffi->new('struct NdArrayHandle*');
+
         $status = $ffi->ndarray_norm_axis(
             $this->handle,
-            $this->offset,
-            $shape,
-            $strides,
-            $ndim,
+            Lib::addr($meta),
             $axis,
             $keepdims,
             $ordCode,
@@ -135,7 +128,7 @@ trait HasLinearAlgebra
     private function normalizeNormOrder(float|int|string|null $ord, ?int $axis): int
     {
         if (null === $ord) {
-            if (null === $axis && 2 === \count($this->shape)) {
+            if (null === $axis && 2 === $this->ndim()) {
                 return 5; // fro
             }
 
@@ -186,7 +179,7 @@ trait HasLinearAlgebra
      */
     private function computeNormOutputShape(int $axis, bool $keepdims): array
     {
-        $shape = $this->shape;
+        $shape = $this->shape();
         $ndim = \count($shape);
         $axisNorm = $axis < 0 ? $ndim + $axis : $axis;
 

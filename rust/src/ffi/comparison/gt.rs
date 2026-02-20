@@ -8,24 +8,16 @@ use crate::core::view_helpers::{
 };
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use crate::scalar_cmp_op_arm;
-
-use std::slice;
 
 /// Element-wise greater-than comparison with broadcasting. Returns Bool array.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_gt(
     a: *const NdArrayHandle,
-    a_offset: usize,
-    a_shape: *const usize,
-    a_strides: *const usize,
-    a_ndim: usize,
+    a_meta: *const ViewMetadata,
     b: *const NdArrayHandle,
-    b_offset: usize,
-    b_shape: *const usize,
-    b_strides: *const usize,
-    b_ndim: usize,
+    b_meta: *const ViewMetadata,
     out: *mut *mut NdArrayHandle,
     out_dtype_ptr: *mut u8,
     out_ndim: *mut usize,
@@ -38,39 +30,131 @@ pub unsafe extern "C" fn ndarray_gt(
         || out_dtype_ptr.is_null()
         || out_shape.is_null()
         || out_ndim.is_null()
-        || a_shape.is_null()
-        || b_shape.is_null()
+        || a_meta.is_null()
+        || b_meta.is_null()
     {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
+        let a_meta = &*a_meta;
+        let b_meta = &*b_meta;
+
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
         let b_wrapper = NdArrayHandle::as_wrapper(b as *mut _);
-
-        let a_shape_slice = slice::from_raw_parts(a_shape, a_ndim);
-        let b_shape_slice = slice::from_raw_parts(b_shape, b_ndim);
-        let a_strides_slice = slice::from_raw_parts(a_strides, a_ndim);
-        let b_strides_slice = slice::from_raw_parts(b_strides, b_ndim);
 
         let out_dtype = DType::promote(a_wrapper.dtype, b_wrapper.dtype);
 
         let (result_wrapper, result_shape) = match out_dtype {
-            DType::Float64 => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Float64, extract_view_as_f64, gt),
-            DType::Float32 => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Float32, extract_view_as_f32, gt),
-            DType::Int64 => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Int64, extract_view_as_i64, gt),
-            DType::Int32 => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Int32, extract_view_as_i32, gt),
-            DType::Int16 => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Int16, extract_view_as_i16, gt),
-            DType::Int8 => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Int8, extract_view_as_i8, gt),
-            DType::Uint64 => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Uint64, extract_view_as_u64, gt),
-            DType::Uint32 => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Uint32, extract_view_as_u32, gt),
-            DType::Uint16 => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Uint16, extract_view_as_u16, gt),
-            DType::Uint8 => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Uint8, extract_view_as_u8, gt),
-            DType::Bool => binary_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, b_wrapper, b_offset, b_shape_slice, b_strides_slice, DType::Bool, extract_view_as_bool, gt),
+            DType::Float64 => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Float64,
+                extract_view_as_f64,
+                gt
+            ),
+            DType::Float32 => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Float32,
+                extract_view_as_f32,
+                gt
+            ),
+            DType::Int64 => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Int64,
+                extract_view_as_i64,
+                gt
+            ),
+            DType::Int32 => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Int32,
+                extract_view_as_i32,
+                gt
+            ),
+            DType::Int16 => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Int16,
+                extract_view_as_i16,
+                gt
+            ),
+            DType::Int8 => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Int8,
+                extract_view_as_i8,
+                gt
+            ),
+            DType::Uint64 => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Uint64,
+                extract_view_as_u64,
+                gt
+            ),
+            DType::Uint32 => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Uint32,
+                extract_view_as_u32,
+                gt
+            ),
+            DType::Uint16 => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Uint16,
+                extract_view_as_u16,
+                gt
+            ),
+            DType::Uint8 => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Uint8,
+                extract_view_as_u8,
+                gt
+            ),
+            DType::Bool => binary_cmp_op_arm!(
+                a_wrapper,
+                &*a_meta,
+                b_wrapper,
+                &*b_meta,
+                DType::Bool,
+                extract_view_as_bool,
+                gt
+            ),
         };
 
         let _ = result_shape;
-        if let Err(e) = write_output_metadata(&result_wrapper, out_dtype_ptr, out_ndim, out_shape, max_ndim) {
+        if let Err(e) = write_output_metadata(
+            &result_wrapper,
+            out_dtype_ptr,
+            out_ndim,
+            out_shape,
+            max_ndim,
+        ) {
             crate::error::set_last_error(e);
             return ERR_GENERIC;
         }
@@ -83,10 +167,7 @@ pub unsafe extern "C" fn ndarray_gt(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_gt_scalar(
     a: *const NdArrayHandle,
-    a_offset: usize,
-    a_shape: *const usize,
-    a_strides: *const usize,
-    ndim: usize,
+    a_meta: *const ViewMetadata,
     scalar: f64,
     out: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
@@ -94,18 +175,26 @@ pub unsafe extern "C" fn ndarray_gt_scalar(
     out_shape: *mut usize,
     max_ndim: usize,
 ) -> i32 {
-    if a.is_null() || out.is_null() || a_shape.is_null() || out_dtype.is_null() || out_ndim.is_null() || out_shape.is_null() {
+    if a.is_null()
+        || out.is_null()
+        || a_meta.is_null()
+        || out_dtype.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
+    {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
-        let a_shape_slice = slice::from_raw_parts(a_shape, ndim);
-        let a_strides_slice = slice::from_raw_parts(a_strides, ndim);
 
-        let result_wrapper = scalar_cmp_op_arm!(a_wrapper, a_offset, a_shape_slice, a_strides_slice, scalar, >);
+        let result_wrapper = scalar_cmp_op_arm!(
+            a_wrapper, &*a_meta, scalar, >
+        );
 
-        if let Err(e) = write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim) {
+        if let Err(e) =
+            write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
+        {
             crate::error::set_last_error(e);
             return ERR_GENERIC;
         }
