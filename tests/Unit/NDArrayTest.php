@@ -12,6 +12,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for NDArray::array() factory method.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class NDArrayTest extends TestCase
 {

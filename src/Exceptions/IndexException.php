@@ -7,6 +7,4 @@ namespace PhpMlKit\NDArray\Exceptions;
 /**
  * Exception for array indexing errors (out of bounds, invalid indices).
  */
-class IndexException extends NDArrayException
-{
-}
+class IndexException extends NDArrayException {}

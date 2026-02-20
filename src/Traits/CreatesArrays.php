@@ -21,9 +21,8 @@ trait CreatesArrays
     /**
      * Create array from PHP array.
      *
-     * @param array $data Nested PHP array
-     * @param DType|null $dtype Data type (auto-inferred if null)
-     * @return self
+     * @param array      $data  Nested PHP array
+     * @param null|DType $dtype Data type (auto-inferred if null)
      */
     public static function array(array $data, ?DType $dtype = null): self
     {
@@ -37,7 +36,7 @@ trait CreatesArrays
         $dtype ??= DType::fromArray($data);
 
         $ffi = Lib::get();
-        $len = count($flatData);
+        $len = \count($flatData);
 
         $handle = self::createTyped($ffi, $dtype, $flatData, $shape, $len);
 
@@ -48,8 +47,7 @@ trait CreatesArrays
      * Create an array filled with zeros.
      *
      * @param array<int> $shape Array shape
-     * @param DType|null $dtype Data type (default: Float64)
-     * @return self
+     * @param null|DType $dtype Data type (default: Float64)
      */
     public static function zeros(array $shape, ?DType $dtype = null): self
     {
@@ -57,11 +55,11 @@ trait CreatesArrays
 
         $ffi = Lib::get();
         $cShape = Lib::createShapeArray($shape);
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_zeros(
             $cShape,
-            count($shape),
+            \count($shape),
             $dtype->value,
             Lib::addr($outHandle)
         );
@@ -75,8 +73,7 @@ trait CreatesArrays
      * Create an array filled with ones.
      *
      * @param array<int> $shape Array shape
-     * @param DType|null $dtype Data type (default: Float64)
-     * @return self
+     * @param null|DType $dtype Data type (default: Float64)
      */
     public static function ones(array $shape, ?DType $dtype = null): self
     {
@@ -84,11 +81,11 @@ trait CreatesArrays
 
         $ffi = Lib::get();
         $cShape = Lib::createShapeArray($shape);
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_ones(
             $cShape,
-            count($shape),
+            \count($shape),
             $dtype->value,
             Lib::addr($outHandle)
         );
@@ -98,7 +95,7 @@ trait CreatesArrays
         return new self($outHandle, $shape, $dtype);
     }
 
-     /**
+    /**
      * Create an empty array for the given shape and dtype.
      *
      * This is intended for preallocation APIs where shape metadata matters,
@@ -106,13 +103,12 @@ trait CreatesArrays
      * uses the same safe allocation path as zeros().
      *
      * @param array<int> $shape Array shape
-     * @param DType|null $dtype Data type (default: Float64)
-     * @return self
+     * @param null|DType $dtype Data type (default: Float64)
      */
     public static function empty(array $shape, ?DType $dtype = null): self
     {
-        if (!in_array(0, $shape, true)) {
-            throw new ShapeException("empty() requires a zero-size shape (at least one dimension must be 0)");
+        if (!\in_array(0, $shape, true)) {
+            throw new ShapeException('empty() requires a zero-size shape (at least one dimension must be 0)');
         }
 
         return self::zeros($shape, $dtype);
@@ -121,40 +117,39 @@ trait CreatesArrays
     /**
      * Create an array filled with a specific value.
      *
-     * @param array<int> $shape Array shape
-     * @param mixed $fillValue Value to fill array with
-     * @param DType|null $dtype Data type (default: inferred from value)
-     * @return self
+     * @param array<int> $shape     Array shape
+     * @param mixed      $fillValue Value to fill array with
+     * @param null|DType $dtype     Data type (default: inferred from value)
      */
     public static function full(array $shape, mixed $fillValue, ?DType $dtype = null): self
     {
-        if ($dtype === null) {
-            if (is_int($fillValue)) {
+        if (null === $dtype) {
+            if (\is_int($fillValue)) {
                 $dtype = DType::Int64;
-            } elseif (is_float($fillValue)) {
+            } elseif (\is_float($fillValue)) {
                 $dtype = DType::Float64;
-            } elseif (is_bool($fillValue)) {
+            } elseif (\is_bool($fillValue)) {
                 $dtype = DType::Bool;
             } else {
-                throw new \InvalidArgumentException("Cannot infer dtype from fill value");
+                throw new \InvalidArgumentException('Cannot infer dtype from fill value');
             }
         }
 
         $ffi = Lib::get();
         $cShape = Lib::createShapeArray($shape);
 
-        if ($dtype === DType::Bool) {
+        if (DType::Bool === $dtype) {
             $val = $fillValue ? 1 : 0;
         } else {
             $val = $fillValue;
         }
         $cValue = Lib::createCArray($dtype->ffiType(), [$val]);
 
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_full(
             $cShape,
-            count($shape),
+            \count($shape),
             $cValue,
             $dtype->value,
             Lib::addr($outHandle)
@@ -168,11 +163,10 @@ trait CreatesArrays
     /**
      * Create a 2D identity matrix.
      *
-     * @param int $N Number of rows
-     * @param int|null $M Number of columns (default: N)
-     * @param int $k Diagonal index (0: main, >0: upper, <0: lower)
-     * @param DType|null $dtype Data type (default: Float64)
-     * @return self
+     * @param int        $N     Number of rows
+     * @param null|int   $M     Number of columns (default: N)
+     * @param int        $k     Diagonal index (0: main, >0: upper, <0: lower)
+     * @param null|DType $dtype Data type (default: Float64)
      */
     public static function eye(int $N, ?int $M = null, int $k = 0, ?DType $dtype = null): self
     {
@@ -180,7 +174,7 @@ trait CreatesArrays
         $dtype ??= DType::Float64;
 
         $ffi = Lib::get();
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_eye(
             $N,
@@ -198,31 +192,30 @@ trait CreatesArrays
     /**
      * Create evenly spaced values within a given interval.
      *
-     * @param int|float $start Start of interval (inclusive)
-     * @param int|float|null $stop End of interval (exclusive)
-     * @param int|float $step Spacing between values
-     * @param DType|null $dtype Data type
-     * @return self
+     * @param float|int      $start Start of interval (inclusive)
+     * @param null|float|int $stop  End of interval (exclusive)
+     * @param float|int      $step  Spacing between values
+     * @param null|DType     $dtype Data type
      */
-    public static function arange(int|float $start, int|float|null $stop = null, int|float $step = 1, ?DType $dtype = null): self
+    public static function arange(float|int $start, float|int|null $stop = null, float|int $step = 1, ?DType $dtype = null): self
     {
-        if ($stop === null) {
+        if (null === $stop) {
             $stop = $start;
             $start = 0;
         }
 
         $dtype ??= DType::fromValue($start);
 
-        if ($step == 0) {
-            throw new \InvalidArgumentException("Step cannot be zero");
+        if (0 == $step) {
+            throw new \InvalidArgumentException('Step cannot be zero');
         }
 
-        if ($dtype === DType::Bool) {
-            throw new \InvalidArgumentException("Bool dtype not supported for arange");
+        if (DType::Bool === $dtype) {
+            throw new \InvalidArgumentException('Bool dtype not supported for arange');
         }
 
         $ffi = Lib::get();
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_arange(
             (float) $start,
@@ -248,12 +241,11 @@ trait CreatesArrays
     /**
      * Create evenly spaced numbers over a specified interval.
      *
-     * @param float $start The starting value of the sequence
-     * @param float $stop The end value of the sequence
-     * @param int $num Number of samples to generate
-     * @param bool $endpoint If true, stop is the last sample
-     * @param DType $dtype Data type (default: Float64)
-     * @return self
+     * @param float $start    The starting value of the sequence
+     * @param float $stop     The end value of the sequence
+     * @param int   $num      Number of samples to generate
+     * @param bool  $endpoint If true, stop is the last sample
+     * @param DType $dtype    Data type (default: Float64)
      */
     public static function linspace(
         float $start,
@@ -263,15 +255,15 @@ trait CreatesArrays
         DType $dtype = DType::Float64
     ): self {
         if ($num <= 0) {
-            throw new ShapeException("Number of samples, $num, must be positive");
+            throw new ShapeException("Number of samples, {$num}, must be positive");
         }
 
-        if ($dtype !== DType::Float32 && $dtype !== DType::Float64) {
-            throw new \InvalidArgumentException("linspace only supports Float32 and Float64 dtypes");
+        if (DType::Float32 !== $dtype && DType::Float64 !== $dtype) {
+            throw new \InvalidArgumentException('linspace only supports Float32 and Float64 dtypes');
         }
 
         $ffi = Lib::get();
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_linspace(
             $start,
@@ -291,11 +283,10 @@ trait CreatesArrays
      * Create numbers spaced evenly on a log scale.
      *
      * @param float $start The starting exponent (base**start is the first value)
-     * @param float $stop The end exponent (base**stop is the final value)
-     * @param int $num Number of samples to generate
-     * @param float $base The base of the log space
+     * @param float $stop  The end exponent (base**stop is the final value)
+     * @param int   $num   Number of samples to generate
+     * @param float $base  The base of the log space
      * @param DType $dtype Data type (default: Float64)
-     * @return self
      */
     public static function logspace(
         float $start,
@@ -305,15 +296,15 @@ trait CreatesArrays
         DType $dtype = DType::Float64
     ): self {
         if ($num <= 0) {
-            throw new ShapeException("Number of samples, $num, must be positive");
+            throw new ShapeException("Number of samples, {$num}, must be positive");
         }
 
-        if ($dtype !== DType::Float32 && $dtype !== DType::Float64) {
-            throw new \InvalidArgumentException("logspace only supports Float32 and Float64 dtypes");
+        if (DType::Float32 !== $dtype && DType::Float64 !== $dtype) {
+            throw new \InvalidArgumentException('logspace only supports Float32 and Float64 dtypes');
         }
 
         $ffi = Lib::get();
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_logspace(
             $start,
@@ -333,10 +324,9 @@ trait CreatesArrays
      * Create numbers spaced geometrically from start to stop.
      *
      * @param float $start The starting value of the sequence
-     * @param float $stop The end value of the sequence
-     * @param int $num Number of samples to generate
+     * @param float $stop  The end value of the sequence
+     * @param int   $num   Number of samples to generate
      * @param DType $dtype Data type (default: Float64)
-     * @return self
      */
     public static function geomspace(
         float $start,
@@ -345,23 +335,23 @@ trait CreatesArrays
         DType $dtype = DType::Float64
     ): self {
         if ($num <= 0) {
-            throw new ShapeException("Number of samples, $num, must be positive");
+            throw new ShapeException("Number of samples, {$num}, must be positive");
         }
 
-        if ($dtype !== DType::Float32 && $dtype !== DType::Float64) {
-            throw new \InvalidArgumentException("geomspace only supports Float32 and Float64 dtypes");
+        if (DType::Float32 !== $dtype && DType::Float64 !== $dtype) {
+            throw new \InvalidArgumentException('geomspace only supports Float32 and Float64 dtypes');
         }
 
-        if ($start == 0.0 || $stop == 0.0) {
-            throw new \InvalidArgumentException("geomspace does not support zero values");
+        if (0.0 == $start || 0.0 == $stop) {
+            throw new \InvalidArgumentException('geomspace does not support zero values');
         }
 
         if (($start > 0.0) !== ($stop > 0.0)) {
-            throw new \InvalidArgumentException("geomspace requires start and stop to have the same sign");
+            throw new \InvalidArgumentException('geomspace requires start and stop to have the same sign');
         }
 
         $ffi = Lib::get();
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_geomspace(
             $start,
@@ -380,9 +370,8 @@ trait CreatesArrays
      * Create random samples from a uniform distribution over [0, 1).
      *
      * @param array<int> $shape Output shape
-     * @param DType|null $dtype Float dtype (default: Float64)
-     * @param int|null $seed Optional seed for deterministic output
-     * @return self
+     * @param null|DType $dtype Float dtype (default: Float64)
+     * @param null|int   $seed  Optional seed for deterministic output
      */
     public static function random(array $shape, ?DType $dtype = null, ?int $seed = null): self
     {
@@ -390,29 +379,29 @@ trait CreatesArrays
         self::assertFloatDtype($dtype, 'random');
 
         $ffi = Lib::get();
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
         $status = $ffi->ndarray_random(
             Lib::createShapeArray($shape),
-            count($shape),
+            \count($shape),
             $dtype->value,
-            $seed !== null,
+            null !== $seed,
             $seed ?? 0,
             Lib::addr($outHandle)
         );
 
         Lib::checkStatus($status);
+
         return new self($outHandle, $shape, $dtype);
     }
 
     /**
      * Create random integer samples from [low, high).
      *
-     * @param int $low Inclusive lower bound
-     * @param int $high Exclusive upper bound
+     * @param int        $low   Inclusive lower bound
+     * @param int        $high  Exclusive upper bound
      * @param array<int> $shape Output shape
-     * @param DType|null $dtype Integer dtype (default: Int64)
-     * @param int|null $seed Optional seed for deterministic output
-     * @return self
+     * @param null|DType $dtype Integer dtype (default: Int64)
+     * @param null|int   $seed  Optional seed for deterministic output
      */
     public static function randomInt(int $low, int $high, array $shape, ?DType $dtype = null, ?int $seed = null): self
     {
@@ -421,23 +410,24 @@ trait CreatesArrays
             throw new \InvalidArgumentException('randomInt only supports integer dtypes');
         }
         if ($high <= $low) {
-            throw new \InvalidArgumentException("randomInt requires high > low, got [$low, $high)");
+            throw new \InvalidArgumentException("randomInt requires high > low, got [{$low}, {$high})");
         }
 
         $ffi = Lib::get();
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
         $status = $ffi->ndarray_random_int(
             $low,
             $high,
             Lib::createShapeArray($shape),
-            count($shape),
+            \count($shape),
             $dtype->value,
-            $seed !== null,
+            null !== $seed,
             $seed ?? 0,
             Lib::addr($outHandle)
         );
 
         Lib::checkStatus($status);
+
         return new self($outHandle, $shape, $dtype);
     }
 
@@ -445,9 +435,8 @@ trait CreatesArrays
      * Create random samples from a standard normal distribution N(0, 1).
      *
      * @param array<int> $shape Output shape
-     * @param DType|null $dtype Float dtype (default: Float64)
-     * @param int|null $seed Optional seed for deterministic output
-     * @return self
+     * @param null|DType $dtype Float dtype (default: Float64)
+     * @param null|int   $seed  Optional seed for deterministic output
      */
     public static function randn(array $shape, ?DType $dtype = null, ?int $seed = null): self
     {
@@ -455,87 +444,88 @@ trait CreatesArrays
         self::assertFloatDtype($dtype, 'randn');
 
         $ffi = Lib::get();
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
         $status = $ffi->ndarray_randn(
             Lib::createShapeArray($shape),
-            count($shape),
+            \count($shape),
             $dtype->value,
-            $seed !== null,
+            null !== $seed,
             $seed ?? 0,
             Lib::addr($outHandle)
         );
 
         Lib::checkStatus($status);
+
         return new self($outHandle, $shape, $dtype);
     }
 
     /**
      * Create random samples from a normal distribution N(mean, std).
      *
-     * @param float $mean Mean of the distribution
-     * @param float $std Standard deviation (must be > 0)
+     * @param float      $mean  Mean of the distribution
+     * @param float      $std   Standard deviation (must be > 0)
      * @param array<int> $shape Output shape
-     * @param DType|null $dtype Float dtype (default: Float64)
-     * @param int|null $seed Optional seed for deterministic output
-     * @return self
+     * @param null|DType $dtype Float dtype (default: Float64)
+     * @param null|int   $seed  Optional seed for deterministic output
      */
     public static function normal(float $mean, float $std, array $shape, ?DType $dtype = null, ?int $seed = null): self
     {
         $dtype ??= DType::Float64;
         self::assertFloatDtype($dtype, 'normal');
         if (!($std > 0.0)) {
-            throw new \InvalidArgumentException("normal requires std > 0, got $std");
+            throw new \InvalidArgumentException("normal requires std > 0, got {$std}");
         }
 
         $ffi = Lib::get();
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
         $status = $ffi->ndarray_normal(
             $mean,
             $std,
             Lib::createShapeArray($shape),
-            count($shape),
+            \count($shape),
             $dtype->value,
-            $seed !== null,
+            null !== $seed,
             $seed ?? 0,
             Lib::addr($outHandle)
         );
 
         Lib::checkStatus($status);
+
         return new self($outHandle, $shape, $dtype);
     }
 
     /**
      * Create random samples from a uniform distribution over [low, high).
      *
-     * @param float $low Inclusive lower bound
-     * @param float $high Exclusive upper bound
+     * @param float      $low   Inclusive lower bound
+     * @param float      $high  Exclusive upper bound
      * @param array<int> $shape Output shape
-     * @param DType|null $dtype Float dtype (default: Float64)
-     * @param int|null $seed Optional seed for deterministic output
-     * @return self
+     * @param null|DType $dtype Float dtype (default: Float64)
+     * @param null|int   $seed  Optional seed for deterministic output
      */
     public static function uniform(float $low, float $high, array $shape, ?DType $dtype = null, ?int $seed = null): self
     {
         $dtype ??= DType::Float64;
         self::assertFloatDtype($dtype, 'uniform');
         if ($high <= $low) {
-            throw new \InvalidArgumentException("uniform requires high > low, got [$low, $high)");
+            throw new \InvalidArgumentException("uniform requires high > low, got [{$low}, {$high})");
         }
 
         $ffi = Lib::get();
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
         $status = $ffi->ndarray_uniform(
             $low,
             $high,
             Lib::createShapeArray($shape),
-            count($shape),
+            \count($shape),
             $dtype->value,
-            $seed !== null,
+            null !== $seed,
             $seed ?? 0,
             Lib::addr($outHandle)
         );
 
         Lib::checkStatus($status);
+
         return new self($outHandle, $shape, $dtype);
     }
 
@@ -544,15 +534,17 @@ trait CreatesArrays
      *
      * Static convenience method that accepts either a PHP array or NDArray.
      *
-     * @param array<int>|self $a Input array or NDArray
-     * @param int|array<int>|self $reps The number of repetitions of A along each axis
+     * @param array<int>|self     $a    Input array or NDArray
+     * @param array<int>|int|self $reps The number of repetitions of A along each axis
+     *
      * @return self The tiled output array
      */
-    public static function tileArray(array|self $a, int|array|self $reps): self
+    public static function tileArray(array|self $a, array|int|self $reps): self
     {
-        if (is_array($a)) {
+        if (\is_array($a)) {
             $a = self::array($a);
         }
+
         return $a->tile($reps);
     }
 
@@ -561,16 +553,18 @@ trait CreatesArrays
      *
      * Static convenience method that accepts either a PHP array or NDArray.
      *
-     * @param array<int>|self $a Input array or NDArray
-     * @param int|array<int>|self $repeats The number of repetitions for each element
-     * @param int|null $axis The axis along which to repeat values. By default, use the flattened input array
+     * @param array<int>|self     $a       Input array or NDArray
+     * @param array<int>|int|self $repeats The number of repetitions for each element
+     * @param null|int            $axis    The axis along which to repeat values. By default, use the flattened input array
+     *
      * @return self Output array which has the same shape as a, except along the given axis
      */
-    public static function repeatArray(array|self $a, int|array|self $repeats, ?int $axis = null): self
+    public static function repeatArray(array|self $a, array|int|self $repeats, ?int $axis = null): self
     {
-        if (is_array($a)) {
+        if (\is_array($a)) {
             $a = self::array($a);
         }
+
         return $a->repeat($repeats, $axis);
     }
 
@@ -588,9 +582,9 @@ trait CreatesArrays
         $shape = [];
         $current = $data;
 
-        while (is_array($current)) {
-            $count = count($current);
-            if ($count === 0) {
+        while (\is_array($current)) {
+            $count = \count($current);
+            if (0 === $count) {
                 break;
             }
             $shape[] = $count;
@@ -609,7 +603,7 @@ trait CreatesArrays
     {
         $result = [];
 
-        array_walk_recursive($data, function ($value) use (&$result) {
+        array_walk_recursive($data, static function ($value) use (&$result) {
             $result[] = $value;
         });
 
@@ -619,29 +613,30 @@ trait CreatesArrays
     /**
      * Create an NDArray handle using the appropriate FFI function for the dtype.
      *
-     * @param FFI&Bindings $ffi FFI instance
-     * @param DType $dtype Data type
-     * @param array $data Flat array of values
-     * @param array<int> $shape Array shape
-     * @param int $len Number of elements
+     * @param Bindings&\FFI $ffi   FFI instance
+     * @param DType         $dtype Data type
+     * @param array         $data  Flat array of values
+     * @param array<int>    $shape Array shape
+     * @param int           $len   Number of elements
+     *
      * @return CData Opaque handle
      */
-    private static function createTyped(FFI $ffi, DType $dtype, array $data, array $shape, int $len): CData
+    private static function createTyped(\FFI $ffi, DType $dtype, array $data, array $shape, int $len): CData
     {
-        if ($dtype === DType::Bool) {
-            $data = array_map(fn($v) => $v ? 1 : 0, $data);
+        if (DType::Bool === $dtype) {
+            $data = array_map(static fn ($v) => $v ? 1 : 0, $data);
         }
 
         $cData = Lib::createCArray($dtype->ffiType(), $data);
         $cShape = Lib::createShapeArray($shape);
 
-        $outHandle = $ffi->new("struct NdArrayHandle*");
+        $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_create(
             $cData,
             $len,
             $cShape,
-            count($shape),
+            \count($shape),
             $dtype->value,
             Lib::addr($outHandle)
         );
@@ -657,7 +652,7 @@ trait CreatesArrays
     private static function assertFloatDtype(DType $dtype, string $method): void
     {
         if (!$dtype->isFloat()) {
-            throw new \InvalidArgumentException("$method only supports Float32 and Float64 dtypes");
+            throw new \InvalidArgumentException("{$method} only supports Float32 and Float64 dtypes");
         }
     }
 }

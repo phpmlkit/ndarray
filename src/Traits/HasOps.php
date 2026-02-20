@@ -6,9 +6,10 @@ namespace PhpMlKit\NDArray\Traits;
 
 use FFI;
 use FFI\CData;
+use NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\DType;
-use PhpMlKit\NDArray\NDArray;
 use PhpMlKit\NDArray\FFI\Lib;
+use PhpMlKit\NDArray\NDArray;
 
 /**
  * Shared operation helpers for FFI-backed unary, binary, and scalar reduction ops.
@@ -24,9 +25,8 @@ trait HasOps
      * All unary ops return metadata (dtype, ndim, shape) into caller-provided buffers.
      * Signature: (handle, offset, shape, strides, ndim, ...$extraArgs, out_handle, out_dtype, out_ndim, out_shape, max_ndim).
      *
-     * @param string $funcName FFI function name
-     * @param mixed ...$extraArgs Extra FFI args inserted before out_handle (e.g. scalar, axis)
-     * @return NDArray
+     * @param string $funcName     FFI function name
+     * @param mixed  ...$extraArgs Extra FFI args inserted before out_handle (e.g. scalar, axis)
      */
     protected function unaryOp(string $funcName, mixed ...$extraArgs): NDArray
     {
@@ -36,7 +36,7 @@ trait HasOps
 
         // Normalize extra args: convert BackedEnum to their values
         $normalizedArgs = array_map(
-            fn($arg) => $arg instanceof \BackedEnum ? $arg->value : $arg,
+            static fn ($arg) => $arg instanceof \BackedEnum ? $arg->value : $arg,
             $extraArgs
         );
 
@@ -54,13 +54,13 @@ trait HasOps
             Lib::MAX_NDIM,
         ];
 
-        $status = $ffi->$funcName(...$args);
+        $status = $ffi->{$funcName}(...$args);
 
         Lib::checkStatus($status);
 
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
-        if ($dtype === null) {
-            throw new \NDArray\Exceptions\NDArrayException('Invalid dtype returned from Rust');
+        if (null === $dtype) {
+            throw new NDArrayException('Invalid dtype returned from Rust');
         }
 
         $ndim = (int) $outNdimBuf->cdata;
@@ -75,9 +75,8 @@ trait HasOps
      * FFI signature: (a..., b..., out_handle, out_dtype_ptr, out_ndim, out_shape, max_ndim).
      * dtype and shape are always read from Rust output metadata.
      *
-     * @param string $funcName FFI function for NDArray RHS
-     * @param NDArray $other RHS operand
-     * @return NDArray
+     * @param string  $funcName FFI function for NDArray RHS
+     * @param NDArray $other    RHS operand
      */
     protected function binaryOp(
         string $funcName,
@@ -87,7 +86,7 @@ trait HasOps
         $outHandle = $ffi->new('struct NdArrayHandle*');
         [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
 
-        $status = $ffi->$funcName(
+        $status = $ffi->{$funcName}(
             $this->handle,
             $this->offset,
             Lib::createShapeArray($this->shape),
@@ -108,13 +107,13 @@ trait HasOps
         Lib::checkStatus($status);
 
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
-        if ($dtype === null) {
-            throw new \NDArray\Exceptions\NDArrayException('Invalid dtype returned from Rust');
+        if (null === $dtype) {
+            throw new NDArrayException('Invalid dtype returned from Rust');
         }
 
         $ndim = (int) $outNdimBuf->cdata;
         $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
-        
+
         return new NDArray($outHandle, $shape, $dtype);
     }
 
@@ -124,9 +123,8 @@ trait HasOps
      * FFI signature: (handle, offset, shape, strides, ndim, ...$extraArgs, out_value, out_dtype).
      * Examples: ndarray_sum (no extra args), ndarray_var (ddof before out_value).
      *
-     * @param string $funcName FFI function name
-     * @param mixed ...$extraArgs Extra FFI args inserted before out_value (e.g. ddof)
-     * @return float|int
+     * @param string $funcName     FFI function name
+     * @param mixed  ...$extraArgs Extra FFI args inserted before out_value (e.g. ddof)
      */
     protected function scalarReductionOp(string $funcName, mixed ...$extraArgs): float|int
     {
@@ -145,12 +143,12 @@ trait HasOps
             Lib::addr($outDtype),
         ];
 
-        $status = $ffi->$funcName(...$args);
+        $status = $ffi->{$funcName}(...$args);
         Lib::checkStatus($status);
 
         $dtype = DType::tryFrom((int) $outDtype->cdata);
-        if ($dtype === null) {
-            throw new \NDArray\Exceptions\NDArrayException('Invalid dtype returned from Rust scalar reduction');
+        if (null === $dtype) {
+            throw new NDArrayException('Invalid dtype returned from Rust scalar reduction');
         }
 
         return $this->interpretScalarValue($ffi, $outValue, $dtype);
@@ -159,14 +157,14 @@ trait HasOps
     /**
      * Interpret 8-byte value buffer as PHP scalar based on dtype.
      *
-     * @param FFI $ffi FFI instance
+     * @param \FFI  $ffi      FFI instance
      * @param CData $outValue 8-byte buffer (allocated as double)
-     * @param DType $dtype Result dtype from Rust
-     * @return float|int
+     * @param DType $dtype    Result dtype from Rust
      */
-    private function interpretScalarValue(FFI $ffi, CData $outValue, DType $dtype): float|int
+    private function interpretScalarValue(\FFI $ffi, CData $outValue, DType $dtype): float|int
     {
-        $addr = FFI::addr($outValue);
+        $addr = \FFI::addr($outValue);
+
         return match ($dtype) {
             DType::Float64, DType::Float32 => $outValue->cdata,
             DType::Int64, DType::Int32, DType::Int16, DType::Int8 => $ffi->cast('int64_t*', $addr)[0],

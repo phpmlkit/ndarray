@@ -9,6 +9,4 @@ use Exception;
 /**
  * Base exception for all NDArray errors.
  */
-class NDArrayException extends Exception
-{
-}
+class NDArrayException extends \Exception {}

@@ -12,6 +12,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for NDArray indexing: get(), set(), ArrayAccess, and view behavior.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class IndexingTest extends TestCase
 {
@@ -65,7 +69,7 @@ final class IndexingTest extends TestCase
         $arr = NDArray::array($data, $dtype);
         $result = $arr->get(0);
 
-        if ($dtype === DType::Bool) {
+        if (DType::Bool === $dtype) {
             $this->assertSame($expected, $result);
         } elseif ($dtype->isFloat()) {
             $this->assertEqualsWithDelta($expected, $result, 0.001);
@@ -237,7 +241,7 @@ final class IndexingTest extends TestCase
 
         $arr->set([1], true);
 
-        $this->assertSame(true, $arr->get(1));
+        $this->assertTrue($arr->get(1));
     }
 
     // =========================================================================
@@ -712,16 +716,16 @@ final class IndexingTest extends TestCase
 
         foreach ($dtypes as $dtype) {
             $arr = NDArray::array([10, 20, 30, 40, 50], $dtype);
-            $this->assertEqualsWithDelta(50, $arr->get(-1), 0.001, "Failed for $dtype->name");
-            $this->assertEqualsWithDelta(40, $arr->get(-2), 0.001, "Failed for $dtype->name");
-            $this->assertEqualsWithDelta(10, $arr->get(-5), 0.001, "Failed for $dtype->name");
+            $this->assertEqualsWithDelta(50, $arr->get(-1), 0.001, "Failed for {$dtype->name}");
+            $this->assertEqualsWithDelta(40, $arr->get(-2), 0.001, "Failed for {$dtype->name}");
+            $this->assertEqualsWithDelta(10, $arr->get(-5), 0.001, "Failed for {$dtype->name}");
         }
 
         // Test Bool separately since values are different
         $boolArr = NDArray::array([true, false, true, false], DType::Bool);
-        $this->assertSame(false, $boolArr->get(-1));
-        $this->assertSame(true, $boolArr->get(-2));
-        $this->assertSame(true, $boolArr->get(-4));
+        $this->assertFalse($boolArr->get(-1));
+        $this->assertTrue($boolArr->get(-2));
+        $this->assertTrue($boolArr->get(-4));
     }
 
     public function testSetPartialIndicesThrows(): void
@@ -812,8 +816,9 @@ final class IndexingTest extends TestCase
     public function testViewKeepsRootAlive(): void
     {
         // Create view, then release the root reference
-        $view = (function () {
+        $view = (static function () {
             $arr = NDArray::array([[10, 20], [30, 40]], DType::Int64);
+
             return $arr->get(1); // view of row [30, 40]
         })();
 
@@ -837,7 +842,7 @@ final class IndexingTest extends TestCase
 
         // Assign scalar to row (broadcast)
         $arr[0] = 99;
-        
+
         $this->assertSame([
             [99, 99],
             [3, 4],

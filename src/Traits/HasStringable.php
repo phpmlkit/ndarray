@@ -9,6 +9,4 @@ namespace PhpMlKit\NDArray\Traits;
  *
  * Will provide __toString(), dump(), and formatted print support.
  */
-trait HasStringable
-{
-}
+trait HasStringable {}

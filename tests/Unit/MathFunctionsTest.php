@@ -9,7 +9,11 @@ use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests for element-wise math operations
+ * Tests for element-wise math operations.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class MathFunctionsTest extends TestCase
 {
@@ -31,33 +35,33 @@ final class MathFunctionsTest extends TestCase
     {
         $a = NDArray::array([0, 1], DType::Float64);
         $result = $a->exp();
-        $this->assertEqualsWithDelta([1, M_E], $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta([1, \M_E], $result->toArray(), 0.0001);
     }
 
     public function testLog(): void
     {
-        $a = NDArray::array([1, M_E], DType::Float64);
+        $a = NDArray::array([1, \M_E], DType::Float64);
         $result = $a->log();
         $this->assertEqualsWithDelta([0, 1], $result->toArray(), 0.0001);
     }
 
     public function testLn(): void
     {
-        $a = NDArray::array([1, M_E], DType::Float64);
+        $a = NDArray::array([1, \M_E], DType::Float64);
         $result = $a->ln();
         $this->assertEqualsWithDelta([0, 1], $result->toArray(), 0.0001);
     }
 
     public function testLn1p(): void
     {
-        $a = NDArray::array([0, M_E - 1], DType::Float64);
+        $a = NDArray::array([0, \M_E - 1], DType::Float64);
         $result = $a->ln1p();
         $this->assertEqualsWithDelta([0, 1], $result->toArray(), 0.0001);
     }
 
     public function testToDegrees(): void
     {
-        $a = NDArray::array([0, M_PI / 2, M_PI], DType::Float64);
+        $a = NDArray::array([0, \M_PI / 2, \M_PI], DType::Float64);
         $result = $a->toDegrees();
         $this->assertEqualsWithDelta([0, 90, 180], $result->toArray(), 0.0001);
     }
@@ -66,7 +70,7 @@ final class MathFunctionsTest extends TestCase
     {
         $a = NDArray::array([0, 90, 180], DType::Float64);
         $result = $a->toRadians();
-        $this->assertEqualsWithDelta([0, M_PI / 2, M_PI], $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta([0, \M_PI / 2, \M_PI], $result->toArray(), 0.0001);
     }
 
     public function testPowi(): void
@@ -85,21 +89,21 @@ final class MathFunctionsTest extends TestCase
 
     public function testSin(): void
     {
-        $a = NDArray::array([0, M_PI / 2], DType::Float64);
+        $a = NDArray::array([0, \M_PI / 2], DType::Float64);
         $result = $a->sin();
         $this->assertEqualsWithDelta([0, 1], $result->toArray(), 0.0001);
     }
 
     public function testCos(): void
     {
-        $a = NDArray::array([0, M_PI], DType::Float64);
+        $a = NDArray::array([0, \M_PI], DType::Float64);
         $result = $a->cos();
         $this->assertEqualsWithDelta([1, -1], $result->toArray(), 0.0001);
     }
 
     public function testTan(): void
     {
-        $a = NDArray::array([0, M_PI / 4], DType::Float64);
+        $a = NDArray::array([0, \M_PI / 4], DType::Float64);
         $result = $a->tan();
         $this->assertEqualsWithDelta([0, 1], $result->toArray(), 0.0001);
     }
@@ -173,21 +177,21 @@ final class MathFunctionsTest extends TestCase
     {
         $a = NDArray::array([0, 1], DType::Float64);
         $result = $a->asin();
-        $this->assertEqualsWithDelta([0, M_PI / 2], $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta([0, \M_PI / 2], $result->toArray(), 0.0001);
     }
 
     public function testAcos(): void
     {
         $a = NDArray::array([1, 0], DType::Float64);
         $result = $a->acos();
-        $this->assertEqualsWithDelta([0, M_PI / 2], $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta([0, \M_PI / 2], $result->toArray(), 0.0001);
     }
 
     public function testAtan(): void
     {
         $a = NDArray::array([0, 1], DType::Float64);
         $result = $a->atan();
-        $this->assertEqualsWithDelta([0, M_PI / 4], $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta([0, \M_PI / 4], $result->toArray(), 0.0001);
     }
 
     public function testCbrt(): void

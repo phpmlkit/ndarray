@@ -10,6 +10,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for 3D array slicing and assignment.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class Slicing3DTest extends TestCase
 {
@@ -37,10 +41,10 @@ final class Slicing3DTest extends TestCase
 
         // Slice with stride 2 on axis 1: arr[:, ::2, :]
         $slice = $arr->slice([':', '::2', ':']);
-        
+
         // Original axis 1 has size 3. Step 2 selects indices 0, 2. So new size is 2.
         $this->assertSame([3, 2, 3], $slice->shape());
-        
+
         // Check a value
         // Original [0, 2, 0] is 0*9 + 2*3 + 0 = 6
         // In slice [0, 1, 0] corresponds to original [0, 2, 0] -> 6
@@ -57,14 +61,14 @@ final class Slicing3DTest extends TestCase
 
         // Check planes
         $data = $arr->toArray();
-        
+
         // Plane 0: all zeros
         $this->assertEquals(0, $arr->get(0, 0, 0));
-        
+
         // Plane 1: all ones
         $this->assertEquals(1, $arr->get(1, 0, 0));
         $this->assertEquals(1, $arr->get(1, 2, 2));
-        
+
         // Plane 2: all zeros
         $this->assertEquals(0, $arr->get(2, 0, 0));
     }
@@ -79,13 +83,13 @@ final class Slicing3DTest extends TestCase
 
         // Plane 0 should be 5s
         $this->assertEquals(5, $arr->get(0, 0, 0));
-        
+
         // Plane 1 should be 0s
         $this->assertEquals(0, $arr->get(1, 0, 0));
-        
+
         // Plane 2 should be 5s
         $this->assertEquals(5, $arr->get(2, 0, 0));
-        
+
         // Plane 3 should be 0s
         $this->assertEquals(0, $arr->get(3, 0, 0));
     }

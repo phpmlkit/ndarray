@@ -7,6 +7,4 @@ namespace PhpMlKit\NDArray\Exceptions;
 /**
  * Exception for data type errors (invalid dtype, type mismatch, etc).
  */
-class DTypeException extends NDArrayException
-{
-}
+class DTypeException extends NDArrayException {}

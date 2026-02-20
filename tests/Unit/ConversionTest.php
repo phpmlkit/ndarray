@@ -12,6 +12,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for conversion operations (toArray, toScalar, copy, astype).
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class ConversionTest extends TestCase
 {
@@ -28,7 +32,7 @@ final class ConversionTest extends TestCase
         $a = NDArray::array([1, 2, 255], DType::Uint8);
         $bytes = $a->tobytes();
 
-        $this->assertSame(3, strlen($bytes));
+        $this->assertSame(3, \strlen($bytes));
         $this->assertSame("\x01\x02\xff", $bytes);
     }
 
@@ -37,7 +41,7 @@ final class ConversionTest extends TestCase
         $a = NDArray::array([true, false, true], DType::Bool);
         $bytes = $a->tobytes();
 
-        $this->assertSame(3, strlen($bytes));
+        $this->assertSame(3, \strlen($bytes));
         $this->assertSame("\x01\x00\x01", $bytes);
     }
 
@@ -46,7 +50,7 @@ final class ConversionTest extends TestCase
         $a = NDArray::array([1.5, -2.25, 3.75], DType::Float64);
         $bytes = $a->tobytes();
 
-        $this->assertSame(24, strlen($bytes)); // 3 * 8 bytes
+        $this->assertSame(24, \strlen($bytes)); // 3 * 8 bytes
 
         // Use machine-endian unpack for stable round-trip on this platform.
         $decoded = array_values(unpack('d*', $bytes));
@@ -120,10 +124,10 @@ final class ConversionTest extends TestCase
             $out = $a->toArray();
 
             $this->assertIsArray($out);
-            $this->assertCount(count($input), $out);
+            $this->assertCount(\count($input), $out);
 
-            if ($dtype === DType::Float32 || $dtype === DType::Float64) {
-                for ($i = 0; $i < count($input); $i++) {
+            if (DType::Float32 === $dtype || DType::Float64 === $dtype) {
+                for ($i = 0; $i < \count($input); ++$i) {
                     $this->assertEqualsWithDelta((float) $input[$i], $out[$i], 0.0001, "Failed for {$dtype->name} at index {$i}");
                 }
             } else {
@@ -161,7 +165,7 @@ final class ConversionTest extends TestCase
             $view = $a->slice([':', '1:3']);
             $out = $view->toArray();
 
-            if ($dtype === DType::Float64) {
+            if (DType::Float64 === $dtype) {
                 $this->assertEqualsWithDelta($expected, $out, 0.0001, "Failed for {$dtype->name}");
             } else {
                 $this->assertSame($expected, $out, "Failed for {$dtype->name}");
@@ -192,7 +196,7 @@ final class ConversionTest extends TestCase
 
     public function testToArrayPreservesNaN(): void
     {
-        $a = NDArray::array([1.0, NAN, 2.0], DType::Float64);
+        $a = NDArray::array([1.0, \NAN, 2.0], DType::Float64);
 
         $out = $a->toArray();
 

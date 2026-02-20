@@ -12,6 +12,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for sort/argsort operations.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class SortTest extends TestCase
 {
@@ -97,7 +101,7 @@ final class SortTest extends TestCase
 
     public function testSortNaNPlacedAtEnd(): void
     {
-        $a = NDArray::array([NAN, 2.0, 1.0, NAN], DType::Float64);
+        $a = NDArray::array([\NAN, 2.0, 1.0, \NAN], DType::Float64);
         $result = $a->sort(axis: null);
         $out = $result->toArray();
 

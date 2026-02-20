@@ -7,6 +7,4 @@ namespace PhpMlKit\NDArray\Exceptions;
 /**
  * Exception for mathematical operation errors (division by zero, overflow, etc).
  */
-class MathException extends NDArrayException
-{
-}
+class MathException extends NDArrayException {}

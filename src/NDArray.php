@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray;
 
-use ArrayAccess;
 use FFI\CData;
-use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\Exceptions\NDArrayException;
+use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\Traits\CreatesArrays;
 use PhpMlKit\NDArray\Traits\HasArrayAccess;
 use PhpMlKit\NDArray\Traits\HasComparison;
@@ -29,23 +28,23 @@ use PhpMlKit\NDArray\Traits\HasStringable;
  * $base is null) call ndarray_free() on destruction. Views keep their root
  * alive through PHP's reference counting via the $base chain.
  *
- * @implements ArrayAccess<int|string, self|int|float|bool>
+ * @implements \ArrayAccess<int|string, bool|float|int|self>
  */
-class NDArray implements ArrayAccess
+class NDArray implements \ArrayAccess
 {
     use CreatesArrays;
-    use HasIndexing;
     use HasArrayAccess;
+    use HasComparison;
     use HasConversion;
+    use HasIndexing;
     use HasLinearAlgebra;
-    use HasOps;
     use HasMath;
+    use HasOps;
     use HasReductions;
     use HasShapeOps;
-    use HasStacking;
-    use HasComparison;
-    use HasStringable;
     use HasSlicing;
+    use HasStacking;
+    use HasStringable;
 
     /** Number of dimensions */
     protected int $ndim;
@@ -59,12 +58,12 @@ class NDArray implements ArrayAccess
     /**
      * Private constructor — use factory methods.
      *
-     * @param CData $handle Opaque pointer to Rust NDArrayWrapper
-     * @param array<int> $shape Shape of this array/view
-     * @param DType $dtype Data type
+     * @param CData      $handle  Opaque pointer to Rust NDArrayWrapper
+     * @param array<int> $shape   Shape of this array/view
+     * @param DType      $dtype   Data type
      * @param array<int> $strides Element strides per dimension
-     * @param int $offset Flat offset into root data
-     * @param self|null $base Parent array if this is a view
+     * @param int        $offset  Flat offset into root data
+     * @param null|self  $base    Parent array if this is a view
      */
     protected function __construct(
         protected readonly CData $handle,
@@ -74,7 +73,7 @@ class NDArray implements ArrayAccess
         protected readonly int $offset = 0,
         protected readonly ?self $base = null,
     ) {
-        $this->ndim = count($shape);
+        $this->ndim = \count($shape);
         $this->size = (int) array_product($shape);
         $this->strides = $strides ?: self::computeStrides($shape);
     }
@@ -84,7 +83,7 @@ class NDArray implements ArrayAccess
      */
     public function __destruct()
     {
-        if ($this->base === null && isset($this->handle)) {
+        if (null === $this->base && isset($this->handle)) {
             Lib::get()->ndarray_free($this->handle);
         }
     }
@@ -178,7 +177,7 @@ class NDArray implements ArrayAccess
      */
     public function isView(): bool
     {
-        return $this->base !== null;
+        return null !== $this->base;
     }
 
     /**
@@ -187,18 +186,18 @@ class NDArray implements ArrayAccess
     public function isContiguous(): bool
     {
         $expected = self::computeStrides($this->shape);
+
         return $this->strides === $expected;
     }
 
     /**
      * Select values from x and y based on a boolean condition.
      *
-     * @param self|int|float|bool $condition Bool NDArray or scalar condition
-     * @param self|int|float|bool $x Values where condition is true
-     * @param self|int|float|bool $y Values where condition is false
-     * @return self
+     * @param bool|float|int|self $condition Bool NDArray or scalar condition
+     * @param bool|float|int|self $x         Values where condition is true
+     * @param bool|float|int|self $y         Values where condition is false
      */
-    public static function where(self|int|float|bool $condition, self|int|float|bool $x, self|int|float|bool $y): self
+    public static function where(bool|float|int|self $condition, bool|float|int|self $x, bool|float|int|self $y): self
     {
         $condArray = self::coerceWhereOperand($condition, DType::Bool);
         $xArray = self::coerceWhereOperand($x, null);
@@ -236,7 +235,7 @@ class NDArray implements ArrayAccess
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
         $ndim = (int) $outNdimBuf->cdata;
         $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
-        if ($dtype === null) {
+        if (null === $dtype) {
             throw new NDArrayException('Invalid dtype returned from Rust for where()');
         }
 
@@ -253,36 +252,36 @@ class NDArray implements ArrayAccess
      * For shape [3, 4, 5], strides are [20, 5, 1].
      *
      * @param array<int> $shape
+     *
      * @return array<int>
      */
     private static function computeStrides(array $shape): array
     {
-        $ndim = count($shape);
-        if ($ndim === 0) {
+        $ndim = \count($shape);
+        if (0 === $ndim) {
             return [];
         }
 
         $strides = array_fill(0, $ndim, 1);
-        for ($i = $ndim - 2; $i >= 0; $i--) {
+        for ($i = $ndim - 2; $i >= 0; --$i) {
             $strides[$i] = $strides[$i + 1] * $shape[$i + 1];
         }
 
         return $strides;
     }
 
-    /**
-     * @param self|int|float|bool $value
-     */
-    private static function coerceWhereOperand(self|int|float|bool $value, ?DType $forceDtype): self
+    private static function coerceWhereOperand(bool|float|int|self $value, ?DType $forceDtype): self
     {
         if ($value instanceof self) {
-            if ($forceDtype !== null && $value->dtype !== $forceDtype) {
+            if (null !== $forceDtype && $value->dtype !== $forceDtype) {
                 return $value->astype($forceDtype);
             }
+
             return $value;
         }
 
         $dtype = $forceDtype ?? DType::fromValue($value);
+
         return self::array([$value], $dtype);
     }
 }

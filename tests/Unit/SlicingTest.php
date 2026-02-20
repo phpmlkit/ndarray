@@ -12,6 +12,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for NDArray slicing and advanced assignment.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class SlicingTest extends TestCase
 {

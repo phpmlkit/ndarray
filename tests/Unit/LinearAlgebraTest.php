@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Tests\Unit;
 
 use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for linear algebra operations.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 class LinearAlgebraTest extends TestCase
 {
@@ -59,7 +64,7 @@ class LinearAlgebraTest extends TestCase
         $a = NDArray::array([1, 2, 3], DType::Float64);
         $b = NDArray::array([4, 5], DType::Float64);
 
-        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         $a->dot($b);
     }
 
@@ -77,7 +82,7 @@ class LinearAlgebraTest extends TestCase
         $a = NDArray::array([1, 2, 3], DType::Float64);
         $b = NDArray::array([[1, 2], [3, 4]], DType::Float64);
 
-        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         $a->matmul($b);
     }
 
@@ -102,7 +107,7 @@ class LinearAlgebraTest extends TestCase
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
 
-        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         $a->diagonal();
     }
 
@@ -128,7 +133,7 @@ class LinearAlgebraTest extends TestCase
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
 
-        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         $a->trace();
     }
 
@@ -142,8 +147,8 @@ class LinearAlgebraTest extends TestCase
     {
         $a = NDArray::array([-3, 4, -5], DType::Float64);
         $this->assertEqualsWithDelta(12.0, $a->norm(1), 1e-10);
-        $this->assertEqualsWithDelta(5.0, $a->norm(INF), 1e-10);
-        $this->assertEqualsWithDelta(3.0, $a->norm(-INF), 1e-10);
+        $this->assertEqualsWithDelta(5.0, $a->norm(\INF), 1e-10);
+        $this->assertEqualsWithDelta(3.0, $a->norm(-\INF), 1e-10);
     }
 
     public function testNormAxisL2(): void

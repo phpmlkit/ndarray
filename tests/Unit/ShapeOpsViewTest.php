@@ -12,6 +12,10 @@ use PHPUnit\Framework\TestCase;
  * Tests for shape operations on views and slices
  * Note: Most shape operations (reshape, squeeze, flatten, etc.) don't work correctly on views
  * They operate on the full underlying array instead of the view.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class ShapeOpsViewTest extends TestCase
 {
@@ -23,7 +27,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], DType::Float64);
         $view = $a->slice(['2:8']); // [3, 4, 5, 6, 7, 8]
-        
+
         $this->assertSame([6], $view->shape());
         $this->assertEqualsWithDelta([3, 4, 5, 6, 7, 8], $view->toArray(), 0.0001);
     }
@@ -33,10 +37,10 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3, 4],
             [5, 6, 7, 8],
-            [9, 10, 11, 12]
+            [9, 10, 11, 12],
         ], DType::Float64);
         $view = $a->slice(['0:2', '1:3']); // [[2, 3], [6, 7]]
-        
+
         $this->assertSame([2, 2], $view->shape());
         $this->assertEqualsWithDelta([[2, 3], [6, 7]], $view->toArray(), 0.0001);
     }
@@ -45,10 +49,10 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([
             [[1, 2], [3, 4], [5, 6]],
-            [[7, 8], [9, 10], [11, 12]]
+            [[7, 8], [9, 10], [11, 12]],
         ], DType::Float64);
         $view = $a->slice(['0:1', ':', ':']); // [[[1, 2], [3, 4], [5, 6]]]
-        
+
         $this->assertSame([1, 3, 2], $view->shape());
     }
 
@@ -56,7 +60,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $row = $a->slice(['1:2']); // [[4, 5, 6]]
-        
+
         $this->assertSame([1, 3], $row->shape());
         $this->assertEqualsWithDelta([[4, 5, 6]], $row->toArray(), 0.0001);
     }
@@ -65,7 +69,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $col = $a->slice([':', '1:2']); // [[2], [5], [8]]
-        
+
         $this->assertSame([3, 1], $col->shape());
         $this->assertEqualsWithDelta([[2], [5], [8]], $col->toArray(), 0.0001);
     }
@@ -76,10 +80,10 @@ final class ShapeOpsViewTest extends TestCase
             [1, 2, 3, 4],
             [5, 6, 7, 8],
             [9, 10, 11, 12],
-            [13, 14, 15, 16]
+            [13, 14, 15, 16],
         ], DType::Float64);
         $strided = $a->slice(['::2', '::2']); // [[1, 3], [9, 11]]
-        
+
         $this->assertSame([2, 2], $strided->shape());
         $this->assertEqualsWithDelta([[1, 3], [9, 11]], $strided->toArray(), 0.0001);
     }
@@ -89,7 +93,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
         // Note: slice(['1', '2']) returns shape [1, 1] instead of [1]
         $single = $a->slice(['1', '2']);
-        
+
         $this->assertSame([1, 1], $single->shape());
         $this->assertEqualsWithDelta([[6]], $single->toArray(), 0.0001);
     }
@@ -98,7 +102,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
         $empty = $a->slice(['2:2']); // Empty slice
-        
+
         $this->assertSame([0], $empty->shape());
     }
 
@@ -106,7 +110,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $view = $a->slice(['-2:', '-2:']); // Last 2 rows, last 2 columns
-        
+
         $this->assertSame([2, 2], $view->shape());
         $this->assertEqualsWithDelta([[5, 6], [8, 9]], $view->toArray(), 0.0001);
     }
@@ -119,7 +123,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $row = $a[1]; // [4, 5, 6]
-        
+
         $this->assertSame([3], $row->shape());
         $this->assertEqualsWithDelta([4, 5, 6], $row->toArray(), 0.0001);
     }
@@ -128,7 +132,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3, 4], [5, 6, 7, 8]], DType::Int32);
         $row = $a[0]; // [1, 2, 3, 4]
-        
+
         $this->assertSame([4], $row->shape());
         $this->assertSame(DType::Int32, $row->dtype());
     }
@@ -141,7 +145,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Int32);
         $view = $a->slice(['0:1', ':']);
-        
+
         $this->assertSame(DType::Int32, $view->dtype());
     }
 
@@ -150,10 +154,10 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Float64);
         $view = $a->slice(['0:2', '1:3']);
-        
+
         $this->assertSame(DType::Float64, $view->dtype());
     }
 
@@ -165,10 +169,10 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([
             [[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
-            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]
+            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]],
         ], DType::Float64);
         $view = $a->slice(['0:1', ':', ':', ':']);
-        
+
         $this->assertSame([1, 2, 2, 2], $view->shape());
     }
 
@@ -176,11 +180,11 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([
             [[1, 2, 3], [4, 5, 6]],
-            [[7, 8, 9], [10, 11, 12]]
+            [[7, 8, 9], [10, 11, 12]],
         ], DType::Float64);
         // Note: slice([':', '0', ':']) currently returns full array due to implementation bug
         $view = $a->slice([':', '0', ':']);
-        
+
         $this->assertSame([2, 2, 3], $view->shape());
     }
 
@@ -193,7 +197,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([1, 2, 3, 4, 5, 6, 7, 8], DType::Float64);
         $view = $a->slice(['2:6']); // [3, 4, 5, 6]
         $result = $view->reshape([2, 2]);
-        
+
         $this->assertSame([2, 2], $result->shape());
         $this->assertEqualsWithDelta([[3, 4], [5, 6]], $result->toArray(), 0.0001);
     }
@@ -203,7 +207,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $view = $a->slice(['0:2', '1:3']); // [[2, 3], [5, 6]]
         $result = $view->flatten();
-        
+
         $this->assertSame([4], $result->shape());
         $this->assertEqualsWithDelta([2, 3, 5, 6], $result->toArray(), 0.0001);
     }
@@ -213,7 +217,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
         $result = $view->transpose();
-        
+
         $this->assertSame([3, 2], $result->shape());
         $this->assertEqualsWithDelta([[1, 4], [2, 5], [3, 6]], $result->toArray(), 0.0001);
     }
@@ -223,7 +227,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
         $result = $view->swapAxes(0, 1);
-        
+
         $this->assertSame([3, 2], $result->shape());
         $this->assertEqualsWithDelta([[1, 4], [2, 5], [3, 6]], $result->toArray(), 0.0001);
     }
@@ -233,7 +237,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([[[[1, 2]]], [[[3, 4]]]], DType::Float64);
         $view = $a->slice(['0:1', ':', ':', ':']); // [[[[1, 2]]]]
         $result = $view->squeeze();
-        
+
         $this->assertSame([2], $result->shape());
         $this->assertEqualsWithDelta([1, 2], $result->toArray(), 0.0001);
     }
@@ -243,7 +247,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
         $view = $a->slice(['1:4']); // [2, 3, 4]
         $result = $view->insertAxis(0);
-        
+
         $this->assertSame([1, 3], $result->shape());
         $this->assertEqualsWithDelta([[2, 3, 4]], $result->toArray(), 0.0001);
     }
@@ -253,7 +257,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
         $view = $a->slice(['1:4']); // [2, 3, 4]
         $result = $view->expandDims(1);
-        
+
         $this->assertSame([3, 1], $result->shape());
         $this->assertEqualsWithDelta([[2], [3], [4]], $result->toArray(), 0.0001);
     }
@@ -263,7 +267,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
         $view = $a->slice(['1:4']); // [2, 3, 4]
         $result = $view->invertAxis(0);
-        
+
         $this->assertSame([3], $result->shape());
         $this->assertEqualsWithDelta([4, 3, 2], $result->toArray(), 0.0001);
     }
@@ -273,7 +277,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $view = $a->slice(['1:3', '0:2']); // [[4, 5], [7, 8]]
         $result = $view->ravel();
-        
+
         $this->assertSame([4], $result->shape());
         $this->assertEqualsWithDelta([4, 5, 7, 8], $result->toArray(), 0.0001);
     }
@@ -283,11 +287,11 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [[1, 2], [3, 4]],
             [[5, 6], [7, 8]],
-            [[9, 10], [11, 12]]
+            [[9, 10], [11, 12]],
         ], DType::Float64);
         $view = $a->slice(['0:2', ':', ':']); // First 2 rows of 3D array [2, 2, 2]
         $result = $view->mergeAxes(0, 1);
-        
+
         // Merging axes: [2, 2, 2] -> squeeze removes length-1 axis
         $this->assertSame([4, 2], $result->shape());
     }
@@ -297,7 +301,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
         $result = $view->transpose()->flatten();
-        
+
         $this->assertSame([6], $result->shape());
         $this->assertEqualsWithDelta([1, 4, 2, 5, 3, 6], $result->toArray(), 0.0001);
     }
@@ -307,10 +311,11 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], DType::Float64);
         $view = $a->slice(['2:10']); // [3, 4, 5, 6, 7, 8, 9, 10]
         $result = $view->reshape([2, 2, 2])
-                       ->transpose()
-                       ->insertAxis(0)
-                       ->flatten();
-        
+            ->transpose()
+            ->insertAxis(0)
+            ->flatten()
+        ;
+
         $this->assertSame([8], $result->shape());
     }
 
@@ -319,7 +324,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
         $result = $view->swapAxes(0, 1)->flatten();
-        
+
         $this->assertSame([6], $result->shape());
         $this->assertEqualsWithDelta([1, 4, 2, 5, 3, 6], $result->toArray(), 0.0001);
     }
@@ -330,11 +335,11 @@ final class ShapeOpsViewTest extends TestCase
             [1, 2, 3, 4],
             [5, 6, 7, 8],
             [9, 10, 11, 12],
-            [13, 14, 15, 16]
+            [13, 14, 15, 16],
         ], DType::Float64);
         $view = $a->slice(['::2', '::2']); // [[1, 3], [9, 11]]
         $result = $view->flatten();
-        
+
         $this->assertSame([4], $result->shape());
         $this->assertEqualsWithDelta([1, 3, 9, 11], $result->toArray(), 0.0001);
     }
@@ -345,7 +350,7 @@ final class ShapeOpsViewTest extends TestCase
             [1, 2, 3, 4],
             [5, 6, 7, 8],
             [9, 10, 11, 12],
-            [13, 14, 15, 16]
+            [13, 14, 15, 16],
         ], DType::Float64);
         $view = $a->slice(['::2', '::2']); // [[1, 3], [9, 11]]
         $result = $view->transpose();
@@ -362,7 +367,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([
             [[1, 2], [3, 4], [5, 6]],
-            [[7, 8], [9, 10], [11, 12]]
+            [[7, 8], [9, 10], [11, 12]],
         ], DType::Float64);
         $view = $a->slice(['0:1', ':', ':']); // First row only
         $result = $view->permuteAxes([1, 0, 2]);
@@ -373,7 +378,7 @@ final class ShapeOpsViewTest extends TestCase
         $this->assertEqualsWithDelta([
             [[1, 2]],
             [[3, 4]],
-            [[5, 6]]
+            [[5, 6]],
         ], $result->toArray(), 0.0001);
     }
 
@@ -393,7 +398,7 @@ final class ShapeOpsViewTest extends TestCase
             [[1, 2], [3, 4]],
             [[5, 6], [7, 8]],
             [[9, 10], [11, 12]],
-            [[13, 14], [15, 16]]
+            [[13, 14], [15, 16]],
         ], DType::Float64);
         $view = $a->slice(['::2', ':', ':']); // [[[1,2],[3,4]], [[9,10],[11,12]]]
         $result = $view->permuteAxes([2, 0, 1]);
@@ -404,7 +409,7 @@ final class ShapeOpsViewTest extends TestCase
         $this->assertSame([2, 2, 2], $result->shape());
         $this->assertEqualsWithDelta([
             [[1, 3], [9, 11]],
-            [[2, 4], [10, 12]]
+            [[2, 4], [10, 12]],
         ], $result->toArray(), 0.0001);
     }
 
@@ -412,7 +417,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([
             [[1, 2, 3], [4, 5, 6]],
-            [[7, 8, 9], [10, 11, 12]]
+            [[7, 8, 9], [10, 11, 12]],
         ], DType::Float64);
         $view = $a->slice(['0:1', ':', '1:3']); // [[[2, 3], [5, 6]]]
 
@@ -420,7 +425,8 @@ final class ShapeOpsViewTest extends TestCase
         $result = $view
             ->permuteAxes([2, 1, 0])
             ->insertAxis(0)
-            ->flatten();
+            ->flatten()
+        ;
 
         $this->assertSame([4], $result->shape());
         // After permute [2,1,0]: [[[2],[5]],[[3],[6]]], after insertAxis and flatten
@@ -458,7 +464,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', '1:3']); // [[2, 3], [5, 6]]
         $result = $view->tile([2, 1]);
@@ -477,7 +483,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
         $result = $view->tile([1, 2]);
@@ -494,7 +500,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3, 4],
             [5, 6, 7, 8],
-            [9, 10, 11, 12]
+            [9, 10, 11, 12],
         ], DType::Int64);
         $view = $a->slice(['::2', '1:4']); // [[2, 3, 4], [10, 11, 12]]
         $result = $view->tile([2, 1]);
@@ -523,7 +529,7 @@ final class ShapeOpsViewTest extends TestCase
             [1, 2, 3, 4],
             [5, 6, 7, 8],
             [9, 10, 11, 12],
-            [13, 14, 15, 16]
+            [13, 14, 15, 16],
         ], DType::Int64);
         $view = $a->slice(['::2', '::2']); // [[1, 3], [9, 11]]
         $result = $view->tile([1, 2]);
@@ -539,7 +545,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([
             [[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
-            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]
+            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]],
         ], DType::Int64);
         $view = $a->slice(['0:1', ':', ':', ':']); // First block
         $result = $view->tile([1, 2, 1, 1]);
@@ -552,7 +558,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3, 4, 5],
             [6, 7, 8, 9, 10],
-            [11, 12, 13, 14, 15]
+            [11, 12, 13, 14, 15],
         ], DType::Int64);
         // Slice to get middle rows and columns
         $view = $a->slice(['1:3', '1:4']); // [[7, 8, 9], [12, 13, 14]]
@@ -586,7 +592,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', '1:3']); // [[2, 3], [5, 6]]
         $result = $view->repeat(2, axis: 0);
@@ -605,7 +611,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
         $result = $view->repeat(2, axis: 1);
@@ -622,7 +628,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
         $result = $view->repeat([1, 2], axis: 0);
@@ -640,7 +646,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
         $result = $view->repeat([2, 1], axis: 1);
@@ -667,7 +673,7 @@ final class ShapeOpsViewTest extends TestCase
             [1, 2, 3, 4],
             [5, 6, 7, 8],
             [9, 10, 11, 12],
-            [13, 14, 15, 16]
+            [13, 14, 15, 16],
         ], DType::Int64);
         $view = $a->slice(['::2', '::2']); // [[1, 3], [9, 11]]
         $result = $view->repeat(2, axis: 1);
@@ -683,7 +689,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([
             [[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
-            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]
+            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]],
         ], DType::Int64);
         $view = $a->slice(['0:1', ':', ':', ':']); // First block
         $result = $view->repeat(2, axis: 1);
@@ -696,7 +702,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3, 4, 5],
             [6, 7, 8, 9, 10],
-            [11, 12, 13, 14, 15]
+            [11, 12, 13, 14, 15],
         ], DType::Int64);
         // Slice to get middle rows and columns
         $view = $a->slice(['1:3', '1:4']); // [[7, 8, 9], [12, 13, 14]]
@@ -716,7 +722,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
         $result = $view->repeat(1, axis: 0);
@@ -737,7 +743,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
         $result = $view->tile([1, 2])->flatten();
@@ -751,7 +757,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
         $result = $view->repeat(2, axis: 1)->flatten();
@@ -765,7 +771,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
         $result = $view->tile([2, 1])->transpose();
@@ -778,7 +784,7 @@ final class ShapeOpsViewTest extends TestCase
         $a = NDArray::array([
             [1, 2, 3],
             [4, 5, 6],
-            [7, 8, 9]
+            [7, 8, 9],
         ], DType::Int64);
         $view = $a->slice(['0:2', '0:2']); // [[1, 2], [4, 5]]
         $result = $view->repeat(2, axis: 0)->transpose();

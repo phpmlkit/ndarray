@@ -11,6 +11,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for sort/argsort operations on views and slices.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class SortViewTest extends TestCase
 {
@@ -68,7 +72,7 @@ final class SortViewTest extends TestCase
 
     public function testSortNaNOnView(): void
     {
-        $a = NDArray::array([5.0, NAN, 2.0, NAN, 1.0], DType::Float64);
+        $a = NDArray::array([5.0, \NAN, 2.0, \NAN, 1.0], DType::Float64);
         $view = $a->slice(['1:5']); // [NaN, 2, NaN, 1]
 
         $result = $view->sort(axis: null, kind: SortKind::MergeSort)->toArray();

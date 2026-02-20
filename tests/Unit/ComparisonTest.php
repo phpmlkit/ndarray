@@ -9,7 +9,11 @@ use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests for element-wise comparison operations (eq, ne, gt, gte, lt, lte)
+ * Tests for element-wise comparison operations (eq, ne, gt, gte, lt, lte).
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class ComparisonTest extends TestCase
 {

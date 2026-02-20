@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Traits;
 
 use PhpMlKit\NDArray\DType;
-use PhpMlKit\NDArray\NDArray;
 use PhpMlKit\NDArray\FFI\Lib;
+use PhpMlKit\NDArray\NDArray;
 
 /**
  * Linear algebra operations trait.
@@ -26,28 +26,27 @@ trait HasLinearAlgebra
      * - -INF
      * - 'fro' (matrix only, axis=null)
      *
-     * @param int|float|string|null $ord Norm order
-     * @param int|null $axis Reduction axis. If null, reduces all elements
-     * @param bool $keepdims Keep reduced axis with size 1 (axis mode only)
-     * @return NDArray|float
+     * @param null|float|int|string $ord      Norm order
+     * @param null|int              $axis     Reduction axis. If null, reduces all elements
+     * @param bool                  $keepdims Keep reduced axis with size 1 (axis mode only)
      */
-    public function norm(int|float|string|null $ord = null, ?int $axis = null, bool $keepdims = false): NDArray|float
+    public function norm(float|int|string|null $ord = null, ?int $axis = null, bool $keepdims = false): float|NDArray
     {
         $ffi = Lib::get();
         $ordCode = $this->normalizeNormOrder($ord, $axis);
-        $ndim = count($this->shape);
+        $ndim = \count($this->shape);
 
-        if ($ordCode === 5 && $ndim !== 2) {
+        if (5 === $ordCode && 2 !== $ndim) {
             throw new \InvalidArgumentException("Norm order '{$ord}' requires a 2D matrix");
         }
-        if ($ordCode === 5 && $axis !== null) {
+        if (5 === $ordCode && null !== $axis) {
             throw new \InvalidArgumentException("Norm order '{$ord}' is only supported when axis is null");
         }
 
         $shape = Lib::createShapeArray($this->shape);
         $strides = Lib::createShapeArray($this->strides);
 
-        if ($axis === null) {
+        if (null === $axis) {
             $outValue = Lib::createBox('double');
             $outDtype = $ffi->new('uint8_t');
             $status = $ffi->ndarray_norm(
@@ -62,6 +61,7 @@ trait HasLinearAlgebra
             );
 
             Lib::checkStatus($status);
+
             return (float) $outValue->cdata;
         }
 
@@ -80,6 +80,7 @@ trait HasLinearAlgebra
 
         Lib::checkStatus($status);
         $outShape = $this->computeNormOutputShape($axis, $keepdims);
+
         return new NDArray($outHandle, $outShape, DType::Float64);
     }
 
@@ -90,7 +91,6 @@ trait HasLinearAlgebra
      * For 2D arrays: returns matrix multiplication
      *
      * @param NDArray $other The other array
-     * @return NDArray
      */
     public function dot(NDArray $other): NDArray
     {
@@ -103,7 +103,6 @@ trait HasLinearAlgebra
      * Requires both arrays to be at least 2D.
      *
      * @param NDArray $other The other array
-     * @return NDArray
      */
     public function matmul(NDArray $other): NDArray
     {
@@ -114,8 +113,6 @@ trait HasLinearAlgebra
      * Extract diagonal elements from a 2D array.
      *
      * Returns a 1D array containing the diagonal.
-     *
-     * @return NDArray
      */
     public function diagonal(): NDArray
     {
@@ -126,8 +123,6 @@ trait HasLinearAlgebra
      * Compute trace (sum of diagonal elements).
      *
      * Returns a scalar array.
-     *
-     * @return NDArray
      */
     public function trace(): NDArray
     {
@@ -139,30 +134,29 @@ trait HasLinearAlgebra
      *
      * @param array $aShape Shape of first array
      * @param array $bShape Shape of second array
-     * @return array
      */
     private function computeDotShape(array $aShape, array $bShape): array
     {
         // 1D @ 1D -> scalar (0D)
-        if (count($aShape) === 1 && count($bShape) === 1) {
+        if (1 === \count($aShape) && 1 === \count($bShape)) {
             return [];
         }
-        
+
         // 2D @ 1D -> 1D (M)
-        if (count($aShape) === 2 && count($bShape) === 1) {
+        if (2 === \count($aShape) && 1 === \count($bShape)) {
             return [$aShape[0]];
         }
-        
+
         // 1D @ 2D -> 1D (N)
-        if (count($aShape) === 1 && count($bShape) === 2) {
+        if (1 === \count($aShape) && 2 === \count($bShape)) {
             return [$bShape[1]];
         }
-        
+
         // 2D @ 2D -> 2D (M x N)
-        if (count($aShape) === 2 && count($bShape) === 2) {
+        if (2 === \count($aShape) && 2 === \count($bShape)) {
             return [$aShape[0], $bShape[1]];
         }
-        
+
         // Default to empty for other cases
         return [];
     }
@@ -172,32 +166,32 @@ trait HasLinearAlgebra
      *
      * @param array $aShape Shape of first array
      * @param array $bShape Shape of second array
-     * @return array
      */
     private function computeMatmulShape(array $aShape, array $bShape): array
     {
         // Simple 2D @ 2D -> (M x K)
-        if (count($aShape) === 2 && count($bShape) === 2) {
+        if (2 === \count($aShape) && 2 === \count($bShape)) {
             return [$aShape[0], $bShape[1]];
         }
-        
+
         // For other cases, try to infer
-        return [$aShape[0], $bShape[count($bShape) - 1]];
+        return [$aShape[0], $bShape[\count($bShape) - 1]];
     }
 
     /**
      * Normalize norm order into FFI code.
      */
-    private function normalizeNormOrder(int|float|string|null $ord, ?int $axis): int
+    private function normalizeNormOrder(float|int|string|null $ord, ?int $axis): int
     {
-        if ($ord === null) {
-            if ($axis === null && count($this->shape) === 2) {
+        if (null === $ord) {
+            if (null === $axis && 2 === \count($this->shape)) {
                 return 5; // fro
             }
+
             return 2;
         }
 
-        if (is_int($ord)) {
+        if (\is_int($ord)) {
             return match ($ord) {
                 1 => 1,
                 2 => 2,
@@ -205,23 +199,25 @@ trait HasLinearAlgebra
             };
         }
 
-        if (is_float($ord)) {
-            if ($ord === INF) {
+        if (\is_float($ord)) {
+            if (\INF === $ord) {
                 return 3;
             }
-            if ($ord === -INF) {
+            if ($ord === -\INF) {
                 return 4;
             }
-            if ($ord === 1.0) {
+            if (1.0 === $ord) {
                 return 1;
             }
-            if ($ord === 2.0) {
+            if (2.0 === $ord) {
                 return 2;
             }
+
             throw new \InvalidArgumentException("Unsupported norm order: {$ord}");
         }
 
         $normalized = strtolower(trim($ord));
+
         return match ($normalized) {
             '1' => 1,
             '2' => 2,
@@ -240,19 +236,21 @@ trait HasLinearAlgebra
     private function computeNormOutputShape(int $axis, bool $keepdims): array
     {
         $shape = $this->shape;
-        $ndim = count($shape);
+        $ndim = \count($shape);
         $axisNorm = $axis < 0 ? $ndim + $axis : $axis;
 
         if ($keepdims) {
             $shape[$axisNorm] = 1;
+
             return $shape;
         }
 
         $out = array_values(array_filter(
             $shape,
             static fn (int $idx): bool => $idx !== $axisNorm,
-            ARRAY_FILTER_USE_KEY
+            \ARRAY_FILTER_USE_KEY
         ));
+
         return $out;
     }
 }

@@ -25,42 +25,43 @@ trait HasSlicing
      * (e.g., "0:5", ":", "::2") to subset dimensions.
      *
      * @param array<int|string> $selection List of selectors for each dimension
+     *
      * @return self A new view sharing the same data
      */
     public function slice(array $selection): self
     {
-        $count = count($selection);
-        
+        $count = \count($selection);
+
         $ellipsisPos = null;
         foreach ($selection as $i => $sel) {
-            if ($sel === '...' || $sel === '…') {
-                if ($ellipsisPos !== null) {
+            if ('...' === $sel || '…' === $sel) {
+                if (null !== $ellipsisPos) {
                     throw new IndexException('Only one ellipsis (...) allowed per slice');
                 }
                 $ellipsisPos = $i;
             }
         }
-        
-        if ($ellipsisPos !== null) {
+
+        if (null !== $ellipsisPos) {
             $nonEllipsisCount = $count - 1;
             $ellipsisDims = $this->ndim - $nonEllipsisCount;
-            
+
             if ($ellipsisDims < 0) {
                 throw new IndexException(
                     "Too many indices for slice: ellipsis expansion would exceed {$this->ndim} dimensions"
                 );
             }
-            
-            $before = array_slice($selection, 0, $ellipsisPos);
+
+            $before = \array_slice($selection, 0, $ellipsisPos);
             $ellipsisFill = array_fill(0, $ellipsisDims, ':');
-            $after = array_slice($selection, $ellipsisPos + 1);
+            $after = \array_slice($selection, $ellipsisPos + 1);
             $selection = array_merge($before, $ellipsisFill, $after);
-            $count = count($selection);
+            $count = \count($selection);
         }
-        
+
         if ($count > $this->ndim) {
             throw new IndexException(
-                "Too many indices for slice: got $count, expected <= {$this->ndim}"
+                "Too many indices for slice: got {$count}, expected <= {$this->ndim}"
             );
         }
 
@@ -79,17 +80,17 @@ trait HasSlicing
             $dimSize = $this->shape[$dim];
             $stride = $this->strides[$dim];
 
-            if (is_int($selector)) {
+            if (\is_int($selector)) {
                 if ($selector < 0) {
                     $selector += $dimSize;
                 }
                 if ($selector < 0 || $selector >= $dimSize) {
                     throw new IndexException(
-                        "Index $selector out of bounds for axis $dim with size $dimSize"
+                        "Index {$selector} out of bounds for axis {$dim} with size {$dimSize}"
                     );
                 }
                 $newOffset += $selector * $stride;
-            } elseif (is_string($selector)) {
+            } elseif (\is_string($selector)) {
                 $slice = Slice::parse($selector);
                 $res = $slice->resolve($dimSize);
 
@@ -98,7 +99,7 @@ trait HasSlicing
                 $newStrides[] = $stride * $res['step'];
             } else {
                 throw new IndexException(
-                    "Invalid slice selector type: " . get_debug_type($selector)
+                    'Invalid slice selector type: '.get_debug_type($selector)
                 );
             }
         }
@@ -124,18 +125,20 @@ trait HasSlicing
      */
     public function assign(mixed $value): void
     {
-        if (is_scalar($value)) {
+        if (\is_scalar($value)) {
             $this->fill($value);
+
             return;
         }
 
         if ($value instanceof NDArray) {
             $this->assignFromNDArray($value);
+
             return;
         }
 
         throw new \InvalidArgumentException(
-            "Assignment value must be scalar or NDArray, got " . get_debug_type($value)
+            'Assignment value must be scalar or NDArray, got '.get_debug_type($value)
         );
     }
 
@@ -165,7 +168,7 @@ trait HasSlicing
             DType::Bool => $ffi->new('uint8_t'),
         };
 
-        if ($this->dtype === DType::Bool) {
+        if (DType::Bool === $this->dtype) {
             $cValue->cdata = $value ? 1 : 0;
         } else {
             $cValue->cdata = $value;

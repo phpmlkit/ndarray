@@ -7,6 +7,4 @@ namespace PhpMlKit\NDArray\Exceptions;
 /**
  * Exception thrown when memory allocation fails.
  */
-class AllocationException extends NDArrayException
-{
-}
+class AllocationException extends NDArrayException {}

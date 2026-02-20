@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Tests\Unit;
 
 use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
 final class CreationTest extends TestCase
 {
-  
-
     public function testZeros(): void
     {
         $arr = NDArray::zeros([2, 3], DType::Float64);
@@ -27,7 +31,7 @@ final class CreationTest extends TestCase
     public function testZerosInt(): void
     {
         $arr = NDArray::zeros([2], DType::Int32);
-        
+
         $this->assertSame(DType::Int32, $arr->dtype());
         $this->assertSame([0, 0], $arr->toArray());
     }
@@ -99,14 +103,14 @@ final class CreationTest extends TestCase
 
     public function testEmptyRequiresZeroSizeShapeThrows(): void
     {
-        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         NDArray::empty([2, 3], DType::Float64);
     }
 
     public function testEyeRectangle(): void
     {
         $arr = NDArray::eye(2, 3);
-        
+
         $this->assertSame([2, 3], $arr->shape());
         $this->assertEquals([
             [1.0, 0.0, 0.0],
@@ -270,7 +274,7 @@ final class CreationTest extends TestCase
 
     public function testLinspaceNegativeThrows(): void
     {
-        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         NDArray::linspace(0.0, 1.0, 0);
     }
 
@@ -340,7 +344,7 @@ final class CreationTest extends TestCase
 
     public function testLogspaceNegativeThrows(): void
     {
-        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         NDArray::logspace(0.0, 1.0, 0);
     }
 
@@ -416,7 +420,7 @@ final class CreationTest extends TestCase
 
     public function testGeomspaceNegativeThrows(): void
     {
-        $this->expectException(\PhpMlKit\NDArray\Exceptions\ShapeException::class);
+        $this->expectException(ShapeException::class);
         NDArray::geomspace(1.0, 100.0, 0);
     }
 
@@ -488,11 +492,11 @@ final class CreationTest extends TestCase
         $arr = NDArray::randn([20000], DType::Float64, seed: 77);
         $flat = $arr->toFlatArray();
 
-        $mean = array_sum($flat) / count($flat);
+        $mean = array_sum($flat) / \count($flat);
         $variance = array_sum(array_map(
             static fn (float $x): float => ($x - $mean) ** 2,
             $flat
-        )) / count($flat);
+        )) / \count($flat);
         $std = sqrt($variance);
 
         $this->assertEqualsWithDelta(0.0, $mean, 0.05);
@@ -506,11 +510,11 @@ final class CreationTest extends TestCase
         $arr = NDArray::normal($meanTarget, $stdTarget, [20000], DType::Float64, seed: 91);
         $flat = $arr->toFlatArray();
 
-        $mean = array_sum($flat) / count($flat);
+        $mean = array_sum($flat) / \count($flat);
         $variance = array_sum(array_map(
             static fn (float $x): float => ($x - $mean) ** 2,
             $flat
-        )) / count($flat);
+        )) / \count($flat);
         $std = sqrt($variance);
 
         $this->assertEqualsWithDelta($meanTarget, $mean, 0.1);
@@ -535,7 +539,7 @@ final class CreationTest extends TestCase
             $this->assertLessThan($high, $v);
         }
 
-        $mean = array_sum($flat) / count($flat);
+        $mean = array_sum($flat) / \count($flat);
         $this->assertEqualsWithDelta(($low + $high) / 2.0, $mean, 0.08);
     }
 

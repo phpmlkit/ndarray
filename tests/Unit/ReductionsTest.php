@@ -9,7 +9,11 @@ use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests for reduction and aggregation operations
+ * Tests for reduction and aggregation operations.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class ReductionsTest extends TestCase
 {
@@ -283,7 +287,7 @@ final class ReductionsTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
         $result = $a->std(axis: 1);
-        $this->assertEqualsWithDelta([sqrt(2/3), sqrt(2/3)], $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta([sqrt(2 / 3), sqrt(2 / 3)], $result->toArray(), 0.0001);
     }
 
     // =========================================================================
@@ -394,17 +398,17 @@ final class ReductionsTest extends TestCase
             [[1, 2], [3, 4]],
             [[5, 6], [7, 8]],
         ], DType::Float64);
-        
+
         // Sum along axis 0
         $result = $a->sum(axis: 0);
         $this->assertSame([2, 2], $result->shape());
         $this->assertEqualsWithDelta([[6, 8], [10, 12]], $result->toArray(), 0.0001);
-        
+
         // Sum along axis 1
         $result = $a->sum(axis: 1);
         $this->assertSame([2, 2], $result->shape());
         $this->assertEqualsWithDelta([[4, 6], [12, 14]], $result->toArray(), 0.0001);
-        
+
         // Sum along axis 2
         $result = $a->sum(axis: 2);
         $this->assertSame([2, 2], $result->shape());
@@ -427,5 +431,4 @@ final class ReductionsTest extends TestCase
 
         $this->assertSame([0, 1, 0, 1, 0, 0], $result->toArray());
     }
-
 }

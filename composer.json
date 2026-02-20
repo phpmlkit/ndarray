@@ -10,6 +10,7 @@
     "codewithkyrian/platform-package-installer": "^1.1"
   },
   "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.91",
     "phpunit/phpunit": "^10.0",
     "symfony/var-dumper": "^8.0"
   },
@@ -36,5 +37,11 @@
       "darwin-arm64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-darwin-arm64.tar.gz",
       "windows-64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-windows-64.zip"
     }
+  },
+  "scripts": {
+      "test": "vendor/bin/phpunit",
+      "test:pretty": "vendor/bin/phpunit --testdox",
+      "cs:fix": "vendor/bin/php-cs-fixer fix",
+      "cs:check": "vendor/bin/php-cs-fixer fix --dry-run --diff"
   }
 }

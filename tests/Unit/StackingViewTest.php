@@ -10,6 +10,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for joining and splitting operations on views and slices.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class StackingViewTest extends TestCase
 {
@@ -118,7 +122,7 @@ final class StackingViewTest extends TestCase
     public function testVsplitOn2DView(): void
     {
         $a = NDArray::array([
-            [1, 2], [3, 4], [5, 6], [7, 8], [9, 10]
+            [1, 2], [3, 4], [5, 6], [7, 8], [9, 10],
         ], DType::Float64);
         $view = $a->slice(['1:4', ':']);  // rows 1-3
 
@@ -134,7 +138,7 @@ final class StackingViewTest extends TestCase
     {
         $a = NDArray::array([
             [1, 2, 3, 4],
-            [5, 6, 7, 8]
+            [5, 6, 7, 8],
         ], DType::Float64);
         $view = $a->slice([':', '1:3']);  // columns 1-2
 

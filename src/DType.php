@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray;
 
-use InvalidArgumentException;
-
 /**
  * Data type enumeration for NDArray elements.
  *
@@ -111,7 +109,7 @@ enum DType: int
      */
     public function isBool(): bool
     {
-        return $this === self::Bool;
+        return self::Bool === $this;
     }
 
     /**
@@ -159,9 +157,9 @@ enum DType: int
             'float32', 'f4', 'float' => self::Float32,
             'float64', 'f8', 'double' => self::Float64,
             'bool', 'b' => self::Bool,
-            default => throw new InvalidArgumentException(
-                "Unknown dtype: '$name'. Valid types: int8, int16, int32, int64, " .
-                "uint8, uint16, uint32, uint64, float32, float64, bool"
+            default => throw new \InvalidArgumentException(
+                "Unknown dtype: '{$name}'. Valid types: int8, int16, int32, int64, "
+                .'uint8, uint16, uint32, uint64, float32, float64, bool'
             ),
         };
     }
@@ -173,20 +171,20 @@ enum DType: int
      */
     public static function fromValue(mixed $value): self
     {
-        if (is_bool($value)) {
+        if (\is_bool($value)) {
             return self::Bool;
         }
 
-        if (is_int($value)) {
+        if (\is_int($value)) {
             return self::Int64;
         }
 
-        if (is_float($value)) {
+        if (\is_float($value)) {
             return self::Float64;
         }
 
-        throw new InvalidArgumentException(
-            sprintf(
+        throw new \InvalidArgumentException(
+            \sprintf(
                 "Cannot infer dtype from value of type '%s'. Expected bool, int, or float.",
                 get_debug_type($value)
             )
@@ -212,17 +210,17 @@ enum DType: int
         while ($stack) {
             $current = array_pop($stack);
             foreach ($current as $item) {
-                if (is_array($item)) {
+                if (\is_array($item)) {
                     $stack[] = $item;
-                } elseif (is_float($item)) {
+                } elseif (\is_float($item)) {
                     $hasFloat = true;
-                } elseif (is_int($item)) {
+                } elseif (\is_int($item)) {
                     $hasInt = true;
-                } elseif (is_bool($item)) {
+                } elseif (\is_bool($item)) {
                     $hasBool = true;
                 } else {
-                    throw new InvalidArgumentException(
-                        sprintf(
+                    throw new \InvalidArgumentException(
+                        \sprintf(
                             "Cannot infer dtype: array contains unsupported type '%s'.",
                             get_debug_type($item)
                         )
@@ -247,16 +245,16 @@ enum DType: int
     /**
      * Get the minimum value representable by this dtype.
      */
-    public function minValue(): int|float
+    public function minValue(): float|int
     {
         return match ($this) {
             self::Int8 => -128,
             self::Int16 => -32768,
             self::Int32 => -2147483648,
-            self::Int64 => PHP_INT_MIN,
+            self::Int64 => \PHP_INT_MIN,
             self::Uint8, self::Uint16, self::Uint32, self::Uint64 => 0,
             self::Float32 => -3.4028235e+38,
-            self::Float64 => -PHP_FLOAT_MAX,
+            self::Float64 => -\PHP_FLOAT_MAX,
             self::Bool => 0,
         };
     }
@@ -264,19 +262,19 @@ enum DType: int
     /**
      * Get the maximum value representable by this dtype.
      */
-    public function maxValue(): int|float
+    public function maxValue(): float|int
     {
         return match ($this) {
             self::Int8 => 127,
             self::Int16 => 32767,
             self::Int32 => 2147483647,
-            self::Int64 => PHP_INT_MAX,
+            self::Int64 => \PHP_INT_MAX,
             self::Uint8 => 255,
             self::Uint16 => 65535,
             self::Uint32 => 4294967295,
-            self::Uint64 => PHP_INT_MAX,
+            self::Uint64 => \PHP_INT_MAX,
             self::Float32 => 3.4028235e+38,
-            self::Float64 => PHP_FLOAT_MAX,
+            self::Float64 => \PHP_FLOAT_MAX,
             self::Bool => 1,
         };
     }

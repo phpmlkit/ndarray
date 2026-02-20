@@ -20,6 +20,8 @@ use PHPUnit\Framework\TestCase;
  * that Rust panics/errors are properly mapped to PHP exceptions.
  *
  * @covers \PhpMlKit\NDArray\FFI\Lib::checkStatus
+ *
+ * @internal
  */
 final class PanicMappingTest extends TestCase
 {
@@ -244,7 +246,7 @@ final class PanicMappingTest extends TestCase
         $arr = NDArray::array([[1, 2], [3, 4]], DType::Float64);
 
         $this->expectException(ShapeException::class);
-        $arr->$method(5);
+        $arr->{$method}(5);
     }
 
     public static function reductionOperationsProvider(): array

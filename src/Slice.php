@@ -20,7 +20,7 @@ final class Slice
         public readonly ?int $stop,
         public readonly int $step = 1
     ) {
-        if ($step === 0) {
+        if (0 === $step) {
             throw new IndexException('Slice step cannot be zero');
         }
         if ($step < 0) {
@@ -40,17 +40,16 @@ final class Slice
     public static function parse(string $spec): self
     {
         $parts = explode(':', $spec);
-        $count = count($parts);
+        $count = \count($parts);
 
         if ($count > 3) {
-            throw new IndexException("Invalid slice syntax '$spec': too many colons");
+            throw new IndexException("Invalid slice syntax '{$spec}': too many colons");
         }
 
         // Helper to convert empty strings to null, numeric strings to int
-        $toInt = fn(string $s, string $ctx): ?int => 
-            $s === '' ? null : (
-                is_numeric($s) ? (int)$s : throw new IndexException("Invalid slice component '$s' in '$spec'")
-            );
+        $toInt = static fn (string $s, string $ctx): ?int => '' === $s ? null : (
+            is_numeric($s) ? (int) $s : throw new IndexException("Invalid slice component '{$s}' in '{$spec}'")
+        );
 
         $start = $toInt(trim($parts[0]), 'start');
         $stop = isset($parts[1]) ? $toInt(trim($parts[1]), 'stop') : null;
@@ -66,6 +65,7 @@ final class Slice
      * Returns the concrete start, stop, step, and the number of elements (shape).
      *
      * @param int $dimSize Size of the dimension
+     *
      * @return array{start: int, stop: int, step: int, shape: int}
      */
     public function resolve(int $dimSize): array
@@ -99,7 +99,7 @@ final class Slice
         // Calculate number of steps
         // shape = ceil((stop - start) / step)
         $diff = $stop - $start;
-        $shape = (int)ceil($diff / $step);
+        $shape = (int) ceil($diff / $step);
 
         return [
             'start' => $start,

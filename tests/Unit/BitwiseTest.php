@@ -11,6 +11,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for bitwise operations (AND, OR, XOR, shifts).
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class BitwiseTest extends TestCase
 {
@@ -296,7 +300,7 @@ final class BitwiseTest extends TestCase
         foreach ($types as $dtype) {
             $a = NDArray::array([0b1100, 0b1010], $dtype);
             $b = NDArray::array([0b1010, 0b1100], $dtype);
-            
+
             $result = $a->bitand($b);
             $this->assertSame($dtype, $result->dtype(), "bitand failed for {$dtype->name}");
             $this->assertSame([8, 8], $result->toArray());

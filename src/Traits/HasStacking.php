@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
-use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
@@ -22,8 +21,7 @@ trait HasStacking
      * All arrays must have the same shape except for the dimension along axis.
      *
      * @param array<NDArray> $arrays Arrays to concatenate
-     * @param int $axis Axis along which to join (default 0)
-     * @return NDArray
+     * @param int            $axis   Axis along which to join (default 0)
      */
     public static function concatenate(array $arrays, int $axis = 0): NDArray
     {
@@ -31,34 +29,34 @@ trait HasStacking
             throw new ShapeException('concatenate requires at least one array');
         }
 
-        $numArrays = count($arrays);
+        $numArrays = \count($arrays);
         $ndim = $arrays[0]->ndim;
 
         $axisResolved = $axis < 0 ? $ndim + $axis : $axis;
         if ($axisResolved < 0 || $axisResolved >= $ndim) {
-            throw new ShapeException("Axis $axis out of bounds for array with $ndim dimensions");
+            throw new ShapeException("Axis {$axis} out of bounds for array with {$ndim} dimensions");
         }
 
         foreach ($arrays as $i => $arr) {
             if ($arr->ndim !== $ndim) {
                 throw new ShapeException(
-                    "concatenate requires all arrays to have the same number of dimensions (array $i has {$arr->ndim}, expected $ndim)"
+                    "concatenate requires all arrays to have the same number of dimensions (array {$i} has {$arr->ndim}, expected {$ndim})"
                 );
             }
         }
 
         $ffi = Lib::get();
 
-        $cHandles = $ffi->new("struct NdArrayHandle*[$numArrays]");
-        $cOffsets = $ffi->new("size_t[$numArrays]");
-        $cShapes = $ffi->new("size_t[" . ($numArrays * $ndim) . "]");
-        $cStrides = $ffi->new("size_t[" . ($numArrays * $ndim) . "]");
+        $cHandles = $ffi->new("struct NdArrayHandle*[{$numArrays}]");
+        $cOffsets = $ffi->new("size_t[{$numArrays}]");
+        $cShapes = $ffi->new('size_t['.($numArrays * $ndim).']');
+        $cStrides = $ffi->new('size_t['.($numArrays * $ndim).']');
 
-        for ($i = 0; $i < $numArrays; $i++) {
+        for ($i = 0; $i < $numArrays; ++$i) {
             $arr = $arrays[$i];
             $cHandles[$i] = $arr->handle;
             $cOffsets[$i] = $arr->offset;
-            for ($d = 0; $d < $ndim; $d++) {
+            for ($d = 0; $d < $ndim; ++$d) {
                 $cShapes[$i * $ndim + $d] = $arr->shape[$d];
                 $cStrides[$i * $ndim + $d] = $arr->strides[$d];
             }
@@ -96,8 +94,7 @@ trait HasStacking
      * All arrays must have identical shapes.
      *
      * @param array<NDArray> $arrays Arrays to stack
-     * @param int $axis Axis in the result at which the arrays are stacked
-     * @return NDArray
+     * @param int            $axis   Axis in the result at which the arrays are stacked
      */
     public static function stack(array $arrays, int $axis = 0): NDArray
     {
@@ -105,34 +102,34 @@ trait HasStacking
             throw new ShapeException('stack requires at least one array');
         }
 
-        $numArrays = count($arrays);
+        $numArrays = \count($arrays);
         $ndim = $arrays[0]->ndim;
 
         $axisResolved = $axis < 0 ? $ndim + $axis + 1 : $axis;
         if ($axisResolved < 0 || $axisResolved > $ndim) {
-            throw new ShapeException("Axis $axis out of bounds for stack");
+            throw new ShapeException("Axis {$axis} out of bounds for stack");
         }
 
         foreach ($arrays as $i => $arr) {
             if ($arr->ndim !== $ndim) {
                 throw new ShapeException(
-                    "stack requires all arrays to have the same number of dimensions (array $i has {$arr->ndim}, expected $ndim)"
+                    "stack requires all arrays to have the same number of dimensions (array {$i} has {$arr->ndim}, expected {$ndim})"
                 );
             }
         }
 
         $ffi = Lib::get();
 
-        $cHandles = $ffi->new("struct NdArrayHandle*[$numArrays]");
-        $cOffsets = $ffi->new("size_t[$numArrays]");
-        $cShapes = $ffi->new("size_t[" . ($numArrays * $ndim) . "]");
-        $cStrides = $ffi->new("size_t[" . ($numArrays * $ndim) . "]");
+        $cHandles = $ffi->new("struct NdArrayHandle*[{$numArrays}]");
+        $cOffsets = $ffi->new("size_t[{$numArrays}]");
+        $cShapes = $ffi->new('size_t['.($numArrays * $ndim).']');
+        $cStrides = $ffi->new('size_t['.($numArrays * $ndim).']');
 
-        for ($i = 0; $i < $numArrays; $i++) {
+        for ($i = 0; $i < $numArrays; ++$i) {
             $arr = $arrays[$i];
             $cHandles[$i] = $arr->handle;
             $cOffsets[$i] = $arr->offset;
-            for ($d = 0; $d < $ndim; $d++) {
+            for ($d = 0; $d < $ndim; ++$d) {
                 $cShapes[$i * $ndim + $d] = $arr->shape[$d];
                 $cStrides[$i * $ndim + $d] = $arr->strides[$d];
             }
@@ -170,7 +167,6 @@ trait HasStacking
      * Equivalent to concatenate(arrays, axis=0).
      *
      * @param array<NDArray> $arrays Arrays to stack
-     * @return NDArray
      */
     public static function vstack(array $arrays): NDArray
     {
@@ -183,7 +179,6 @@ trait HasStacking
      * Equivalent to concatenate(arrays, axis=1).
      *
      * @param array<NDArray> $arrays Arrays to stack
-     * @return NDArray
      */
     public static function hstack(array $arrays): NDArray
     {
@@ -196,23 +191,24 @@ trait HasStacking
      * If $indicesOrSections is an integer N, split into N equal parts (axis length must be divisible by N).
      * If it is an array of indices, split at those positions.
      *
-     * @param int|array<int> $indicesOrSections Number of equal parts, or array of split indices
-     * @param int $axis Axis along which to split
+     * @param array<int>|int $indicesOrSections Number of equal parts, or array of split indices
+     * @param int            $axis              Axis along which to split
+     *
      * @return array<NDArray> List of sub-arrays (views)
      */
-    public function split(int|array $indicesOrSections, int $axis = 0): array
+    public function split(array|int $indicesOrSections, int $axis = 0): array
     {
         $ffi = Lib::get();
         $ndim = $this->ndim;
 
         $axisResolved = $axis < 0 ? $ndim + $axis : $axis;
         if ($axisResolved < 0 || $axisResolved >= $ndim) {
-            throw new ShapeException("Axis $axis out of bounds for array with $ndim dimensions");
+            throw new ShapeException("Axis {$axis} out of bounds for array with {$ndim} dimensions");
         }
 
         $axisLen = $this->shape[$axisResolved];
 
-        $indices = is_int($indicesOrSections)
+        $indices = \is_int($indicesOrSections)
             ? self::indicesForEqualSplit($axisLen, $indicesOrSections)
             : $indicesOrSections;
 
@@ -220,11 +216,11 @@ trait HasStacking
             return [$this];
         }
 
-        $numParts = count($indices) + 1;
+        $numParts = \count($indices) + 1;
         $cIndices = Lib::createCArray('size_t', $indices);
-        $cOutOffsets = $ffi->new("size_t[$numParts]");
-        $cOutShapes = $ffi->new("size_t[" . ($numParts * $ndim) . "]");
-        $cOutStrides = $ffi->new("size_t[" . ($numParts * $ndim) . "]");
+        $cOutOffsets = $ffi->new("size_t[{$numParts}]");
+        $cOutShapes = $ffi->new('size_t['.($numParts * $ndim).']');
+        $cOutStrides = $ffi->new('size_t['.($numParts * $ndim).']');
 
         $status = $ffi->ndarray_split(
             $this->handle,
@@ -234,7 +230,7 @@ trait HasStacking
             $ndim,
             $axisResolved,
             $cIndices,
-            count($indices),
+            \count($indices),
             $cOutOffsets,
             $cOutShapes,
             $cOutStrides
@@ -244,10 +240,10 @@ trait HasStacking
 
         $base = $this->base ?? $this;
         $result = [];
-        for ($i = 0; $i < $numParts; $i++) {
+        for ($i = 0; $i < $numParts; ++$i) {
             $partShape = [];
             $partStrides = [];
-            for ($d = 0; $d < $ndim; $d++) {
+            for ($d = 0; $d < $ndim; ++$d) {
                 $partShape[] = (int) $cOutShapes[$i * $ndim + $d];
                 $partStrides[] = (int) $cOutStrides[$i * $ndim + $d];
             }
@@ -261,16 +257,18 @@ trait HasStacking
                 $base
             );
         }
+
         return $result;
     }
 
     /**
      * Split array vertically (along axis 0).
      *
-     * @param int|array<int> $indicesOrSections Number of equal parts or split indices
+     * @param array<int>|int $indicesOrSections Number of equal parts or split indices
+     *
      * @return array<NDArray>
      */
-    public function vsplit(int|array $indicesOrSections): array
+    public function vsplit(array|int $indicesOrSections): array
     {
         return $this->split($indicesOrSections, 0);
     }
@@ -278,10 +276,11 @@ trait HasStacking
     /**
      * Split array horizontally (along axis 1).
      *
-     * @param int|array<int> $indicesOrSections Number of equal parts or split indices
+     * @param array<int>|int $indicesOrSections Number of equal parts or split indices
+     *
      * @return array<NDArray>
      */
-    public function hsplit(int|array $indicesOrSections): array
+    public function hsplit(array|int $indicesOrSections): array
     {
         return $this->split($indicesOrSections, 1);
     }
@@ -292,18 +291,19 @@ trait HasStacking
     private static function indicesForEqualSplit(int $axisLen, int $n): array
     {
         if ($n < 1) {
-            throw new ShapeException("Number of sections must be >= 1");
+            throw new ShapeException('Number of sections must be >= 1');
         }
-        if ($axisLen % $n !== 0) {
+        if (0 !== $axisLen % $n) {
             throw new ShapeException(
-                "Array split does not result in an equal division (axis length $axisLen not divisible by $n)"
+                "Array split does not result in an equal division (axis length {$axisLen} not divisible by {$n})"
             );
         }
         $chunk = (int) ($axisLen / $n);
         $indices = [];
-        for ($i = 1; $i < $n; $i++) {
+        for ($i = 1; $i < $n; ++$i) {
             $indices[] = $i * $chunk;
         }
+
         return $indices;
     }
 }

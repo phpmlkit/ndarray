@@ -20,14 +20,15 @@ trait HasConversion
     /**
      * Copy flattened C-order data into a caller-allocated C buffer.
      *
-     * @param CData $dst Destination typed C buffer
-     * @param int|null $maxElements Maximum elements the destination can hold
+     * @param CData    $dst         Destination typed C buffer
+     * @param null|int $maxElements Maximum elements the destination can hold
+     *
      * @return int Number of elements copied
      */
     public function copyToBuffer(CData $dst, ?int $maxElements = null): int
     {
         $size = $this->size;
-        if ($size === 0) {
+        if (0 === $size) {
             return 0;
         }
 
@@ -65,7 +66,7 @@ trait HasConversion
     public function tobytes(): string
     {
         $nbytes = $this->nbytes();
-        if ($nbytes === 0) {
+        if (0 === $nbytes) {
             return '';
         }
 
@@ -73,7 +74,7 @@ trait HasConversion
         $buffer = $ffi->new("uint8_t[{$nbytes}]");
         $this->copyToBuffer($buffer, $this->size);
 
-        return FFI::string($buffer, $nbytes);
+        return \FFI::string($buffer, $nbytes);
     }
 
     /**
@@ -81,14 +82,12 @@ trait HasConversion
      *
      * Returns float, int, or bool depending on the array's dtype.
      * Throws if the array is not 0-dimensional.
-     *
-     * @return float|int|bool
      */
-    public function toScalar(): float|int|bool
+    public function toScalar(): bool|float|int
     {
-        if ($this->ndim !== 0) {
+        if (0 !== $this->ndim) {
             throw new ShapeException(
-                'toScalar requires a 0-dimensional array, got array with ' . $this->ndim . ' dimensions'
+                'toScalar requires a 0-dimensional array, got array with '.$this->ndim.' dimensions'
             );
         }
 
@@ -105,7 +104,7 @@ trait HasConversion
             $cShape,
             $cStrides,
             $this->ndim,
-            FFI::addr($out),
+            \FFI::addr($out),
         );
 
         Lib::checkStatus($status);
@@ -123,12 +122,10 @@ trait HasConversion
      * Convert to flat PHP data in C-order.
      *
      * For 0-dimensional arrays, returns a scalar.
-     *
-     * @return array|float|int|bool
      */
-    public function toFlatArray(): array|float|int|bool
+    public function toFlatArray(): array|bool|float|int
     {
-        if ($this->ndim === 0) {
+        if (0 === $this->ndim) {
             return $this->toScalar();
         }
 
@@ -140,16 +137,16 @@ trait HasConversion
      *
      * Uses flat typed extraction from Rust + iterative nesting in PHP.
      *
-     * @return array|float|int|bool Returns array for N-dimensional arrays, scalar for 0-dimensional
+     * @return array|bool|float|int Returns array for N-dimensional arrays, scalar for 0-dimensional
      */
-    public function toArray(): array|float|int|bool
+    public function toArray(): array|bool|float|int
     {
-        if ($this->ndim === 0) {
+        if (0 === $this->ndim) {
             return $this->toScalar();
         }
 
         $flat = $this->fetchFlatData();
-        if ($this->ndim === 1) {
+        if (1 === $this->ndim) {
             return $flat;
         }
 
@@ -157,9 +154,73 @@ trait HasConversion
     }
 
     /**
+     * Create a deep copy of the array (or view).
+     *
+     * The returned array is always C-contiguous and owns its data.
+     */
+    public function copy(): self
+    {
+        $ffi = Lib::get();
+
+        $cShape = Lib::createCArray('size_t', $this->shape);
+        $cStrides = Lib::createCArray('size_t', $this->strides);
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_copy(
+            $this->handle,
+            $this->offset,
+            $cShape,
+            $cStrides,
+            $this->ndim,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new self($outHandle, $this->shape, $this->dtype);
+    }
+
+    /**
+     * Cast array to a different data type.
+     *
+     * Returns a new array with the specified dtype. If the target dtype
+     * is the same as the current dtype, this is equivalent to copy().
+     *
+     * @param DType $dtype Target data type
+     *
+     * @return self New array with converted data
+     */
+    public function astype(DType $dtype): self
+    {
+        if ($this->dtype === $dtype) {
+            return $this->copy();
+        }
+
+        $ffi = Lib::get();
+
+        $cShape = Lib::createShapeArray($this->shape);
+        $cStrides = Lib::createShapeArray($this->strides);
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_astype(
+            $this->handle,
+            $this->offset,
+            $cShape,
+            $cStrides,
+            $this->ndim,
+            $dtype->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new self($outHandle, $this->shape, $dtype);
+    }
+
+    /**
      * Fetch flattened view data from Rust using a single FFI call.
      *
-     * @return array<int|float|bool>
+     * @return array<bool|float|int>
      */
     private function fetchFlatData(): array
     {
@@ -191,7 +252,7 @@ trait HasConversion
         Lib::checkStatus($status);
 
         $len = min((int) $outLen->cdata, $size);
-        if ($len === 0) {
+        if (0 === $len) {
             return [];
         }
 
@@ -200,19 +261,24 @@ trait HasConversion
         switch ($this->dtype) {
             case DType::Float64:
             case DType::Float32:
-                for ($i = 0; $i < $len; $i++) {
+                for ($i = 0; $i < $len; ++$i) {
                     $out[] = (float) $buffer[$i];
                 }
+
                 break;
+
             case DType::Bool:
-                for ($i = 0; $i < $len; $i++) {
+                for ($i = 0; $i < $len; ++$i) {
                     $out[] = ((int) $buffer[$i]) !== 0;
                 }
+
                 break;
+
             default:
-                for ($i = 0; $i < $len; $i++) {
+                for ($i = 0; $i < $len; ++$i) {
                     $out[] = (int) $buffer[$i];
                 }
+
                 break;
         }
 
@@ -222,27 +288,26 @@ trait HasConversion
     /**
      * Build nested arrays from a flat C-order vector using iterative chunking.
      *
-     * @param array<int|float|bool> $flat
-     * @param array<int> $shape
-     * @return array
+     * @param array<bool|float|int> $flat
+     * @param array<int>            $shape
      */
     private function nestFromFlatIterative(array $flat, array $shape): array
     {
         $level = $flat;
-        $ndim = count($shape);
+        $ndim = \count($shape);
 
-        for ($dim = $ndim - 1; $dim >= 1; $dim--) {
+        for ($dim = $ndim - 1; $dim >= 1; --$dim) {
             $chunkSize = $shape[$dim];
             if ($chunkSize <= 0) {
                 return [];
             }
 
             $next = [];
-            $count = count($level);
+            $count = \count($level);
             $idx = 0;
             while ($idx < $count) {
                 $chunk = [];
-                for ($j = 0; $j < $chunkSize; $j++) {
+                for ($j = 0; $j < $chunkSize; ++$j) {
                     $chunk[] = $level[$idx++];
                 }
                 $next[] = $chunk;
@@ -251,70 +316,5 @@ trait HasConversion
         }
 
         return $level;
-    }
-
-    /**
-     * Create a deep copy of the array (or view).
-     *
-     * The returned array is always C-contiguous and owns its data.
-     *
-     * @return self
-     */
-    public function copy(): self
-    {
-        $ffi = Lib::get();
-
-        $cShape = Lib::createCArray('size_t', $this->shape);
-        $cStrides = Lib::createCArray('size_t', $this->strides);
-        $outHandle = $ffi->new("struct NdArrayHandle*");
-
-        $status = $ffi->ndarray_copy(
-            $this->handle,
-            $this->offset,
-            $cShape,
-            $cStrides,
-            $this->ndim,
-            Lib::addr($outHandle)
-        );
-
-        Lib::checkStatus($status);
-
-        return new self($outHandle, $this->shape, $this->dtype);
-    }
-
-    /**
-     * Cast array to a different data type.
-     *
-     * Returns a new array with the specified dtype. If the target dtype
-     * is the same as the current dtype, this is equivalent to copy().
-     *
-     * @param DType $dtype Target data type
-     * @return self New array with converted data
-     */
-    public function astype(DType $dtype): self
-    {
-        if ($this->dtype === $dtype) {
-            return $this->copy();
-        }
-
-        $ffi = Lib::get();
-
-        $cShape = Lib::createShapeArray($this->shape);
-        $cStrides = Lib::createShapeArray($this->strides);
-        $outHandle = $ffi->new("struct NdArrayHandle*");
-
-        $status = $ffi->ndarray_astype(
-            $this->handle,
-            $this->offset,
-            $cShape,
-            $cStrides,
-            $this->ndim,
-            $dtype->value,
-            Lib::addr($outHandle)
-        );
-
-        Lib::checkStatus($status);
-
-        return new self($outHandle, $this->shape, $dtype);
     }
 }

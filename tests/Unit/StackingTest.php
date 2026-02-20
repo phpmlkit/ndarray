@@ -13,6 +13,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for joining and splitting operations on full arrays.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 final class StackingTest extends TestCase
 {
