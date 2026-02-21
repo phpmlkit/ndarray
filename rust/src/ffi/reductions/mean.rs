@@ -30,13 +30,14 @@ pub unsafe extern "C" fn ndarray_mean(
         return ERR_GENERIC;
     }
 
+    let meta = &*meta;
+
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        
 
         let mean_result = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, &(*meta))
+                let Some(view) = extract_view_f64(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
@@ -44,7 +45,7 @@ pub unsafe extern "C" fn ndarray_mean(
                 view.mean().unwrap_or(0.0)
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, &(*meta))
+                let Some(view) = extract_view_f32(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
@@ -52,7 +53,7 @@ pub unsafe extern "C" fn ndarray_mean(
                 view.mean().map(|x| x as f64).unwrap_or(0.0)
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, &(*meta))
+                let Some(view) = extract_view_i64(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
@@ -60,7 +61,7 @@ pub unsafe extern "C" fn ndarray_mean(
                 view.mean().map(|x| x as f64).unwrap_or(0.0)
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, &(*meta))
+                let Some(view) = extract_view_i32(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
@@ -68,7 +69,7 @@ pub unsafe extern "C" fn ndarray_mean(
                 view.mean().map(|x| x as f64).unwrap_or(0.0)
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, &(*meta))
+                let Some(view) = extract_view_i16(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
@@ -76,7 +77,7 @@ pub unsafe extern "C" fn ndarray_mean(
                 view.mean().map(|x| x as f64).unwrap_or(0.0)
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, &(*meta))
+                let Some(view) = extract_view_i8(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
@@ -84,7 +85,7 @@ pub unsafe extern "C" fn ndarray_mean(
                 view.mean().map(|x| x as f64).unwrap_or(0.0)
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, &(*meta))
+                let Some(view) = extract_view_u64(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
@@ -92,7 +93,7 @@ pub unsafe extern "C" fn ndarray_mean(
                 view.mean().map(|x| x as f64).unwrap_or(0.0)
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, &(*meta))
+                let Some(view) = extract_view_u32(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
@@ -100,7 +101,7 @@ pub unsafe extern "C" fn ndarray_mean(
                 view.mean().map(|x| x as f64).unwrap_or(0.0)
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, &(*meta))
+                let Some(view) = extract_view_u16(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
@@ -108,7 +109,7 @@ pub unsafe extern "C" fn ndarray_mean(
                 view.mean().map(|x| x as f64).unwrap_or(0.0)
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, &(*meta))
+                let Some(view) = extract_view_u8(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
@@ -149,9 +150,11 @@ pub unsafe extern "C" fn ndarray_mean_axis(
         return ERR_GENERIC;
     }
 
+    let meta = &*meta;
+
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let shape_slice = (*meta).shape_slice();
+        let shape_slice = meta.shape_slice();
 
         // Validate axis
         let axis_usize = match validate_axis(shape_slice, axis) {
@@ -166,7 +169,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
         // Mean always returns Float64
         let reduced: ArrayD<f64> = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, &(*meta))
+                let Some(view) = extract_view_f64(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
@@ -177,7 +180,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
                 })
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, &(*meta))
+                let Some(view) = extract_view_f32(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
@@ -190,7 +193,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
                     })
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, &(*meta))
+                let Some(view) = extract_view_i64(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
@@ -203,7 +206,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
                     })
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, &(*meta))
+                let Some(view) = extract_view_i32(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
@@ -216,7 +219,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
                     })
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, &(*meta))
+                let Some(view) = extract_view_i16(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
@@ -229,7 +232,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
                     })
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, &(*meta))
+                let Some(view) = extract_view_i8(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
@@ -242,7 +245,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
                     })
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, &(*meta))
+                let Some(view) = extract_view_u64(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
@@ -255,7 +258,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
                     })
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, &(*meta))
+                let Some(view) = extract_view_u32(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
@@ -268,7 +271,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
                     })
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, &(*meta))
+                let Some(view) = extract_view_u16(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
@@ -281,7 +284,7 @@ pub unsafe extern "C" fn ndarray_mean_axis(
                     })
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, &(*meta))
+                let Some(view) = extract_view_u8(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;

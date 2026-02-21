@@ -1,4 +1,4 @@
-//! Left shift operation using ndarray's native broadcasting.
+//! Left shift operation.
 //!
 //! Works with all integer types (signed and unsigned) only.
 //! Bool and float types are not supported.
@@ -18,7 +18,7 @@ use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use crate::scalar_op_arm;
 
-/// Left shift with proper broadcasting support.
+/// Compute the left shift of two arrays.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_left_shift(
     a: *const NdArrayHandle,
@@ -117,7 +117,7 @@ pub unsafe extern "C" fn ndarray_left_shift(
     })
 }
 
-/// Left shift with scalar.
+/// Compute the left shift of an array by a scalar.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_left_shift_scalar(
     a: *const NdArrayHandle,

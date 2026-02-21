@@ -214,62 +214,6 @@ impl fmt::Display for DTypeError {
 
 impl std::error::Error for DTypeError {}
 
-// ============================================================================
-// FFI Functions
-// ============================================================================
-
-/// Get the item size for a dtype. Returns 0 for invalid dtype values.
-#[no_mangle]
-pub extern "C" fn dtype_item_size(dtype: u8) -> usize {
-    DType::from_u8(dtype).map_or(0, |d| d.item_size())
-}
-
-/// Check if a dtype value is valid.
-#[no_mangle]
-pub extern "C" fn dtype_is_valid(dtype: u8) -> bool {
-    DType::from_u8(dtype).is_some()
-}
-
-/// Check if a dtype is a signed integer.
-#[no_mangle]
-pub extern "C" fn dtype_is_signed(dtype: u8) -> bool {
-    DType::from_u8(dtype).map_or(false, |d| d.is_signed())
-}
-
-/// Check if a dtype is an unsigned integer.
-#[no_mangle]
-pub extern "C" fn dtype_is_unsigned(dtype: u8) -> bool {
-    DType::from_u8(dtype).map_or(false, |d| d.is_unsigned())
-}
-
-/// Check if a dtype is an integer type.
-#[no_mangle]
-pub extern "C" fn dtype_is_integer(dtype: u8) -> bool {
-    DType::from_u8(dtype).map_or(false, |d| d.is_integer())
-}
-
-/// Check if a dtype is a floating-point type.
-#[no_mangle]
-pub extern "C" fn dtype_is_float(dtype: u8) -> bool {
-    DType::from_u8(dtype).map_or(false, |d| d.is_float())
-}
-
-/// Check if a dtype is a boolean type.
-#[no_mangle]
-pub extern "C" fn dtype_is_bool(dtype: u8) -> bool {
-    DType::from_u8(dtype).map_or(false, |d| d.is_bool())
-}
-
-/// Get the promoted dtype when combining two dtypes.
-/// Returns 255 (invalid) if either dtype is invalid.
-#[no_mangle]
-pub extern "C" fn dtype_promote(a: u8, b: u8) -> u8 {
-    match (DType::from_u8(a), DType::from_u8(b)) {
-        (Some(da), Some(db)) => DType::promote(da, db).to_u8(),
-        _ => 255,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -326,23 +270,5 @@ mod tests {
         assert_eq!(DType::promote(DType::Float32, DType::Int32), DType::Float32);
         assert_eq!(DType::promote(DType::Int64, DType::Int32), DType::Int64);
         assert_eq!(DType::promote(DType::Uint64, DType::Int32), DType::Float64);
-    }
-
-    #[test]
-    fn test_ffi_functions() {
-        assert_eq!(dtype_item_size(9), 8);
-        assert_eq!(dtype_item_size(0), 1);
-        assert_eq!(dtype_item_size(255), 0);
-
-        assert!(dtype_is_valid(0));
-        assert!(dtype_is_valid(10));
-        assert!(!dtype_is_valid(11));
-
-        assert!(dtype_is_signed(0));
-        assert!(!dtype_is_signed(4));
-        assert!(dtype_is_float(9));
-
-        assert_eq!(dtype_promote(9, 2), 9);
-        assert_eq!(dtype_promote(255, 0), 255);
     }
 }

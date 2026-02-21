@@ -35,10 +35,10 @@ pub unsafe extern "C" fn ndarray_softmax(
     }
 
     crate::ffi_guard!({
-        let meta_ref = &*meta;
+        let meta = &*meta;
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
 
-        let axis_usize = match validate_axis(&meta_ref.shape_slice(), axis) {
+        let axis_usize = match validate_axis(&meta.shape_slice(), axis) {
             Ok(a) => a,
             Err(e) => {
                 crate::error::set_last_error(e);
@@ -48,7 +48,7 @@ pub unsafe extern "C" fn ndarray_softmax(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, &meta_ref)
+                let Some(view) = extract_view_f64(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
@@ -78,7 +78,7 @@ pub unsafe extern "C" fn ndarray_softmax(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, &meta_ref)
+                let Some(view) = extract_view_f32(wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;

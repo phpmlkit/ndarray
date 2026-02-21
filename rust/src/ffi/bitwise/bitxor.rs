@@ -1,4 +1,4 @@
-//! Bitwise XOR operation using ndarray's native broadcasting.
+//! Bitwise XOR operation.
 //!
 //! Works with all integer types (signed and unsigned) and Bool.
 
@@ -18,7 +18,7 @@ use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use crate::scalar_op_arm;
 
-/// Bitwise XOR with proper broadcasting support.
+/// Compute the bitwise XOR of two arrays.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_bitxor(
     a: *const NdArrayHandle,
@@ -122,7 +122,7 @@ pub unsafe extern "C" fn ndarray_bitxor(
     })
 }
 
-/// Bitwise XOR with scalar.
+/// Compute the bitwise XOR of an array by a scalar.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_bitxor_scalar(
     a: *const NdArrayHandle,

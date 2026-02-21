@@ -194,19 +194,13 @@ macro_rules! impl_assign_slice {
     ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
         impl $crate::core::NDArrayWrapper {
             $(
-                pub fn $method(
+                pub unsafe fn $method(
                     &self,
-                    dst_offset: usize,
-                    dst_shape: &[usize],
-                    dst_strides: &[usize],
+                    meta: &$crate::ffi::ViewMetadata,
                     src: &$crate::core::NDArrayWrapper,
-                    src_offset: usize,
-                    src_shape: &[usize],
-                    src_strides: &[usize],
+                    src_meta: &$crate::ffi::ViewMetadata,
                 ) -> Result<(), String> {
-                    // 1. Check if self (dst) matches the expected type variant
                     if let $crate::core::ArrayData::$variant(_) = &self.data {
-                        // OK
                     } else {
                          return Err(format!(
                             "Type mismatch: expected {}, got {:?}",
@@ -215,7 +209,6 @@ macro_rules! impl_assign_slice {
                     }
 
 
-                    // 2. Check if src matches dst type
                     if self.dtype != src.dtype {
                         return Err(format!(
                             "DType mismatch in assign: dst={:?}, src={:?}",
@@ -223,11 +216,16 @@ macro_rules! impl_assign_slice {
                         ));
                     }
 
-                    // Check for self-assignment / aliasing
                     let is_same = self.is_same_array(src);
 
+                    let src_shape = src_meta.shape_slice();
+                    let src_strides = src_meta.strides_slice();
+                    let src_offset = src_meta.offset;
+                    let dst_shape = meta.shape_slice();
+                    let dst_strides = meta.strides_slice();
+                    let dst_offset = meta.offset;
+
                     if is_same {
-                        // Case 1: Same underlying array (potential aliasing)
                         let temp_data: Vec<$type> = {
                             if let $crate::core::ArrayData::$variant(arr) = &src.data {
                                 let guard = arr.read();
@@ -246,7 +244,6 @@ macro_rules! impl_assign_slice {
                             }
                         };
 
-                        // Write to destination
                         if let $crate::core::ArrayData::$variant(arr) = &self.data {
                             let mut guard = arr.write();
                             let raw_ptr = guard.as_mut_ptr();
@@ -265,13 +262,10 @@ macro_rules! impl_assign_slice {
                             }
                         }
                     } else {
-                        // Case 2: Different arrays
                         if let ($crate::core::ArrayData::$variant(dst_arr), $crate::core::ArrayData::$variant(src_arr)) = (&self.data, &src.data) {
-                            // Lock source first
                             let src_guard = src_arr.read();
                             let src_ptr = src_guard.as_ptr();
 
-                            // Lock dest
                             let mut dst_guard = dst_arr.write();
                             let dst_ptr = dst_guard.as_mut_ptr();
 

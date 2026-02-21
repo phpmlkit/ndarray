@@ -14,26 +14,6 @@ use FFI\CData;
 interface Bindings
 {
     // =========================================================================
-    // DType Utilities
-    // =========================================================================
-
-    public function dtype_item_size(int $dtype): int;
-
-    public function dtype_is_valid(int $dtype): bool;
-
-    public function dtype_is_signed(int $dtype): bool;
-
-    public function dtype_is_unsigned(int $dtype): bool;
-
-    public function dtype_is_integer(int $dtype): bool;
-
-    public function dtype_is_float(int $dtype): bool;
-
-    public function dtype_is_bool(int $dtype): bool;
-
-    public function dtype_promote(int $a, int $b): int;
-
-    // =========================================================================
     // Error Handling
     // =========================================================================
 
@@ -86,6 +66,7 @@ interface Bindings
     public function ndarray_get_element(CData $handle, int $flat_index, CData $out_value): int;
 
     public function ndarray_set_element(CData $handle, int $flat_index, CData $value): int;
+    public function ndarray_as_scalar(CData $handle, CData $meta, CData $out_value): int;
 
     public function ndarray_get_data(CData $handle, CData $meta, CData $out_data, int $max_len, CData $out_len): int;
 
@@ -256,115 +237,101 @@ interface Bindings
 
     public function ndarray_sigmoid(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_softmax(CData $handle, CData $handle_meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_softmax(CData $handle, CData $meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     // =========================================================================
     // Reductions
     // =========================================================================
 
-    public function ndarray_sum(CData $handle, CData $handle_meta, CData $out_value, CData $out_dtype_ptr): int;
+    public function ndarray_sum(CData $handle, CData $meta, CData $out_value, CData $out_dtype_ptr): int;
 
-    public function ndarray_sum_axis(CData $handle, CData $handle_meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_sum_axis(CData $handle, CData $meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_mean(CData $handle, CData $handle_meta, CData $out_value, CData $out_dtype_ptr): int;
+    public function ndarray_mean(CData $handle, CData $meta, CData $out_value, CData $out_dtype_ptr): int;
 
-    public function ndarray_mean_axis(CData $handle, CData $handle_meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_mean_axis(CData $handle, CData $meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_min(CData $handle, CData $handle_meta, CData $out_value, CData $out_dtype_ptr): int;
+    public function ndarray_min(CData $handle, CData $meta, CData $out_value, CData $out_dtype_ptr): int;
 
-    public function ndarray_min_axis(CData $handle, CData $handle_meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_min_axis(CData $handle, CData $meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_max(CData $handle, CData $handle_meta, CData $out_value, CData $out_dtype_ptr): int;
+    public function ndarray_max(CData $handle, CData $meta, CData $out_value, CData $out_dtype_ptr): int;
 
-    public function ndarray_max_axis(CData $handle, CData $handle_meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_max_axis(CData $handle, CData $meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_argmin(CData $handle, CData $handle_meta, CData $out_value, CData $out_dtype_ptr): int;
+    public function ndarray_argmin(CData $handle, CData $meta, CData $out_value, CData $out_dtype_ptr): int;
 
-    public function ndarray_argmin_axis(CData $handle, CData $handle_meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_argmin_axis(CData $handle, CData $meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_argmax(CData $handle, CData $handle_meta, CData $out_value, CData $out_dtype_ptr): int;
+    public function ndarray_argmax(CData $handle, CData $meta, CData $out_value, CData $out_dtype_ptr): int;
 
-    public function ndarray_argmax_axis(CData $handle, CData $handle_meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_argmax_axis(CData $handle, CData $meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_product(CData $handle, CData $handle_meta, CData $out_value, CData $out_dtype_ptr): int;
+    public function ndarray_product(CData $handle, CData $meta, CData $out_value, CData $out_dtype_ptr): int;
 
-    public function ndarray_product_axis(CData $handle, CData $handle_meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_product_axis(CData $handle, CData $meta, int $axis, bool $keepdims, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_cumsum(CData $handle, CData $handle_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_cumsum(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_cumsum_axis(CData $handle, CData $handle_meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_cumsum_axis(CData $handle, CData $meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_cumprod(CData $handle, CData $handle_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_cumprod(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_cumprod_axis(CData $handle, CData $handle_meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_cumprod_axis(CData $handle, CData $meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_var(CData $handle, CData $handle_meta, float $ddof, CData $out_value, CData $out_dtype_ptr): int;
+    public function ndarray_var(CData $handle, CData $meta, float $ddof, CData $out_value, CData $out_dtype_ptr): int;
 
-    public function ndarray_var_axis(CData $handle, CData $handle_meta, int $axis, bool $keepdims, float $ddof, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_var_axis(CData $handle, CData $meta, int $axis, bool $keepdims, float $ddof, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_std(CData $handle, CData $handle_meta, float $ddof, CData $out_value, CData $out_dtype_ptr): int;
+    public function ndarray_std(CData $handle, CData $meta, float $ddof, CData $out_value, CData $out_dtype_ptr): int;
 
-    public function ndarray_std_axis(CData $handle, CData $handle_meta, int $axis, bool $keepdims, float $ddof, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_std_axis(CData $handle, CData $meta, int $axis, bool $keepdims, float $ddof, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_bincount(CData $handle, CData $handle_meta, int $minlength, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_bincount(CData $handle, CData $meta, int $minlength, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_sort_axis(CData $handle, CData $handle_meta, int $axis, int $kind, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_sort_axis(CData $handle, CData $meta, int $axis, int $kind, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_sort_flat(CData $handle, CData $handle_meta, int $kind, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_sort_flat(CData $handle, CData $meta, int $kind, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_argsort_axis(CData $handle, CData $handle_meta, int $axis, int $kind, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_argsort_axis(CData $handle, CData $meta, int $axis, int $kind, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_argsort_flat(CData $handle, CData $handle_meta, int $kind, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_argsort_flat(CData $handle, CData $meta, int $kind, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_topk_axis(CData $handle, CData $handle_meta, int $axis, int $k, bool $largest, bool $sorted, int $kind, CData $out_values, CData $out_indices, CData $out_shape, int $max_ndim): int;
+    public function ndarray_topk_axis(CData $handle, CData $meta, int $axis, int $k, bool $largest, bool $sorted, int $kind, CData $out_values, CData $out_indices, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_topk_flat(CData $handle, CData $handle_meta, int $k, bool $largest, bool $sorted, int $kind, CData $out_values, CData $out_indices, CData $out_shape): int;
-
-    // =========================================================================
-    // Properties
-    // =========================================================================
-
-    public function ndarray_ndim(CData $handle, CData $out_ndim): int;
-
-    public function ndarray_len(CData $handle, CData $out_len): int;
-
-    public function ndarray_dtype(CData $handle, CData $out_dtype): int;
-
-    public function ndarray_shape(CData $handle, CData $out_shape, int $max_ndim, CData $out_ndim): int;
-
-    public function ndarray_scalar(CData $handle, CData $handle_meta, CData $out_value): int;
+    public function ndarray_topk_flat(CData $handle, CData $meta, int $k, bool $largest, bool $sorted, int $kind, CData $out_values, CData $out_indices, CData $out_shape): int;
 
     // =========================================================================
     // Type Casting
     // =========================================================================
 
-    public function ndarray_astype(CData $handle, CData $handle_meta, int $target_dtype, CData $out_handle): int;
+    public function ndarray_astype(CData $handle, CData $meta, int $target_dtype, CData $out_handle): int;
 
     // =========================================================================
     // Shape Operations
     // =========================================================================
 
-    public function ndarray_reshape(CData $handle, CData $handle_meta, CData $new_shape, int $new_ndim, int $order, CData $out_handle): int;
+    public function ndarray_reshape(CData $handle, CData $meta, CData $new_shape, int $new_ndim, int $order, CData $out_handle): int;
 
-    public function ndarray_transpose(CData $handle, CData $handle_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_transpose(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_swap_axes(CData $handle, CData $handle_meta, int $axis1, int $axis2, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_swap_axes(CData $handle, CData $meta, int $axis1, int $axis2, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_merge_axes(CData $handle, CData $handle_meta, int $take, int $into, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_merge_axes(CData $handle, CData $meta, int $take, int $into, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_invert_axis(CData $handle, CData $handle_meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_invert_axis(CData $handle, CData $meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_insert_axis(CData $handle, CData $handle_meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_insert_axis(CData $handle, CData $meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_permute_axes(CData $handle, CData $handle_meta, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_permute_axes(CData $handle, CData $meta, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_flatten(CData $handle, CData $handle_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_flatten(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_ravel(CData $handle, CData $handle_meta, int $order, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_ravel(CData $handle, CData $meta, int $order, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_squeeze(CData $handle, CData $handle_meta, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_squeeze(CData $handle, CData $meta, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_pad(CData $handle, CData $handle_meta, CData $pad_width, int $mode, CData $constant_values, int $constant_values_len, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_pad(CData $handle, CData $meta, CData $pad_width, int $mode, CData $constant_values, int $constant_values_len, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     // =========================================================================
     // Linear Algebra Operations
@@ -374,13 +341,13 @@ interface Bindings
 
     public function ndarray_matmul(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_diagonal(CData $handle, CData $handle_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_diagonal(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_trace(CData $handle, CData $handle_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_trace(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_norm(CData $handle, CData $handle_meta, int $ord, CData $out_value, CData $out_dtype_ptr): int;
+    public function ndarray_norm(CData $handle, CData $meta, int $ord, CData $out_value, CData $out_dtype_ptr): int;
 
-    public function ndarray_norm_axis(CData $handle, CData $handle_meta, int $axis, bool $keepdims, int $ord, CData $out_handle): int;
+    public function ndarray_norm_axis(CData $handle, CData $meta, int $axis, bool $keepdims, int $ord, CData $out_handle): int;
 
     // =========================================================================
     // Stacking (Joining and Splitting)
@@ -390,13 +357,13 @@ interface Bindings
 
     public function ndarray_stack(CData $handles, CData $handles_meta, int $num_arrays, int $axis, CData $out_handle, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_split(CData $handle, CData $handle_meta, int $axis, CData $indices, int $num_indices, CData $out_offsets, CData $out_shapes, CData $out_strides): int;
+    public function ndarray_split(CData $handle, CData $meta, int $axis, CData $indices, int $num_indices, CData $out_offsets, CData $out_shapes, CData $out_strides): int;
 
     // =========================================================================
     // Tiling and Repeating
     // =========================================================================
 
-    public function ndarray_tile(CData $handle, CData $handle_meta, CData $reps, int $reps_len, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_tile(CData $handle, CData $meta, CData $reps, int $reps_len, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_repeat(CData $handle, CData $handle_meta, CData $repeats, int $repeats_len, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_repeat(CData $handle, CData $meta, CData $repeats, int $repeats_len, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 }

@@ -32,7 +32,7 @@ pub unsafe extern "C" fn ndarray_astype(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let meta_ref = &*meta;
+        let meta = &*meta;
 
         let target = match DType::from_u8(target_dtype as u8) {
             Some(dt) => dt,
@@ -43,9 +43,9 @@ pub unsafe extern "C" fn ndarray_astype(
         };
 
         let result_wrapper = if wrapper.dtype == target {
-            copy_same_dtype(wrapper, meta_ref)
+            copy_same_dtype(wrapper, meta)
         } else {
-            cast_to_dtype(wrapper, meta_ref, target)
+            cast_to_dtype(wrapper, meta, target)
         };
 
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

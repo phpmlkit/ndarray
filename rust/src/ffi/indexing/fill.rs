@@ -26,52 +26,52 @@ pub unsafe extern "C" fn ndarray_fill(
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
-        let meta_ref = &*meta;
+        let meta = &*meta;
 
         let result = match wrapper.dtype {
             DType::Int8 => {
                 let v = *(value as *const i8);
-                wrapper.fill_slice_i8(v, meta_ref)
+                wrapper.fill_slice_i8(v, meta)
             }
             DType::Int16 => {
                 let v = *(value as *const i16);
-                wrapper.fill_slice_i16(v, meta_ref)
+                wrapper.fill_slice_i16(v, meta)
             }
             DType::Int32 => {
                 let v = *(value as *const i32);
-                wrapper.fill_slice_i32(v, meta_ref)
+                wrapper.fill_slice_i32(v, meta)
             }
             DType::Int64 => {
                 let v = *(value as *const i64);
-                wrapper.fill_slice_i64(v, meta_ref)
+                wrapper.fill_slice_i64(v, meta)
             }
             DType::Uint8 => {
                 let v = *(value as *const u8);
-                wrapper.fill_slice_u8(v, meta_ref)
+                wrapper.fill_slice_u8(v, meta)
             }
             DType::Uint16 => {
                 let v = *(value as *const u16);
-                wrapper.fill_slice_u16(v, meta_ref)
+                wrapper.fill_slice_u16(v, meta)
             }
             DType::Uint32 => {
                 let v = *(value as *const u32);
-                wrapper.fill_slice_u32(v, meta_ref)
+                wrapper.fill_slice_u32(v, meta)
             }
             DType::Uint64 => {
                 let v = *(value as *const u64);
-                wrapper.fill_slice_u64(v, meta_ref)
+                wrapper.fill_slice_u64(v, meta)
             }
             DType::Float32 => {
                 let v = *(value as *const f32);
-                wrapper.fill_slice_f32(v, meta_ref)
+                wrapper.fill_slice_f32(v, meta)
             }
             DType::Float64 => {
                 let v = *(value as *const f64);
-                wrapper.fill_slice_f64(v, meta_ref)
+                wrapper.fill_slice_f64(v, meta)
             }
             DType::Bool => {
                 let v = *(value as *const u8);
-                wrapper.fill_slice_bool(v, meta_ref)
+                wrapper.fill_slice_bool(v, meta)
             }
         };
 

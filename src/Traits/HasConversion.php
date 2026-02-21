@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
-use FFI;
 use FFI\CData;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
@@ -91,7 +90,7 @@ trait HasConversion
         $meta = $this->viewMetadata()->toCData();
         $out = $ffi->new($this->dtype->ffiType());
 
-        $status = $ffi->ndarray_scalar(
+        $status = $ffi->ndarray_as_scalar(
             $this->handle,
             Lib::addr($meta),
             \FFI::addr($out),

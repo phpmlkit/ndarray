@@ -66,7 +66,7 @@ pub unsafe extern "C" fn ndarray_stack(
         }
 
         let meta_0 = &**metas_slice.get(0).unwrap();
-        let shape_0 = std::slice::from_raw_parts(meta_0.shape, meta_0.ndim);
+        let shape_0 = meta_0.shape_slice();
         let axis_usize = match resolve_axis_for_stack(shape_0, axis) {
             Ok(a) => a,
             Err(e) => {

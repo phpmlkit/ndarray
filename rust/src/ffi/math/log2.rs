@@ -1,4 +1,4 @@
-//! Base-2 logarithm operation using ndarray's built-in log2() method.
+//! Base-2 logarithm operation.
 
 use crate::core::view_helpers::{extract_view_f32, extract_view_f64};
 use crate::core::{ArrayData, NDArrayWrapper};
@@ -8,7 +8,7 @@ use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-/// Compute base-2 logarithm element-wise using ndarray's log2() method.
+/// Compute base-2 logarithm element-wise.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_log2(
     a: *const NdArrayHandle,
@@ -30,13 +30,13 @@ pub unsafe extern "C" fn ndarray_log2(
     }
 
     crate::ffi_guard!({
-        let meta_ref = &*meta;
+        let meta = &*meta;
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
 
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
                 let Some(view) =
-                    extract_view_f64(a_wrapper, &meta_ref)
+                    extract_view_f64(a_wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
@@ -49,7 +49,7 @@ pub unsafe extern "C" fn ndarray_log2(
             }
             DType::Float32 => {
                 let Some(view) =
-                    extract_view_f32(a_wrapper, &meta_ref)
+                    extract_view_f32(a_wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;

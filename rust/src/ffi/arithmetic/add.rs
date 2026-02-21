@@ -1,7 +1,4 @@
-//! Optimized addition operation using ndarray's native broadcasting.
-//!
-//! This implementation extracts views as the target type and lets ndarray
-//! handle broadcasting automatically through standard operators.
+//! Addition operation.
 
 use crate::binary_op_arm;
 use crate::core::view_helpers::{
@@ -17,10 +14,7 @@ use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use crate::scalar_op_arm;
 
-/// Optimized addition with proper broadcasting support.
-///
-/// Uses extract_view_as_* to convert inputs to the promoted dtype,
-/// then performs addition with ndarray's native broadcasting.
+/// Add two arrays.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_add(
     a: *const NdArrayHandle,
@@ -128,7 +122,7 @@ pub unsafe extern "C" fn ndarray_add(
     })
 }
 
-/// Add scalar to array.
+/// Add a scalar to an array.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_add_scalar(
     a: *const NdArrayHandle,

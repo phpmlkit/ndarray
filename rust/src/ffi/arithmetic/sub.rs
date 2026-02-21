@@ -1,7 +1,4 @@
-//! Optimized subtraction operation using ndarray's native broadcasting.
-//!
-//! This implementation extracts views as the target type and lets ndarray
-//! handle broadcasting automatically through standard operators.
+//! Subtraction operation.
 
 use crate::binary_op_arm;
 use crate::core::view_helpers::{
@@ -17,7 +14,7 @@ use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use crate::scalar_op_arm;
 
-/// Optimized subtraction with proper broadcasting support.
+/// Subtract two arrays.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_sub(
     a: *const NdArrayHandle,
@@ -125,7 +122,7 @@ pub unsafe extern "C" fn ndarray_sub(
     })
 }
 
-/// Subtract scalar from array.
+/// Subtract a scalar from an array.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_sub_scalar(
     a: *const NdArrayHandle,

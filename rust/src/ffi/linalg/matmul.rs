@@ -47,9 +47,31 @@ pub unsafe extern "C" fn ndarray_matmul(
             return ERR_SHAPE;
         }
 
-        let result = matmul_impl(a_wrapper, a_meta, b_wrapper, b_meta);
+        // let result = matmul_impl(a_wrapper, a_meta, b_wrapper, b_meta);
+        let a_shape = unsafe { a_meta.shape_slice() };
+        let b_shape = unsafe { b_meta.shape_slice() };
 
-        match result {
+        let a_cols = a_shape[a_shape.len() - 1];
+        let b_rows = b_shape[b_shape.len() - 2];
+
+        if a_cols != b_rows {
+            error::set_last_error(format!(
+                "Shape mismatch for matmul: ...x{} and ...x{}",
+                a_cols, b_rows
+            ));
+            return ERR_SHAPE;
+        }
+
+        let (a_arr, _, _) = extract_2d_data(a_wrapper, a_meta).unwrap();
+        let (b_arr, _, _) = extract_2d_data(b_wrapper, b_meta).unwrap();
+
+        let result = a_arr.dot(&b_arr);
+        let result_shape = vec![result.shape()[0], result.shape()[1]];
+        let result_data: Vec<f64> = result.iter().cloned().collect();
+
+        let result_wrapper = NDArrayWrapper::from_slice_f64(&result_data, &result_shape);
+
+        match result_wrapper {
             Ok(new_wrapper) => {
                 if let Err(e) = write_output_metadata(
                     &new_wrapper,
@@ -109,35 +131,4 @@ fn extract_2d_data(
     ndarray::Array2::from_shape_vec((rows, cols), data)
         .map(|arr| (arr, rows, cols))
         .map_err(|e| format!("Failed to create 2D array: {}", e))
-}
-
-/// Matrix multiplication implementation
-fn matmul_impl(
-    a_wrapper: &NDArrayWrapper,
-    a_meta: &ViewMetadata,
-    b_wrapper: &NDArrayWrapper,
-    b_meta: &ViewMetadata,
-) -> Result<NDArrayWrapper, String> {
-    let a_shape = unsafe { a_meta.shape_slice() };
-    let b_shape = unsafe { b_meta.shape_slice() };
-
-    // Check inner dimensions
-    let a_cols = a_shape[a_shape.len() - 1];
-    let b_rows = b_shape[b_shape.len() - 2];
-
-    if a_cols != b_rows {
-        return Err(format!(
-            "Shape mismatch for matmul: ...x{} and ...x{}",
-            a_cols, b_rows
-        ));
-    }
-
-    let (a_arr, _, _) = extract_2d_data(a_wrapper, a_meta)?;
-    let (b_arr, _, _) = extract_2d_data(b_wrapper, b_meta)?;
-
-    let result = a_arr.dot(&b_arr);
-    let result_shape = vec![result.shape()[0], result.shape()[1]];
-    let result_data: Vec<f64> = result.iter().cloned().collect();
-
-    NDArrayWrapper::from_slice_f64(&result_data, &result_shape)
 }

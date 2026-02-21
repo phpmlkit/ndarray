@@ -1,4 +1,4 @@
-//! Right shift operation using ndarray's native broadcasting.
+//! Right shift operation.
 //!
 //! Works with all integer types (signed and unsigned) only.
 //! Bool and float types are not supported.
@@ -18,7 +18,7 @@ use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use crate::scalar_op_arm;
 
-/// Right shift with proper broadcasting support.
+/// Compute the right shift of two arrays.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_right_shift(
     a: *const NdArrayHandle,

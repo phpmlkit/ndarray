@@ -4,11 +4,11 @@
 
 pub mod create;
 pub mod data;
-pub mod properties;
+pub mod free;
 pub mod scalar;
 
 // Re-export all public functions
 pub use create::*;
 pub use data::*;
-pub use properties::*;
+pub use free::*;
 pub use scalar::*;

@@ -20,7 +20,7 @@ use crate::ffi::{NdArrayHandle, ViewMetadata};
 /// For bool: writes 0 or 1 to the first byte.
 /// For numeric types: writes the native value (up to 8 bytes).
 #[no_mangle]
-pub unsafe extern "C" fn ndarray_scalar(
+pub unsafe extern "C" fn ndarray_as_scalar(
     handle: *const NdArrayHandle,
     meta: *const ViewMetadata,
     out_value: *mut c_void,

@@ -35,9 +35,9 @@ pub unsafe extern "C" fn ndarray_split(
     }
 
     crate::ffi_guard!({
-        let meta_ref = &*meta;
-        let shape_slice = std::slice::from_raw_parts(meta_ref.shape, meta_ref.ndim);
-        let strides_slice = std::slice::from_raw_parts(meta_ref.strides, meta_ref.ndim);
+        let meta = &*meta;
+        let shape_slice = meta.shape_slice();
+        let strides_slice = meta.strides_slice();
         let indices_slice = std::slice::from_raw_parts(indices, num_indices);
 
         let axis_usize = match resolve_axis(shape_slice, axis) {
@@ -76,22 +76,22 @@ pub unsafe extern "C" fn ndarray_split(
             let part_len = end - start;
 
             // Offset for this part: base_offset + start * axis_stride
-            let part_offset = meta_ref.offset + start * axis_stride;
+            let part_offset = meta.offset + start * axis_stride;
             *out_offsets.add(i) = part_offset;
 
             // Shape: same as input but axis dimension = part_len
-            for d in 0..meta_ref.ndim {
+            for d in 0..meta.ndim {
                 let val = if d == axis_usize {
                     part_len
                 } else {
                     shape_slice[d]
                 };
-                *out_shapes.add(i * meta_ref.ndim + d) = val;
+                *out_shapes.add(i * meta.ndim + d) = val;
             }
 
             // Strides: same as input (views share strides)
-            for d in 0..meta_ref.ndim {
-                *out_strides.add(i * meta_ref.ndim + d) = strides_slice[d];
+            for d in 0..meta.ndim {
+                *out_strides.add(i * meta.ndim + d) = strides_slice[d];
             }
         }
 

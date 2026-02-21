@@ -63,47 +63,6 @@ typedef struct ViewMetadata {
 } ViewMetadata;
 
 /**
- * Get the item size for a dtype. Returns 0 for invalid dtype values.
- */
-uintptr_t dtype_item_size(uint8_t dtype);
-
-/**
- * Check if a dtype value is valid.
- */
-bool dtype_is_valid(uint8_t dtype);
-
-/**
- * Check if a dtype is a signed integer.
- */
-bool dtype_is_signed(uint8_t dtype);
-
-/**
- * Check if a dtype is an unsigned integer.
- */
-bool dtype_is_unsigned(uint8_t dtype);
-
-/**
- * Check if a dtype is an integer type.
- */
-bool dtype_is_integer(uint8_t dtype);
-
-/**
- * Check if a dtype is a floating-point type.
- */
-bool dtype_is_float(uint8_t dtype);
-
-/**
- * Check if a dtype is a boolean type.
- */
-bool dtype_is_bool(uint8_t dtype);
-
-/**
- * Get the promoted dtype when combining two dtypes.
- * Returns 255 (invalid) if either dtype is invalid.
- */
-uint8_t dtype_promote(uint8_t a, uint8_t b);
-
-/**
  * Get the last error message.
  *
  * Writes the message to `buf` up to `len` bytes.
@@ -112,10 +71,7 @@ uint8_t dtype_promote(uint8_t a, uint8_t b);
 uintptr_t ndarray_get_last_error(char *buf, uintptr_t len);
 
 /**
- * Optimized addition with proper broadcasting support.
- *
- * Uses extract_view_as_* to convert inputs to the promoted dtype,
- * then performs addition with ndarray's native broadcasting.
+ * Add two arrays.
  */
 int32_t ndarray_add(const struct NdArrayHandle *a,
                     const struct ViewMetadata *a_meta,
@@ -128,7 +84,7 @@ int32_t ndarray_add(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Add scalar to array.
+ * Add a scalar to an array.
  */
 int32_t ndarray_add_scalar(const struct NdArrayHandle *a,
                            const struct ViewMetadata *a_meta,
@@ -140,7 +96,7 @@ int32_t ndarray_add_scalar(const struct NdArrayHandle *a,
                            uintptr_t max_ndim);
 
 /**
- * Optimized division with proper broadcasting support.
+ * Divide two arrays.
  */
 int32_t ndarray_div(const struct NdArrayHandle *a,
                     const struct ViewMetadata *a_meta,
@@ -153,7 +109,7 @@ int32_t ndarray_div(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Divide array by scalar.
+ * Divide an array by a scalar.
  */
 int32_t ndarray_div_scalar(const struct NdArrayHandle *a,
                            const struct ViewMetadata *a_meta,
@@ -165,7 +121,7 @@ int32_t ndarray_div_scalar(const struct NdArrayHandle *a,
                            uintptr_t max_ndim);
 
 /**
- * Optimized multiplication with proper broadcasting support.
+ * Multiply two arrays.
  */
 int32_t ndarray_mul(const struct NdArrayHandle *a,
                     const struct ViewMetadata *a_meta,
@@ -178,7 +134,7 @@ int32_t ndarray_mul(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Multiply array by scalar.
+ * Multiply an array by a scalar.
  */
 int32_t ndarray_mul_scalar(const struct NdArrayHandle *a,
                            const struct ViewMetadata *a_meta,
@@ -190,7 +146,7 @@ int32_t ndarray_mul_scalar(const struct NdArrayHandle *a,
                            uintptr_t max_ndim);
 
 /**
- * Optimized remainder with proper broadcasting support.
+ * Compute the remainder of two arrays.
  */
 int32_t ndarray_rem(const struct NdArrayHandle *a,
                     const struct ViewMetadata *a_meta,
@@ -203,7 +159,7 @@ int32_t ndarray_rem(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Remainder with scalar.
+ * Compute the remainder of an array by a scalar.
  */
 int32_t ndarray_rem_scalar(const struct NdArrayHandle *a,
                            const struct ViewMetadata *a_meta,
@@ -215,7 +171,7 @@ int32_t ndarray_rem_scalar(const struct NdArrayHandle *a,
                            uintptr_t max_ndim);
 
 /**
- * Optimized subtraction with proper broadcasting support.
+ * Subtract two arrays.
  */
 int32_t ndarray_sub(const struct NdArrayHandle *a,
                     const struct ViewMetadata *a_meta,
@@ -228,7 +184,7 @@ int32_t ndarray_sub(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Subtract scalar from array.
+ * Subtract a scalar from an array.
  */
 int32_t ndarray_sub_scalar(const struct NdArrayHandle *a,
                            const struct ViewMetadata *a_meta,
@@ -286,31 +242,6 @@ int32_t ndarray_get_data(const struct NdArrayHandle *handle,
 int32_t ndarray_free(struct NdArrayHandle *handle);
 
 /**
- * Get the number of dimensions of an array.
- */
-int32_t ndarray_ndim(const struct NdArrayHandle *handle, uintptr_t *out_ndim);
-
-/**
- * Get the total number of elements in an array.
- */
-int32_t ndarray_len(const struct NdArrayHandle *handle, uintptr_t *out_len);
-
-/**
- * Get the dtype of an array.
- */
-int32_t ndarray_dtype(const struct NdArrayHandle *handle, uint8_t *out_dtype);
-
-/**
- * Get the shape of an array.
- *
- * Writes up to `max_ndim` dimensions to `out_shape` and returns the actual ndim in `out_ndim`.
- */
-int32_t ndarray_shape(const struct NdArrayHandle *handle,
-                      uintptr_t *out_shape,
-                      uintptr_t max_ndim,
-                      uintptr_t *out_ndim);
-
-/**
  * Extract the scalar value from a 0-dimensional array or view.
  *
  * The array must have ndim == 0.
@@ -320,12 +251,12 @@ int32_t ndarray_shape(const struct NdArrayHandle *handle,
  * For bool: writes 0 or 1 to the first byte.
  * For numeric types: writes the native value (up to 8 bytes).
  */
-int32_t ndarray_scalar(const struct NdArrayHandle *handle,
-                       const struct ViewMetadata *meta,
-                       void *out_value);
+int32_t ndarray_as_scalar(const struct NdArrayHandle *handle,
+                          const struct ViewMetadata *meta,
+                          void *out_value);
 
 /**
- * Bitwise AND with proper broadcasting support.
+ * Compute the bitwise AND of two arrays.
  */
 int32_t ndarray_bitand(const struct NdArrayHandle *a,
                        const struct ViewMetadata *a_meta,
@@ -338,7 +269,7 @@ int32_t ndarray_bitand(const struct NdArrayHandle *a,
                        uintptr_t max_ndim);
 
 /**
- * Bitwise AND with scalar.
+ * Compute the bitwise AND of an array and a scalar.
  */
 int32_t ndarray_bitand_scalar(const struct NdArrayHandle *a,
                               const struct ViewMetadata *a_meta,
@@ -350,7 +281,7 @@ int32_t ndarray_bitand_scalar(const struct NdArrayHandle *a,
                               uintptr_t max_ndim);
 
 /**
- * Bitwise OR with proper broadcasting support.
+ * Compute the bitwise OR of two arrays.
  */
 int32_t ndarray_bitor(const struct NdArrayHandle *a,
                       const struct ViewMetadata *a_meta,
@@ -363,7 +294,7 @@ int32_t ndarray_bitor(const struct NdArrayHandle *a,
                       uintptr_t max_ndim);
 
 /**
- * Bitwise OR with scalar.
+ * Compute the bitwise OR of an array and a scalar.
  */
 int32_t ndarray_bitor_scalar(const struct NdArrayHandle *a,
                              const struct ViewMetadata *a_meta,
@@ -375,7 +306,7 @@ int32_t ndarray_bitor_scalar(const struct NdArrayHandle *a,
                              uintptr_t max_ndim);
 
 /**
- * Bitwise XOR with proper broadcasting support.
+ * Compute the bitwise XOR of two arrays.
  */
 int32_t ndarray_bitxor(const struct NdArrayHandle *a,
                        const struct ViewMetadata *a_meta,
@@ -388,7 +319,7 @@ int32_t ndarray_bitxor(const struct NdArrayHandle *a,
                        uintptr_t max_ndim);
 
 /**
- * Bitwise XOR with scalar.
+ * Compute the bitwise XOR of an array by a scalar.
  */
 int32_t ndarray_bitxor_scalar(const struct NdArrayHandle *a,
                               const struct ViewMetadata *a_meta,
@@ -400,7 +331,7 @@ int32_t ndarray_bitxor_scalar(const struct NdArrayHandle *a,
                               uintptr_t max_ndim);
 
 /**
- * Left shift with proper broadcasting support.
+ * Compute the left shift of two arrays.
  */
 int32_t ndarray_left_shift(const struct NdArrayHandle *a,
                            const struct ViewMetadata *a_meta,
@@ -413,7 +344,7 @@ int32_t ndarray_left_shift(const struct NdArrayHandle *a,
                            uintptr_t max_ndim);
 
 /**
- * Left shift with scalar.
+ * Compute the left shift of an array by a scalar.
  */
 int32_t ndarray_left_shift_scalar(const struct NdArrayHandle *a,
                                   const struct ViewMetadata *a_meta,
@@ -425,7 +356,7 @@ int32_t ndarray_left_shift_scalar(const struct NdArrayHandle *a,
                                   uintptr_t max_ndim);
 
 /**
- * Right shift with proper broadcasting support.
+ * Compute the right shift of two arrays.
  */
 int32_t ndarray_right_shift(const struct NdArrayHandle *a,
                             const struct ViewMetadata *a_meta,
@@ -943,7 +874,7 @@ int32_t ndarray_trace(const struct NdArrayHandle *handle,
                       uintptr_t max_ndim);
 
 /**
- * Compute cube root element-wise using ndarray's cbrt() method.
+ * Compute cube root element-wise.
  */
 int32_t ndarray_cbrt(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -954,7 +885,7 @@ int32_t ndarray_cbrt(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute exponential element-wise using ndarray's exp() method.
+ * Compute exponential element-wise.
  */
 int32_t ndarray_exp(const struct NdArrayHandle *a,
                     const struct ViewMetadata *meta,
@@ -965,7 +896,7 @@ int32_t ndarray_exp(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Compute 2^x element-wise using ndarray's exp2() method.
+ * Compute 2^x element-wise.
  */
 int32_t ndarray_exp2(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -976,7 +907,7 @@ int32_t ndarray_exp2(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute natural logarithm element-wise using ndarray's ln() method.
+ * Compute natural logarithm element-wise.
  *
  * This is an alias for log().
  */
@@ -989,7 +920,7 @@ int32_t ndarray_ln(const struct NdArrayHandle *a,
                    uintptr_t max_ndim);
 
 /**
- * Compute ln(1+x) element-wise using ndarray's ln_1p() method.
+ * Compute ln(1+x) element-wise.
  *
  * More accurate than computing ln(1+x) directly for small x.
  */
@@ -1002,7 +933,7 @@ int32_t ndarray_ln_1p(const struct NdArrayHandle *a,
                       uintptr_t max_ndim);
 
 /**
- * Compute natural logarithm element-wise using ndarray's ln() method.
+ * Compute natural logarithm element-wise.
  */
 int32_t ndarray_log(const struct NdArrayHandle *a,
                     const struct ViewMetadata *meta,
@@ -1013,7 +944,7 @@ int32_t ndarray_log(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Compute base-10 logarithm element-wise using ndarray's log10() method.
+ * Compute base-10 logarithm element-wise.
  */
 int32_t ndarray_log10(const struct NdArrayHandle *a,
                       const struct ViewMetadata *meta,
@@ -1024,7 +955,7 @@ int32_t ndarray_log10(const struct NdArrayHandle *a,
                       uintptr_t max_ndim);
 
 /**
- * Compute base-2 logarithm element-wise using ndarray's log2() method.
+ * Compute base-2 logarithm element-wise.
  */
 int32_t ndarray_log2(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -1035,7 +966,7 @@ int32_t ndarray_log2(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute square root element-wise using ndarray's sqrt() method.
+ * Compute square root element-wise.
  */
 int32_t ndarray_sqrt(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -1046,7 +977,7 @@ int32_t ndarray_sqrt(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute arc cosine element-wise using ndarray's acos() method.
+ * Compute arc cosine element-wise.
  */
 int32_t ndarray_acos(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -1057,7 +988,7 @@ int32_t ndarray_acos(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute arc sine element-wise using ndarray's asin() method.
+ * Compute arc sine element-wise.
  */
 int32_t ndarray_asin(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -1068,7 +999,7 @@ int32_t ndarray_asin(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute arc tangent element-wise using ndarray's atan() method.
+ * Compute arc tangent element-wise.
  */
 int32_t ndarray_atan(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -1079,7 +1010,7 @@ int32_t ndarray_atan(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute cosine element-wise using ndarray's cos() method.
+ * Compute cosine element-wise.
  */
 int32_t ndarray_cos(const struct NdArrayHandle *a,
                     const struct ViewMetadata *meta,
@@ -1090,7 +1021,7 @@ int32_t ndarray_cos(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Compute hyperbolic cosine element-wise using ndarray's cosh() method.
+ * Compute hyperbolic cosine element-wise.
  */
 int32_t ndarray_cosh(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -1101,7 +1032,7 @@ int32_t ndarray_cosh(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute sine element-wise using ndarray's sin() method.
+ * Compute sine element-wise.
  */
 int32_t ndarray_sin(const struct NdArrayHandle *a,
                     const struct ViewMetadata *meta,
@@ -1112,7 +1043,7 @@ int32_t ndarray_sin(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Compute hyperbolic sine element-wise using ndarray's sinh() method.
+ * Compute hyperbolic sine element-wise.
  */
 int32_t ndarray_sinh(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -1123,7 +1054,7 @@ int32_t ndarray_sinh(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute tangent element-wise using ndarray's tan() method.
+ * Compute tangent element-wise.
  */
 int32_t ndarray_tan(const struct NdArrayHandle *a,
                     const struct ViewMetadata *meta,
@@ -1134,7 +1065,7 @@ int32_t ndarray_tan(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Compute hyperbolic tangent element-wise using ndarray's tanh() method.
+ * Compute hyperbolic tangent element-wise.
  */
 int32_t ndarray_tanh(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -1145,7 +1076,7 @@ int32_t ndarray_tanh(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Convert radians to degrees element-wise using ndarray's to_degrees() method.
+ * Convert radians to degrees element-wise.
  */
 int32_t ndarray_to_degrees(const struct NdArrayHandle *a,
                            const struct ViewMetadata *meta,
@@ -1156,7 +1087,7 @@ int32_t ndarray_to_degrees(const struct NdArrayHandle *a,
                            uintptr_t max_ndim);
 
 /**
- * Convert degrees to radians element-wise using ndarray's to_radians() method.
+ * Convert degrees to radians element-wise.
  */
 int32_t ndarray_to_radians(const struct NdArrayHandle *a,
                            const struct ViewMetadata *meta,
@@ -1190,7 +1121,7 @@ int32_t ndarray_pow2(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute x^y where y is a float, element-wise using ndarray's powf.
+ * Compute x^y where y is a float, element-wise.
  */
 int32_t ndarray_powf(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -1202,7 +1133,7 @@ int32_t ndarray_powf(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute x^n where n is an integer, element-wise using ndarray's powi.
+ * Compute x^n where n is an integer, element-wise.
  *
  * Generally faster than powf for integer exponents.
  */
@@ -1216,7 +1147,7 @@ int32_t ndarray_powi(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute 1/x element-wise using ndarray's recip() method.
+ * Compute 1/x element-wise.
  */
 int32_t ndarray_recip(const struct NdArrayHandle *a,
                       const struct ViewMetadata *meta,
@@ -1227,7 +1158,7 @@ int32_t ndarray_recip(const struct NdArrayHandle *a,
                       uintptr_t max_ndim);
 
 /**
- * Compute ceiling element-wise using ndarray's ceil() method.
+ * Compute ceiling element-wise.
  */
 int32_t ndarray_ceil(const struct NdArrayHandle *a,
                      const struct ViewMetadata *meta,
@@ -1238,7 +1169,7 @@ int32_t ndarray_ceil(const struct NdArrayHandle *a,
                      uintptr_t max_ndim);
 
 /**
- * Compute floor element-wise using ndarray's floor() method.
+ * Compute floor element-wise.
  */
 int32_t ndarray_floor(const struct NdArrayHandle *a,
                       const struct ViewMetadata *meta,
@@ -1249,7 +1180,7 @@ int32_t ndarray_floor(const struct NdArrayHandle *a,
                       uintptr_t max_ndim);
 
 /**
- * Compute round element-wise using ndarray's round() method.
+ * Compute round element-wise.
  */
 int32_t ndarray_round(const struct NdArrayHandle *a,
                       const struct ViewMetadata *meta,
@@ -1260,7 +1191,7 @@ int32_t ndarray_round(const struct NdArrayHandle *a,
                       uintptr_t max_ndim);
 
 /**
- * Compute absolute value element-wise using ndarray's abs().
+ * Compute absolute value element-wise.
  */
 int32_t ndarray_abs(const struct NdArrayHandle *a,
                     const struct ViewMetadata *meta,
@@ -1271,7 +1202,7 @@ int32_t ndarray_abs(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
- * Compute negation element-wise using ndarray's neg() method.
+ * Compute negation element-wise.
  * Not supported for unsigned integers or bool.
  */
 int32_t ndarray_neg(const struct NdArrayHandle *a,
@@ -1294,7 +1225,7 @@ int32_t ndarray_sigmoid(const struct NdArrayHandle *a,
                         uintptr_t max_ndim);
 
 /**
- * Compute signum element-wise using ndarray's signum().
+ * Compute the sign number of each element.
  */
 int32_t ndarray_signum(const struct NdArrayHandle *a,
                        const struct ViewMetadata *meta,
@@ -1629,7 +1560,7 @@ int32_t ndarray_invert_axis(const struct NdArrayHandle *handle,
 /**
  * Merge in the axis take into into.
  *
- * Returns true iff the axes are now merged.
+ * Returns true if the axes are now merged.
  * This method merges the axes if movement along the two original axes can be
  * equivalently represented as movement along one (merged) axis.
  */
@@ -1690,9 +1621,6 @@ int32_t ndarray_repeat(const struct NdArrayHandle *handle,
 
 /**
  * Reshape array to new shape.
- *
- * Uses ndarray's `to_shape` which returns a view if contiguous, otherwise copies.
- * Supports both RowMajor (C-style) and ColumnMajor (F-style) ordering.
  */
 int32_t ndarray_reshape(const struct NdArrayHandle *handle,
                         const struct ViewMetadata *meta,

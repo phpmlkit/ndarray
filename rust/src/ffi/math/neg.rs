@@ -1,4 +1,4 @@
-//! Negation operation using ndarray's neg() method.
+//! Negation operation.
 //!
 //! Not supported for unsigned integers (negating unsigned is undefined).
 
@@ -15,7 +15,7 @@ use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-/// Compute negation element-wise using ndarray's neg() method.
+/// Compute negation element-wise.
 /// Not supported for unsigned integers or bool.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_neg(
@@ -38,13 +38,13 @@ pub unsafe extern "C" fn ndarray_neg(
     }
 
     crate::ffi_guard!({
-        let meta_ref = &*meta;
+        let meta = &*meta;
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
 
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
                 let Some(view) =
-                    extract_view_f64(a_wrapper, &meta_ref)
+                    extract_view_f64(a_wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
@@ -57,7 +57,7 @@ pub unsafe extern "C" fn ndarray_neg(
             }
             DType::Float32 => {
                 let Some(view) =
-                    extract_view_f32(a_wrapper, &meta_ref)
+                    extract_view_f32(a_wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
@@ -70,7 +70,7 @@ pub unsafe extern "C" fn ndarray_neg(
             }
             DType::Int64 => {
                 let Some(view) =
-                    extract_view_i64(a_wrapper, &meta_ref)
+                    extract_view_i64(a_wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
@@ -83,7 +83,7 @@ pub unsafe extern "C" fn ndarray_neg(
             }
             DType::Int32 => {
                 let Some(view) =
-                    extract_view_i32(a_wrapper, &meta_ref)
+                    extract_view_i32(a_wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
@@ -96,7 +96,7 @@ pub unsafe extern "C" fn ndarray_neg(
             }
             DType::Int16 => {
                 let Some(view) =
-                    extract_view_i16(a_wrapper, &meta_ref)
+                    extract_view_i16(a_wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
@@ -109,7 +109,7 @@ pub unsafe extern "C" fn ndarray_neg(
             }
             DType::Int8 => {
                 let Some(view) =
-                    extract_view_i8(a_wrapper, &meta_ref)
+                    extract_view_i8(a_wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;

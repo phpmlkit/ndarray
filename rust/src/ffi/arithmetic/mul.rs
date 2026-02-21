@@ -1,7 +1,4 @@
-//! Optimized multiplication operation using ndarray's native broadcasting.
-//!
-//! This implementation extracts views as the target type and lets ndarray
-//! handle broadcasting automatically through standard operators.
+//! Multiplication operation.
 
 use crate::binary_op_arm;
 use crate::core::view_helpers::{
@@ -17,7 +14,7 @@ use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use crate::scalar_op_arm;
 
-/// Optimized multiplication with proper broadcasting support.
+/// Multiply two arrays.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_mul(
     a: *const NdArrayHandle,
@@ -127,7 +124,7 @@ pub unsafe extern "C" fn ndarray_mul(
     })
 }
 
-/// Multiply array by scalar.
+/// Multiply an array by a scalar.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_mul_scalar(
     a: *const NdArrayHandle,

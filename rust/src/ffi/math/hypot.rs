@@ -33,18 +33,18 @@ pub unsafe extern "C" fn ndarray_hypot(
     }
 
     crate::ffi_guard!({
-        let meta_ref = &*meta;
+        let meta = &*meta;
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
 
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
                 let Some(view) =
-                    extract_view_f64(a_wrapper, &meta_ref)
+                    extract_view_f64(a_wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| x.hypot(b));
+                let result = view.hypot(b);
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
                     dtype: DType::Float64,
@@ -52,12 +52,12 @@ pub unsafe extern "C" fn ndarray_hypot(
             }
             DType::Float32 => {
                 let Some(view) =
-                    extract_view_f32(a_wrapper, &meta_ref)
+                    extract_view_f32(a_wrapper, meta)
                 else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| x.hypot(b as f32));
+                let result = view.hypot(b as f32);
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
                     dtype: DType::Float32,

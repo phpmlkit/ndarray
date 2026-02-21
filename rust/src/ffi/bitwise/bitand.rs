@@ -1,4 +1,4 @@
-//! Bitwise AND operation using ndarray's native broadcasting.
+//! Bitwise AND operation.
 //!
 //! Works with all integer types (signed and unsigned) and Bool.
 
@@ -18,7 +18,7 @@ use crate::error::{ERR_GENERIC, SUCCESS};
 use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 use crate::scalar_op_arm;
 
-/// Bitwise AND with proper broadcasting support.
+/// Compute the bitwise AND of two arrays.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_bitand(
     a: *const NdArrayHandle,
@@ -122,7 +122,7 @@ pub unsafe extern "C" fn ndarray_bitand(
     })
 }
 
-/// Bitwise AND with scalar.
+/// Compute the bitwise AND of an array and a scalar.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_bitand_scalar(
     a: *const NdArrayHandle,
