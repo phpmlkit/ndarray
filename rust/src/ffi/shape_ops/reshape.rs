@@ -45,7 +45,6 @@ pub unsafe extern "C" fn ndarray_reshape(
             return ERR_SHAPE;
         }
 
-        // Convert to ndarray Order
         let order_enum = match order {
             0 => ndarray::Order::RowMajor,
             1 => ndarray::Order::ColumnMajor,
@@ -58,7 +57,6 @@ pub unsafe extern "C" fn ndarray_reshape(
             }
         };
 
-        // Match on dtype, extract view, reshape, and create result wrapper
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta) else {

@@ -41,7 +41,6 @@ pub unsafe extern "C" fn ndarray_transpose(
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let meta = &*meta;
 
-        // Match on dtype, extract view, transpose, and create result wrapper
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta)
@@ -50,9 +49,8 @@ pub unsafe extern "C" fn ndarray_transpose(
                     return ERR_GENERIC;
                 };
                 let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
                 let data: Vec<f64> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
                     .expect("Failed to create transposed array");
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
@@ -66,9 +64,8 @@ pub unsafe extern "C" fn ndarray_transpose(
                     return ERR_GENERIC;
                 };
                 let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
                 let data: Vec<f32> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
                     .expect("Failed to create transposed array");
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
@@ -82,9 +79,8 @@ pub unsafe extern "C" fn ndarray_transpose(
                     return ERR_GENERIC;
                 };
                 let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
                 let data: Vec<i64> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
                     .expect("Failed to create transposed array");
                 NDArrayWrapper {
                     data: ArrayData::Int64(Arc::new(RwLock::new(result))),
@@ -98,9 +94,8 @@ pub unsafe extern "C" fn ndarray_transpose(
                     return ERR_GENERIC;
                 };
                 let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
                 let data: Vec<i32> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
                     .expect("Failed to create transposed array");
                 NDArrayWrapper {
                     data: ArrayData::Int32(Arc::new(RwLock::new(result))),
@@ -114,9 +109,8 @@ pub unsafe extern "C" fn ndarray_transpose(
                     return ERR_GENERIC;
                 };
                 let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
                 let data: Vec<i16> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
                     .expect("Failed to create transposed array");
                 NDArrayWrapper {
                     data: ArrayData::Int16(Arc::new(RwLock::new(result))),
@@ -130,9 +124,8 @@ pub unsafe extern "C" fn ndarray_transpose(
                     return ERR_GENERIC;
                 };
                 let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
                 let data: Vec<i8> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
                     .expect("Failed to create transposed array");
                 NDArrayWrapper {
                     data: ArrayData::Int8(Arc::new(RwLock::new(result))),
@@ -146,9 +139,8 @@ pub unsafe extern "C" fn ndarray_transpose(
                     return ERR_GENERIC;
                 };
                 let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
                 let data: Vec<u64> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
                     .expect("Failed to create transposed array");
                 NDArrayWrapper {
                     data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
@@ -162,9 +154,8 @@ pub unsafe extern "C" fn ndarray_transpose(
                     return ERR_GENERIC;
                 };
                 let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
                 let data: Vec<u32> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
                     .expect("Failed to create transposed array");
                 NDArrayWrapper {
                     data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
@@ -178,9 +169,8 @@ pub unsafe extern "C" fn ndarray_transpose(
                     return ERR_GENERIC;
                 };
                 let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
                 let data: Vec<u16> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
                     .expect("Failed to create transposed array");
                 NDArrayWrapper {
                     data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
@@ -194,9 +184,8 @@ pub unsafe extern "C" fn ndarray_transpose(
                     return ERR_GENERIC;
                 };
                 let transposed_view = view.t();
-                let new_shape: Vec<usize> = transposed_view.shape().to_vec();
                 let data: Vec<u8> = transposed_view.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
                     .expect("Failed to create transposed array");
                 NDArrayWrapper {
                     data: ArrayData::Uint8(Arc::new(RwLock::new(result))),

@@ -220,7 +220,7 @@ fn tile_array<T: Copy>(mut arr: ndarray::ArrayD<T>, reps: &[usize]) -> ndarray::
         }
     }
 
-    // Tile along each axis in reverse order (last axis first) to match NumPy behavior
+    // Tile along each axis in reverse order (last axis first)
     for (axis, &rep) in padded_reps.iter().enumerate().rev() {
         if rep > 1 {
             let views: Vec<_> = (0..rep).map(|_| arr.view()).collect();

@@ -43,7 +43,6 @@ pub unsafe extern "C" fn ndarray_permute_axes(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let meta = &*meta;
-        let shape_slice = meta.shape_slice();
         let ndim = meta.ndim;
         let axes_slice = std::slice::from_raw_parts(axes, num_axes);
 
@@ -73,10 +72,6 @@ pub unsafe extern "C" fn ndarray_permute_axes(
             seen[axis] = true;
         }
 
-        // Compute new shape after permutation
-        let new_shape: Vec<usize> = axes_slice.iter().map(|&i| shape_slice[i]).collect();
-
-        // Match on dtype, extract view, permute axes, and create result wrapper
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta) else {
@@ -85,7 +80,7 @@ pub unsafe extern "C" fn ndarray_permute_axes(
                 };
                 let permuted = view.permuted_axes(axes_slice);
                 let data: Vec<f64> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(permuted.raw_dim(), data)
                     .expect("Failed to create permuted array");
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
@@ -99,7 +94,7 @@ pub unsafe extern "C" fn ndarray_permute_axes(
                 };
                 let permuted = view.permuted_axes(axes_slice);
                 let data: Vec<f32> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(permuted.raw_dim(), data)
                     .expect("Failed to create permuted array");
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
@@ -113,7 +108,7 @@ pub unsafe extern "C" fn ndarray_permute_axes(
                 };
                 let permuted = view.permuted_axes(axes_slice);
                 let data: Vec<i64> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(permuted.raw_dim(), data)
                     .expect("Failed to create permuted array");
                 NDArrayWrapper {
                     data: ArrayData::Int64(Arc::new(RwLock::new(result))),
@@ -127,7 +122,7 @@ pub unsafe extern "C" fn ndarray_permute_axes(
                 };
                 let permuted = view.permuted_axes(axes_slice);
                 let data: Vec<i32> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(permuted.raw_dim(), data)
                     .expect("Failed to create permuted array");
                 NDArrayWrapper {
                     data: ArrayData::Int32(Arc::new(RwLock::new(result))),
@@ -141,7 +136,7 @@ pub unsafe extern "C" fn ndarray_permute_axes(
                 };
                 let permuted = view.permuted_axes(axes_slice);
                 let data: Vec<i16> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(permuted.raw_dim(), data)
                     .expect("Failed to create permuted array");
                 NDArrayWrapper {
                     data: ArrayData::Int16(Arc::new(RwLock::new(result))),
@@ -155,7 +150,7 @@ pub unsafe extern "C" fn ndarray_permute_axes(
                 };
                 let permuted = view.permuted_axes(axes_slice);
                 let data: Vec<i8> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(permuted.raw_dim(), data)
                     .expect("Failed to create permuted array");
                 NDArrayWrapper {
                     data: ArrayData::Int8(Arc::new(RwLock::new(result))),
@@ -169,7 +164,7 @@ pub unsafe extern "C" fn ndarray_permute_axes(
                 };
                 let permuted = view.permuted_axes(axes_slice);
                 let data: Vec<u64> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(permuted.raw_dim(), data)
                     .expect("Failed to create permuted array");
                 NDArrayWrapper {
                     data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
@@ -183,7 +178,7 @@ pub unsafe extern "C" fn ndarray_permute_axes(
                 };
                 let permuted = view.permuted_axes(axes_slice);
                 let data: Vec<u32> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(permuted.raw_dim(), data)
                     .expect("Failed to create permuted array");
                 NDArrayWrapper {
                     data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
@@ -197,7 +192,7 @@ pub unsafe extern "C" fn ndarray_permute_axes(
                 };
                 let permuted = view.permuted_axes(axes_slice);
                 let data: Vec<u16> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(permuted.raw_dim(), data)
                     .expect("Failed to create permuted array");
                 NDArrayWrapper {
                     data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
@@ -211,7 +206,7 @@ pub unsafe extern "C" fn ndarray_permute_axes(
                 };
                 let permuted = view.permuted_axes(axes_slice);
                 let data: Vec<u8> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(permuted.raw_dim(), data)
                     .expect("Failed to create permuted array");
                 NDArrayWrapper {
                     data: ArrayData::Uint8(Arc::new(RwLock::new(result))),

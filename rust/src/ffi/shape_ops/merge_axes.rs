@@ -55,7 +55,6 @@ pub unsafe extern "C" fn ndarray_merge_axes(
             return ERR_SHAPE;
         }
 
-        // Match on dtype, extract view, merge axes, and create result wrapper
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta)
@@ -65,7 +64,6 @@ pub unsafe extern "C" fn ndarray_merge_axes(
                 };
                 let mut result = view.to_owned();
                 result.merge_axes(Axis(take), Axis(into));
-                // Remove the merged axis to actually change the shape
                 result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
@@ -80,7 +78,6 @@ pub unsafe extern "C" fn ndarray_merge_axes(
                 };
                 let mut result = view.to_owned();
                 result.merge_axes(Axis(take), Axis(into));
-                // Remove the merged axis to actually change the shape
                 result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),

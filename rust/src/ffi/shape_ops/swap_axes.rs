@@ -41,10 +41,8 @@ pub unsafe extern "C" fn ndarray_swap_axes(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let meta = &*meta;
-        let shape_slice = meta.shape_slice();
         let ndim = meta.ndim;
 
-        // Validate axes
         if axis1 >= ndim || axis2 >= ndim {
             error::set_last_error(format!(
                 "Axis out of bounds: axes are {} and {} but array has {} dimensions",
@@ -53,23 +51,16 @@ pub unsafe extern "C" fn ndarray_swap_axes(
             return ERR_SHAPE;
         }
 
-        // Create new shape with swapped axes
-        let mut new_shape = shape_slice.to_vec();
-        new_shape.swap(axis1, axis2);
-
-        // Match on dtype, extract view, swap axes, and create result wrapper
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                // Create permutation that swaps the two axes
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<f64> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<f64> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
@@ -81,11 +72,10 @@ pub unsafe extern "C" fn ndarray_swap_axes(
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<f32> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<f32> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
@@ -97,11 +87,10 @@ pub unsafe extern "C" fn ndarray_swap_axes(
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<i64> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<i64> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Int64(Arc::new(RwLock::new(result))),
@@ -113,11 +102,10 @@ pub unsafe extern "C" fn ndarray_swap_axes(
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<i32> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<i32> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Int32(Arc::new(RwLock::new(result))),
@@ -129,11 +117,10 @@ pub unsafe extern "C" fn ndarray_swap_axes(
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<i16> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<i16> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Int16(Arc::new(RwLock::new(result))),
@@ -145,11 +132,10 @@ pub unsafe extern "C" fn ndarray_swap_axes(
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<i8> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<i8> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Int8(Arc::new(RwLock::new(result))),
@@ -161,11 +147,10 @@ pub unsafe extern "C" fn ndarray_swap_axes(
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<u64> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<u64> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
@@ -177,11 +162,10 @@ pub unsafe extern "C" fn ndarray_swap_axes(
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<u32> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<u32> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
@@ -193,11 +177,10 @@ pub unsafe extern "C" fn ndarray_swap_axes(
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<u16> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<u16> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
@@ -209,11 +192,10 @@ pub unsafe extern "C" fn ndarray_swap_axes(
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<u8> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<u8> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
@@ -225,11 +207,10 @@ pub unsafe extern "C" fn ndarray_swap_axes(
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut axes: Vec<usize> = (0..ndim).collect();
-                axes.swap(axis1, axis2);
-                let permuted = view.permuted_axes(axes);
-                let data: Vec<u8> = permuted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let mut swapped = view.to_owned();
+                swapped.swap_axes(axis1, axis2);
+                let data: Vec<u8> = swapped.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(swapped.raw_dim(), data)
                     .expect("Failed to create swapped array");
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),

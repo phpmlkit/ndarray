@@ -15,8 +15,6 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 
 /// Reverse the stride of axis and return in standard layout.
-///
-/// Panics if the axis is out of bounds.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_invert_axis(
     handle: *const NdArrayHandle,
@@ -41,7 +39,6 @@ pub unsafe extern "C" fn ndarray_invert_axis(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let meta = &*meta;
-        let shape_slice = meta.shape_slice();
         let ndim = meta.ndim;
 
         // Validate axis
@@ -53,22 +50,16 @@ pub unsafe extern "C" fn ndarray_invert_axis(
             return ERR_SHAPE;
         }
 
-        // Clone shape for result
-        let new_shape = shape_slice.to_vec();
-
-        // Match on dtype, extract view, invert axis, and create result wrapper
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                // Invert axis and collect in standard layout
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
-                // Collect in standard layout by iterating
                 let data: Vec<f64> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
@@ -83,7 +74,7 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
                 let data: Vec<f32> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
@@ -98,7 +89,7 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
                 let data: Vec<i64> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Int64(Arc::new(RwLock::new(result))),
@@ -113,7 +104,7 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
                 let data: Vec<i32> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Int32(Arc::new(RwLock::new(result))),
@@ -128,7 +119,7 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
                 let data: Vec<i16> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Int16(Arc::new(RwLock::new(result))),
@@ -143,7 +134,7 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
                 let data: Vec<i8> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Int8(Arc::new(RwLock::new(result))),
@@ -158,7 +149,7 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
                 let data: Vec<u64> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
@@ -173,7 +164,7 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
                 let data: Vec<u32> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
@@ -188,7 +179,7 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
                 let data: Vec<u16> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
@@ -203,7 +194,7 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
                 let data: Vec<u8> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
@@ -218,7 +209,7 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                 let mut inverted = view.to_owned();
                 inverted.invert_axis(Axis(axis));
                 let data: Vec<u8> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(&new_shape), data)
+                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
                     .expect("Failed to create inverted array");
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),

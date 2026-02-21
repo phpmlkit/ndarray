@@ -17,7 +17,6 @@ use std::sync::Arc;
 /// Insert new array axis at axis and return the result.
 ///
 /// The new axis always has length 1.
-/// Panics if the axis is out of bounds.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_insert_axis(
     handle: *const NdArrayHandle,
@@ -44,7 +43,6 @@ pub unsafe extern "C" fn ndarray_insert_axis(
         let meta = &*meta;
         let ndim = meta.ndim;
 
-        // Validate axis - can be from 0 to ndim (inclusive, for appending)
         if axis > ndim {
             error::set_last_error(format!(
                 "Axis {} out of bounds for array with {} dimensions",

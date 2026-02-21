@@ -1532,7 +1532,6 @@ int32_t ndarray_ravel(const struct NdArrayHandle *handle,
  * Insert new array axis at axis and return the result.
  *
  * The new axis always has length 1.
- * Panics if the axis is out of bounds.
  */
 int32_t ndarray_insert_axis(const struct NdArrayHandle *handle,
                             const struct ViewMetadata *meta,
@@ -1545,8 +1544,6 @@ int32_t ndarray_insert_axis(const struct NdArrayHandle *handle,
 
 /**
  * Reverse the stride of axis and return in standard layout.
- *
- * Panics if the axis is out of bounds.
  */
 int32_t ndarray_invert_axis(const struct NdArrayHandle *handle,
                             const struct ViewMetadata *meta,
