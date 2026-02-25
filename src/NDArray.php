@@ -7,19 +7,19 @@ namespace PhpMlKit\NDArray;
 use FFI\CData;
 use PhpMlKit\NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\FFI\Lib;
+use PhpMlKit\NDArray\Traits\CanBePrinted;
 use PhpMlKit\NDArray\Traits\CreatesArrays;
 use PhpMlKit\NDArray\Traits\HasArrayAccess;
 use PhpMlKit\NDArray\Traits\HasComparison;
 use PhpMlKit\NDArray\Traits\HasConversion;
-use PhpMlKit\NDArray\Traits\HasLogical;
 use PhpMlKit\NDArray\Traits\HasIndexing;
 use PhpMlKit\NDArray\Traits\HasLinearAlgebra;
+use PhpMlKit\NDArray\Traits\HasLogical;
 use PhpMlKit\NDArray\Traits\HasMath;
 use PhpMlKit\NDArray\Traits\HasOps;
 use PhpMlKit\NDArray\Traits\HasReductions;
 use PhpMlKit\NDArray\Traits\HasShapeOps;
 use PhpMlKit\NDArray\Traits\HasSlicing;
-use PhpMlKit\NDArray\Traits\CanBePrinted;
 use PhpMlKit\NDArray\Traits\HasStacking;
 
 /**
@@ -39,8 +39,8 @@ class NDArray implements \ArrayAccess, \Stringable
     use HasComparison;
     use HasConversion;
     use HasIndexing;
-    use HasLogical;
     use HasLinearAlgebra;
+    use HasLogical;
     use HasMath;
     use HasOps;
     use HasReductions;

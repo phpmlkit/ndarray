@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
-use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\IndexException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Lib;
@@ -99,7 +98,7 @@ trait HasSlicing
                 $newStrides[] = $stride * $res['step'];
             } else {
                 throw new IndexException(
-                    'Invalid slice selector type: ' . get_debug_type($selector)
+                    'Invalid slice selector type: '.get_debug_type($selector)
                 );
             }
         }
@@ -138,7 +137,7 @@ trait HasSlicing
         }
 
         throw new \InvalidArgumentException(
-            'Assignment value must be scalar or NDArray, got ' . get_debug_type($value)
+            'Assignment value must be scalar or NDArray, got '.get_debug_type($value)
         );
     }
 

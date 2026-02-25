@@ -47,7 +47,7 @@ trait CreatesArrays
      * Create an array filled with zeros.
      *
      * @param array<int> $shape Array shape
-     * @param DType $dtype Data type (default: Float64)
+     * @param DType      $dtype Data type (default: Float64)
      */
     public static function zeros(array $shape, DType $dtype = DType::Float64): self
     {
@@ -71,7 +71,7 @@ trait CreatesArrays
      * Create an array filled with ones.
      *
      * @param array<int> $shape Array shape
-     * @param DType $dtype Data type (default: Float64)
+     * @param DType      $dtype Data type (default: Float64)
      */
     public static function ones(array $shape, DType $dtype = DType::Float64): self
     {
@@ -99,7 +99,7 @@ trait CreatesArrays
      * uses the same safe allocation path as zeros().
      *
      * @param array<int> $shape Array shape
-     * @param DType $dtype Data type (default: Float64)
+     * @param DType      $dtype Data type (default: Float64)
      */
     public static function empty(array $shape, DType $dtype = DType::Float64): self
     {
@@ -113,11 +113,11 @@ trait CreatesArrays
     /**
      * Create an array filled with a specific value.
      *
-     * @param array<int> $shape     Array shape
-     * @param float|int|bool $value Value to fill array with
-     * @param null|DType $dtype     Data type (default: inferred from value)
+     * @param array<int>     $shape Array shape
+     * @param bool|float|int $value Value to fill array with
+     * @param null|DType     $dtype Data type (default: inferred from value)
      */
-    public static function full(array $shape, float|int|bool $value, ?DType $dtype = null): self
+    public static function full(array $shape, bool|float|int $value, ?DType $dtype = null): self
     {
         if (null === $dtype) {
             if (\is_int($value)) {
@@ -154,8 +154,8 @@ trait CreatesArrays
     /**
      * Create an array of zeros with the same shape as the input array.
      *
-     * @param self     $array Input array defining the output shape
-     * @param DType|null $dtype Data type (default: same as input array)
+     * @param self       $array Input array defining the output shape
+     * @param null|DType $dtype Data type (default: same as input array)
      */
     public static function zerosLike(self $array, ?DType $dtype = null): self
     {
@@ -165,8 +165,8 @@ trait CreatesArrays
     /**
      * Create an array of ones with the same shape as the input array.
      *
-     * @param self     $array Input array defining the output shape
-     * @param DType|null $dtype Data type (default: same as input array)
+     * @param self       $array Input array defining the output shape
+     * @param null|DType $dtype Data type (default: same as input array)
      */
     public static function onesLike(self $array, ?DType $dtype = null): self
     {
@@ -176,23 +176,24 @@ trait CreatesArrays
     /**
      * Create an array filled with a specific value, with the same shape as the input array.
      *
-     * @param self          $array Input array defining the output shape
-     * @param float|int|bool $value Value to fill array with
-     * @param DType|null     $dtype Data type (default: inferred from value or same as input)
+     * @param self           $array Input array defining the output shape
+     * @param bool|float|int $value Value to fill array with
+     * @param null|DType     $dtype Data type (default: inferred from value or same as input)
      */
-    public static function fullLike(self $array, float|int|bool $value, ?DType $dtype = null): self
+    public static function fullLike(self $array, bool|float|int $value, ?DType $dtype = null): self
     {
         $dtype ??= $array->dtype();
+
         return self::full($array->shape(), $value, $dtype);
     }
 
     /**
      * Create a 2D identity matrix.
      *
-     * @param int        $N     Number of rows
-     * @param null|int   $M     Number of columns (default: N)
-     * @param int        $k     Diagonal index (0: main, >0: upper, <0: lower)
-     * @param DType $dtype Data type (default: Float64)
+     * @param int      $N     Number of rows
+     * @param null|int $M     Number of columns (default: N)
+     * @param int      $k     Diagonal index (0: main, >0: upper, <0: lower)
+     * @param DType    $dtype Data type (default: Float64)
      */
     public static function eye(int $N, ?int $M = null, int $k = 0, DType $dtype = DType::Float64): self
     {

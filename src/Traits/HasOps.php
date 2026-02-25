@@ -37,7 +37,7 @@ trait HasOps
 
         // Normalize extra args: convert BackedEnum to their values
         $normalizedArgs = array_map(
-            static fn($arg) => $arg instanceof \BackedEnum ? $arg->value : $arg,
+            static fn ($arg) => $arg instanceof \BackedEnum ? $arg->value : $arg,
             $extraArgs
         );
 

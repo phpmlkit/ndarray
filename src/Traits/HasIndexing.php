@@ -312,7 +312,7 @@ trait HasIndexing
 
         return new self($outHandle, $this->shape(), $this->dtype);
     }
-    
+
     /**
      * Calculate flat index from dimension indices using strides.
      *
@@ -427,7 +427,6 @@ trait HasIndexing
             base: $root,
         );
     }
-
 
     /**
      * Build a typed values buffer for put/scatter operations.

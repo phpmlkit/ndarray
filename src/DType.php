@@ -242,7 +242,7 @@ enum DType: int
      *
      * @return CData FFI CData representing this dtype
      */
-    public function createCValue(null|bool|float|int $value = null): CData
+    public function createCValue(bool|float|int|null $value = null): CData
     {
         $ffi = Lib::get();
         $cValue = $ffi->new($this->ffiType());
@@ -257,8 +257,8 @@ enum DType: int
     /**
      * Create a C array for this dtype.
      *
-     * @param int $length Length of the array
-     * @param array $values Values to initialize the array with
+     * @param int          $length Length of the array
+     * @param array<mixed> $values Values to initialize the array with
      *
      * @return CData The allocated C array
      */
@@ -299,9 +299,9 @@ enum DType: int
      * This is necessary because FFI bools are represented as uint8_t,
      * so boolean values must be converted to integers.
      *
-     * @param array<mixed> $values Array of values to prepare
+     * @param array<bool|float|int> $values Array of values to prepare
      *
-     * @return array<int|float> Prepared values with bools converted
+     * @return array<float|int> Prepared values with bools converted
      */
     public function prepareArrayValues(array $values): array
     {

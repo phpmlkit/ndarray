@@ -253,7 +253,8 @@ final class AstypeTest extends TestCase
         $result = $arr
             ->astype(DType::Float64)
             ->astype(DType::Int16)
-            ->astype(DType::Float32);
+            ->astype(DType::Float32)
+        ;
 
         $this->assertSame(DType::Float32, $result->dtype());
         $this->assertEquals([1.0, 2.0, 3.0], $result->toArray());
@@ -285,7 +286,7 @@ final class AstypeTest extends TestCase
             $arr = NDArray::zeros($shape, DType::Int32);
             $casted = $arr->astype(DType::Float64);
 
-            $this->assertSame($shape, $casted->shape(), 'Failed for shape ' . json_encode($shape));
+            $this->assertSame($shape, $casted->shape(), 'Failed for shape '.json_encode($shape));
         }
     }
 }

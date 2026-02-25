@@ -68,7 +68,7 @@ trait HasShapeOps
 
         if ($oldSize !== $newSize) {
             throw new ShapeException(
-                "Cannot reshape array of size {$oldSize} into shape " . json_encode($newShape) . " with size {$newSize}"
+                "Cannot reshape array of size {$oldSize} into shape ".json_encode($newShape)." with size {$newSize}"
             );
         }
 
@@ -160,7 +160,6 @@ trait HasShapeOps
             );
         }
 
-
         return $this->unaryOp('ndarray_transpose');
     }
 
@@ -225,7 +224,7 @@ trait HasShapeOps
     /**
      * Reverse the order of elements in an array along the given axis or axes.
      *
-     * @param array<int>|int|null $axes Axis or axes to flip. If null, flip over all axes.
+     * @param null|array<int>|int $axes Axis or axes to flip. If null, flip over all axes.
      */
     public function flip(array|int|null $axes = null): NDArray
     {
@@ -238,7 +237,7 @@ trait HasShapeOps
         if (null === $axes) {
             $axesArray = [];
             $numAxes = 0;
-        } elseif (is_int($axes)) {
+        } elseif (\is_int($axes)) {
             $axis = $axes;
             if ($axis < 0) {
                 $axis = $this->ndim() + $axis;
@@ -259,7 +258,7 @@ trait HasShapeOps
                 }
                 $axesArray[] = $axis;
             }
-            $numAxes = count($axesArray);
+            $numAxes = \count($axesArray);
         }
 
         $status = $ffi->ndarray_flip(
@@ -315,15 +314,15 @@ trait HasShapeOps
         // Insert appropriate stride
         // The stride for the new axis should be the stride of the next axis,
         // or if at the end, use the last axis's stride
-        if ($axis < count($strides)) {
+        if ($axis < \count($strides)) {
             // Insert the stride of the axis that will follow
             $strideToInsert = $strides[$axis];
         } else {
             // At the end - stride should be the size of an element in bytes
             // But we need to calculate based on the last dimension
             $strideToInsert = 1;
-            if (count($strides) > 0) {
-                $strideToInsert = $strides[count($strides) - 1];
+            if (\count($strides) > 0) {
+                $strideToInsert = $strides[\count($strides) - 1];
             }
         }
         array_splice($strides, $axis, 0, [$strideToInsert]);
@@ -440,7 +439,7 @@ trait HasShapeOps
         // NumPy behavior: if all dimensions were squeezed, keep at least 1 dimension
         if (empty($newShape)) {
             // Keep the last dimension that was squeezed (shape [1], stride from original)
-            $lastSqueezedAxis = $axesToRemove[count($axesToRemove) - 1];
+            $lastSqueezedAxis = $axesToRemove[\count($axesToRemove) - 1];
             $newShape = [1];
             $newStrides = [$strides[$lastSqueezedAxis]];
         }

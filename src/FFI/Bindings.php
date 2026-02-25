@@ -76,7 +76,7 @@ interface Bindings
     public function ndarray_take(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_take_axis(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-   
+
     public function ndarray_take_along_axis(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_put(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, CData $values, int $values_len, float $scalar_value, bool $has_scalar, CData $out_handle): int;
