@@ -148,7 +148,7 @@ final class ReductionsTest extends TestCase
 
     public function testMinAxis1(): void
     {
-        $a = NDArray::array([[5, 2, 8], [1, 9, 3]], DType::Uint16);
+        $a = NDArray::array([[5, 2, 8], [1, 9, 3]], DType::UInt16);
         $result = $a->min(axis: 1);
         $this->assertEqualsWithDelta([2, 1], $result->toArray(), 0.0001);
     }

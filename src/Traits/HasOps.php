@@ -37,7 +37,7 @@ trait HasOps
 
         // Normalize extra args: convert BackedEnum to their values
         $normalizedArgs = array_map(
-            static fn ($arg) => $arg instanceof \BackedEnum ? $arg->value : $arg,
+            static fn($arg) => $arg instanceof \BackedEnum ? $arg->value : $arg,
             $extraArgs
         );
 
@@ -160,7 +160,7 @@ trait HasOps
         return match ($dtype) {
             DType::Float64, DType::Float32 => $outValue->cdata,
             DType::Int64, DType::Int32, DType::Int16, DType::Int8 => $ffi->cast('int64_t*', $addr)[0],
-            DType::Uint64, DType::Uint32, DType::Uint16, DType::Uint8 => $ffi->cast('uint64_t*', $addr)[0],
+            DType::UInt64, DType::UInt32, DType::UInt16, DType::UInt8 => $ffi->cast('uint64_t*', $addr)[0],
             default => 0,
         };
     }

@@ -1,6 +1,6 @@
 //! NDArray free function.
 
-use crate::error::{SUCCESS};
+use crate::error::SUCCESS;
 use crate::ffi::NdArrayHandle;
 
 /// Destroy an NDArray and free its memory.
@@ -13,4 +13,3 @@ pub unsafe extern "C" fn ndarray_free(handle: *mut NdArrayHandle) -> i32 {
         SUCCESS
     })
 }
-

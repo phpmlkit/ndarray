@@ -158,7 +158,7 @@ final class ShapeOpsTest extends TestCase
     public function testSwapAxes2D(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->swapAxes(0, 1);
+        $result = $a->swap(0, 1);
 
         $this->assertSame([3, 2], $result->shape());
         $this->assertEqualsWithDelta([[1, 4], [2, 5], [3, 6]], $result->toArray(), 0.0001);
@@ -167,7 +167,7 @@ final class ShapeOpsTest extends TestCase
     public function testSwapAxesThenFlatten(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->swapAxes(0, 1)->flatten();
+        $result = $a->swap(0, 1)->flatten();
 
         $this->assertSame([6], $result->shape());
         $this->assertEqualsWithDelta([1, 4, 2, 5, 3, 6], $result->toArray(), 0.0001);
@@ -267,7 +267,7 @@ final class ShapeOpsTest extends TestCase
     public function testInsertAxisAtBeginning(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
-        $result = $a->insertAxis(0);
+        $result = $a->insert(0);
 
         $this->assertSame([1, 3], $result->shape());
         $this->assertEqualsWithDelta([[1, 2, 3]], $result->toArray(), 0.0001);
@@ -276,7 +276,7 @@ final class ShapeOpsTest extends TestCase
     public function testInsertAxisAtEnd(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
-        $result = $a->insertAxis(1);
+        $result = $a->insert(1);
 
         $this->assertSame([3, 1], $result->shape());
         $this->assertEqualsWithDelta([[1], [2], [3]], $result->toArray(), 0.0001);
@@ -285,7 +285,7 @@ final class ShapeOpsTest extends TestCase
     public function testInsertAxisInMiddle(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->insertAxis(1);
+        $result = $a->insert(1);
 
         $this->assertSame([2, 1, 3], $result->shape());
     }
@@ -293,7 +293,7 @@ final class ShapeOpsTest extends TestCase
     public function testInsertAxisNegativeIndex(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
-        $result = $a->insertAxis(-1);
+        $result = $a->insert(-1);
 
         $this->assertSame([3, 1], $result->shape());
     }
@@ -305,7 +305,7 @@ final class ShapeOpsTest extends TestCase
     public function testMergeAxes2DInto1D(): void
     {
         $a = NDArray::array([[1, 2], [3, 4], [5, 6]], DType::Float64);
-        $result = $a->mergeAxes(0, 1);
+        $result = $a->merge(0, 1);
 
         // Merging axis 0 into axis 1: [3, 2] -> [6]
         $this->assertSame([6], $result->shape());
@@ -314,41 +314,59 @@ final class ShapeOpsTest extends TestCase
     public function testMergeAxes3D(): void
     {
         $a = NDArray::zeros([2, 3, 4], DType::Float64);
-        $result = $a->mergeAxes(1, 2);
+        $result = $a->merge(1, 2);
 
         // Merging axis 1 into axis 2: [2, 3, 4] -> [2, 12]
         $this->assertSame([2, 12], $result->shape());
     }
 
     // =========================================================================
-    // Invert Axis Tests
+    // Flip Tests
     // =========================================================================
 
-    public function testInvertAxis1D(): void
+    public function testFlip1D(): void
     {
         $a = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
-        $result = $a->invertAxis(0);
+        $result = $a->flip(0);
 
         $this->assertSame([5], $result->shape());
         $this->assertEqualsWithDelta([5, 4, 3, 2, 1], $result->toArray(), 0.0001);
     }
 
-    public function testInvertAxis2D(): void
+    public function testFlip2D(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->invertAxis(0);
+        $result = $a->flip(0);
 
         $this->assertSame([2, 3], $result->shape());
         $this->assertEqualsWithDelta([[4, 5, 6], [1, 2, 3]], $result->toArray(), 0.0001);
     }
 
-    public function testInvertAxisNegativeIndex(): void
+    public function testFlipNegativeIndex(): void
     {
         $a = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
-        $result = $a->invertAxis(-1);
+        $result = $a->flip(-1);
 
         $this->assertSame([5], $result->shape());
         $this->assertEqualsWithDelta([5, 4, 3, 2, 1], $result->toArray(), 0.0001);
+    }
+
+    public function testFlipAllAxes(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $result = $a->flip();
+
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[6, 5, 4], [3, 2, 1]], $result->toArray(), 0.0001);
+    }
+
+    public function testFlipMultipleAxes(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $result = $a->flip([0, 1]);
+
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[6, 5, 4], [3, 2, 1]], $result->toArray(), 0.0001);
     }
 
     // =========================================================================
@@ -371,7 +389,7 @@ final class ShapeOpsTest extends TestCase
     public function testPermuteAxes2D(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->permuteAxes([1, 0]);
+        $result = $a->permute(1, 0);
 
         $this->assertSame([3, 2], $result->shape());
         $this->assertEqualsWithDelta([[1, 4], [2, 5], [3, 6]], $result->toArray(), 0.0001);
@@ -384,7 +402,7 @@ final class ShapeOpsTest extends TestCase
             [[7, 8], [9, 10], [11, 12]],
         ], DType::Float64);
         // Original shape: [2, 3, 2]
-        $result = $a->permuteAxes([1, 0, 2]);
+        $result = $a->permute(1, 0, 2);
         // New shape: [3, 2, 2]
 
         $this->assertSame([3, 2, 2], $result->shape());
@@ -398,7 +416,7 @@ final class ShapeOpsTest extends TestCase
     public function testPermuteAxesWithNegativeIndices(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->permuteAxes([-1, -2]);
+        $result = $a->permute(-1, -2);
 
         $this->assertSame([3, 2], $result->shape());
         $this->assertEqualsWithDelta([[1, 4], [2, 5], [3, 6]], $result->toArray(), 0.0001);
@@ -407,7 +425,7 @@ final class ShapeOpsTest extends TestCase
     public function testPermuteAxesIdentity(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->permuteAxes([0, 1]);
+        $result = $a->permute(0, 1);
 
         $this->assertSame([2, 3], $result->shape());
         $this->assertEqualsWithDelta([[1, 2, 3], [4, 5, 6]], $result->toArray(), 0.0001);
@@ -416,7 +434,7 @@ final class ShapeOpsTest extends TestCase
     public function testPermuteAxesThenFlatten(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->permuteAxes([1, 0])->flatten();
+        $result = $a->permute(1, 0)->flatten();
 
         $this->assertSame([6], $result->shape());
         $this->assertEqualsWithDelta([1, 4, 2, 5, 3, 6], $result->toArray(), 0.0001);
@@ -427,7 +445,7 @@ final class ShapeOpsTest extends TestCase
         $a = NDArray::array([[1, 2], [3, 4]], DType::Float64);
 
         $this->expectException(ShapeException::class);
-        $a->permuteAxes([0, 1, 2]); // 3 axes for 2D array
+        $a->permute(0, 1, 2); // 3 axes for 2D array
     }
 
     public function testPermuteAxesWithDuplicateAxes(): void
@@ -435,7 +453,7 @@ final class ShapeOpsTest extends TestCase
         $a = NDArray::array([[1, 2], [3, 4]], DType::Float64);
 
         $this->expectException(ShapeException::class);
-        $a->permuteAxes([0, 0]); // Duplicate axis
+        $a->permute(0, 0); // Duplicate axis
     }
 
     public function testPermuteAxesWithOutOfBoundsAxis(): void
@@ -443,7 +461,7 @@ final class ShapeOpsTest extends TestCase
         $a = NDArray::array([[1, 2], [3, 4]], DType::Float64);
 
         $this->expectException(ShapeException::class);
-        $a->permuteAxes([0, 5]); // Axis 5 is out of bounds
+        $a->permute(0, 5); // Axis 5 is out of bounds
     }
 
     // =========================================================================
@@ -842,7 +860,7 @@ final class ShapeOpsTest extends TestCase
     public function testInsertAxisThenFlatten(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
-        $result = $a->insertAxis(0)->flatten();
+        $result = $a->insert(0)->flatten();
 
         $this->assertSame([3], $result->shape());
         $this->assertEqualsWithDelta([1, 2, 3], $result->toArray(), 0.0001);
@@ -851,15 +869,15 @@ final class ShapeOpsTest extends TestCase
     public function testTransposeThenInsertAxis(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->transpose()->insertAxis(1);
+        $result = $a->transpose()->insert(1);
 
         $this->assertSame([3, 1, 2], $result->shape());
     }
 
-    public function testInvertAxisThenFlatten(): void
+    public function testFlipThenFlatten(): void
     {
         $a = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
-        $result = $a->invertAxis(0)->flatten();
+        $result = $a->flip(0)->flatten();
 
         $this->assertSame([5], $result->shape());
         $this->assertEqualsWithDelta([5, 4, 3, 2, 1], $result->toArray(), 0.0001);
@@ -871,7 +889,7 @@ final class ShapeOpsTest extends TestCase
         $a = NDArray::array([1, 2, 3, 4, 5, 6, 7, 8], DType::Float64);
         $result = $a->reshape([2, 2, 2])
             ->transpose()
-            ->insertAxis(0)
+            ->insert(0)
             ->flatten()
         ;
 
@@ -888,7 +906,7 @@ final class ShapeOpsTest extends TestCase
 
         // First permute: [1, 0, 2] - swap first two axes
         // Then flatten
-        $result = $a->permuteAxes([1, 0, 2])->flatten();
+        $result = $a->permute(1, 0, 2)->flatten();
 
         $this->assertSame([8], $result->shape());
         // After permute: [[[1,2],[5,6]], [[3,4],[7,8]]]
@@ -904,7 +922,7 @@ final class ShapeOpsTest extends TestCase
         ], DType::Float64);
 
         // Shape [2, 2, 3] -> permute [1, 0, 2] -> [2, 2, 3] -> reshape to [4, 3]
-        $result = $a->permuteAxes([1, 0, 2])->reshape([4, 3]);
+        $result = $a->permute(1, 0, 2)->reshape([4, 3]);
 
         $this->assertSame([4, 3], $result->shape());
         $this->assertEqualsWithDelta([

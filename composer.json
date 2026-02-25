@@ -32,11 +32,11 @@
   },
   "extra": {
     "platform-urls": {
-      "linux-x86_64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-linux-x86_64.tar.gz",
-      "linux-arm64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-linux-arm64.tar.gz",
-      "darwin-x86_64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-darwin-x86_64.tar.gz",
-      "darwin-arm64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-darwin-arm64.tar.gz",
-      "windows-64": "https://github.com/codewithkyrian/ndarray-php/releases/download/{version}/dist-windows-64.zip"
+      "linux-x86_64": "https://github.com/phpmlkit/ndarray/releases/download/{version}/dist-linux-x86_64.tar.gz",
+      "linux-arm64": "https://github.com/phpmlkit/ndarray/releases/download/{version}/dist-linux-arm64.tar.gz",
+      "darwin-x86_64": "https://github.com/phpmlkit/ndarray/releases/download/{version}/dist-darwin-x86_64.tar.gz",
+      "darwin-arm64": "https://github.com/phpmlkit/ndarray/releases/download/{version}/dist-darwin-arm64.tar.gz",
+      "windows-64": "https://github.com/phpmlkit/ndarray/releases/download/{version}/dist-windows-64.zip"
     }
   },
   "scripts": {

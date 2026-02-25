@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray;
 
+use FFI\CData;
+use PhpMlKit\NDArray\FFI\Lib;
+
 /**
  * Data type enumeration for NDArray elements.
  *
@@ -18,10 +21,10 @@ enum DType: int
     case Int64 = 3;
 
     // Unsigned integers
-    case Uint8 = 4;
-    case Uint16 = 5;
-    case Uint32 = 6;
-    case Uint64 = 7;
+    case UInt8 = 4;
+    case UInt16 = 5;
+    case UInt32 = 6;
+    case UInt64 = 7;
 
     // Floating-point
     case Float32 = 8;
@@ -40,10 +43,10 @@ enum DType: int
             self::Int16 => 'int16_t',
             self::Int32 => 'int32_t',
             self::Int64 => 'int64_t',
-            self::Uint8 => 'uint8_t',
-            self::Uint16 => 'uint16_t',
-            self::Uint32 => 'uint32_t',
-            self::Uint64 => 'uint64_t',
+            self::UInt8 => 'uint8_t',
+            self::UInt16 => 'uint16_t',
+            self::UInt32 => 'uint32_t',
+            self::UInt64 => 'uint64_t',
             self::Float32 => 'float',
             self::Float64 => 'double',
             self::Bool => 'uint8_t',
@@ -56,10 +59,10 @@ enum DType: int
     public function itemSize(): int
     {
         return match ($this) {
-            self::Int8, self::Uint8, self::Bool => 1,
-            self::Int16, self::Uint16 => 2,
-            self::Int32, self::Uint32, self::Float32 => 4,
-            self::Int64, self::Uint64, self::Float64 => 8,
+            self::Int8, self::UInt8, self::Bool => 1,
+            self::Int16, self::UInt16 => 2,
+            self::Int32, self::UInt32, self::Float32 => 4,
+            self::Int64, self::UInt64, self::Float64 => 8,
         };
     }
 
@@ -80,7 +83,7 @@ enum DType: int
     public function isUnsigned(): bool
     {
         return match ($this) {
-            self::Uint8, self::Uint16, self::Uint32, self::Uint64 => true,
+            self::UInt8, self::UInt16, self::UInt32, self::UInt64 => true,
             default => false,
         };
     }
@@ -110,58 +113,6 @@ enum DType: int
     public function isBool(): bool
     {
         return self::Bool === $this;
-    }
-
-    /**
-     * Check if this dtype is a numeric type (integer or float).
-     */
-    public function isNumeric(): bool
-    {
-        return $this->isInteger() || $this->isFloat();
-    }
-
-    /**
-     * Get a human-readable name for this dtype.
-     */
-    public function name(): string
-    {
-        return match ($this) {
-            self::Int8 => 'int8',
-            self::Int16 => 'int16',
-            self::Int32 => 'int32',
-            self::Int64 => 'int64',
-            self::Uint8 => 'uint8',
-            self::Uint16 => 'uint16',
-            self::Uint32 => 'uint32',
-            self::Uint64 => 'uint64',
-            self::Float32 => 'float32',
-            self::Float64 => 'float64',
-            self::Bool => 'bool',
-        };
-    }
-
-    /**
-     * Create DType from string name (NumPy-compatible names).
-     */
-    public static function fromString(string $name): self
-    {
-        return match (strtolower($name)) {
-            'int8', 'i1' => self::Int8,
-            'int16', 'i2' => self::Int16,
-            'int32', 'i4', 'int' => self::Int32,
-            'int64', 'i8' => self::Int64,
-            'uint8', 'u1' => self::Uint8,
-            'uint16', 'u2' => self::Uint16,
-            'uint32', 'u4' => self::Uint32,
-            'uint64', 'u8' => self::Uint64,
-            'float32', 'f4', 'float' => self::Float32,
-            'float64', 'f8', 'double' => self::Float64,
-            'bool', 'b' => self::Bool,
-            default => throw new \InvalidArgumentException(
-                "Unknown dtype: '{$name}'. Valid types: int8, int16, int32, int64, "
-                .'uint8, uint16, uint32, uint64, float32, float64, bool'
-            ),
-        };
     }
 
     /**
@@ -254,7 +205,7 @@ enum DType: int
             self::Int16 => -32768,
             self::Int32 => -2147483648,
             self::Int64 => \PHP_INT_MIN,
-            self::Uint8, self::Uint16, self::Uint32, self::Uint64 => 0,
+            self::UInt8, self::UInt16, self::UInt32, self::UInt64 => 0,
             self::Float32 => -3.4028235e+38,
             self::Float64 => -\PHP_FLOAT_MAX,
             self::Bool => 0,
@@ -271,13 +222,93 @@ enum DType: int
             self::Int16 => 32767,
             self::Int32 => 2147483647,
             self::Int64 => \PHP_INT_MAX,
-            self::Uint8 => 255,
-            self::Uint16 => 65535,
-            self::Uint32 => 4294967295,
-            self::Uint64 => \PHP_INT_MAX,
+            self::UInt8 => 255,
+            self::UInt16 => 65535,
+            self::UInt32 => 4294967295,
+            self::UInt64 => \PHP_INT_MAX,
             self::Float32 => 3.4028235e+38,
             self::Float64 => \PHP_FLOAT_MAX,
             self::Bool => 1,
         };
+    }
+
+    /**
+     * Create an FFI C value container for this dtype.
+     *
+     * If a value is provided, it will be stored in the C value with appropriate
+     * type handling (e.g., bool is converted to 1/0).
+     *
+     * @param null|bool|float|int $value Optional value to store
+     *
+     * @return CData FFI CData representing this dtype
+     */
+    public function createCValue(null|bool|float|int $value = null): CData
+    {
+        $ffi = Lib::get();
+        $cValue = $ffi->new($this->ffiType());
+
+        if (null !== $value) {
+            $cValue->cdata = $this->isBool() ? ($value ? 1 : 0) : $value;
+        }
+
+        return $cValue;
+    }
+
+    /**
+     * Create a C array for this dtype.
+     *
+     * @param int $length Length of the array
+     * @param array $values Values to initialize the array with
+     *
+     * @return CData The allocated C array
+     */
+    public function createCArray(int $length, array $values = []): CData
+    {
+        $ffi = Lib::get();
+        $cArray = $ffi->new("{$this->ffiType()}[{$length}]");
+
+        foreach ($values as $i => $value) {
+            $cArray[$i] = $value;
+        }
+
+        return $cArray;
+    }
+
+    /**
+     * Cast an FFI C value to the appropriate PHP type for this dtype.
+     *
+     * Handles type conversion: bools are cast from integer representation,
+     * floats are cast to float, integers to int.
+     *
+     * @param CData $cValue FFI CData containing the value
+     *
+     * @return bool|float|int The value cast to the appropriate PHP type
+     */
+    public function castFromCValue(bool|CData|float|int|string|null $cValue): bool|float|int
+    {
+        return match ($this) {
+            self::Float64, self::Float32 => (float) $cValue,
+            self::Bool => (bool) $cValue,
+            default => (int) $cValue,
+        };
+    }
+
+    /**
+     * Prepare array values for FFI by converting bools to 1/0.
+     *
+     * This is necessary because FFI bools are represented as uint8_t,
+     * so boolean values must be converted to integers.
+     *
+     * @param array<mixed> $values Array of values to prepare
+     *
+     * @return array<int|float> Prepared values with bools converted
+     */
+    public function prepareArrayValues(array $values): array
+    {
+        if (!$this->isBool()) {
+            return $values;
+        }
+
+        return array_map(static fn ($v) => $v ? 1 : 0, $values);
     }
 }

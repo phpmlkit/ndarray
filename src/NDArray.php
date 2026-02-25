@@ -11,6 +11,7 @@ use PhpMlKit\NDArray\Traits\CreatesArrays;
 use PhpMlKit\NDArray\Traits\HasArrayAccess;
 use PhpMlKit\NDArray\Traits\HasComparison;
 use PhpMlKit\NDArray\Traits\HasConversion;
+use PhpMlKit\NDArray\Traits\HasLogical;
 use PhpMlKit\NDArray\Traits\HasIndexing;
 use PhpMlKit\NDArray\Traits\HasLinearAlgebra;
 use PhpMlKit\NDArray\Traits\HasMath;
@@ -18,8 +19,8 @@ use PhpMlKit\NDArray\Traits\HasOps;
 use PhpMlKit\NDArray\Traits\HasReductions;
 use PhpMlKit\NDArray\Traits\HasShapeOps;
 use PhpMlKit\NDArray\Traits\HasSlicing;
+use PhpMlKit\NDArray\Traits\CanBePrinted;
 use PhpMlKit\NDArray\Traits\HasStacking;
-use PhpMlKit\NDArray\Traits\HasStringable;
 
 /**
  * N-dimensional array class with PHP-managed view metadata and Rust-managed data.
@@ -30,13 +31,15 @@ use PhpMlKit\NDArray\Traits\HasStringable;
  *
  * @implements \ArrayAccess<int|string, bool|float|int|self>
  */
-class NDArray implements \ArrayAccess
+class NDArray implements \ArrayAccess, \Stringable
 {
+    use CanBePrinted;
     use CreatesArrays;
     use HasArrayAccess;
     use HasComparison;
     use HasConversion;
     use HasIndexing;
+    use HasLogical;
     use HasLinearAlgebra;
     use HasMath;
     use HasOps;
@@ -44,7 +47,6 @@ class NDArray implements \ArrayAccess
     use HasShapeOps;
     use HasSlicing;
     use HasStacking;
-    use HasStringable;
 
     /** View metadata (shape, strides, offset, ndim). */
     protected readonly ViewMetadata $viewMetadata;

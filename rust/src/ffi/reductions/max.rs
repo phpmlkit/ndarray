@@ -35,8 +35,7 @@ pub unsafe extern "C" fn ndarray_max(
 
         let max_result = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta)
-                else {
+                let Some(view) = extract_view_f64(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -52,8 +51,7 @@ pub unsafe extern "C" fn ndarray_max(
                 )
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta)
-                else {
+                let Some(view) = extract_view_f32(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -69,8 +67,7 @@ pub unsafe extern "C" fn ndarray_max(
                 ) as f64
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i64(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -79,8 +76,7 @@ pub unsafe extern "C" fn ndarray_max(
                     .fold(i64::MIN, |max, x| if x > max { x } else { max }) as f64
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i32(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -89,8 +85,7 @@ pub unsafe extern "C" fn ndarray_max(
                     .fold(i32::MIN, |max, x| if x > max { x } else { max }) as f64
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i16(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -99,8 +94,7 @@ pub unsafe extern "C" fn ndarray_max(
                     .fold(i16::MIN, |max, x| if x > max { x } else { max }) as f64
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i8(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -109,8 +103,7 @@ pub unsafe extern "C" fn ndarray_max(
                     .fold(i8::MIN, |max, x| if x > max { x } else { max }) as f64
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u64(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -119,8 +112,7 @@ pub unsafe extern "C" fn ndarray_max(
                     .fold(u64::MIN, |max, x| if x > max { x } else { max }) as f64
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u32(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -129,8 +121,7 @@ pub unsafe extern "C" fn ndarray_max(
                     .fold(u32::MIN, |max, x| if x > max { x } else { max }) as f64
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u16(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -139,8 +130,7 @@ pub unsafe extern "C" fn ndarray_max(
                     .fold(u16::MIN, |max, x| if x > max { x } else { max }) as f64
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u8(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -174,7 +164,6 @@ pub unsafe extern "C" fn ndarray_max_axis(
 ) -> i32 {
     if handle.is_null()
         || out_handle.is_null()
-        
         || out_dtype.is_null()
         || out_ndim.is_null()
         || out_shape.is_null()
@@ -206,8 +195,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta)
-                else {
+                let Some(view) = extract_view_f64(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -224,8 +212,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta)
-                else {
+                let Some(view) = extract_view_f32(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -242,8 +229,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i64(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -260,8 +246,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i32(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -278,8 +263,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i16(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -296,8 +280,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i8(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -313,8 +296,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u64(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -331,8 +313,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u32(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -349,8 +330,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u16(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -367,8 +347,7 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u8(wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };

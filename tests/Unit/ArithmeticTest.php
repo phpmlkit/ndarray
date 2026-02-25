@@ -149,7 +149,7 @@ final class ArithmeticTest extends TestCase
     public function testNegativeUnsignedShouldError(): void
     {
         $this->expectException(DTypeException::class);
-        $a = NDArray::array([1, 2, 3], DType::Uint32);
+        $a = NDArray::array([1, 2, 3], DType::UInt32);
         $a->negative();
     }
 }

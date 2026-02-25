@@ -99,7 +99,7 @@ trait HasSlicing
                 $newStrides[] = $stride * $res['step'];
             } else {
                 throw new IndexException(
-                    'Invalid slice selector type: '.get_debug_type($selector)
+                    'Invalid slice selector type: ' . get_debug_type($selector)
                 );
             }
         }
@@ -138,7 +138,7 @@ trait HasSlicing
         }
 
         throw new \InvalidArgumentException(
-            'Assignment value must be scalar or NDArray, got '.get_debug_type($value)
+            'Assignment value must be scalar or NDArray, got ' . get_debug_type($value)
         );
     }
 
@@ -150,32 +150,10 @@ trait HasSlicing
     private function fill(mixed $value): void
     {
         $ffi = Lib::get();
-        $cValue = match ($this->dtype) {
-            DType::Int8 => $ffi->new('int8_t'),
-            DType::Int16 => $ffi->new('int16_t'),
-            DType::Int32 => $ffi->new('int32_t'),
-            DType::Int64 => $ffi->new('int64_t'),
-            DType::Uint8 => $ffi->new('uint8_t'),
-            DType::Uint16 => $ffi->new('uint16_t'),
-            DType::Uint32 => $ffi->new('uint32_t'),
-            DType::Uint64 => $ffi->new('uint64_t'),
-            DType::Float32 => $ffi->new('float'),
-            DType::Float64 => $ffi->new('double'),
-            DType::Bool => $ffi->new('uint8_t'),
-        };
-
-        if (DType::Bool === $this->dtype) {
-            $cValue->cdata = $value ? 1 : 0;
-        } else {
-            $cValue->cdata = $value;
-        }
+        $cValue = $this->dtype->createCValue($value);
 
         $meta = $this->viewMetadata()->toCData();
-        $status = $ffi->ndarray_fill(
-            $this->handle,
-            Lib::addr($meta),
-            Lib::addr($cValue)
-        );
+        $status = $ffi->ndarray_fill($this->handle, Lib::addr($meta), Lib::addr($cValue));
 
         Lib::checkStatus($status);
     }

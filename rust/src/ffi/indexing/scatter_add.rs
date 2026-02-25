@@ -6,27 +6,13 @@ use crate::core::view_helpers::{
 };
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
-use crate::error::{self, ERR_GENERIC, ERR_INDEX, ERR_MATH, SUCCESS};
+use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_MATH, SUCCESS};
+use crate::ffi::indexing::utils::normalize_index;
 use crate::ffi::{NdArrayHandle, ViewMetadata};
-use ndarray::{ArrayD, IxDyn};
+use ndarray::ArrayD;
 use parking_lot::RwLock;
 use std::ffi::c_void;
 use std::sync::Arc;
-
-#[inline]
-fn normalize_index(idx: i64, len: usize) -> Result<usize, String> {
-    let mut i = idx;
-    if i < 0 {
-        i += len as i64;
-    }
-    if i < 0 || i >= len as i64 {
-        return Err(format!(
-            "Index {} is out of bounds for axis with size {}",
-            idx, len
-        ));
-    }
-    Ok(i as usize)
-}
 
 fn scatter_add_impl<T>(
     view: ndarray::ArrayViewD<'_, T>,
@@ -37,7 +23,6 @@ fn scatter_add_impl<T>(
 where
     T: Copy + std::ops::AddAssign,
 {
-    let shape = view.shape().to_vec();
     let mut flat: Vec<T> = view.iter().copied().collect();
     if updates.is_empty() && scalar.is_none() {
         return Err("scatterAdd requires scalar or non-empty updates".to_string());
@@ -52,7 +37,7 @@ where
         flat[i] += upd;
     }
 
-    ArrayD::from_shape_vec(IxDyn(&shape), flat)
+    ArrayD::from_shape_vec(view.raw_dim(), flat)
         .map_err(|e| format!("Failed to create scatterAdd output: {}", e))
 }
 
@@ -61,22 +46,39 @@ where
 pub unsafe extern "C" fn ndarray_scatter_add_flat(
     handle: *const NdArrayHandle,
     meta: *const ViewMetadata,
-    indices: *const i64,
-    indices_len: usize,
+    indices_handle: *const NdArrayHandle,
+    indices_meta: *const ViewMetadata,
     updates: *const c_void,
     updates_len: usize,
     scalar_update: f64,
     has_scalar: bool,
     out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
-    if handle.is_null() || meta.is_null() || indices.is_null() || out_handle.is_null() {
+    if handle.is_null()
+        || meta.is_null()
+        || indices_handle.is_null()
+        || indices_meta.is_null()
+        || out_handle.is_null()
+    {
         return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
+        let indices_wrapper = NdArrayHandle::as_wrapper(indices_handle as *mut _);
         let meta_ref = &*meta;
-        let idx_slice = std::slice::from_raw_parts(indices, indices_len);
+        let indices_meta_ref = &*indices_meta;
+
+        if indices_wrapper.dtype != DType::Int64 {
+            error::set_last_error("scatter_add indices must have Int64 dtype".to_string());
+            return ERR_DTYPE;
+        }
+
+        let Some(indices_view) = extract_view_i64(indices_wrapper, indices_meta_ref) else {
+            error::set_last_error("Failed to extract Int64 indices view".to_string());
+            return ERR_GENERIC;
+        };
+        let idx_slice = indices_view.as_slice().unwrap_or(&[]);
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {

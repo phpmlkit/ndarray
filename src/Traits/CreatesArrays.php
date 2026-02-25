@@ -6,6 +6,7 @@ namespace PhpMlKit\NDArray\Traits;
 
 use FFI\CData;
 use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\DTypeException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Bindings;
 use PhpMlKit\NDArray\FFI\Lib;
@@ -46,12 +47,10 @@ trait CreatesArrays
      * Create an array filled with zeros.
      *
      * @param array<int> $shape Array shape
-     * @param null|DType $dtype Data type (default: Float64)
+     * @param DType $dtype Data type (default: Float64)
      */
-    public static function zeros(array $shape, ?DType $dtype = null): self
+    public static function zeros(array $shape, DType $dtype = DType::Float64): self
     {
-        $dtype ??= DType::Float64;
-
         $ffi = Lib::get();
         $cShape = Lib::createShapeArray($shape);
         $outHandle = $ffi->new('struct NdArrayHandle*');
@@ -72,12 +71,10 @@ trait CreatesArrays
      * Create an array filled with ones.
      *
      * @param array<int> $shape Array shape
-     * @param null|DType $dtype Data type (default: Float64)
+     * @param DType $dtype Data type (default: Float64)
      */
-    public static function ones(array $shape, ?DType $dtype = null): self
+    public static function ones(array $shape, DType $dtype = DType::Float64): self
     {
-        $dtype ??= DType::Float64;
-
         $ffi = Lib::get();
         $cShape = Lib::createShapeArray($shape);
         $outHandle = $ffi->new('struct NdArrayHandle*');
@@ -102,9 +99,9 @@ trait CreatesArrays
      * uses the same safe allocation path as zeros().
      *
      * @param array<int> $shape Array shape
-     * @param null|DType $dtype Data type (default: Float64)
+     * @param DType $dtype Data type (default: Float64)
      */
-    public static function empty(array $shape, ?DType $dtype = null): self
+    public static function empty(array $shape, DType $dtype = DType::Float64): self
     {
         if (!\in_array(0, $shape, true)) {
             throw new ShapeException('empty() requires a zero-size shape (at least one dimension must be 0)');
@@ -117,17 +114,17 @@ trait CreatesArrays
      * Create an array filled with a specific value.
      *
      * @param array<int> $shape     Array shape
-     * @param mixed      $fillValue Value to fill array with
+     * @param float|int|bool $value Value to fill array with
      * @param null|DType $dtype     Data type (default: inferred from value)
      */
-    public static function full(array $shape, mixed $fillValue, ?DType $dtype = null): self
+    public static function full(array $shape, float|int|bool $value, ?DType $dtype = null): self
     {
         if (null === $dtype) {
-            if (\is_int($fillValue)) {
+            if (\is_int($value)) {
                 $dtype = DType::Int64;
-            } elseif (\is_float($fillValue)) {
+            } elseif (\is_float($value)) {
                 $dtype = DType::Float64;
-            } elseif (\is_bool($fillValue)) {
+            } elseif (\is_bool($value)) {
                 $dtype = DType::Bool;
             } else {
                 throw new \InvalidArgumentException('Cannot infer dtype from fill value');
@@ -135,21 +132,16 @@ trait CreatesArrays
         }
 
         $ffi = Lib::get();
-        $cShape = Lib::createShapeArray($shape);
 
-        if (DType::Bool === $dtype) {
-            $val = $fillValue ? 1 : 0;
-        } else {
-            $val = $fillValue;
-        }
-        $cValue = Lib::createCArray($dtype->ffiType(), [$val]);
+        $cShape = Lib::createShapeArray($shape);
+        $cValue = $dtype->createCValue($value);
 
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_full(
             $cShape,
             \count($shape),
-            $cValue,
+            Lib::addr($cValue),
             $dtype->value,
             Lib::addr($outHandle)
         );
@@ -160,18 +152,51 @@ trait CreatesArrays
     }
 
     /**
+     * Create an array of zeros with the same shape as the input array.
+     *
+     * @param self     $array Input array defining the output shape
+     * @param DType|null $dtype Data type (default: same as input array)
+     */
+    public static function zerosLike(self $array, ?DType $dtype = null): self
+    {
+        return self::zeros($array->shape(), $dtype ?? $array->dtype());
+    }
+
+    /**
+     * Create an array of ones with the same shape as the input array.
+     *
+     * @param self     $array Input array defining the output shape
+     * @param DType|null $dtype Data type (default: same as input array)
+     */
+    public static function onesLike(self $array, ?DType $dtype = null): self
+    {
+        return self::ones($array->shape(), $dtype ?? $array->dtype());
+    }
+
+    /**
+     * Create an array filled with a specific value, with the same shape as the input array.
+     *
+     * @param self          $array Input array defining the output shape
+     * @param float|int|bool $value Value to fill array with
+     * @param DType|null     $dtype Data type (default: inferred from value or same as input)
+     */
+    public static function fullLike(self $array, float|int|bool $value, ?DType $dtype = null): self
+    {
+        $dtype ??= $array->dtype();
+        return self::full($array->shape(), $value, $dtype);
+    }
+
+    /**
      * Create a 2D identity matrix.
      *
      * @param int        $N     Number of rows
      * @param null|int   $M     Number of columns (default: N)
      * @param int        $k     Diagonal index (0: main, >0: upper, <0: lower)
-     * @param null|DType $dtype Data type (default: Float64)
+     * @param DType $dtype Data type (default: Float64)
      */
-    public static function eye(int $N, ?int $M = null, int $k = 0, ?DType $dtype = null): self
+    public static function eye(int $N, ?int $M = null, int $k = 0, DType $dtype = DType::Float64): self
     {
         $M ??= $N;
-        $dtype ??= DType::Float64;
-
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
@@ -406,10 +431,10 @@ trait CreatesArrays
     {
         $dtype ??= DType::Int64;
         if (!$dtype->isInteger()) {
-            throw new \InvalidArgumentException('randomInt only supports integer dtypes');
+            throw new DTypeException('randomInt only supports integer dtypes');
         }
         if ($high <= $low) {
-            throw new \InvalidArgumentException("randomInt requires high > low, got [{$low}, {$high})");
+            throw new ShapeException("randomInt requires high > low, got [{$low}, {$high})");
         }
 
         $ffi = Lib::get();
@@ -626,11 +651,9 @@ trait CreatesArrays
      */
     private static function createTyped(\FFI $ffi, DType $dtype, array $data, array $shape, int $len): CData
     {
-        if (DType::Bool === $dtype) {
-            $data = array_map(static fn ($v) => $v ? 1 : 0, $data);
-        }
+        $data = $dtype->prepareArrayValues($data);
 
-        $cData = Lib::createCArray($dtype->ffiType(), $data);
+        $cData = $dtype->createCArray($len, $data);
         $cShape = Lib::createShapeArray($shape);
 
         $outHandle = $ffi->new('struct NdArrayHandle*');
@@ -655,7 +678,7 @@ trait CreatesArrays
     private static function assertFloatDtype(DType $dtype, string $method): void
     {
         if (!$dtype->isFloat()) {
-            throw new \InvalidArgumentException("{$method} only supports Float32 and Float64 dtypes");
+            throw new DTypeException("{$method} only supports Float32 and Float64 dtypes");
         }
     }
 }

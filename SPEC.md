@@ -15,8 +15,6 @@ To provide PHP developers with a NumPy-like interface for efficient numerical co
 - **Flexibility**: Support for various data types, memory layouts, and operations
 - **Optional BLAS**: High-performance linear algebra through optional BLAS integration
 
----
-
 ## 2. Core Array Types and Properties
 
 ### 2.1 NDArray Class (REQ-2.1)
@@ -54,8 +52,6 @@ The primary array type representing N-dimensional arrays.
 - [x] 2.3.7: `nbytes`: Total bytes consumed
 - [ ] 2.3.8: `flags`: Memory layout flags (C_CONTIGUOUS, F_CONTIGUOUS, etc.)
 
----
-
 ## 3. Array Creation
 
 ### 3.1 Basic Creation Functions (REQ-3.1)
@@ -92,12 +88,10 @@ The primary array type representing N-dimensional arrays.
 **Priority**: MEDIUM
 
 **Requirements**:
-- [ ] 3.4.1: `$array->zerosLike()` - Zeros with same shape/dtype
-- [ ] 3.4.2: `$array->onesLike()` - Ones with same shape/dtype
-- [ ] 3.4.3: `$array->fullLike($value)` - Filled with same shape/dtype
-- [ ] 3.4.4: `$array->emptyLike()` - Empty with same shape/dtype
-
----
+- [x] 3.4.1: `NDArray::zerosLike($array)` - Zeros with same shape/dtype
+- [x] 3.4.2: `NDArray::onesLike($array)` - Ones with same shape/dtype
+- [x] 3.4.3: `NDArray::fullLike($array, $value)` - Filled with same shape/dtype
+- [ ] 3.4.4: `NDArray::emptyLike($array)` - Empty with same shape/dtype (not planned)
 
 ## 4. Indexing and Slicing
 
@@ -145,8 +139,6 @@ The primary array type representing N-dimensional arrays.
 - [x] 4.4.6: Scatter write along axis: `$array->putAlongAxis($indices, $values, $axis)`
 - [x] 4.4.7: Accumulating scatter add: `$array->scatterAdd($indices, $updates)`
 
----
-
 ## 5. Array Views and Copies
 
 ### 5.1 View Creation (REQ-5.1)
@@ -176,8 +168,6 @@ The primary array type representing N-dimensional arrays.
 - [ ] 5.3.2: `isFortranContiguous()` - Check if Fortran-contiguous
 - [ ] 5.3.3: `asContiguousArray()` - Return C-contiguous copy
 - [ ] 5.3.4: `asFortranArray()` - Return Fortran-contiguous copy
-
----
 
 ## 6. Shape Manipulation
 
@@ -226,8 +216,6 @@ The primary array type representing N-dimensional arrays.
 - [x] 6.4.5: `$array->split($indices_or_sections, $axis = 0)` - Split array
 - [x] 6.4.6: `$array->vsplit($indices)` - Vertical split
 - [x] 6.4.7: `$array->hsplit($indices)` - Horizontal split
-
----
 
 ## 7. Mathematical Operations
 
@@ -278,13 +266,11 @@ The primary array type representing N-dimensional arrays.
 **Priority**: CRITICAL
 
 **Requirements**:
-- [ ] 7.4.1: Automatic broadcasting for binary operations
-- [ ] 7.4.2: Broadcasting rules compatible with NumPy
-- [ ] 7.4.3: Support for scalar broadcasting
-- [ ] 7.4.4: Error on incompatible shapes
+- [x] 7.4.1: Automatic broadcasting for binary operations
+- [x] 7.4.2: Broadcasting rules compatible with NumPy
+- [x] 7.4.3: Support for scalar broadcasting
+- [x] 7.4.4: Error on incompatible shapes
 - [ ] 7.4.5: `$array->broadcastTo($shape)` for explicit broadcasting
-
----
 
 ## 8. Reduction Operations
 
@@ -333,8 +319,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [x] 8.4.1: `$array->cumsum($axis = null)` - Cumulative sum
 - [x] 8.4.2: `$array->cumprod($axis = null)` - Cumulative product
 
----
-
 ## 9. Linear Algebra
 
 ### 9.1 Matrix Operations (REQ-9.1)
@@ -374,8 +358,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 9.4.1: `NDArray::solve($a, $b)` - Solve linear equations
 - [ ] 9.4.2: `NDArray::lstsq($a, $b)` - Least squares solution
 
----
-
 ## 10. Iteration and Application
 
 ### 10.1 Iterator Support (REQ-10.1)
@@ -396,8 +378,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 10.2.2: `$array->map($callable)` - Map function (returns new array)
 - [ ] 10.2.3: `$array->reduce($callable, $initial = null)` - Reduce operation
 
----
-
 ## 11. Type Conversion and I/O
 
 ### 11.1 Type Conversion (REQ-11.1)
@@ -412,8 +392,8 @@ Sort kind selection is enum-based via `SortKind`:
 - [x] 11.1.6: `$array->toFlatArray()` - Convert to flat PHP array (C-order)
 - [x] 11.1.7: `$array->itemsize()` - Bytes per element
 - [x] 11.1.8: `$array->nbytes()` - Total bytes in array/view
-- [x] 11.1.9: `$array->copyToBuffer($dst, $maxElements = null)` - Bulk copy to caller C buffer
-- [x] 11.1.10: `$array->tobytes()` - Raw bytes in C-order
+- [x] 11.1.9: `$array->intoBuffer($buffer, $maxElements = null)` - Bulk copy to caller C buffer
+- [x] 11.1.10: `$array->toBytes()` - Raw bytes in C-order
 
 ### 11.2 Serialization (REQ-11.2)
 **Priority**: MEDIUM
@@ -424,8 +404,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 11.2.3: `$array->toString()` - String representation
 - [ ] 11.2.4: `$array->toJson()` - JSON serialization
 - [ ] 11.2.5: Support for `serialize()` / `unserialize()`
-
----
 
 ## 12. BLAS Integration
 
@@ -448,8 +426,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 12.2.3: Matrix-vector operations (GEMV)
 - [ ] 12.2.4: Linear system solving
 - [ ] 12.2.5: Eigenvalue/SVD decompositions
-
----
 
 ## 13. Memory Management
 
@@ -482,8 +458,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 13.3.3: View creation instead of copying
 - [ ] 13.3.4: Memory pooling for small allocations (optional)
 
----
-
 ## 14. Error Handling
 
 ### 14.1 Exception Types (REQ-14.1)
@@ -505,8 +479,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [x] 14.2.2: Clear error messages with context
 - [ ] 14.2.3: Stack traces preserved where possible
 - [x] 14.2.4: No silent failures
-
----
 
 ## 15. Performance Requirements
 
@@ -530,8 +502,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 15.2.4: Minimize FFI crossings
 - [ ] 15.2.5: Batch operations in Rust layer
 
----
-
 ## 16. Testing and Quality
 
 ### 16.1 Test Coverage (REQ-16.1)
@@ -552,8 +522,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 16.2.2: Cross-platform testing (Linux, macOS, Windows)
 - [ ] 16.2.3: PHP version testing (8.1, 8.2, 8.3+)
 - [ ] 16.2.4: Different BLAS backends
-
----
 
 ## 17. Documentation
 
@@ -577,8 +545,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 17.2.4: Advanced usage patterns
 - [ ] 17.2.5: Integration examples (with Laravel, Symfony, etc.)
 
----
-
 ## 18. Installation and Distribution
 
 ### 18.1 Package Distribution (REQ-18.1)
@@ -599,8 +565,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 18.2.3: Windows (x86_64)
 - [ ] 18.2.4: PHP 8.1+ with FFI extension enabled
 
----
-
 ## 19. Future Enhancements (Optional)
 
 ### 19.1 Phase 2 Features (REQ-19.1)
@@ -620,8 +584,6 @@ Sort kind selection is enum-based via `SortKind`:
 - [ ] 19.2.2: Symfony bundle
 - [ ] 19.2.3: CSV/Excel import utilities
 - [ ] 19.2.4: Database query result conversion
-
----
 
 ## 20. Success Criteria
 
@@ -648,21 +610,17 @@ Sort kind selection is enum-based via `SortKind`:
 - Migration guide from NumPy
 - Active community engagement
 
----
-
 ## Appendix A: NumPy Compatibility Matrix
 
 | Feature | NumPy Equivalent | Priority | Status |
 |---------|------------------|----------|--------|
 | Array creation | `np.array()` | CRITICAL | Planned |
 | Slicing | `arr[0:5]` | CRITICAL | Planned |
-| Broadcasting | Automatic | CRITICAL | Planned |
+| Broadcasting | Automatic | CRITICAL | Done |
 | Matrix mult | `@` operator | HIGH | Planned |
 | Reductions | `sum()`, `mean()` | HIGH | Planned |
 | SVD | `np.linalg.svd()` | MEDIUM | Planned |
 | FFT | `np.fft.fft()` | LOW | Future |
-
----
 
 ## Appendix B: Glossary
 
@@ -672,14 +630,3 @@ Sort kind selection is enum-based via `SortKind`:
 - **Broadcasting**: Automatic shape alignment for operations
 - **Contiguous**: Memory layout where elements are stored sequentially
 - **Stride**: Number of bytes to step in each dimension
-
----
-
-## Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2026-02-09 | Initial specification |
-| 1.1 | 2026-02-13 | Marked 91 implemented features with checkboxes; completed Linear Algebra operations (dot, matmul, trace, diagonal); added clamp operation; added ln, ln1p, toDegrees, toRadians, powi, powf math functions |
-| 1.2 | 2026-02-16 | Completed Joining and Splitting (REQ-6.4): concatenate, stack, vstack, hstack, split, vsplit, hsplit; ndim validation for concatenate/stack |
-

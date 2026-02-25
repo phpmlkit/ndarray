@@ -91,10 +91,10 @@ final class IndexingTest extends TestCase
             'Int16' => [DType::Int16, [1000], 1000],
             'Int32' => [DType::Int32, [100000], 100000],
             'Int64' => [DType::Int64, [9999999], 9999999],
-            'Uint8' => [DType::Uint8, [200], 200],
-            'Uint16' => [DType::Uint16, [50000], 50000],
-            'Uint32' => [DType::Uint32, [3000000], 3000000],
-            'Uint64' => [DType::Uint64, [123456789], 123456789],
+            'Uint8' => [DType::UInt8, [200], 200],
+            'Uint16' => [DType::UInt16, [50000], 50000],
+            'Uint32' => [DType::UInt32, [3000000], 3000000],
+            'Uint64' => [DType::UInt64, [123456789], 123456789],
             'Float32' => [DType::Float32, [3.14], 3.14],
             'Float64' => [DType::Float64, [2.718281828], 2.718281828],
             'Bool' => [DType::Bool, [true, false], true],
@@ -539,6 +539,176 @@ final class IndexingTest extends TestCase
     }
 
     // =========================================================================
+    // take() with axis - selecting slices
+    // =========================================================================
+
+    public function testTakeWithAxisZeroSelectsRows(): void
+    {
+        $matrix = NDArray::array([
+            [10, 20, 30],
+            [40, 50, 60],
+            [70, 80, 90],
+        ], DType::Int64);
+
+        // Select rows 0 and 2
+        $result = $matrix->take([0, 2], axis: 0);
+
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertSame([[10, 20, 30], [70, 80, 90]], $result->toArray());
+    }
+
+    public function testTakeWithAxisOneSelectsColumns(): void
+    {
+        $matrix = NDArray::array([
+            [10, 20, 30],
+            [40, 50, 60],
+            [70, 80, 90],
+        ], DType::Int64);
+
+        // Select columns 0 and 2
+        $result = $matrix->take([0, 2], axis: 1);
+
+        $this->assertSame([3, 2], $result->shape());
+        $this->assertSame([[10, 30], [40, 60], [70, 90]], $result->toArray());
+    }
+
+    public function testTakeWithAxisOn3DArray(): void
+    {
+        // Shape [2, 3, 2]
+        $arr = NDArray::array([
+            [[1, 2], [3, 4], [5, 6]],
+            [[7, 8], [9, 10], [11, 12]],
+        ], DType::Int64);
+
+        // Select along axis=1 (middle dimension)
+        // Take indices [0, 2] -> shape should be [2, 2, 2]
+        $result = $arr->take([0, 2], axis: 1);
+
+        $this->assertSame([2, 2, 2], $result->shape());
+        $this->assertSame([
+            [[1, 2], [5, 6]],
+            [[7, 8], [11, 12]],
+        ], $result->toArray());
+    }
+
+    public function testTakeWithAxisSingleIndex(): void
+    {
+        $matrix = NDArray::array([
+            [10, 20, 30],
+            [40, 50, 60],
+            [70, 80, 90],
+        ], DType::Int64);
+
+        // Select single row
+        $result = $matrix->take([1], axis: 0);
+
+        $this->assertSame([1, 3], $result->shape());
+        $this->assertSame([[40, 50, 60]], $result->toArray());
+    }
+
+    public function testTakeWithAxisNegativeIndices(): void
+    {
+        $matrix = NDArray::array([
+            [10, 20, 30],
+            [40, 50, 60],
+            [70, 80, 90],
+        ], DType::Int64);
+
+        // Select rows -1 and -3 (last and first)
+        $result = $matrix->take([-1, -3], axis: 0);
+
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertSame([[70, 80, 90], [10, 20, 30]], $result->toArray());
+    }
+
+    public function testTakeWithAxisNestedIndices(): void
+    {
+        $matrix = NDArray::array([
+            [10, 20, 30],
+            [40, 50, 60],
+            [70, 80, 90],
+        ], DType::Int64);
+
+        // Use nested indices shape [[0, 2], [1, 0]] -> results in shape [2, 2, 3]
+        // indices_shape [2,2] + input_shape[1:] [3]
+        $result = $matrix->take([[0, 2], [1, 0]], axis: 0);
+
+        // Shape should be [2, 2, 3]
+        $this->assertSame([2, 2, 3], $result->shape());
+
+        // Verify the actual values
+        // First row of indices [0, 2] -> rows 0 and 2 from input
+        $this->assertSame([[10, 20, 30], [70, 80, 90]], $result->get(0)->toArray());
+        // Second row of indices [1, 0] -> rows 1 and 0 from input
+        $this->assertSame([[40, 50, 60], [10, 20, 30]], $result->get(1)->toArray());
+    }
+
+    public function testTakeWithAxisOutOfBounds(): void
+    {
+        $matrix = NDArray::array([
+            [10, 20, 30],
+            [40, 50, 60],
+        ], DType::Int64);
+
+        $this->expectException(IndexException::class);
+        $this->expectExceptionMessage('out of bounds');
+
+        // Try to take row index 5 from a 2-row matrix
+        $matrix->take([5], axis: 0);
+    }
+
+    public function testTakeWithAxisPreservesDType(): void
+    {
+        $matrix = NDArray::array([
+            [1.5, 2.5, 3.5],
+            [4.5, 5.5, 6.5],
+        ], DType::Float64);
+
+        $result = $matrix->take([0, 1], axis: 0);
+
+        $this->assertSame(DType::Float64, $result->dtype());
+        $this->assertEqualsWithDelta([[1.5, 2.5, 3.5], [4.5, 5.5, 6.5]], $result->toArray(), 0.0001);
+    }
+
+    public function testTakeWithAxisOnView(): void
+    {
+        $arr = NDArray::array([
+            [10, 20, 30],
+            [40, 50, 60],
+            [70, 80, 90],
+            [100, 110, 120],
+        ], DType::Int64);
+
+        // Create a view (every other row)
+        $view = $arr->slice(['::2', ':']); // [[10,20,30], [70,80,90]]
+
+        // Take from the view
+        $result = $view->take([1], axis: 0); // Take row 1 from view
+
+        $this->assertSame([1, 3], $result->shape());
+        $this->assertSame([[70, 80, 90]], $result->toArray());
+    }
+
+    public function testTakeDistinctionFromTakeAlongAxis(): void
+    {
+        $matrix = NDArray::array([
+            [10, 20, 30],
+            [40, 50, 60],
+        ], DType::Int64);
+
+        // take() with axis=0 selects rows
+        $takeResult = $matrix->take([0, 1], axis: 0);
+        $this->assertSame([2, 3], $takeResult->shape());
+        $this->assertSame([[10, 20, 30], [40, 50, 60]], $takeResult->toArray());
+
+        // takeAlongAxis() with matching indices shape
+        $indices = NDArray::array([[2, 0, 1], [1, 2, 0]], DType::Int64);
+        $takeAlongResult = $matrix->takeAlongAxis($indices, axis: 1);
+        $this->assertSame([2, 3], $takeAlongResult->shape());
+        $this->assertSame([[30, 10, 20], [50, 60, 40]], $takeAlongResult->toArray());
+    }
+
+    // =========================================================================
     // put / putAlongAxis / scatterAdd
     // =========================================================================
 
@@ -712,10 +882,10 @@ final class IndexingTest extends TestCase
             DType::Int16,
             DType::Int32,
             DType::Int64,
-            DType::Uint8,
-            DType::Uint16,
-            DType::Uint32,
-            DType::Uint64,
+            DType::UInt8,
+            DType::UInt16,
+            DType::UInt32,
+            DType::UInt64,
             DType::Float32,
             DType::Float64,
         ];

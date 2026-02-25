@@ -47,78 +47,100 @@ pub unsafe extern "C" fn ndarray_gte(
 
         let (result_wrapper, result_shape) = match out_dtype {
             DType::Float64 => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Float64,
                 extract_view_as_f64,
                 gte
             ),
             DType::Float32 => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Float32,
                 extract_view_as_f32,
                 gte
             ),
             DType::Int64 => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Int64,
                 extract_view_as_i64,
                 gte
             ),
             DType::Int32 => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Int32,
                 extract_view_as_i32,
                 gte
             ),
             DType::Int16 => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Int16,
                 extract_view_as_i16,
                 gte
             ),
             DType::Int8 => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Int8,
                 extract_view_as_i8,
                 gte
             ),
             DType::Uint64 => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Uint64,
                 extract_view_as_u64,
                 gte
             ),
             DType::Uint32 => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Uint32,
                 extract_view_as_u32,
                 gte
             ),
             DType::Uint16 => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Uint16,
                 extract_view_as_u16,
                 gte
             ),
             DType::Uint8 => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Uint8,
                 extract_view_as_u8,
                 gte
             ),
             DType::Bool => binary_cmp_op_arm!(
-                a_wrapper, a_meta,
-                b_wrapper, b_meta,
+                a_wrapper,
+                a_meta,
+                b_wrapper,
+                b_meta,
                 DType::Bool,
                 extract_view_as_bool,
                 gte

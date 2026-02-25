@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Tests\Unit;
 
 use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\DTypeException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
@@ -458,7 +459,7 @@ final class CreationTest extends TestCase
 
     public function testRandomFloatOnlyThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(DTypeException::class);
         NDArray::random([4], DType::Int32);
     }
 
@@ -483,7 +484,7 @@ final class CreationTest extends TestCase
 
     public function testRandomIntRejectsInvalidArgs(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(ShapeException::class);
         NDArray::randomInt(5, 5, [2], DType::Int64);
     }
 

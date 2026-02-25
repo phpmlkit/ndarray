@@ -27,28 +27,28 @@ final class ConversionTest extends TestCase
         $this->assertSame(48, $a->nbytes());
     }
 
-    public function testTobytesUint8(): void
+    public function testToBytesUint8(): void
     {
-        $a = NDArray::array([1, 2, 255], DType::Uint8);
-        $bytes = $a->tobytes();
+        $a = NDArray::array([1, 2, 255], DType::UInt8);
+        $bytes = $a->toBytes();
 
         $this->assertSame(3, \strlen($bytes));
         $this->assertSame("\x01\x02\xff", $bytes);
     }
 
-    public function testTobytesBool(): void
+    public function testToBytesBool(): void
     {
         $a = NDArray::array([true, false, true], DType::Bool);
-        $bytes = $a->tobytes();
+        $bytes = $a->toBytes();
 
         $this->assertSame(3, \strlen($bytes));
         $this->assertSame("\x01\x00\x01", $bytes);
     }
 
-    public function testTobytesFloat64RoundTripWithUnpack(): void
+    public function testToBytesFloat64RoundTripWithUnpack(): void
     {
         $a = NDArray::array([1.5, -2.25, 3.75], DType::Float64);
-        $bytes = $a->tobytes();
+        $bytes = $a->toBytes();
 
         $this->assertSame(24, \strlen($bytes)); // 3 * 8 bytes
 
@@ -61,13 +61,13 @@ final class ConversionTest extends TestCase
         $this->assertEqualsWithDelta(3.75, $decoded[2], 0.0000001);
     }
 
-    public function testCopyToBufferTypedInt32(): void
+    public function testIntoBufferTypedInt32(): void
     {
         $a = NDArray::array([10, 20, 30, 40], DType::Int32);
         $ffi = Lib::get();
         $dst = $ffi->new('int32_t[4]');
 
-        $copied = $a->copyToBuffer($dst);
+        $copied = $a->intoBuffer($dst);
 
         $this->assertSame(4, $copied);
         $this->assertSame(10, $dst[0]);
@@ -76,14 +76,14 @@ final class ConversionTest extends TestCase
         $this->assertSame(40, $dst[3]);
     }
 
-    public function testCopyToBufferOnView(): void
+    public function testIntoBufferOnView(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Int32);
         $view = $a->slice([':', '1:3']); // [[2,3],[5,6]]
         $ffi = Lib::get();
         $dst = $ffi->new('int32_t[4]');
 
-        $copied = $view->copyToBuffer($dst);
+        $copied = $view->intoBuffer($dst);
 
         $this->assertSame(4, $copied);
         $this->assertSame(2, $dst[0]);
@@ -92,7 +92,7 @@ final class ConversionTest extends TestCase
         $this->assertSame(6, $dst[3]);
     }
 
-    public function testCopyToBufferTooSmallThrows(): void
+    public function testIntoBufferTooSmallThrows(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Int32);
         $ffi = Lib::get();
@@ -100,7 +100,7 @@ final class ConversionTest extends TestCase
 
         $this->expectException(ShapeException::class);
         $this->expectExceptionMessage('Destination buffer too small');
-        $a->copyToBuffer($dst, 2);
+        $a->intoBuffer($dst, 2);
     }
 
     public function testToArrayForAllDTypes1D(): void
@@ -110,10 +110,10 @@ final class ConversionTest extends TestCase
             [DType::Int16, [100, -200, 300]],
             [DType::Int32, [1000, -2000, 3000]],
             [DType::Int64, [10000, -20000, 30000]],
-            [DType::Uint8, [1, 2, 3]],
-            [DType::Uint16, [100, 200, 300]],
-            [DType::Uint32, [1000, 2000, 3000]],
-            [DType::Uint64, [10000, 20000, 30000]],
+            [DType::UInt8, [1, 2, 3]],
+            [DType::UInt16, [100, 200, 300]],
+            [DType::UInt32, [1000, 2000, 3000]],
+            [DType::UInt64, [10000, 20000, 30000]],
             [DType::Float32, [1.25, -2.5, 3.75]],
             [DType::Float64, [1.25, -2.5, 3.75]],
             [DType::Bool, [true, false, true]],
@@ -155,7 +155,7 @@ final class ConversionTest extends TestCase
     {
         $cases = [
             [DType::Int32, [[1, 2, 3], [4, 5, 6]], [[2, 3], [5, 6]]],
-            [DType::Uint16, [[1, 2, 3], [4, 5, 6]], [[2, 3], [5, 6]]],
+            [DType::UInt16, [[1, 2, 3], [4, 5, 6]], [[2, 3], [5, 6]]],
             [DType::Float64, [[1.5, 2.5, 3.5], [4.5, 5.5, 6.5]], [[2.5, 3.5], [5.5, 6.5]]],
             [DType::Bool, [[true, false, true], [false, true, false]], [[false, true], [true, false]]],
         ];

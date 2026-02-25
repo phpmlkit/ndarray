@@ -38,7 +38,6 @@ pub unsafe extern "C" fn ndarray_dot(
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
         let b_wrapper = NdArrayHandle::as_wrapper(b as *mut _);
 
-
         let result = dot_impl(a_wrapper, &a_meta_ref, b_wrapper, &b_meta_ref);
 
         match result {
@@ -78,8 +77,7 @@ fn dot_impl(
         (1, 2) => dot_1d_2d(a_wrapper, a_meta, b_wrapper, b_meta),
         _ => Err(format!(
             "Dot product not supported for dimensions {}D @ {}D",
-            a_meta.ndim,
-            b_meta.ndim
+            a_meta.ndim, b_meta.ndim
         )),
     }
 }
@@ -92,7 +90,11 @@ fn dot_1d_1d(
     b_meta: &ViewMetadata,
 ) -> Result<NDArrayWrapper, String> {
     if unsafe { a_meta.shape_slice()[0] } != unsafe { b_meta.shape_slice()[0] } {
-        return Err(format!("Shape mismatch: {} and {}", unsafe { a_meta.shape_slice()[0] }, unsafe { b_meta.shape_slice()[0] }));
+        return Err(format!(
+            "Shape mismatch: {} and {}",
+            unsafe { a_meta.shape_slice()[0] },
+            unsafe { b_meta.shape_slice()[0] }
+        ));
     }
 
     unsafe {

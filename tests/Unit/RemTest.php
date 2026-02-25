@@ -35,8 +35,8 @@ final class RemTest extends TestCase
 
     public function testRemUintArrays(): void
     {
-        $a = NDArray::array([10, 20, 30], DType::Uint32);
-        $b = NDArray::array([3, 7, 8], DType::Uint32);
+        $a = NDArray::array([10, 20, 30], DType::UInt32);
+        $b = NDArray::array([3, 7, 8], DType::UInt32);
         $result = $a->rem($b);
 
         $this->assertSame([1, 6, 6], $result->toArray());
@@ -95,10 +95,10 @@ final class RemTest extends TestCase
             DType::Int16,
             DType::Int32,
             DType::Int64,
-            DType::Uint8,
-            DType::Uint16,
-            DType::Uint32,
-            DType::Uint64,
+            DType::UInt8,
+            DType::UInt16,
+            DType::UInt32,
+            DType::UInt64,
         ];
 
         foreach ($types as $dtype) {

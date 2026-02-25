@@ -33,8 +33,8 @@ final class BitwiseTest extends TestCase
 
     public function testBitandUintArrays(): void
     {
-        $a = NDArray::array([0xFF, 0xAA], DType::Uint32);
-        $b = NDArray::array([0x0F, 0x55], DType::Uint32);
+        $a = NDArray::array([0xFF, 0xAA], DType::UInt32);
+        $b = NDArray::array([0x0F, 0x55], DType::UInt32);
         $result = $a->bitand($b);
 
         $this->assertSame([0x0F, 0x00], $result->toArray());
@@ -232,7 +232,7 @@ final class BitwiseTest extends TestCase
 
     public function testRightShiftUnsigned(): void
     {
-        $a = NDArray::array([0x80000000, 0x40000000], DType::Uint32);
+        $a = NDArray::array([0x80000000, 0x40000000], DType::UInt32);
         $result = $a->rightShift(1);
 
         $this->assertSame([0x40000000, 0x20000000], $result->toArray());
@@ -291,10 +291,10 @@ final class BitwiseTest extends TestCase
             DType::Int16,
             DType::Int32,
             DType::Int64,
-            DType::Uint8,
-            DType::Uint16,
-            DType::Uint32,
-            DType::Uint64,
+            DType::UInt8,
+            DType::UInt16,
+            DType::UInt32,
+            DType::UInt64,
         ];
 
         foreach ($types as $dtype) {
@@ -354,8 +354,8 @@ final class BitwiseTest extends TestCase
 
     public function testBitwiseWithAllOnes(): void
     {
-        $a = NDArray::array([0xFF, 0xFF], DType::Uint8);
-        $b = NDArray::array([0xFF, 0x00], DType::Uint8);
+        $a = NDArray::array([0xFF, 0xFF], DType::UInt8);
+        $b = NDArray::array([0xFF, 0x00], DType::UInt8);
 
         $this->assertSame([0xFF, 0x00], $a->bitand($b)->toArray());
         $this->assertSame([0xFF, 0xFF], $a->bitor($b)->toArray());
@@ -364,8 +364,8 @@ final class BitwiseTest extends TestCase
 
     public function testBitwiseComplement(): void
     {
-        $a = NDArray::array([0b11110000], DType::Uint8);
-        $b = NDArray::array([0b00001111], DType::Uint8);
+        $a = NDArray::array([0b11110000], DType::UInt8);
+        $b = NDArray::array([0b00001111], DType::UInt8);
 
         $this->assertSame([0], $a->bitand($b)->toArray());
         $this->assertSame([255], $a->bitor($b)->toArray());

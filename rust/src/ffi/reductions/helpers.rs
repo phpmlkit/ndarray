@@ -8,12 +8,7 @@ use crate::dtype::DType;
 ///
 /// out_value: 8-byte buffer, interpreted per dtype (f64, i64, or u64)
 /// out_dtype: 1-byte dtype value
-pub unsafe fn write_scalar(
-    out_value: *mut c_void,
-    out_dtype: *mut u8,
-    value: f64,
-    dtype: DType,
-) {
+pub unsafe fn write_scalar(out_value: *mut c_void, out_dtype: *mut u8, value: f64, dtype: DType) {
     if !out_value.is_null() {
         match dtype {
             DType::Float64 | DType::Float32 => {

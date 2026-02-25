@@ -29,11 +29,7 @@ pub unsafe extern "C" fn ndarray_get_data(
     max_len: usize,
     out_len: *mut usize,
 ) -> i32 {
-    if handle.is_null()
-        || meta.is_null()
-        || out_data.is_null()
-        || out_len.is_null()
-    {
+    if handle.is_null() || meta.is_null() || out_data.is_null() || out_len.is_null() {
         return ERR_GENERIC;
     }
 

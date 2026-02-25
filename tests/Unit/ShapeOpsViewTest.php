@@ -226,7 +226,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
-        $result = $view->swapAxes(0, 1);
+        $result = $view->swap(0, 1);
 
         $this->assertSame([3, 2], $result->shape());
         $this->assertEqualsWithDelta([[1, 4], [2, 5], [3, 6]], $result->toArray(), 0.0001);
@@ -246,7 +246,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
         $view = $a->slice(['1:4']); // [2, 3, 4]
-        $result = $view->insertAxis(0);
+        $result = $view->insert(0);
 
         $this->assertSame([1, 3], $result->shape());
         $this->assertEqualsWithDelta([[2, 3, 4]], $result->toArray(), 0.0001);
@@ -262,11 +262,11 @@ final class ShapeOpsViewTest extends TestCase
         $this->assertEqualsWithDelta([[2], [3], [4]], $result->toArray(), 0.0001);
     }
 
-    public function testViewInvertAxis(): void
+    public function testViewFlip(): void
     {
         $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
         $view = $a->slice(['1:4']); // [2, 3, 4]
-        $result = $view->invertAxis(0);
+        $result = $view->flip(0);
 
         $this->assertSame([3], $result->shape());
         $this->assertEqualsWithDelta([4, 3, 2], $result->toArray(), 0.0001);
@@ -290,7 +290,7 @@ final class ShapeOpsViewTest extends TestCase
             [[9, 10], [11, 12]],
         ], DType::Float64);
         $view = $a->slice(['0:2', ':', ':']); // First 2 rows of 3D array [2, 2, 2]
-        $result = $view->mergeAxes(0, 1);
+        $result = $view->merge(0, 1);
 
         // Merging axes: [2, 2, 2] -> squeeze removes length-1 axis
         $this->assertSame([4, 2], $result->shape());
@@ -312,7 +312,7 @@ final class ShapeOpsViewTest extends TestCase
         $view = $a->slice(['2:10']); // [3, 4, 5, 6, 7, 8, 9, 10]
         $result = $view->reshape([2, 2, 2])
             ->transpose()
-            ->insertAxis(0)
+            ->insert(0)
             ->flatten()
         ;
 
@@ -323,7 +323,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
-        $result = $view->swapAxes(0, 1)->flatten();
+        $result = $view->swap(0, 1)->flatten();
 
         $this->assertSame([6], $result->shape());
         $this->assertEqualsWithDelta([1, 4, 2, 5, 3, 6], $result->toArray(), 0.0001);
@@ -370,7 +370,7 @@ final class ShapeOpsViewTest extends TestCase
             [[7, 8], [9, 10], [11, 12]],
         ], DType::Float64);
         $view = $a->slice(['0:1', ':', ':']); // First row only
-        $result = $view->permuteAxes([1, 0, 2]);
+        $result = $view->permute(1, 0, 2);
 
         // Original view shape: [1, 3, 2]
         // After permute: [3, 1, 2]
@@ -386,7 +386,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], DType::Float64);
         $view = $a->slice(['0:2', ':']); // [[1, 2, 3], [4, 5, 6]]
-        $result = $view->permuteAxes([1, 0])->flatten();
+        $result = $view->permute(1, 0)->flatten();
 
         $this->assertSame([6], $result->shape());
         $this->assertEqualsWithDelta([1, 4, 2, 5, 3, 6], $result->toArray(), 0.0001);
@@ -401,11 +401,11 @@ final class ShapeOpsViewTest extends TestCase
             [[13, 14], [15, 16]],
         ], DType::Float64);
         $view = $a->slice(['::2', ':', ':']); // [[[1,2],[3,4]], [[9,10],[11,12]]]
-        $result = $view->permuteAxes([2, 0, 1]);
+        $result = $view->permute(2, 0, 1);
 
         // Original view shape: [2, 2, 2]
         // After permute [2, 0, 1]: [2, 2, 2]
-        // permuteAxes([2,0,1]): new axis 0 = old axis 2, new axis 1 = old axis 0, new axis 2 = old axis 1
+        // permute(2,0,1): new axis 0 = old axis 2, new axis 1 = old axis 0, new axis 2 = old axis 1
         $this->assertSame([2, 2, 2], $result->shape());
         $this->assertEqualsWithDelta([
             [[1, 3], [9, 11]],
@@ -421,15 +421,15 @@ final class ShapeOpsViewTest extends TestCase
         ], DType::Float64);
         $view = $a->slice(['0:1', ':', '1:3']); // [[[2, 3], [5, 6]]]
 
-        // Chain: permute -> insertAxis -> flatten
+        // Chain: permute -> insert -> flatten
         $result = $view
-            ->permuteAxes([2, 1, 0])
-            ->insertAxis(0)
+            ->permute(2, 1, 0)
+            ->insert(0)
             ->flatten()
         ;
 
         $this->assertSame([4], $result->shape());
-        // After permute [2,1,0]: [[[2],[5]],[[3],[6]]], after insertAxis and flatten
+        // After permute [2,1,0]: [[[2],[5]],[[3],[6]]], after insert and flatten
         $this->assertEqualsWithDelta([2, 5, 3, 6], $result->toArray(), 0.0001);
     }
 
@@ -437,7 +437,7 @@ final class ShapeOpsViewTest extends TestCase
     {
         $a = NDArray::array([[[[1, 2]], [[3, 4]]], [[[5, 6]], [[7, 8]]]], DType::Float64);
         $view = $a->slice(['0:1', ':', ':', ':']); // [[[[1,2]],[[3,4]]]]
-        $permuted = $view->permuteAxes([3, 2, 1, 0]);
+        $permuted = $view->permute(3, 2, 1, 0);
         $squeezed = $permuted->squeeze();
 
         // Shape after permute: [2, 1, 2, 1]

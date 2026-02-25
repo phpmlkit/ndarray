@@ -49,8 +49,7 @@ pub unsafe extern "C" fn ndarray_tile(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta)
-                else {
+                let Some(view) = extract_view_f64(wrapper, meta) else {
                     set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -62,8 +61,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta)
-                else {
+                let Some(view) = extract_view_f32(wrapper, meta) else {
                     set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -75,8 +73,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i64(wrapper, meta) else {
                     set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -88,8 +85,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i32(wrapper, meta) else {
                     set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -101,8 +97,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i16(wrapper, meta) else {
                     set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -114,8 +109,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta)
-                else {
+                let Some(view) = extract_view_i8(wrapper, meta) else {
                     set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -127,8 +121,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u64(wrapper, meta) else {
                     set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -140,8 +133,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u32(wrapper, meta) else {
                     set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -153,8 +145,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u16(wrapper, meta) else {
                     set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -166,8 +157,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta)
-                else {
+                let Some(view) = extract_view_u8(wrapper, meta) else {
                     set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -179,8 +169,7 @@ pub unsafe extern "C" fn ndarray_tile(
                 }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta)
-                else {
+                let Some(view) = extract_view_bool(wrapper, meta) else {
                     set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };

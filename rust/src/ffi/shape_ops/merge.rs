@@ -1,4 +1,4 @@
-//! Invert axis operations.
+//! Merge axes operations.
 
 use crate::core::view_helpers::{
     extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
@@ -14,12 +14,17 @@ use ndarray::Axis;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-/// Reverse the stride of axis and return in standard layout.
+/// Merge in the axis take into into.
+///
+/// Returns true if the axes are now merged.
+/// This method merges the axes if movement along the two original axes can be
+/// equivalently represented as movement along one (merged) axis.
 #[no_mangle]
-pub unsafe extern "C" fn ndarray_invert_axis(
+pub unsafe extern "C" fn ndarray_merge(
     handle: *const NdArrayHandle,
     meta: *const ViewMetadata,
-    axis: usize,
+    take: usize,
+    into: usize,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
     out_ndim: *mut usize,
@@ -41,11 +46,11 @@ pub unsafe extern "C" fn ndarray_invert_axis(
         let meta = &*meta;
         let ndim = meta.ndim;
 
-        // Validate axis
-        if axis >= ndim {
+        // Validate axes
+        if take >= ndim || into >= ndim {
             error::set_last_error(format!(
-                "Axis {} out of bounds for array with {} dimensions",
-                axis, ndim
+                "Axis out of bounds: take={}, into={} but array has {} dimensions",
+                take, into, ndim
             ));
             return ERR_SHAPE;
         }
@@ -56,11 +61,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<f64> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
                     dtype: DType::Float64,
@@ -71,11 +74,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<f32> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
                     dtype: DType::Float32,
@@ -86,11 +87,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<i64> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Int64(Arc::new(RwLock::new(result))),
                     dtype: DType::Int64,
@@ -101,11 +100,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<i32> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Int32(Arc::new(RwLock::new(result))),
                     dtype: DType::Int32,
@@ -116,11 +113,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<i16> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Int16(Arc::new(RwLock::new(result))),
                     dtype: DType::Int16,
@@ -131,11 +126,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<i8> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Int8(Arc::new(RwLock::new(result))),
                     dtype: DType::Int8,
@@ -146,11 +139,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<u64> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint64,
@@ -161,11 +152,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<u32> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint32,
@@ -176,11 +165,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<u16> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint16,
@@ -191,11 +178,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<u8> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint8,
@@ -206,11 +191,9 @@ pub unsafe extern "C" fn ndarray_invert_axis(
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut inverted = view.to_owned();
-                inverted.invert_axis(Axis(axis));
-                let data: Vec<u8> = inverted.iter().cloned().collect();
-                let result = ndarray::ArrayD::from_shape_vec(inverted.raw_dim(), data)
-                    .expect("Failed to create inverted array");
+                let mut result = view.to_owned();
+                result.merge_axes(Axis(take), Axis(into));
+                result = result.remove_axis(Axis(take));
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),
                     dtype: DType::Bool,

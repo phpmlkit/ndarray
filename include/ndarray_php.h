@@ -715,20 +715,20 @@ int32_t ndarray_get_element(const struct NdArrayHandle *handle,
                             void *out_value);
 
 /**
- * Put values by flattened logical indices. Returns a mutated copy.
+ * Put values by flattened logical indices.
  */
-int32_t ndarray_put_flat(const struct NdArrayHandle *handle,
-                         const struct ViewMetadata *meta,
-                         const int64_t *indices,
-                         uintptr_t indices_len,
-                         const void *values,
-                         uintptr_t values_len,
-                         double scalar_value,
-                         bool has_scalar,
-                         struct NdArrayHandle **out_handle);
+int32_t ndarray_put(const struct NdArrayHandle *handle,
+                    const struct ViewMetadata *meta,
+                    const struct NdArrayHandle *indices_handle,
+                    const struct ViewMetadata *indices_meta,
+                    const void *values,
+                    uintptr_t values_len,
+                    double scalar_value,
+                    bool has_scalar,
+                    struct NdArrayHandle **out_handle);
 
 /**
- * Put values by per-position indices along a specific axis. Returns a mutated copy.
+ * Scatter values along an axis and return a mutated copy.
  */
 int32_t ndarray_put_along_axis(const struct NdArrayHandle *handle,
                                const struct ViewMetadata *meta,
@@ -746,8 +746,8 @@ int32_t ndarray_put_along_axis(const struct NdArrayHandle *handle,
  */
 int32_t ndarray_scatter_add_flat(const struct NdArrayHandle *handle,
                                  const struct ViewMetadata *meta,
-                                 const int64_t *indices,
-                                 uintptr_t indices_len,
+                                 const struct NdArrayHandle *indices_handle,
+                                 const struct ViewMetadata *indices_meta,
                                  const void *updates,
                                  uintptr_t updates_len,
                                  double scalar_update,
@@ -769,13 +769,31 @@ int32_t ndarray_set_element(struct NdArrayHandle *handle, uintptr_t flat_index, 
 /**
  * Gather values by flattened logical indices.
  */
-int32_t ndarray_take_flat(const struct NdArrayHandle *handle,
+int32_t ndarray_take(const struct NdArrayHandle *handle,
+                     const struct ViewMetadata *meta,
+                     const struct NdArrayHandle *indices_handle,
+                     const struct ViewMetadata *indices_meta,
+                     struct NdArrayHandle **out_handle,
+                     uint8_t *out_dtype,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
+
+/**
+ * Take slices along an axis.
+ *
+ * This selects entire slices along the specified axis according to indices.
+ */
+int32_t ndarray_take_axis(const struct NdArrayHandle *handle,
                           const struct ViewMetadata *meta,
-                          const int64_t *indices,
-                          uintptr_t indices_len,
-                          const uintptr_t *indices_shape,
-                          uintptr_t indices_ndim,
-                          struct NdArrayHandle **out_handle);
+                          const struct NdArrayHandle *indices_handle,
+                          const struct ViewMetadata *indices_meta,
+                          int32_t axis,
+                          struct NdArrayHandle **out_handle,
+                          uint8_t *out_dtype,
+                          uintptr_t *out_ndim,
+                          uintptr_t *out_shape,
+                          uintptr_t max_ndim);
 
 /**
  * Gather values using per-position indices along a specific axis.
@@ -785,7 +803,11 @@ int32_t ndarray_take_along_axis(const struct NdArrayHandle *handle,
                                 const struct NdArrayHandle *indices_handle,
                                 const struct ViewMetadata *indices_meta,
                                 int32_t axis,
-                                struct NdArrayHandle **out_handle);
+                                struct NdArrayHandle **out_handle,
+                                uint8_t *out_dtype,
+                                uintptr_t *out_ndim,
+                                uintptr_t *out_shape,
+                                uintptr_t max_ndim);
 
 /**
  * Select values from x and y depending on condition.
@@ -872,6 +894,60 @@ int32_t ndarray_trace(const struct NdArrayHandle *handle,
                       uintptr_t *out_ndim,
                       uintptr_t *out_shape,
                       uintptr_t max_ndim);
+
+/**
+ * Compute the logical AND of two arrays.
+ * Both arrays are converted to bool first, result is always Bool.
+ */
+int32_t ndarray_logical_and(const struct NdArrayHandle *a,
+                            const struct ViewMetadata *a_meta,
+                            const struct NdArrayHandle *b,
+                            const struct ViewMetadata *b_meta,
+                            struct NdArrayHandle **out,
+                            uint8_t *out_dtype_ptr,
+                            uintptr_t *out_ndim,
+                            uintptr_t *out_shape,
+                            uintptr_t max_ndim);
+
+/**
+ * Compute the logical NOT of an array.
+ * Array is converted to bool first, result is always Bool.
+ */
+int32_t ndarray_logical_not(const struct NdArrayHandle *a,
+                            const struct ViewMetadata *a_meta,
+                            struct NdArrayHandle **out,
+                            uint8_t *out_dtype_ptr,
+                            uintptr_t *out_ndim,
+                            uintptr_t *out_shape,
+                            uintptr_t max_ndim);
+
+/**
+ * Compute the logical OR of two arrays.
+ * Both arrays are converted to bool first, result is always Bool.
+ */
+int32_t ndarray_logical_or(const struct NdArrayHandle *a,
+                           const struct ViewMetadata *a_meta,
+                           const struct NdArrayHandle *b,
+                           const struct ViewMetadata *b_meta,
+                           struct NdArrayHandle **out,
+                           uint8_t *out_dtype_ptr,
+                           uintptr_t *out_ndim,
+                           uintptr_t *out_shape,
+                           uintptr_t max_ndim);
+
+/**
+ * Compute the logical XOR of two arrays.
+ * Both arrays are converted to bool first, result is always Bool.
+ */
+int32_t ndarray_logical_xor(const struct NdArrayHandle *a,
+                            const struct ViewMetadata *a_meta,
+                            const struct NdArrayHandle *b,
+                            const struct ViewMetadata *b_meta,
+                            struct NdArrayHandle **out,
+                            uint8_t *out_dtype_ptr,
+                            uintptr_t *out_ndim,
+                            uintptr_t *out_shape,
+                            uintptr_t max_ndim);
 
 /**
  * Compute cube root element-wise.
@@ -1350,6 +1426,27 @@ int32_t ndarray_cumsum_axis(const struct NdArrayHandle *handle,
                             uintptr_t max_ndim);
 
 /**
+ * Compute the maximum of all elements in the array.
+ */
+int32_t ndarray_max(const struct NdArrayHandle *handle,
+                    const struct ViewMetadata *meta,
+                    void *out_value,
+                    uint8_t *out_dtype);
+
+/**
+ * Compute the maximum along an axis.
+ */
+int32_t ndarray_max_axis(const struct NdArrayHandle *handle,
+                         const struct ViewMetadata *meta,
+                         int32_t axis,
+                         bool keepdims,
+                         struct NdArrayHandle **out_handle,
+                         uint8_t *out_dtype,
+                         uintptr_t *out_ndim,
+                         uintptr_t *out_shape,
+                         uintptr_t max_ndim);
+
+/**
  * Compute the mean of all elements in the array.
  *
  * Returns Float64 regardless of input dtype.
@@ -1371,27 +1468,6 @@ int32_t ndarray_mean_axis(const struct NdArrayHandle *handle,
                           uintptr_t *out_ndim,
                           uintptr_t *out_shape,
                           uintptr_t max_ndim);
-
-/**
- * Compute the maximum of all elements in the array.
- */
-int32_t ndarray_max(const struct NdArrayHandle *handle,
-                    const struct ViewMetadata *meta,
-                    void *out_value,
-                    uint8_t *out_dtype);
-
-/**
- * Compute the maximum along an axis.
- */
-int32_t ndarray_max_axis(const struct NdArrayHandle *handle,
-                         const struct ViewMetadata *meta,
-                         int32_t axis,
-                         bool keepdims,
-                         struct NdArrayHandle **out_handle,
-                         uint8_t *out_dtype,
-                         uintptr_t *out_ndim,
-                         uintptr_t *out_shape,
-                         uintptr_t max_ndim);
 
 /**
  * Compute the minimum of all elements in the array.
@@ -1434,29 +1510,6 @@ int32_t ndarray_product_axis(const struct NdArrayHandle *handle,
                              uintptr_t *out_ndim,
                              uintptr_t *out_shape,
                              uintptr_t max_ndim);
-
-/**
- * Compute the variance of all elements in the array.
- */
-int32_t ndarray_var(const struct NdArrayHandle *handle,
-                    const struct ViewMetadata *meta,
-                    double ddof,
-                    void *out_value,
-                    uint8_t *out_dtype);
-
-/**
- * Compute the variance along an axis in the array.
- */
-int32_t ndarray_var_axis(const struct NdArrayHandle *handle,
-                         const struct ViewMetadata *meta,
-                         int32_t axis,
-                         bool keepdims,
-                         double ddof,
-                         struct NdArrayHandle **out_handle,
-                         uint8_t *out_dtype,
-                         uintptr_t *out_ndim,
-                         uintptr_t *out_shape,
-                         uintptr_t max_ndim);
 
 /**
  * Compute the standard deviation of all elements in the array.
@@ -1503,6 +1556,29 @@ int32_t ndarray_sum_axis(const struct NdArrayHandle *handle,
                          uintptr_t max_ndim);
 
 /**
+ * Compute the variance of all elements in the array.
+ */
+int32_t ndarray_var(const struct NdArrayHandle *handle,
+                    const struct ViewMetadata *meta,
+                    double ddof,
+                    void *out_value,
+                    uint8_t *out_dtype);
+
+/**
+ * Compute the variance along an axis in the array.
+ */
+int32_t ndarray_var_axis(const struct NdArrayHandle *handle,
+                         const struct ViewMetadata *meta,
+                         int32_t axis,
+                         bool keepdims,
+                         double ddof,
+                         struct NdArrayHandle **out_handle,
+                         uint8_t *out_dtype,
+                         uintptr_t *out_ndim,
+                         uintptr_t *out_shape,
+                         uintptr_t max_ndim);
+
+/**
  * Flatten array to 1D.
  */
 int32_t ndarray_flatten(const struct NdArrayHandle *handle,
@@ -1529,30 +1605,35 @@ int32_t ndarray_ravel(const struct NdArrayHandle *handle,
                       uintptr_t max_ndim);
 
 /**
+ * Flip (reverse) elements along specified axes.
+ *
+ * # Arguments
+ * * `axes` - Array of axis indices to flip. Can be empty (flip all axes).
+ * * `num_axes` - Number of axes to flip. If 0, flips all axes.
+ */
+int32_t ndarray_flip(const struct NdArrayHandle *handle,
+                     const struct ViewMetadata *meta,
+                     const int64_t *axes,
+                     uintptr_t num_axes,
+                     struct NdArrayHandle **out_handle,
+                     uint8_t *out_dtype,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
+
+/**
  * Insert new array axis at axis and return the result.
  *
  * The new axis always has length 1.
  */
-int32_t ndarray_insert_axis(const struct NdArrayHandle *handle,
-                            const struct ViewMetadata *meta,
-                            uintptr_t axis,
-                            struct NdArrayHandle **out_handle,
-                            uint8_t *out_dtype,
-                            uintptr_t *out_ndim,
-                            uintptr_t *out_shape,
-                            uintptr_t max_ndim);
-
-/**
- * Reverse the stride of axis and return in standard layout.
- */
-int32_t ndarray_invert_axis(const struct NdArrayHandle *handle,
-                            const struct ViewMetadata *meta,
-                            uintptr_t axis,
-                            struct NdArrayHandle **out_handle,
-                            uint8_t *out_dtype,
-                            uintptr_t *out_ndim,
-                            uintptr_t *out_shape,
-                            uintptr_t max_ndim);
+int32_t ndarray_insert(const struct NdArrayHandle *handle,
+                       const struct ViewMetadata *meta,
+                       uintptr_t axis,
+                       struct NdArrayHandle **out_handle,
+                       uint8_t *out_dtype,
+                       uintptr_t *out_ndim,
+                       uintptr_t *out_shape,
+                       uintptr_t max_ndim);
 
 /**
  * Merge in the axis take into into.
@@ -1561,15 +1642,15 @@ int32_t ndarray_invert_axis(const struct NdArrayHandle *handle,
  * This method merges the axes if movement along the two original axes can be
  * equivalently represented as movement along one (merged) axis.
  */
-int32_t ndarray_merge_axes(const struct NdArrayHandle *handle,
-                           const struct ViewMetadata *meta,
-                           uintptr_t take,
-                           uintptr_t into,
-                           struct NdArrayHandle **out_handle,
-                           uint8_t *out_dtype,
-                           uintptr_t *out_ndim,
-                           uintptr_t *out_shape,
-                           uintptr_t max_ndim);
+int32_t ndarray_merge(const struct NdArrayHandle *handle,
+                      const struct ViewMetadata *meta,
+                      uintptr_t take,
+                      uintptr_t into,
+                      struct NdArrayHandle **out_handle,
+                      uint8_t *out_dtype,
+                      uintptr_t *out_ndim,
+                      uintptr_t *out_shape,
+                      uintptr_t max_ndim);
 
 /**
  * Pad an array with constant/symmetric/reflect mode.
@@ -1592,15 +1673,15 @@ int32_t ndarray_pad(const struct NdArrayHandle *handle,
  * The axes array specifies the new order of axes.
  * Panics if axes are invalid (out of bounds, missing, or duplicated).
  */
-int32_t ndarray_permute_axes(const struct NdArrayHandle *handle,
-                             const struct ViewMetadata *meta,
-                             const uintptr_t *axes,
-                             uintptr_t num_axes,
-                             struct NdArrayHandle **out_handle,
-                             uint8_t *out_dtype,
-                             uintptr_t *out_ndim,
-                             uintptr_t *out_shape,
-                             uintptr_t max_ndim);
+int32_t ndarray_permute(const struct NdArrayHandle *handle,
+                        const struct ViewMetadata *meta,
+                        const uintptr_t *axes,
+                        uintptr_t num_axes,
+                        struct NdArrayHandle **out_handle,
+                        uint8_t *out_dtype,
+                        uintptr_t *out_ndim,
+                        uintptr_t *out_shape,
+                        uintptr_t max_ndim);
 
 /**
  * Repeat elements of an array.
@@ -1647,15 +1728,15 @@ int32_t ndarray_squeeze(const struct NdArrayHandle *handle,
  *
  * Returns a copy with data in standard C-contiguous layout.
  */
-int32_t ndarray_swap_axes(const struct NdArrayHandle *handle,
-                          const struct ViewMetadata *meta,
-                          uintptr_t axis1,
-                          uintptr_t axis2,
-                          struct NdArrayHandle **out_handle,
-                          uint8_t *out_dtype,
-                          uintptr_t *out_ndim,
-                          uintptr_t *out_shape,
-                          uintptr_t max_ndim);
+int32_t ndarray_swap(const struct NdArrayHandle *handle,
+                     const struct ViewMetadata *meta,
+                     uintptr_t axis1,
+                     uintptr_t axis2,
+                     struct NdArrayHandle **out_handle,
+                     uint8_t *out_dtype,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
 
 /**
  * Tile an array by repeating it.
@@ -1825,5 +1906,16 @@ int32_t ndarray_stack(const struct NdArrayHandle *const *handles,
                       uintptr_t *out_ndim,
                       uintptr_t *out_shape,
                       uintptr_t max_ndim);
+
+/**
+ * Format an array into a string buffer.
+ */
+uintptr_t ndarray_to_string(const struct NdArrayHandle *handle,
+                            const struct ViewMetadata *meta,
+                            char *buffer,
+                            uintptr_t buffer_size,
+                            uintptr_t threshold,
+                            uintptr_t edgeitems,
+                            uintptr_t precision);
 
 #endif /* NDARRAY_PHP_H */

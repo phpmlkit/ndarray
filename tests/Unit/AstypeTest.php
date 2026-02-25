@@ -86,7 +86,7 @@ final class AstypeTest extends TestCase
 
     public function testAstypeUnsignedToSigned(): void
     {
-        $arr = NDArray::array([0, 100, 255], DType::Uint8);
+        $arr = NDArray::array([0, 100, 255], DType::UInt8);
 
         $signedArr = $arr->astype(DType::Int16);
 
@@ -98,9 +98,9 @@ final class AstypeTest extends TestCase
     {
         $arr = NDArray::array([-10, 0, 10], DType::Int16);
 
-        $unsignedArr = $arr->astype(DType::Uint16);
+        $unsignedArr = $arr->astype(DType::UInt16);
 
-        $this->assertSame(DType::Uint16, $unsignedArr->dtype());
+        $this->assertSame(DType::UInt16, $unsignedArr->dtype());
         // Note: Negative values will wrap due to Rust's casting behavior
         // -10 as u16 = 65526
         $result = $unsignedArr->toArray();
@@ -137,10 +137,10 @@ final class AstypeTest extends TestCase
             DType::Int16,
             DType::Int32,
             DType::Int64,
-            DType::Uint8,
-            DType::Uint16,
-            DType::Uint32,
-            DType::Uint64,
+            DType::UInt8,
+            DType::UInt16,
+            DType::UInt32,
+            DType::UInt64,
             DType::Float32,
             DType::Float64,
             DType::Bool,
@@ -253,8 +253,7 @@ final class AstypeTest extends TestCase
         $result = $arr
             ->astype(DType::Float64)
             ->astype(DType::Int16)
-            ->astype(DType::Float32)
-        ;
+            ->astype(DType::Float32);
 
         $this->assertSame(DType::Float32, $result->dtype());
         $this->assertEquals([1.0, 2.0, 3.0], $result->toArray());
@@ -286,7 +285,7 @@ final class AstypeTest extends TestCase
             $arr = NDArray::zeros($shape, DType::Int32);
             $casted = $arr->astype(DType::Float64);
 
-            $this->assertSame($shape, $casted->shape(), 'Failed for shape '.json_encode($shape));
+            $this->assertSame($shape, $casted->shape(), 'Failed for shape ' . json_encode($shape));
         }
     }
 }

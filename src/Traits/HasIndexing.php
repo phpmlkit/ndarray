@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
-use FFI;
 use FFI\CData;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\IndexException;
-use PhpMlKit\NDArray\FFI\Bindings;
+use PhpMlKit\NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
 
@@ -46,7 +45,6 @@ trait HasIndexing
             );
         }
 
-        // Normalize and validate each index
         $normalizedIndices = [];
         foreach ($indices as $dim => $index) {
             $dimSize = $this->shape()[$dim];
@@ -55,13 +53,13 @@ trait HasIndexing
         }
 
         if ($count === $this->ndim()) {
-            // Full indexing — return scalar via FFI
+            // Full indexing - return scalar
             $flatIndex = $this->calculateFlatIndex($normalizedIndices);
 
-            return $this->getScalar($flatIndex);
+            return $this->getElement($flatIndex);
         }
 
-        // Partial indexing — return a view (pure PHP, zero FFI)
+        // Partial indexing - return a view
         return $this->createView($normalizedIndices);
     }
 
@@ -85,7 +83,6 @@ trait HasIndexing
             );
         }
 
-        // Normalize and validate each index
         $normalizedIndices = [];
         foreach ($indices as $dim => $index) {
             $dimSize = $this->shape()[$dim];
@@ -94,7 +91,7 @@ trait HasIndexing
 
         $flatIndex = $this->calculateFlatIndex($normalizedIndices);
 
-        $this->setScalar($flatIndex, $value);
+        $this->setElement($flatIndex, $value);
     }
 
     /**
@@ -109,7 +106,7 @@ trait HasIndexing
     {
         $normalized = $this->normalizeFlatIndex($flatIndex);
         $storageFlatIndex = $this->logicalFlatToStorageIndex($normalized);
-        $this->setScalar($storageFlatIndex, $value);
+        $this->setElement($storageFlatIndex, $value);
     }
 
     /**
@@ -122,45 +119,67 @@ trait HasIndexing
      */
     public function take(array|self $indices, ?int $axis = null): self
     {
-        if (null !== $axis) {
-            $idxArray = $indices instanceof self ? $indices : NDArray::array($indices, DType::Int64);
+        $indices = $indices instanceof self ? $indices : NDArray::array($indices, DType::Int64);
 
-            return $this->takeAlongAxis($idxArray, $axis);
-        }
-
-        [$flatIndices, $indicesShape] = $this->prepareIndicesInput($indices);
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
+        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
 
         $meta = $this->viewMetadata()->toCData();
-        $status = $ffi->ndarray_take_flat(
-            $this->handle,
-            Lib::addr($meta),
-            Lib::createCArray('int64_t', $flatIndices),
-            \count($flatIndices),
-            Lib::createShapeArray($indicesShape),
-            \count($indicesShape),
-            Lib::addr($outHandle)
-        );
+        $indicesMeta = $indices->viewMetadata()->toCData();
+
+        if (null !== $axis) {
+            $status = $ffi->ndarray_take_axis(
+                $this->handle,
+                Lib::addr($meta),
+                $indices->handle(),
+                Lib::addr($indicesMeta),
+                $axis,
+                Lib::addr($outHandle),
+                Lib::addr($outDtypeBuf),
+                Lib::addr($outNdimBuf),
+                $outShapeBuf,
+                Lib::MAX_NDIM
+            );
+        } else {
+            $status = $ffi->ndarray_take(
+                $this->handle,
+                Lib::addr($meta),
+                $indices->handle(),
+                Lib::addr($indicesMeta),
+                Lib::addr($outHandle),
+                Lib::addr($outDtypeBuf),
+                Lib::addr($outNdimBuf),
+                $outShapeBuf,
+                Lib::MAX_NDIM
+            );
+        }
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $indicesShape, $this->dtype);
+        $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
+        if (null === $dtype) {
+            throw new NDArrayException('Invalid dtype returned from Rust');
+        }
+
+        $ndim = (int) $outNdimBuf->cdata;
+        $outShape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+
+        return new self($outHandle, $outShape, $dtype);
     }
 
     /**
      * Gather values along an axis using per-position indices.
      *
-     * @param self $indices Int64 indices array
+     * @param array<array<int>|int>|self $indices
      */
-    public function takeAlongAxis(self $indices, int $axis): self
+    public function takeAlongAxis(array|self $indices, int $axis): self
     {
-        if (DType::Int64 !== $indices->dtype) {
-            throw new \InvalidArgumentException('takeAlongAxis indices must have Int64 dtype');
-        }
+        $indices = $indices instanceof self ? $indices : NDArray::array($indices, DType::Int64);
 
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
+        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
 
         $meta = $this->viewMetadata()->toCData();
         $indicesMeta = $indices->viewMetadata()->toCData();
@@ -170,12 +189,24 @@ trait HasIndexing
             $indices->handle(),
             Lib::addr($indicesMeta),
             $axis,
-            Lib::addr($outHandle)
+            Lib::addr($outHandle),
+            Lib::addr($outDtypeBuf),
+            Lib::addr($outNdimBuf),
+            $outShapeBuf,
+            Lib::MAX_NDIM
         );
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $indices->shape(), $this->dtype);
+        $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
+        if (null === $dtype) {
+            throw new NDArrayException('Invalid dtype returned from Rust');
+        }
+
+        $ndim = (int) $outNdimBuf->cdata;
+        $outShape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+
+        return new self($outHandle, $outShape, $dtype);
     }
 
     /**
@@ -190,18 +221,20 @@ trait HasIndexing
             throw new \InvalidArgumentException("put mode '{$mode}' is not supported yet. Use 'raise'.");
         }
 
-        [$flatIndices] = $this->prepareIndicesInput($indices);
+        $indices = $indices instanceof self ? $indices : NDArray::array($indices, DType::Int64);
+
         [$valuesBuffer, $valuesLen, $scalarValue, $hasScalar] = $this->prepareValuesBuffer($values);
 
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $meta = $this->viewMetadata()->toCData();
-        $status = $ffi->ndarray_put_flat(
+        $indicesMeta = $indices->viewMetadata()->toCData();
+        $status = $ffi->ndarray_put(
             $this->handle,
             Lib::addr($meta),
-            Lib::createCArray('int64_t', $flatIndices),
-            \count($flatIndices),
+            $indices->handle(),
+            Lib::addr($indicesMeta),
             $valuesBuffer,
             $valuesLen,
             $scalarValue,
@@ -217,13 +250,11 @@ trait HasIndexing
     /**
      * Scatter values along an axis and return a mutated copy.
      *
-     * @param self $indices Int64 indices array
+     * @param array<array<int>|int>|self $indices
      */
-    public function putAlongAxis(self $indices, bool|float|int|self $values, int $axis): self
+    public function putAlongAxis(array|self $indices, bool|float|int|self $values, int $axis): self
     {
-        if (DType::Int64 !== $indices->dtype) {
-            throw new \InvalidArgumentException('putAlongAxis indices must have Int64 dtype');
-        }
+        $indices = $indices instanceof self ? $indices : NDArray::array($indices, DType::Int64);
 
         [$valuesBuffer, $valuesLen, $scalarValue, $hasScalar] = $this->prepareValuesBuffer($values);
         $ffi = Lib::get();
@@ -256,18 +287,20 @@ trait HasIndexing
      */
     public function scatterAdd(array|self $indices, bool|float|int|self $updates): self
     {
-        [$flatIndices] = $this->prepareIndicesInput($indices);
+        $indices = $indices instanceof self ? $indices : NDArray::array($indices, DType::Int64);
+
         [$updatesBuffer, $updatesLen, $scalarUpdate, $hasScalar] = $this->prepareValuesBuffer($updates);
 
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $meta = $this->viewMetadata()->toCData();
+        $indicesMeta = $indices->viewMetadata()->toCData();
         $status = $ffi->ndarray_scatter_add_flat(
             $this->handle,
             Lib::addr($meta),
-            Lib::createCArray('int64_t', $flatIndices),
-            \count($flatIndices),
+            $indices->handle(),
+            Lib::addr($indicesMeta),
             $updatesBuffer,
             $updatesLen,
             $scalarUpdate,
@@ -279,11 +312,7 @@ trait HasIndexing
 
         return new self($outHandle, $this->shape(), $this->dtype);
     }
-
-    // =========================================================================
-    // Private Helpers
-    // =========================================================================
-
+    
     /**
      * Calculate flat index from dimension indices using strides.
      *
@@ -363,7 +392,7 @@ trait HasIndexing
 
         if ($index < 0 || $index >= $size) {
             throw new IndexException(
-                'Index '.($index - $size)." is out of bounds for dimension {$dim} with size {$size}"
+                "Index {$index} is out of bounds for dimension {$dim} with size {$size}"
             );
         }
 
@@ -379,17 +408,14 @@ trait HasIndexing
     {
         $count = \count($indices);
 
-        // Calculate new offset
         $newOffset = $this->getOffset();
         foreach ($indices as $dim => $index) {
             $newOffset += $index * $this->strides()[$dim];
         }
 
-        // Remaining dimensions become the view's shape/strides
         $newShape = \array_slice($this->shape(), $count);
         $newStrides = \array_slice($this->strides(), $count);
 
-        // Base is the root array (follow the chain)
         $root = $this->base ?? $this;
 
         return new self(
@@ -402,65 +428,6 @@ trait HasIndexing
         );
     }
 
-    /**
-     * Read a scalar value at a flat index via FFI.
-     */
-    private function getScalar(int $flatIndex): bool|float|int
-    {
-        $ffi = Lib::get();
-
-        return match ($this->dtype) {
-            DType::Int8 => $this->getTypedScalar($ffi, 'int8_t', $flatIndex),
-            DType::Int16 => $this->getTypedScalar($ffi, 'int16_t', $flatIndex),
-            DType::Int32 => $this->getTypedScalar($ffi, 'int32_t', $flatIndex),
-            DType::Int64 => $this->getTypedScalar($ffi, 'int64_t', $flatIndex),
-            DType::Uint8 => $this->getTypedScalar($ffi, 'uint8_t', $flatIndex),
-            DType::Uint16 => $this->getTypedScalar($ffi, 'uint16_t', $flatIndex),
-            DType::Uint32 => $this->getTypedScalar($ffi, 'uint32_t', $flatIndex),
-            DType::Uint64 => $this->getTypedScalar($ffi, 'uint64_t', $flatIndex),
-            DType::Float32 => $this->getTypedScalar($ffi, 'float', $flatIndex),
-            DType::Float64 => $this->getTypedScalar($ffi, 'double', $flatIndex),
-            DType::Bool => (bool) $this->getTypedScalar($ffi, 'uint8_t', $flatIndex),
-        };
-    }
-
-    /**
-     * Get a scalar value via FFI using the unified ndarray_get_element function.
-     *
-     * @param Bindings&\FFI $ffi
-     * @param string        $cType C type for the output value
-     */
-    private function getTypedScalar(\FFI $ffi, string $cType, int $flatIndex): float|int
-    {
-        $outValue = $ffi->new($cType);
-        $status = $ffi->ndarray_get_element($this->handle, $flatIndex, Lib::addr($outValue));
-        Lib::checkStatus($status);
-
-        return $outValue->cdata;
-    }
-
-    /**
-     * @param array<array<int>|int>|self $indices
-     *
-     * @return array{0: array<int>, 1: array<int>}
-     */
-    private function prepareIndicesInput(array|self $indices): array
-    {
-        if ($indices instanceof self) {
-            if (!$indices->dtype->isInteger()) {
-                throw new \InvalidArgumentException('indices NDArray must have an integer dtype');
-            }
-            $flat = $indices->toFlatArray();
-            $flat = \is_array($flat) ? $flat : [$flat];
-
-            return [array_map(static fn ($v) => (int) $v, $flat), $indices->shape()];
-        }
-
-        $shape = self::inferShape($indices);
-        $flat = self::flattenArray($indices);
-
-        return [array_map(static fn ($v) => (int) $v, $flat), $shape];
-    }
 
     /**
      * Build a typed values buffer for put/scatter operations.
@@ -470,7 +437,7 @@ trait HasIndexing
     private function prepareValuesBuffer(bool|float|int|self $values): array
     {
         if (\is_int($values) || \is_float($values) || \is_bool($values)) {
-            $dummy = Lib::createCArray($this->dtype->ffiType(), [0]);
+            $dummy = $this->dtype->createCArray(1, [0]);
 
             return [$dummy, 0, (float) $values, true];
         }
@@ -478,42 +445,34 @@ trait HasIndexing
         $valuesNd = $values->dtype === $this->dtype ? $values : $values->astype($this->dtype);
         $flat = $valuesNd->toFlatArray();
         $flat = \is_array($flat) ? $flat : [$flat];
-        if (DType::Bool === $this->dtype) {
-            $flat = array_map(static fn ($v) => $v ? 1 : 0, $flat);
-        }
-        $buffer = Lib::createCArray($this->dtype->ffiType(), $flat);
+        $flat = $this->dtype->prepareArrayValues($flat);
+        $buffer = $this->dtype->createCArray(\count($flat), $flat);
 
         return [$buffer, \count($flat), 0.0, false];
     }
 
     /**
-     * Write a scalar value at a flat index via type-specific FFI call.
+     * Read an element at a flat index.
      */
-    private function setScalar(int $flatIndex, bool|float|int $value): void
+    private function getElement(int $flatIndex): bool|float|int
     {
         $ffi = Lib::get();
 
-        // Create C value of appropriate type
-        $cValue = match ($this->dtype) {
-            DType::Int8 => $ffi->new('int8_t'),
-            DType::Int16 => $ffi->new('int16_t'),
-            DType::Int32 => $ffi->new('int32_t'),
-            DType::Int64 => $ffi->new('int64_t'),
-            DType::Uint8 => $ffi->new('uint8_t'),
-            DType::Uint16 => $ffi->new('uint16_t'),
-            DType::Uint32 => $ffi->new('uint32_t'),
-            DType::Uint64 => $ffi->new('uint64_t'),
-            DType::Float32 => $ffi->new('float'),
-            DType::Float64 => $ffi->new('double'),
-            DType::Bool => $ffi->new('uint8_t'),
-        };
+        $outValue = $this->dtype->createCValue();
+        $status = $ffi->ndarray_get_element($this->handle, $flatIndex, Lib::addr($outValue));
+        Lib::checkStatus($status);
 
-        // Set the value
-        if (DType::Bool === $this->dtype) {
-            $cValue->cdata = $value ? 1 : 0;
-        } else {
-            $cValue->cdata = $value;
-        }
+        return $this->dtype->castFromCValue($outValue->cdata);
+    }
+
+    /**
+     * Write an element at a flat index.
+     */
+    private function setElement(int $flatIndex, bool|float|int $value): void
+    {
+        $ffi = Lib::get();
+
+        $cValue = $this->dtype->createCValue($value);
 
         $status = $ffi->ndarray_set_element($this->handle, $flatIndex, Lib::addr($cValue));
         Lib::checkStatus($status);

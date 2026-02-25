@@ -7,8 +7,6 @@ Correctness, memory safety, and API parity matter more than speed of implementat
 
 Agents must treat this as a systems project, not a typical PHP library.
 
-⸻
-
 ## Canonical Project Documents
 
 Agents must consult these files before making architectural or behavioral decisions:
@@ -22,15 +20,11 @@ Agents must consult these files before making architectural or behavioral decisi
 
 If there is a conflict between intuition and these documents, the documents win.
 
-⸻
-
 ## External References
 
 - Rust ndarray crate documentation: https://docs.rs/ndarray/latest/ndarray/struct.ArrayBase.html
   → The core Rust library this project wraps
   → Consult for understanding ArrayBase, views, slicing, and memory layout
-
-⸻
 
 ## High-Level Agent Responsibilities
 
@@ -42,8 +36,6 @@ Agents working on this repo must:
 4. Prefer views over copies unless explicitly unsafe or forbidden.
 5. Keep the PHP API idiomatic, even when backed by complex Rust logic.
 6. Avoid introducing behavior that diverges subtly from the spec.
-
-⸻
 
 ## What This Project Is Not
 
@@ -57,8 +49,6 @@ Agents must not assume:
 
 This is a low-level numerical system exposed through a high-level PHP API.
 
-⸻
-
 ## PHP ↔ Rust FFI Rules (Critical)
 
 Agents must follow these rules exactly:
@@ -68,9 +58,9 @@ Agents must follow these rules exactly:
 - Rust owns all NDArray memory
 - PHP holds opaque pointers only
 - PHP must never:
-- free Rust memory manually
-- clone raw buffers
-- assume pointer validity beyond documented lifetimes
+    - free Rust memory manually
+    - clone raw buffers
+    - assume pointer validity beyond documented lifetimes
 
 ### Views
 
@@ -94,8 +84,6 @@ Agents must follow these rules exactly:
 - This ensures IDEs (VS Code, PHPStorm) and static analyzers provide correct autocomplete and type checking for `$ffi->method_name(...)` calls.
 - Failure to do this degrades the developer experience and makes the codebase harder to maintain.
 
-⸻
-
 ## API Design Rules
 
 When implementing or modifying APIs:
@@ -107,11 +95,6 @@ When implementing or modifying APIs:
 - Internal helper methods may exist, but:
     - They must not leak into public API
     - They must not bypass validation logic
-- Operator overloading (+, -, *, @, etc.):
-    - Must obey broadcasting rules
-    - Must fail loudly on invalid shapes
-
-⸻
 
 ## Shape, Broadcasting, and DType Discipline
 
@@ -130,8 +113,6 @@ If behavior is unclear:
 1. Check SPEC.md
 2. Compare with NumPy
 3. Choose the stricter, safer behavior
-
-⸻
 
 ## Performance Expectations
 
@@ -152,8 +133,6 @@ Avoid:
 
 If an optimization changes semantics, do not apply it.
 
-⸻
-
 ## Testing Obligations
 
 When adding or changing behavior, agents must:
@@ -169,8 +148,6 @@ When adding or changing behavior, agents must:
 
 Performance-sensitive changes should include benchmarks when feasible.
 
-⸻
-
 ## Common Mistakes to Avoid
 
 Agents must not:
@@ -183,8 +160,6 @@ Agents must not:
 - Break cross-platform builds
 - Add features not described in SPEC.md without clear justification
 
-⸻
-
 ## When in Doubt
 
 If uncertain about:
@@ -196,20 +171,14 @@ If uncertain about:
 
 When tradeoffs exist, document the decision clearly in code comments.
 
-⸻
-
 ## Code Documentation Rules
 
 Agents must follow these rules for code comments and docblocks:
 
-- Never reference SPEC.md, or any specification documents in code
-- Never include requirement IDs (e.g., "REQ-2.2") in source files
 - Write docblocks that describe what the code does, not what document it implements
 - Comments should be self-contained and understandable without external references
 - Use proper PHPDoc for PHP and rustdoc for Rust
 - Keep comments concise and implementation-focused
-
-⸻
 
 ## Rust View Extraction Patterns
 
@@ -266,76 +235,7 @@ These functions:
 
 ### File Organization
 - Keep operation-specific logic in its own file (e.g., `sum.rs`)
-- `view_helpers.rs` should only contain generic extraction utilities
 - Never put operation logic in helpers
-
-## Arithmetic Operations Patterns
-
-### Type-Preserving Operations
-Use `math_helpers.rs` for type-specific operations:
-
-**Generic ops** (work on all types like abs, pow2):
-```rust
-use crate::core::math_helpers::unary_op_generic;
-
-let result = unary_op_generic(
-    wrapper, offset, shape, strides,
-    |x: f64| x.abs(),
-    |x: f32| x.abs(),
-    |x: i64| x.abs(),
-    // ... etc for all types
-)?;
-```
-
-**Float-only ops** (floor, sqrt, sin, etc.):
-```rust
-use crate::core::math_helpers::unary_op_float_only;
-
-let result = unary_op_float_only(
-    wrapper, offset, shape, strides,
-    |x: f64| x.floor(),
-    |x: f32| x.floor(),
-    "floor",
-)?;
-```
-
-**Binary ops** with type promotion:
-```rust
-use crate::core::math_helpers::{
-    binary_op_f64, binary_op_i64, promote_dtypes,
-};
-
-let out_dtype = promote_dtypes(a.dtype, b.dtype)?;
-let result = match out_dtype {
-    DType::Float64 => binary_op_f64(a, ..., b, ..., |x, y| x + y),
-    DType::Int64 => binary_op_i64(a, ..., b, ..., |x, y| x + y),
-    // ... etc
-};
-```
-
-Binary helpers use `extract_view_as_*` internally, so they automatically handle mixed types:
-- `binary_op_i32(Int32 array, Int16 array)` converts Int16 to Int32 automatically
-- No need for separate "mixed" helper functions
-
-**Scalar ops** preserving input type:
-```rust
-use crate::core::math_helpers::scalar_op_generic;
-
-let result = scalar_op_generic(
-    wrapper, offset, shape, strides, scalar,
-    |a: f64, b: f64| a + b,
-    |a: f32, b: f32| a + b,
-    |a: i64, b: i64| a + b,
-    // ... etc
-)?;
-```
-
-### Key Principles
-- Never convert through f64 unless necessary
-- Use closures with explicit type parameters: `|x: f64| x.abs()` not `|x| x.abs()`
-- Binary operations promote to higher precision dtype
-- Float-only operations error on integer inputs
-- Bool operations error (use specific Bool helpers if needed)
 
 ## Final Principle
 

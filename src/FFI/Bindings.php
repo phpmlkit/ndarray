@@ -19,6 +19,8 @@ interface Bindings
 
     public function ndarray_get_last_error(CData $buf, int $len): int;
 
+    public function ndarray_to_string(CData $handle, CData $meta, CData $buf, int $buf_size, int $threshold, int $edgeitems, int $precision): int;
+
     // =========================================================================
     // Array Lifecycle
     // =========================================================================
@@ -66,21 +68,24 @@ interface Bindings
     public function ndarray_get_element(CData $handle, int $flat_index, CData $out_value): int;
 
     public function ndarray_set_element(CData $handle, int $flat_index, CData $value): int;
+
     public function ndarray_as_scalar(CData $handle, CData $meta, CData $out_value): int;
 
     public function ndarray_get_data(CData $handle, CData $meta, CData $out_data, int $max_len, CData $out_len): int;
 
-    public function ndarray_take_flat(CData $handle, CData $meta, CData $indices, int $indices_len, CData $indices_shape, int $indices_ndim, CData $out_handle): int;
+    public function ndarray_take(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_take_along_axis(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, int $axis, CData $out_handle): int;
+    public function ndarray_take_axis(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+   
+    public function ndarray_take_along_axis(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_put_flat(CData $handle, CData $meta, CData $indices, int $indices_len, CData $values, int $values_len, float $scalar_value, bool $has_scalar, CData $out_handle): int;
+    public function ndarray_put(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, CData $values, int $values_len, float $scalar_value, bool $has_scalar, CData $out_handle): int;
 
     public function ndarray_put_along_axis(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, int $axis, CData $values, int $values_len, float $scalar_value, bool $has_scalar, CData $out_handle): int;
 
     public function ndarray_where(CData $cond_handle, CData $cond_meta, CData $x_handle, CData $x_meta, CData $y_handle, CData $y_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_scatter_add_flat(CData $handle, CData $meta, CData $indices, int $indices_len, CData $updates, int $updates_len, float $scalar_update, bool $has_scalar, CData $out_handle): int;
+    public function ndarray_scatter_add_flat(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, CData $updates, int $updates_len, float $scalar_update, bool $has_scalar, CData $out_handle): int;
 
     // =========================================================================
     // Slice Operations
@@ -167,6 +172,18 @@ interface Bindings
     public function ndarray_right_shift(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_right_shift_scalar(CData $a, CData $a_meta, int $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    // =========================================================================
+    // Logical Operations
+    // =========================================================================
+
+    public function ndarray_logical_and(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_logical_or(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_logical_not(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_logical_xor(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     // =========================================================================
     // Math Operations
@@ -315,15 +332,15 @@ interface Bindings
 
     public function ndarray_transpose(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_swap_axes(CData $handle, CData $meta, int $axis1, int $axis2, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_swap(CData $handle, CData $meta, int $axis1, int $axis2, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_merge_axes(CData $handle, CData $meta, int $take, int $into, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_merge(CData $handle, CData $meta, int $take, int $into, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_invert_axis(CData $handle, CData $meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_flip(CData $handle, CData $meta, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_insert_axis(CData $handle, CData $meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_insert(CData $handle, CData $meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_permute_axes(CData $handle, CData $meta, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_permute(CData $handle, CData $meta, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_flatten(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 

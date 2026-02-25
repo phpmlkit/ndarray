@@ -112,7 +112,7 @@ pub unsafe extern "C" fn ndarray_copy(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let meta = &*meta;
-       
+
         let result = match wrapper.dtype {
             DType::Int8 => wrapper.copy_view_i8(meta),
             DType::Int16 => wrapper.copy_view_i16(meta),

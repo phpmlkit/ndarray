@@ -36,9 +36,7 @@ pub unsafe extern "C" fn ndarray_powf(
 
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
-                let Some(view) =
-                    extract_view_f64(a_wrapper, meta)
-                else {
+                let Some(view) = extract_view_f64(a_wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -49,9 +47,7 @@ pub unsafe extern "C" fn ndarray_powf(
                 }
             }
             DType::Float32 => {
-                let Some(view) =
-                    extract_view_f32(a_wrapper, meta)
-                else {
+                let Some(view) = extract_view_f32(a_wrapper, meta) else {
                     crate::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };

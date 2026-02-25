@@ -117,10 +117,10 @@ final class NDArrayTest extends TestCase
             'Int32' => [DType::Int32, [1, 2, 3]],
             'Int16' => [DType::Int16, [1, 2, 3]],
             'Int8' => [DType::Int8, [1, 2, 3]],
-            'Uint64' => [DType::Uint64, [1, 2, 3]],
-            'Uint32' => [DType::Uint32, [1, 2, 3]],
-            'Uint16' => [DType::Uint16, [1, 2, 3]],
-            'Uint8' => [DType::Uint8, [1, 2, 3]],
+            'Uint64' => [DType::UInt64, [1, 2, 3]],
+            'Uint32' => [DType::UInt32, [1, 2, 3]],
+            'Uint16' => [DType::UInt16, [1, 2, 3]],
+            'Uint8' => [DType::UInt8, [1, 2, 3]],
             'Bool' => [DType::Bool, [true, false, true]],
         ];
     }
@@ -298,7 +298,7 @@ final class NDArrayTest extends TestCase
     public function testUint64Roundtrip(): void
     {
         $data = [100, 200, 300, 400];
-        $arr = NDArray::array($data, DType::Uint64);
+        $arr = NDArray::array($data, DType::UInt64);
         $result = $arr->toArray();
 
         $this->assertSame($data, $result);
@@ -307,7 +307,7 @@ final class NDArrayTest extends TestCase
     public function testUint32Roundtrip(): void
     {
         $data = [100, 200, 300, 400];
-        $arr = NDArray::array($data, DType::Uint32);
+        $arr = NDArray::array($data, DType::UInt32);
         $result = $arr->toArray();
 
         $this->assertSame($data, $result);
@@ -316,7 +316,7 @@ final class NDArrayTest extends TestCase
     public function testUint16Roundtrip(): void
     {
         $data = [100, 200, 300, 400];
-        $arr = NDArray::array($data, DType::Uint16);
+        $arr = NDArray::array($data, DType::UInt16);
         $result = $arr->toArray();
 
         $this->assertSame($data, $result);
@@ -325,7 +325,7 @@ final class NDArrayTest extends TestCase
     public function testUint8Roundtrip(): void
     {
         $data = [10, 20, 30, 40];
-        $arr = NDArray::array($data, DType::Uint8);
+        $arr = NDArray::array($data, DType::UInt8);
         $result = $arr->toArray();
 
         $this->assertSame($data, $result);

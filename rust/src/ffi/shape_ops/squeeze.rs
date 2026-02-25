@@ -11,8 +11,8 @@ use crate::ffi::write_output_metadata;
 use crate::ffi::NdArrayHandle;
 use crate::ffi::ViewMetadata;
 use ndarray::Axis;
-use std::slice;
 use parking_lot::RwLock;
+use std::slice;
 use std::sync::Arc;
 
 /// Remove axes of length 1 from the array.

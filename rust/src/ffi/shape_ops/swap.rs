@@ -17,7 +17,7 @@ use std::sync::Arc;
 ///
 /// Returns a copy with data in standard C-contiguous layout.
 #[no_mangle]
-pub unsafe extern "C" fn ndarray_swap_axes(
+pub unsafe extern "C" fn ndarray_swap(
     handle: *const NdArrayHandle,
     meta: *const ViewMetadata,
     axis1: usize,
