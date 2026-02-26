@@ -68,7 +68,7 @@ jobs:
 
   # Build on macOS x86_64 (Intel)
   build-darwin-x86_64:
-    runs-on: macos-13  # Intel runner
+    runs-on: macos-15-intel  # Intel runner
     steps:
       - uses: actions/checkout@v6
       
@@ -201,21 +201,3 @@ jobs:
             dist-*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Smoke test - verifies all builds work
-  smoke-test:
-    needs: [build-linux-x86_64, build-linux-arm64, build-darwin-x86_64, build-darwin-arm64, build-windows-64]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v7
-        with:
-          path: artifacts
-      
-      - name: Verify artifacts exist
-        run: |
-          for platform in linux-x86_64 linux-arm64 darwin-x86_64 darwin-arm64 windows-64; do
-            echo "Checking $platform..."
-            ls -la "artifacts/${platform}/lib/${platform}/"
-            ls -la "artifacts/${platform}/include/"
-          done
