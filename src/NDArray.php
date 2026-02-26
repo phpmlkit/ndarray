@@ -30,6 +30,7 @@ use PhpMlKit\NDArray\Traits\HasStacking;
  * alive through PHP's reference counting via the $base chain.
  *
  * @implements \ArrayAccess<int|string, bool|float|int|self>
+ * @implements \IteratorAggregate<int, bool|float|int|self>
  */
 class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
 {
@@ -244,21 +245,6 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
         return new self($outHandle, $shape, $dtype);
     }
 
-    private static function coerceWhereOperand(bool|float|int|self $value, ?DType $forceDtype): self
-    {
-        if ($value instanceof self) {
-            if (null !== $forceDtype && $value->dtype !== $forceDtype) {
-                return $value->astype($forceDtype);
-            }
-
-            return $value;
-        }
-
-        $dtype = $forceDtype ?? DType::fromValue($value);
-
-        return self::array([$value], $dtype);
-    }
-
     /**
      * Get iterator for foreach loops.
      *
@@ -269,7 +255,7 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
      */
     public function getIterator(): \Generator
     {
-        if ($this->ndim() === 1) {
+        if (1 === $this->ndim()) {
             // 1D: yield scalars from flat iteration
             foreach ($this->flat() as $value) {
                 yield $value;
@@ -296,5 +282,20 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
     public function flat(): FlatIterator
     {
         return new FlatIterator($this);
+    }
+
+    private static function coerceWhereOperand(bool|float|int|self $value, ?DType $forceDtype): self
+    {
+        if ($value instanceof self) {
+            if (null !== $forceDtype && $value->dtype !== $forceDtype) {
+                return $value->astype($forceDtype);
+            }
+
+            return $value;
+        }
+
+        $dtype = $forceDtype ?? DType::fromValue($value);
+
+        return self::array([$value], $dtype);
     }
 }

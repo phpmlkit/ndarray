@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\FlatIterator;
 use PhpMlKit\NDArray\NDArray;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for NDArray iterator functionality.
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 class IteratorTest extends TestCase
 {
@@ -197,7 +201,7 @@ class IteratorTest extends TestCase
         $flat = $arr->flat();
 
         $this->expectException(\OutOfBoundsException::class);
-        $flat[10];
+        $_unused = $flat[10];
     }
 
     public function testFlatIteratorArrayAccessNegativeIndex(): void
@@ -241,7 +245,7 @@ class IteratorTest extends TestCase
         $arr = NDArray::array([1, 2, 3, 4, 5]);
         $flat = $arr->flat();
 
-        $this->assertEquals(5, count($flat));
+        $this->assertEquals(5, \count($flat));
     }
 
     public function testFlatIteratorCount2D(): void
@@ -249,7 +253,7 @@ class IteratorTest extends TestCase
         $matrix = NDArray::array([[1, 2, 3], [4, 5, 6]]);
         $flat = $matrix->flat();
 
-        $this->assertEquals(6, count($flat));
+        $this->assertEquals(6, \count($flat));
     }
 
     // ============================================================================

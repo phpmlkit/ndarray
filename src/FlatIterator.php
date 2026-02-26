@@ -14,6 +14,9 @@ namespace PhpMlKit\NDArray;
  *
  * Note: This is a snapshot - changes to the original array after creating
  * the iterator will not be reflected.
+ *
+ * @implements \Iterator<int, bool|float|int>
+ * @implements \ArrayAccess<int, bool|float|int>
  */
 class FlatIterator implements \Iterator, \ArrayAccess, \Countable
 {
@@ -31,8 +34,10 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
     private int $totalSize;
     private int $position = 0;
 
+    /** @var null|array<int, bool|float|int> */
     private ?array $batchElements = null;
 
+    /** @var array<int, bool|float|int> */
     private array $currentChunk = [];
     private int $chunkStart = 0;
 
@@ -45,9 +50,9 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
         }
     }
 
-    public function current(): float|int|bool
+    public function current(): bool|float|int
     {
-        if ($this->batchElements !== null) {
+        if (null !== $this->batchElements) {
             return $this->batchElements[$this->position];
         }
 
@@ -75,7 +80,7 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
     {
         $this->position = 0;
 
-        if ($this->batchElements === null) {
+        if (null === $this->batchElements) {
             $this->currentChunk = [];
             $this->chunkStart = 0;
         }
@@ -99,10 +104,10 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
         return $offset >= 0 && $offset < $this->totalSize;
     }
 
-    public function offsetGet(mixed $offset): float|int|bool
+    public function offsetGet(mixed $offset): bool|float|int
     {
         if (!\is_int($offset)) {
-            throw new \OutOfBoundsException("Offset must be an integer");
+            throw new \OutOfBoundsException('Offset must be an integer');
         }
 
         if ($offset < 0) {
@@ -113,7 +118,7 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
             throw new \OutOfBoundsException("Offset {$offset} is out of bounds");
         }
 
-        if ($this->batchElements !== null) {
+        if (null !== $this->batchElements) {
             return $this->batchElements[$offset];
         }
 
@@ -123,7 +128,7 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
     public function offsetSet(mixed $offset, mixed $value): void
     {
         if (!\is_int($offset)) {
-            throw new \OutOfBoundsException("Offset must be an integer");
+            throw new \OutOfBoundsException('Offset must be an integer');
         }
 
         if ($offset < 0) {
@@ -136,7 +141,7 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
 
         $this->array->setAt($offset, $value);
 
-        if ($this->batchElements !== null) {
+        if (null !== $this->batchElements) {
             $this->batchElements[$offset] = $value;
         }
     }
@@ -153,10 +158,12 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
 
     /**
      * Convert to PHP array.
+     *
+     * @return array<int, bool|float|int>
      */
     public function toArray(): array
     {
-        if ($this->batchElements !== null) {
+        if (null !== $this->batchElements) {
             return $this->batchElements;
         }
 

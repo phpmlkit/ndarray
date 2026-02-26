@@ -141,9 +141,9 @@ trait HasConversion
     /**
      * Copy flattened C-order data into a caller-allocated C buffer.
      *
-     * @param CData    $buffer Destination typed C buffer
-     * @param int      $start  Starting element offset (0-indexed)
-     * @param int      $len    Number of elements to copy
+     * @param CData $buffer Destination typed C buffer
+     * @param int   $start  Starting element offset (0-indexed)
+     * @param int   $len    Number of elements to copy
      *
      * @return int Number of elements copied
      */

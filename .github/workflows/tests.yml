@@ -23,6 +23,12 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Rust library
+        run: ./scripts/build.sh debug
+
       - name: Install Composer
         uses: "ramsey/composer-install@v3"
 
