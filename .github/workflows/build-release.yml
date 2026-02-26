@@ -28,8 +28,6 @@ jobs:
           PLATFORM="linux-x86_64"
           mkdir -p "lib/${PLATFORM}"
           cp "rust/target/release/libndarray_php.so" "lib/${PLATFORM}/libndarray_php.so.${VERSION}"
-          mkdir -p include
-          cp lib/ndarray_php.h include/ndarray_php.h
       
       - name: Upload artifact
         uses: actions/upload-artifact@v6
@@ -59,8 +57,6 @@ jobs:
           PLATFORM="linux-arm64"
           mkdir -p "lib/${PLATFORM}"
           cp "rust/target/release/libndarray_php.so" "lib/${PLATFORM}/libndarray_php.so.${VERSION}"
-          mkdir -p include
-          cp lib/ndarray_php.h include/ndarray_php.h
       
       - name: Upload artifact
         uses: actions/upload-artifact@v6
@@ -90,8 +86,6 @@ jobs:
           PLATFORM="darwin-x86_64"
           mkdir -p "lib/${PLATFORM}"
           cp "rust/target/release/libndarray_php.dylib" "lib/${PLATFORM}/libndarray_php-${VERSION}.dylib"
-          mkdir -p include
-          cp lib/ndarray_php.h include/ndarray_php.h
       
       - name: Upload artifact
         uses: actions/upload-artifact@v6
@@ -121,8 +115,6 @@ jobs:
           PLATFORM="darwin-arm64"
           mkdir -p "lib/${PLATFORM}"
           cp "rust/target/release/libndarray_php.dylib" "lib/${PLATFORM}/libndarray_php-${VERSION}.dylib"
-          mkdir -p include
-          cp lib/ndarray_php.h include/ndarray_php.h
       
       - name: Upload artifact
         uses: actions/upload-artifact@v6
@@ -153,8 +145,6 @@ jobs:
           PLATFORM="windows-64"
           mkdir -p "lib/${PLATFORM}"
           cp "rust/target/release/ndarray_php.dll" "lib/${PLATFORM}/ndarray_php-${VERSION}.dll"
-          mkdir -p include
-          cp lib/ndarray_php.h include/ndarray_php.h
       
       - name: Upload artifact
         uses: actions/upload-artifact@v6
