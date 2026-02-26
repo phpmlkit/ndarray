@@ -141,6 +141,44 @@ print_r($raveled->toArray());
 
 ---
 
+## Flattening Comparison
+
+When you need a one-dimensional representation of an array, you have three options:
+
+| Method | Returns | When to Use |
+|--------|---------|-------------|
+| `flatten()` | 1D NDArray (copy) | When you need a real array and want to ensure no shared memory |
+| `ravel()` | 1D NDArray (view or copy) | When you need a real array and want zero-copy when possible |
+| `flat()` | FlatIterator | When you just need to iterate or index elements, not a full array |
+
+**Key Differences:**
+
+**`flatten()`** always creates a new contiguous copy. Changes to the result don't affect the original, and vice versa. This is safest when you need independence.
+
+**`ravel()`** returns a view if the array is already contiguous, avoiding a copy. For non-contiguous arrays (like slices or transposed arrays), it falls back to copying. Use this when performance matters and you can handle either views or copies.
+
+**`flat()`** returns an iterator, not an array. It provides element-by-element access without copying any data, working efficiently even on complex views. However, you get an iterator object, not an NDArray, so you can't use array methods like `mean()` or `sum()` on it directly.
+
+```php
+$matrix = NDArray::array([[1, 2], [3, 4]]);
+
+// Get a 1D array (copy)
+$copy = $matrix->flatten();
+echo $copy->sum();  // Works: 10
+
+// Get a 1D array (view if contiguous)
+$view = $matrix->ravel();
+echo $view->mean();  // Works: 2.5
+
+// Iterate without copying
+foreach ($matrix->flat() as $value) {
+    echo $value . " ";
+}
+// Output: 1 2 3 4
+```
+
+---
+
 ## swap()
 
 Swap two axes of the array.

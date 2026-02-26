@@ -4,35 +4,53 @@ Understanding when arrays share memory versus when they create copies is essenti
 
 ## The Core Concept
 
-**Views** share memory with the original array. **Copies** have their own independent memory.
+A **view** is a new array object that looks at the same memory as the original array, thus modifying one affects the other. A **copy** is an entirely new array with its own independent memory therefore changing one does not affect the other.
+
+**Key differences:**
+
+|              | View                              | Copy                     |
+|--------------|-----------------------------------|--------------------------|
+| Memory       | Shared with original              | Own, independent         |
+| Address      | Same as original                  | New, different           |
+| Writable     | Yes (if original is writable)     | Yes                      |
+| Fast to Make | Always (O(1) for basic cases)     | Slower (requires copy)   |
+| Use case     | Efficient, no data duplication    | Data isolation needed    |
+
+**Visual Example:**
+
+|                |              |                |
+|:---------------|:-------------|:-----------------|
+| ![Original](https://dummyimage.com/120x80/eeeeee/888888&text=Original+Array) | ![View](https://dummyimage.com/120x80/eeeeee/888888&text=View) | ![Copy](https://dummyimage.com/120x80/eeeeee/888888&text=Copy) |
+| **Original Array**  | **View (shares memory)** | **Copy (independent)**   |
+| Address: 0x1000     | Address: 0x1000 *(same!)* | Address: 0x2000 *(different)* |
+| Data: [1 2 3 4 5 6] | Data: [1 2 3 4 5 6]      | Data: [1 2 3 4 5 6]      |
+| Shape: [2,3]        | Shape: [1,3] (example)   | Shape: [2,3]             |
+| Owns: Yes           | Owns: No                 | Owns: Yes                |
+| Offset: 0           | Offset: 0 or >0 (view)   | Offset: 0                |
+| View of: —          | View of: Original        | View of: —               |
+
+<details>
+<summary>Equivalent memory diagrams</summary>
 
 ```
-MEMORY LAYOUT COMPARISON:
+Original Array:
+[Memory Address: 0x1000] [Data: 1, 2, 3, 4, 5, 6] [Shape: 2x3]
 
-Owned Array (Original):
-┌─────────────────────────────────────────────────┐
-│ Address: 0x1000                                 │
-│ Data: [1][2][3][4][5][6]                        │
-│ Shape: [2, 3]                                   │
-└─────────────────────────────────────────────────┘
+       ┌──────────────────────────┐
+       │ 1 │ 2 │ 3 │ 4 │ 5 │ 6   │
+       └──────────────────────────┘
+        ^0x1000 (Owned)
 
 View (shares memory):
-┌─────────────────────────────────────────────────┐
-│ Address: 0x1000 (SAME!)                         │
-│ Data: [1][2][3][4][5][6]                        │
-│ Shape: [1, 3]                                   │
-│ Offset: 0                                       │
-│ View of: Original                               │
-└─────────────────────────────────────────────────┘
+[Memory Address: 0x1000] [Shape: 1x3] [Offset: 0]
+      (reads/writes from same 0x1000)
 
-Copy (independent memory):
-┌─────────────────────────────────────────────────┐
-│ Address: 0x2000 (DIFFERENT)                     │
-│ Data: [1][2][3][4][5][6]                        │
-│ Shape: [2, 3]                                   │
-│ Owns: true                                      │
-└─────────────────────────────────────────────────┘
+Copy (independent):
+[Memory Address: 0x2000] [Data: 1, 2, 3, 4, 5, 6] [Shape: 2x3]
+      (completely separate memory from original)
 ```
+</details>
+
 
 ```php
 $arr = NDArray::array([[1, 2, 3], [4, 5, 6]]);

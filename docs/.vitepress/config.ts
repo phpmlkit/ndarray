@@ -50,6 +50,7 @@ export default defineConfig({
             { text: 'Understanding Arrays', link: '/guide/fundamentals/understanding-arrays' },
             { text: 'Data Types', link: '/guide/fundamentals/data-types' },
             { text: 'Indexing and Slicing', link: '/guide/fundamentals/indexing-and-slicing' },
+            { text: 'Iterating Over Arrays', link: '/guide/fundamentals/iteration' },
             { text: 'Broadcasting', link: '/guide/fundamentals/broadcasting' },
             { text: 'Views vs Copies', link: '/guide/fundamentals/views-vs-copies' },
             { text: 'Operations', link: '/guide/fundamentals/operations' },

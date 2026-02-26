@@ -67,7 +67,7 @@ final class ConversionTest extends TestCase
         $ffi = Lib::get();
         $dst = $ffi->new('int32_t[4]');
 
-        $copied = $a->intoBuffer($dst);
+        $copied = $a->intoBuffer($dst, 0, 4);
 
         $this->assertSame(4, $copied);
         $this->assertSame(10, $dst[0]);
@@ -83,24 +83,13 @@ final class ConversionTest extends TestCase
         $ffi = Lib::get();
         $dst = $ffi->new('int32_t[4]');
 
-        $copied = $view->intoBuffer($dst);
+        $copied = $view->intoBuffer($dst, 0, 4);
 
         $this->assertSame(4, $copied);
         $this->assertSame(2, $dst[0]);
         $this->assertSame(3, $dst[1]);
         $this->assertSame(5, $dst[2]);
         $this->assertSame(6, $dst[3]);
-    }
-
-    public function testIntoBufferTooSmallThrows(): void
-    {
-        $a = NDArray::array([1, 2, 3], DType::Int32);
-        $ffi = Lib::get();
-        $dst = $ffi->new('int32_t[2]');
-
-        $this->expectException(ShapeException::class);
-        $this->expectExceptionMessage('Destination buffer too small');
-        $a->intoBuffer($dst, 2);
     }
 
     public function testToArrayForAllDTypes1D(): void
@@ -173,27 +162,6 @@ final class ConversionTest extends TestCase
         }
     }
 
-    public function testToFlatArray1D(): void
-    {
-        $a = NDArray::array([1, 2, 3, 4], DType::Int32);
-
-        $flat = $a->toFlatArray();
-
-        $this->assertIsArray($flat);
-        $this->assertSame([1, 2, 3, 4], $flat);
-    }
-
-    public function testToFlatArrayOnView(): void
-    {
-        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Int32);
-        $view = $a->slice([':', '1:3']); // [[2, 3], [5, 6]]
-
-        $flat = $view->toFlatArray();
-
-        $this->assertIsArray($flat);
-        $this->assertSame([2, 3, 5, 6], $flat);
-    }
-
     public function testToArrayPreservesNaN(): void
     {
         $a = NDArray::array([1.0, \NAN, 2.0], DType::Float64);
@@ -213,16 +181,6 @@ final class ConversionTest extends TestCase
         $out = $a->toArray();
 
         $this->assertSame([[1, 2, 3], [4, 5, 6]], $out);
-    }
-
-    public function testToFlatArrayScalarReturnsScalar(): void
-    {
-        $a = NDArray::full([], 7, DType::Int32);
-
-        $flat = $a->toFlatArray();
-
-        $this->assertIsInt($flat);
-        $this->assertSame(7, $flat);
     }
 
     public function testToScalarFloat64(): void

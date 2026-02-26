@@ -166,163 +166,47 @@ $full = NDArray::full([10], 100, DType::Int32);
 
 ---
 
-## NDArray::empty()
+## NDArray::flat()
 
-Create an uninitialized array.
+Get a 1-D iterator over the array.
 
 ```php
-public static function empty(
-    array $shape,
-    DType $dtype = DType::Float64
-): self
+public function flat(): FlatIterator
 ```
 
-::: warning Important
-`empty()` allocates memory but does **not** initialize it. Values are undefined (whatever was in memory). Only use if you will fill all elements immediately.
-:::
+Returns a `FlatIterator` that provides 1-D access to the array elements in C-contiguous (row-major) order.
 
-**Parameters:**
-- `array $shape` - Array dimensions
-- `DType $dtype` - Data type (default: Float64)
+**Returns:** `FlatIterator` - Iterator over flattened array
 
 **Examples:**
 
 ```php
-// Fast allocation (memory uninitialized)
-$buffer = NDArray::empty([1000, 1000]);
+$matrix = NDArray::array([[1, 2], [3, 4]]);
 
-// You MUST fill all values before reading
-for ($i = 0; $i < 1000; $i++) {
-    for ($j = 0; $j < 1000; $j++) {
-        $buffer->set([$i, $j], calculateValue($i, $j));
-    }
+// Iterate all elements
+foreach ($matrix->flat() as $value) {
+    echo $value;  // 1, 2, 3, 4
 }
+
+// Access by index
+echo $matrix->flat()[0];  // 1
+echo $matrix->flat()[3];  // 4
+
+// Convert to PHP array
+$flat = $matrix->flat()->toArray();  // [1, 2, 3, 4]
+
+// Count elements
+echo count($matrix->flat());  // 4
 ```
 
-**Performance:** Fastest allocation method since memory is not initialized.
-
-**Common Mistake:**
-```php
-// WRONG: Reading uninitialized values
-$arr = NDArray::empty([10]);
-echo $arr[0];  // Undefined value!
-
-// CORRECT: Fill before reading
-$arr = NDArray::empty([10]);
-for ($i = 0; $i < 10; $i++) {
-    $arr[$i] = $i;
-}
-echo $arr[0];  // 0
-```
-
----
-
-## NDArray::zerosLike()
-
-Create an array of zeros with the same shape as the input array.
-
-```php
-public static function zerosLike(self $array, ?DType $dtype = null): self
-```
-
-**Parameters:**
-- `self $array` - Input array defining the output shape
-- `?DType $dtype` - Data type (default: same as input array)
-
-**Examples:**
-
-```php
-$original = NDArray::array([[1, 2], [3, 4]], DType::Int32);
-$zeros = NDArray::zerosLike($original);
-echo $zeros->shape();  // [2, 2]
-echo $zeros->dtype();  // Int32
-echo $zeros;
-// [[0 0]
-//  [0 0]]
-
-// Override dtype
-$zeros = NDArray::zerosLike($original, DType::Float64);
-// Float64
-```
+**Notes:**
+- Iterates in C-contiguous (row-major) order regardless of array layout
+- Returns a snapshot - changes to the original array are not reflected
+- For large arrays, prefer vectorized operations over iteration
 
 **See Also:**
-- [onesLike()](#ndarray-oneslike)
-- [fullLike()](#ndarray-fulllike)
-- [zeros()](#ndarray-zeros)
-
----
-
-## NDArray::onesLike()
-
-Create an array of ones with the same shape as the input array.
-
-```php
-public static function onesLike(self $array, ?DType $dtype = null): self
-```
-
-**Parameters:**
-- `self $array` - Input array defining the output shape
-- `?DType $dtype` - Data type (default: same as input array)
-
-**Examples:**
-
-```php
-$original = NDArray::array([[1, 2], [3, 4]], DType::Int32);
-$ones = NDArray::onesLike($original);
-echo $ones->shape();  // [2, 2]
-echo $ones->dtype();  // Int32
-echo $ones;
-// [[1 1]
-//  [1 1]]
-```
-
-**See Also:**
-- [zerosLike()](#ndarray-zeroslike)
-- [fullLike()](#ndarray-fulllike)
-- [ones()](#ndarray-ones)
-
----
-
-## NDArray::fullLike()
-
-Create an array filled with a specific value, with the same shape as the input array.
-
-```php
-public static function fullLike(
-    self $array,
-    float|int|bool $value,
-    ?DType $dtype = null
-): self
-```
-
-**Parameters:**
-- `self $array` - Input array defining the output shape
-- `float|int|bool $value` - Value to fill array with
-- `?DType $dtype` - Data type (default: same as input array, or inferred from value)
-
-**Examples:**
-
-```php
-$original = NDArray::array([[1, 2], [3, 4]], DType::Int32);
-
-// Same dtype as input
-$full = NDArray::fullLike($original, 5);
-echo $full;
-// [[5 5]
-//  [5 5]]
-
-// Override dtype
-$full = NDArray::fullLike($original, 3.14, DType::Float64);
-echo $full->dtype();  // Float64
-echo $full;
-// [[3.14 3.14]
-//  [3.14 3.14]]
-```
-
-**See Also:**
-- [zerosLike()](#ndarray-zeroslike)
-- [onesLike()](#ndarray-oneslike)
-- [full()](#ndarray-full)
+- [Iterating Over Arrays](/guide/fundamentals/iteration)
+- [toArray()](#toarray)
 
 ---
 

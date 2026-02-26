@@ -221,19 +221,21 @@ int32_t ndarray_copy(const struct NdArrayHandle *handle,
                      struct NdArrayHandle **out_handle);
 
 /**
- * Get flattened data for an array view.
+ * Get flattened data for an array view with optional offset and length.
  *
  * # Arguments
  * * `handle` - Array handle
  * * `meta` - View metadata
+ * * `start` - Starting element offset (0-indexed)
+ * * `len` - Number of elements to copy
  * * `out_data` - Pointer to output buffer (type depends on array dtype)
- * * `max_len` - Maximum number of elements to copy
- * * `out_len` - Output: actual number of elements in the view
+ * * `out_len` - Output: actual number of elements copied
  */
 int32_t ndarray_get_data(const struct NdArrayHandle *handle,
                          const struct ViewMetadata *meta,
+                         uintptr_t start,
+                         uintptr_t len,
                          void *out_data,
-                         uintptr_t max_len,
                          uintptr_t *out_len);
 
 /**

@@ -104,9 +104,26 @@ trait HasIndexing
      */
     public function setAt(int $flatIndex, bool|float|int $value): void
     {
-        $normalized = $this->normalizeFlatIndex($flatIndex);
+        $normalized = $this->normalizeIndex($flatIndex, $this->size);
         $storageFlatIndex = $this->logicalFlatToStorageIndex($normalized);
         $this->setElement($storageFlatIndex, $value);
+    }
+
+    /**
+     * Get a scalar value using a logical flat index (C-order) for this array/view.
+     *
+     * Supports negative indices: -1 refers to the last logical element.
+     *
+     * @param int $flatIndex Logical flat index into this array/view
+     *
+     * @return bool|float|int The value at the specified flat index
+     */
+    public function getAt(int $flatIndex): bool|float|int
+    {
+        $normalized = $this->normalizeIndex($flatIndex, $this->size);
+        $storageFlatIndex = $this->logicalFlatToStorageIndex($normalized);
+
+        return $this->getElement($storageFlatIndex);
     }
 
     /**
@@ -331,24 +348,6 @@ trait HasIndexing
     }
 
     /**
-     * Normalize a logical flat index (supports negative indexing).
-     */
-    private function normalizeFlatIndex(int $flatIndex): int
-    {
-        if ($flatIndex < 0) {
-            $flatIndex += $this->size;
-        }
-
-        if ($flatIndex < 0 || $flatIndex >= $this->size) {
-            throw new IndexException(
-                "Flat index {$flatIndex} is out of bounds for array/view of size {$this->size}"
-            );
-        }
-
-        return $flatIndex;
-    }
-
-    /**
      * Convert a logical C-order flat index to the underlying storage flat index.
      */
     private function logicalFlatToStorageIndex(int $logicalFlatIndex): int
@@ -376,21 +375,27 @@ trait HasIndexing
      * Negative indices count from the end: -1 is the last element,
      * -2 is the second-to-last, etc.
      *
-     * @param int $index The index (may be negative)
-     * @param int $size  The size of the dimension
-     * @param int $dim   The dimension number (for error messages)
+     * @param int      $index The index (may be negative)
+     * @param int      $size  The size of the dimension/array
+     * @param null|int $dim   The dimension number (for error messages), null for flat indexing
      *
      * @return int The normalized positive index
      *
      * @throws IndexException If the index is out of bounds
      */
-    private function normalizeIndex(int $index, int $size, int $dim): int
+    private function normalizeIndex(int $index, int $size, ?int $dim = null): int
     {
         if ($index < 0) {
             $index = $size + $index;
         }
 
         if ($index < 0 || $index >= $size) {
+            if (null === $dim) {
+                throw new IndexException(
+                    "Index {$index} is out of bounds for array/view of size {$size}"
+                );
+            }
+
             throw new IndexException(
                 "Index {$index} is out of bounds for dimension {$dim} with size {$size}"
             );
@@ -433,7 +438,7 @@ trait HasIndexing
      *
      * @return array{0: CData, 1: int, 2: float, 3: bool}
      */
-    private function prepareValuesBuffer(bool|float|int|self $values): array
+    private function prepareValuesBuffer(bool|float|int|NDArray $values): array
     {
         if (\is_int($values) || \is_float($values) || \is_bool($values)) {
             $dummy = $this->dtype->createCArray(1, [0]);
@@ -442,8 +447,7 @@ trait HasIndexing
         }
 
         $valuesNd = $values->dtype === $this->dtype ? $values : $values->astype($this->dtype);
-        $flat = $valuesNd->toFlatArray();
-        $flat = \is_array($flat) ? $flat : [$flat];
+        $flat = $valuesNd->flat()->toArray();
         $flat = $this->dtype->prepareArrayValues($flat);
         $buffer = $this->dtype->createCArray(\count($flat), $flat);
 
@@ -451,7 +455,7 @@ trait HasIndexing
     }
 
     /**
-     * Read an element at a flat index.
+     * Read an element at a storage flat index.
      */
     private function getElement(int $flatIndex): bool|float|int
     {
@@ -465,7 +469,7 @@ trait HasIndexing
     }
 
     /**
-     * Write an element at a flat index.
+     * Write an element at a storage flat index.
      */
     private function setElement(int $flatIndex, bool|float|int $value): void
     {

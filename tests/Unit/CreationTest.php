@@ -89,7 +89,7 @@ final class CreationTest extends TestCase
         $this->assertSame(DType::Float64, $arr->dtype());
         $this->assertSame(0, $arr->size());
         $this->assertSame([], $arr->toArray());
-        $this->assertSame([], $arr->toFlatArray());
+        $this->assertSame([], $arr->flat()->toArray());
     }
 
     public function testEmptyWithZeroSizeShapeBool(): void
@@ -441,7 +441,7 @@ final class CreationTest extends TestCase
         $this->assertSame([2, 3], $arr->shape());
         $this->assertSame(DType::Float64, $arr->dtype());
 
-        foreach ($arr->toFlatArray() as $v) {
+        foreach ($arr->flat() as $v) {
             $this->assertGreaterThanOrEqual(0.0, $v);
             $this->assertLessThan(1.0, $v);
         }
@@ -469,7 +469,7 @@ final class CreationTest extends TestCase
         $this->assertSame([100], $arr->shape());
         $this->assertSame(DType::Int32, $arr->dtype());
 
-        foreach ($arr->toFlatArray() as $v) {
+        foreach ($arr->flat() as $v) {
             $this->assertGreaterThanOrEqual(10, $v);
             $this->assertLessThan(20, $v);
         }
@@ -491,7 +491,7 @@ final class CreationTest extends TestCase
     public function testRandnStatisticalSanity(): void
     {
         $arr = NDArray::randn([20000], DType::Float64, seed: 77);
-        $flat = $arr->toFlatArray();
+        $flat = $arr->flat()->toArray();
 
         $mean = array_sum($flat) / \count($flat);
         $variance = array_sum(array_map(
@@ -509,7 +509,7 @@ final class CreationTest extends TestCase
         $meanTarget = 3.5;
         $stdTarget = 2.0;
         $arr = NDArray::normal($meanTarget, $stdTarget, [20000], DType::Float64, seed: 91);
-        $flat = $arr->toFlatArray();
+        $flat = $arr->flat()->toArray();
 
         $mean = array_sum($flat) / \count($flat);
         $variance = array_sum(array_map(
@@ -533,7 +533,7 @@ final class CreationTest extends TestCase
         $low = -2.0;
         $high = 6.0;
         $arr = NDArray::uniform($low, $high, [20000], DType::Float64, seed: 123);
-        $flat = $arr->toFlatArray();
+        $flat = $arr->flat()->toArray();
 
         foreach ($flat as $v) {
             $this->assertGreaterThanOrEqual($low, $v);

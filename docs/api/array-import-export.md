@@ -34,35 +34,6 @@ print_r($arr->toArray());
 $scalar = NDArray::array([42])->squeeze();
 var_dump($scalar->toArray());  // int(42)
 ```
-
----
-
-## toFlatArray()
-
-Convert to flat PHP array in C-order.
-
-```php
-public function toFlatArray(): array|bool|float|int
-```
-
-For 0-dimensional arrays, returns a scalar.
-
-### Parameters
-
-None.
-
-### Returns
-
-- `array<bool|float|int>|bool|float|int` - Flat list of elements or scalar for 0D.
-
-### Examples
-
-```php
-$arr = NDArray::array([[1, 2], [3, 4]]);
-print_r($arr->toFlatArray());
-// Output: [1, 2, 3, 4]
-```
-
 ---
 
 ## toScalar()
@@ -155,7 +126,6 @@ $n = $arr->intoBuffer($buffer);
 | Method | Output Format | Use Case |
 |--------|---------------|----------|
 | `toArray()` | Nested PHP array | Export to PHP code |
-| `toFlatArray()` | Flat PHP array | Simple list of values |
 | `toScalar()` | Single value | Extract 0D array value |
 | `toBytes()` | Binary string | Binary serialization |
 | `intoBuffer()` | FFI C buffer | Low-level FFI interop |

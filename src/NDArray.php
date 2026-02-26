@@ -31,7 +31,7 @@ use PhpMlKit\NDArray\Traits\HasStacking;
  *
  * @implements \ArrayAccess<int|string, bool|float|int|self>
  */
-class NDArray implements \ArrayAccess, \Stringable
+class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
 {
     use CanBePrinted;
     use CreatesArrays;
@@ -257,5 +257,44 @@ class NDArray implements \ArrayAccess, \Stringable
         $dtype = $forceDtype ?? DType::fromValue($value);
 
         return self::array([$value], $dtype);
+    }
+
+    /**
+     * Get iterator for foreach loops.
+     *
+     * 1D arrays: yields scalar values
+     * 2D+ arrays: yields row views (along first axis)
+     *
+     * @return \Generator<int, bool|float|int|self>
+     */
+    public function getIterator(): \Generator
+    {
+        if ($this->ndim() === 1) {
+            // 1D: yield scalars from flat iteration
+            foreach ($this->flat() as $value) {
+                yield $value;
+            }
+        } else {
+            // 2D+: yield views along first axis
+            $shape = $this->shape();
+            for ($i = 0; $i < $shape[0]; ++$i) {
+                yield $this->slice([$i]);
+            }
+        }
+    }
+
+    /**
+     * Get a 1-D iterator over the array.
+     *
+     * Returns a FlatIterator that provides 1-D access to the array elements
+     * in C-contiguous (row-major) order. Uses hybrid approach:
+     * - Arrays < 100k elements: Batch extraction (fast)
+     * - Arrays >= 100k elements: Chunked extraction (memory efficient)
+     *
+     * @return FlatIterator Iterator over flattened array
+     */
+    public function flat(): FlatIterator
+    {
+        return new FlatIterator($this);
     }
 }

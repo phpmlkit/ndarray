@@ -121,7 +121,7 @@ The primary array type representing N-dimensional arrays.
 - [ ] 4.3.1: Boolean indexing: `$array->at($bool_array)`
 - [ ] 4.3.2: Integer array indexing: `$array->at([0, 2, 4])`
 - [ ] 4.3.3: Fancy indexing with multiple arrays
-- [ ] 4.3.4: Return views where possible, copies when necessary
+- [x] 4.3.4: Return views where possible, copies when necessary
 - [x] 4.3.5: Flat scalar indexing write: `$array->setAt($flatIndex, $value)`
 - [x] 4.3.6: Gather by flat indices: `$array->take($indices, $axis = null)`
 - [x] 4.3.7: Gather along axis: `$array->takeAlongAxis($indices, $axis)`
@@ -364,11 +364,11 @@ Sort kind selection is enum-based via `SortKind`:
 **Priority**: HIGH
 
 **Requirements**:
-- [ ] 10.1.1: Implement PHP `Iterator` interface for 1D iteration
+- [x] 10.1.1: Implement PHP `Iterator` interface for 1D iteration
 - [ ] 10.1.2: `$array->nditer()` - N-dimensional iterator
-- [ ] 10.1.3: Iterate over first axis by default
-- [ ] 10.1.4: Support for `foreach` loops
-- [ ] 10.1.5: Efficient iteration without copying
+- [x] 10.1.3: Iterate over first axis by default
+- [x] 10.1.4: Support for `foreach` loops
+- [x] 10.1.5: Efficient iteration without copying
 
 ### 10.2 Functional Operations (REQ-10.2)
 **Priority**: MEDIUM
@@ -386,14 +386,12 @@ Sort kind selection is enum-based via `SortKind`:
 **Requirements**:
 - [x] 11.1.1: `$array->astype($dtype)` - Convert data type
 - [x] 11.1.2: `$array->toArray()` - Convert to PHP array
-- [ ] 11.1.3: `$array->toList()` - Convert to PHP list (alias for toArray)
-- [x] 11.1.4: `$array->toScalar()` - Convert 0-d array to scalar
-- [x] 11.1.5: Automatic type inference from PHP arrays
-- [x] 11.1.6: `$array->toFlatArray()` - Convert to flat PHP array (C-order)
-- [x] 11.1.7: `$array->itemsize()` - Bytes per element
-- [x] 11.1.8: `$array->nbytes()` - Total bytes in array/view
-- [x] 11.1.9: `$array->intoBuffer($buffer, $maxElements = null)` - Bulk copy to caller C buffer
-- [x] 11.1.10: `$array->toBytes()` - Raw bytes in C-order
+- [x] 11.1.3: `$array->toScalar()` - Convert 0-d array to scalar
+- [x] 11.1.4: Automatic type inference from PHP arrays
+- [x] 11.1.5: `$array->itemsize()` - Bytes per element
+- [x] 11.1.6: `$array->nbytes()` - Total bytes in array/view
+- [x] 11.1.7: `$array->intoBuffer($buffer, $maxElements = null)` - Bulk copy to caller C buffer
+- [x] 11.1.8: `$array->toBytes()` - Raw bytes in C-order
 
 ### 11.2 Serialization (REQ-11.2)
 **Priority**: MEDIUM

@@ -129,6 +129,54 @@ print_r($arr->toArray());
 // Output: [[100, 2, 3], [4, 5, 300]]
 ```
 
+---
+
+## getAt()
+
+```php
+public function getAt(int $flatIndex): bool|float|int
+```
+
+Get a scalar value using a logical flat index (C-order) for this array/view.
+
+Supports negative indices: -1 refers to the last logical element.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$flatIndex` | `int` | Logical flat index into this array/view. |
+
+### Returns
+
+- `bool|float|int` - The value at the specified flat index.
+
+### Raises
+
+- `IndexException` - If flat index is out of bounds.
+
+### Examples
+
+```php
+$arr = NDArray::array([[1, 2, 3], [4, 5, 6]]);
+
+// Get using flat index (C-order)
+echo $arr->getAt(0);   // 1
+echo $arr->getAt(3);   // 4
+echo $arr->getAt(5);   // 6
+
+// With negative index
+echo $arr->getAt(-1);  // 6 (last element)
+echo $arr->getAt(-3);  // 4 (third from last)
+```
+
+### See Also
+
+- [setAt()](#setat) - Set value at flat index
+- [flat()](/api/array-creation#ndarrayflat) - Iterator for flat access
+
+---
+
 ## take()
 
 ```php

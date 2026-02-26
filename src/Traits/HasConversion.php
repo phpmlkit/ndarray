@@ -28,7 +28,7 @@ trait HasConversion
 
         $ffi = Lib::get();
         $buffer = $ffi->new("uint8_t[{$nbytes}]");
-        $this->intoBuffer($buffer, $this->size);
+        $this->intoBuffer($buffer, 0, $this->size);
 
         return \FFI::string($buffer, $nbytes);
     }
@@ -63,22 +63,6 @@ trait HasConversion
     }
 
     /**
-     * Convert to flat PHP data in C-order.
-     *
-     * For 0-dimensional arrays, returns a scalar.
-     *
-     * @return array<bool|float|int>|bool|float|int
-     */
-    public function toFlatArray(): array|bool|float|int
-    {
-        if (0 === $this->ndim()) {
-            return $this->toScalar();
-        }
-
-        return $this->getFlatData();
-    }
-
-    /**
      * Convert to nested PHP array shape.
      *
      * Uses flat typed extraction from Rust + iterative nesting in PHP.
@@ -91,7 +75,7 @@ trait HasConversion
             return $this->toScalar();
         }
 
-        $flat = $this->getFlatData();
+        $flat = $this->getData(0, $this->size);
         if (1 === $this->ndim()) {
             return $flat;
         }
@@ -157,23 +141,16 @@ trait HasConversion
     /**
      * Copy flattened C-order data into a caller-allocated C buffer.
      *
-     * @param CData    $buffer      Destination typed C buffer
-     * @param null|int $maxElements Maximum elements the destination can hold
+     * @param CData    $buffer Destination typed C buffer
+     * @param int      $start  Starting element offset (0-indexed)
+     * @param int      $len    Number of elements to copy
      *
      * @return int Number of elements copied
      */
-    public function intoBuffer(CData $buffer, ?int $maxElements = null): int
+    public function intoBuffer(CData $buffer, int $start, int $len): int
     {
-        $size = $this->size;
-        if (0 === $size) {
+        if (0 === $len) {
             return 0;
-        }
-
-        $maxElements ??= $size;
-        if ($maxElements < $size) {
-            throw new ShapeException(
-                "Destination buffer too small: requires {$size} elements, got {$maxElements}"
-            );
         }
 
         $ffi = Lib::get();
@@ -183,33 +160,38 @@ trait HasConversion
         $status = $ffi->ndarray_get_data(
             $this->handle,
             Lib::addr($meta),
+            $start,
+            $len,
             $buffer,
-            $maxElements,
             Lib::addr($outLen),
         );
 
         Lib::checkStatus($status);
 
-        return (int) min((int) $outLen->cdata, $maxElements);
+        return (int) $outLen->cdata;
     }
 
     /**
-     * Fetch flattened view data from Rust using a single FFI call.
+     * Fetch a range of flattened view data from Rust.
+     *
+     * @param int $start Starting element offset (0-indexed)
+     * @param int $len   Number of elements to fetch
      *
      * @return array<bool|float|int>
      */
-    private function getFlatData(): array
+    public function getData(int $start, int $len): array
     {
-        $size = $this->size;
-        $allocLen = max(1, $size);
+        if ($len <= 0) {
+            return [];
+        }
 
-        $buffer = $this->dtype->createCArray($allocLen);
+        $buffer = $this->dtype->createCArray($len);
 
-        $len = $this->intoBuffer($buffer, $size);
+        $actualLen = $this->intoBuffer($buffer, $start, $len);
 
         $out = [];
 
-        for ($i = 0; $i < $len; ++$i) {
+        for ($i = 0; $i < $actualLen; ++$i) {
             $out[] = $this->dtype->castFromCValue($buffer[$i]);
         }
 

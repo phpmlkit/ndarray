@@ -71,7 +71,7 @@ interface Bindings
 
     public function ndarray_as_scalar(CData $handle, CData $meta, CData $out_value): int;
 
-    public function ndarray_get_data(CData $handle, CData $meta, CData $out_data, int $max_len, CData $out_len): int;
+    public function ndarray_get_data(CData $handle, CData $meta, int $start, int $len, CData $out_data, CData $out_len): int;
 
     public function ndarray_take(CData $handle, CData $meta, CData $indices_handle, CData $indices_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
