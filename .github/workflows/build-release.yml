@@ -9,260 +9,90 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-linux-x86_64:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Build
-        run: |
-          cd rust
-          cargo build --release
-      
-      - name: Prepare artifact
-        run: |
-          VERSION=$(grep '^version' rust/Cargo.toml | head -1 | cut -d'"' -f2)
-          PLATFORM="linux-x86_64"
-          mkdir -p "lib/${PLATFORM}"
-          cp "rust/target/release/libndarray_php.so" "lib/${PLATFORM}/libndarray_php.so.${VERSION}"
-      
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: linux-x86_64
-          path: |
-            lib/linux-x86_64/
-            include/
+  build:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x86_64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+          - platform: darwin-x86_64
+            runner: macos-15-intel
+          - platform: darwin-arm64
+            runner: macos-latest
+          - platform: windows-64
+            runner: windows-latest
 
-  build-linux-arm64:
-    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
       
-      - name: Build
-        run: |
-          cd rust
-          cargo build --release
-      
-      - name: Prepare artifact
-        run: |
-          VERSION=$(grep '^version' rust/Cargo.toml | head -1 | cut -d'"' -f2)
-          PLATFORM="linux-arm64"
-          mkdir -p "lib/${PLATFORM}"
-          cp "rust/target/release/libndarray_php.so" "lib/${PLATFORM}/libndarray_php.so.${VERSION}"
-      
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: linux-arm64
-          path: |
-            lib/linux-arm64/
-            include/
-
-  build-darwin-x86_64:
-    runs-on: macos-15-intel
-    steps:
-      - uses: actions/checkout@v6
-      
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Build
-        run: |
-          cd rust
-          cargo build --release
-      
-      - name: Prepare artifact
-        run: |
-          VERSION=$(grep '^version' rust/Cargo.toml | head -1 | cut -d'"' -f2)
-          PLATFORM="darwin-x86_64"
-          mkdir -p "lib/${PLATFORM}"
-          cp "rust/target/release/libndarray_php.dylib" "lib/${PLATFORM}/libndarray_php-${VERSION}.dylib"
-      
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: darwin-x86_64
-          path: |
-            lib/darwin-x86_64/
-            include/
-
-  build-darwin-arm64:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v6
-      
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Build
-        run: |
-          cd rust
-          cargo build --release
-      
-      - name: Prepare artifact
-        run: |
-          VERSION=$(grep '^version' rust/Cargo.toml | head -1 | cut -d'"' -f2)
-          PLATFORM="darwin-arm64"
-          mkdir -p "lib/${PLATFORM}"
-          cp "rust/target/release/libndarray_php.dylib" "lib/${PLATFORM}/libndarray_php-${VERSION}.dylib"
-      
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: darwin-arm64
-          path: |
-            lib/darwin-arm64/
-            include/
-
-  build-windows-64:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v6
-      
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Build
-        run: |
-          cd rust
-          cargo build --release
-      
-      - name: Prepare artifact
+      - name: Build library
         shell: bash
-        run: |
-          VERSION=$(grep '^version' rust/Cargo.toml | head -1 | cut -d'"' -f2)
-          PLATFORM="windows-64"
-          mkdir -p "lib/${PLATFORM}"
-          cp "rust/target/release/ndarray_php.dll" "lib/${PLATFORM}/ndarray_php-${VERSION}.dll"
+        run: ./scripts/build.sh release
       
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: windows-64
+          name: ${{ matrix.platform }}
           path: |
-            lib/windows-64/
+            lib/${{ matrix.platform}}/
             include/
 
   assemble-and-release:
-    needs: [build-linux-x86_64, build-linux-arm64, build-darwin-x86_64, build-darwin-arm64, build-windows-64]
+    needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [linux-x86_64, linux-arm64, darwin-x86_64, darwin-arm64, windows-64]
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
       
-      - name: Install yq
-        run: |
-          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
-          chmod +x /usr/local/bin/yq
-      
-      - name: Download all artifacts
+      - name: Download artifact for ${{ matrix.platform }}
         uses: actions/download-artifact@v7
         with:
-          path: artifacts
-          merge-multiple: false
+          name: ${{ matrix.platform }}
+          path: .
       
-      - name: Organize artifacts into lib directories
+      - name: Create platform distribution for ${{ matrix.platform }}
         run: |
-          # Create lib directories and place artifacts correctly
-          for platform in linux-x86_64 linux-arm64 darwin-x86_64 darwin-arm64 windows-64; do
-            mkdir -p "lib/${platform}"
-            if [ -d "artifacts/${platform}/lib/${platform}" ]; then
-              cp -r "artifacts/${platform}/lib/${platform}/"* "lib/${platform}/"
-            fi
-          done
+          PLATFORM="${{ matrix.platform }}"
+          DIST_DIR="dist-${PLATFORM}"
           
-          # Copy header (same for all platforms)
-          mkdir -p include
-          if [ -d "artifacts/linux-x86_64/include" ]; then
-            cp "artifacts/linux-x86_64/include/"* include/
-          fi
+          # Create distribution directory with repo contents (excluding git)
+          mkdir -p "${DIST_DIR}"
           
-          echo "Artifacts organized:"
-          ls -la lib/*/
-          ls -la include/
-      
-      - name: Create platform distribution archives
-        run: |
-          # Prepare base exclusion list
-          if [ -f ".gitignore" ]; then
-            cp .gitignore rsync_exclude.txt
+          # Copy all files except .git and dist directory itself
+          find . -maxdepth 1 -not -path "./.git" -not -path "." -not -path "./${DIST_DIR}" -exec cp -r {} "${DIST_DIR}/" \;
+          
+          # Create archive
+          if [ "${PLATFORM}" = "windows-64" ]; then
+            zip -r "dist-${PLATFORM}.zip" "${DIST_DIR}"
           else
-            touch rsync_exclude.txt
+            tar -czf "dist-${PLATFORM}.tar.gz" "${DIST_DIR}"
           fi
-          
-          # Add standard exclusions
-          echo "" >> rsync_exclude.txt
-          echo ".git" >> rsync_exclude.txt
-          echo ".github" >> rsync_exclude.txt
-          echo "rsync_exclude.txt" >> rsync_exclude.txt
-          echo "artifacts" >> rsync_exclude.txt
-          
-          # Create distribution for each platform
-          for platform in linux-x86_64 linux-arm64 darwin-x86_64 darwin-arm64 windows-64; do
-            echo "Creating distribution for ${platform}..."
-            
-            # Create distribution directory
-            DIST_DIR="dist-${platform}"
-            mkdir -p "${DIST_DIR}"
-            
-            # Add platform-specific exclusions from platforms.yml
-            PLATFORM_EXCLUDE_FILE="rsync_exclude_${platform}.txt"
-            cp rsync_exclude.txt "${PLATFORM_EXCLUDE_FILE}"
-            
-            # Add exclusions from platforms.yml if they exist
-            if [ -f "platforms.yml" ]; then
-              yq e ".\"${platform}\".exclude[]" platforms.yml 2>/dev/null >> "${PLATFORM_EXCLUDE_FILE}" || true
-            fi
-            
-            # Copy repo contents with exclusions
-            rsync -av --exclude-from="${PLATFORM_EXCLUDE_FILE}" ./ "${DIST_DIR}/"
-            
-            # Verify the structure
-            echo "Contents of ${DIST_DIR}/lib:"
-            ls -la "${DIST_DIR}/lib/" 2>/dev/null || echo "No lib directory"
-            
-            # Create archive
-            if [ "${platform}" = "windows-64" ]; then
-              zip -r "dist-${platform}.zip" "${DIST_DIR}"
-            else
-              tar -czf "dist-${platform}.tar.gz" "${DIST_DIR}"
-            fi
-            
-            # Clean up
-            rm -rf "${DIST_DIR}" "${PLATFORM_EXCLUDE_FILE}"
-            
-            echo "Created dist-${platform}.tar.gz (or .zip for Windows)"
-          done
           
           # Clean up
-          rm -f rsync_exclude.txt
+          rm -rf "${DIST_DIR}"
           
-          echo "All distributions created:"
-          ls -lh dist-*.*
+          echo "Created dist-${PLATFORM} archive"
       
       - name: Upload to Artifact Hub
         uses: actions/upload-artifact@v4
         with:
-          name: platform-distributions
-          path: |
-            dist-*.tar.gz
-            dist-*.zip
-          retention-days: 7
+          name: dist-${{ matrix.platform }}
+          path: dist-${{ matrix.platform }}.*
+          retention-days: 1
       
-      - name: Upload release assets
+      - name: Upload to Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist-*.tar.gz
-            dist-*.zip
+          files: dist-${{ matrix.platform }}.*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
