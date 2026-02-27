@@ -37,9 +37,8 @@ jobs:
             lib/linux-x86_64/
             include/
 
-  # Build on Linux ARM64
   build-linux-arm64:
-    runs-on: ubuntu-24.04-arm  # Native ARM64 runner
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
       
@@ -66,9 +65,8 @@ jobs:
             lib/linux-arm64/
             include/
 
-  # Build on macOS x86_64 (Intel)
   build-darwin-x86_64:
-    runs-on: macos-15-intel  # Intel runner
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v6
       
@@ -95,9 +93,8 @@ jobs:
             lib/darwin-x86_64/
             include/
 
-  # Build on macOS ARM64 (Apple Silicon)
   build-darwin-arm64:
-    runs-on: macos-latest  # ARM64 runner
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
       
@@ -124,7 +121,6 @@ jobs:
             lib/darwin-arm64/
             include/
 
-  # Build on Windows x64
   build-windows-64:
     runs-on: windows-latest
     steps:
@@ -154,46 +150,115 @@ jobs:
             lib/windows-64/
             include/
 
-  # Assemble and release
   assemble-and-release:
     needs: [build-linux-x86_64, build-linux-arm64, build-darwin-x86_64, build-darwin-arm64, build-windows-64]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
       
       - name: Download all artifacts
         uses: actions/download-artifact@v7
         with:
           path: artifacts
+          merge-multiple: false
       
-      - name: Assemble platform archives
+      - name: Organize artifacts into lib directories
         run: |
-          VERSION=${{ github.event.release.tag_name }}
-          
-          # Create distribution archives for each platform
+          # Create lib directories and place artifacts correctly
           for platform in linux-x86_64 linux-arm64 darwin-x86_64 darwin-arm64 windows-64; do
-            mkdir -p "dist/lib/${platform}"
-            mkdir -p "dist/include"
+            mkdir -p "lib/${platform}"
+            if [ -d "artifacts/${platform}/lib/${platform}" ]; then
+              cp -r "artifacts/${platform}/lib/${platform}/"* "lib/${platform}/"
+            fi
+          done
+          
+          # Copy header (same for all platforms)
+          mkdir -p include
+          if [ -d "artifacts/linux-x86_64/include" ]; then
+            cp "artifacts/linux-x86_64/include/"* include/
+          fi
+          
+          echo "Artifacts organized:"
+          ls -la lib/*/
+          ls -la include/
+      
+      - name: Create platform distribution archives
+        run: |
+          # Prepare base exclusion list
+          if [ -f ".gitignore" ]; then
+            cp .gitignore rsync_exclude.txt
+          else
+            touch rsync_exclude.txt
+          fi
+          
+          # Add standard exclusions
+          echo "" >> rsync_exclude.txt
+          echo ".git" >> rsync_exclude.txt
+          echo ".github" >> rsync_exclude.txt
+          echo "rsync_exclude.txt" >> rsync_exclude.txt
+          echo "artifacts" >> rsync_exclude.txt
+          
+          # Create distribution for each platform
+          for platform in linux-x86_64 linux-arm64 darwin-x86_64 darwin-arm64 windows-64; do
+            echo "Creating distribution for ${platform}..."
             
-            # Copy platform-specific library
-            cp -r "artifacts/${platform}/lib/${platform}/"* "dist/lib/${platform}/"
+            # Create distribution directory
+            DIST_DIR="dist-${platform}"
+            mkdir -p "${DIST_DIR}"
             
-            # Copy header (same for all)
-            cp "artifacts/${platform}/include/ndarray_php.h" "dist/include/"
+            # Add platform-specific exclusions from platforms.yml
+            PLATFORM_EXCLUDE_FILE="rsync_exclude_${platform}.txt"
+            cp rsync_exclude.txt "${PLATFORM_EXCLUDE_FILE}"
             
-            # Create archive
-            if [ "$platform" = "windows-64" ]; then
-              cd dist && zip -r "../dist-${platform}.zip" lib/ include/ && cd ..
-            else
-              cd dist && tar -czf "../dist-${platform}.tar.gz" lib/ include/ && cd ..
+            # Add exclusions from platforms.yml if they exist
+            if [ -f "platforms.yml" ]; then
+              yq e ".\"${platform}\".exclude[]" platforms.yml 2>/dev/null >> "${PLATFORM_EXCLUDE_FILE}" || true
             fi
             
-            # Clean up for next platform
-            rm -rf dist/lib/${platform}/*
+            # Copy repo contents with exclusions
+            rsync -av --exclude-from="${PLATFORM_EXCLUDE_FILE}" ./ "${DIST_DIR}/"
+            
+            # Verify the structure
+            echo "Contents of ${DIST_DIR}/lib:"
+            ls -la "${DIST_DIR}/lib/" 2>/dev/null || echo "No lib directory"
+            
+            # Create archive
+            if [ "${platform}" = "windows-64" ]; then
+              zip -r "dist-${platform}.zip" "${DIST_DIR}"
+            else
+              tar -czf "dist-${platform}.tar.gz" "${DIST_DIR}"
+            fi
+            
+            # Clean up
+            rm -rf "${DIST_DIR}" "${PLATFORM_EXCLUDE_FILE}"
+            
+            echo "Created dist-${platform}.tar.gz (or .zip for Windows)"
           done
+          
+          # Clean up
+          rm -f rsync_exclude.txt
+          
+          echo "All distributions created:"
+          ls -lh dist-*.*
+      
+      - name: Upload to Artifact Hub
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-distributions
+          path: |
+            dist-*.tar.gz
+            dist-*.zip
+          retention-days: 7
       
       - name: Upload release assets
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: |
