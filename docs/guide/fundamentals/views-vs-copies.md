@@ -531,7 +531,5 @@ Mastering views vs copies is the key to writing efficient NDArray code!
 
 ## Next Steps
 
-- **[Indexing](/guide/fundamentals/indexing)** - Detailed indexing patterns
-- **[Slicing](/guide/fundamentals/slicing)** - Working with ranges
+- **[Indexing and Slicing](/guide/fundamentals/indexing-and-slicing)** - Detailed indexing and slicing patterns
 - **[Performance](/guide/advanced/performance)** - Optimization techniques
-- **[Examples](/examples/basics/working-with-views)** - Practical view patterns

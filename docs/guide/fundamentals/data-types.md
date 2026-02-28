@@ -313,6 +313,6 @@ $activated = $hidden->sigmoid();
 
 ## Next Steps
 
-- **[Indexing](/guide/fundamentals/indexing)** - Access array elements
+- **[Indexing and Slicing](/guide/fundamentals/indexing-and-slicing)** - Access array elements
 - **[Views vs Copies](/guide/fundamentals/views-vs-copies)** - Understanding memory
 - **[Performance](/guide/advanced/performance)** - Type optimization tips

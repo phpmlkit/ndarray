@@ -197,6 +197,4 @@ However, if you need to use a broadcasted array multiple times, consider explici
 
 ## See Also
 
-- **[Arithmetic Operations](/guide/operations/arithmetic)** - Element-wise operations with broadcasting
-- **[Shape Manipulation](/guide/operations/shape-manipulation)** - Reshaping arrays for broadcasting
 - **[NDArray Class](/api/ndarray-class)** - Check array shapes with `shape()`

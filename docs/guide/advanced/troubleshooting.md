@@ -378,7 +378,6 @@ echo "Memory used: {$usedMB} MB\n";
 If you encounter an issue not covered here:
 
 1. Check the [API Reference](/api/) for correct method signatures
-2. Review the [Examples](/examples/) for usage patterns
 3. Check your data types and shapes carefully
 4. Enable all error reporting to see full stack traces
 

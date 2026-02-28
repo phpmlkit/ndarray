@@ -362,7 +362,7 @@ $slice = $arr['0:5'];
 
 Now that you know the basics:
 
-- **[Arrays](/guide/fundamentals/arrays)** - Deep dive into array concepts
+- **[Understanding Arrays](/guide/fundamentals/understanding-arrays)** - Deep dive into array concepts
 - **[Views vs Copies](/guide/fundamentals/views-vs-copies)** - Critical for performance
 - **[NumPy Migration](/guide/getting-started/numpy-migration)** - If coming from Python
 - **[API Reference](/api/ndarray-class)** - Complete method listing

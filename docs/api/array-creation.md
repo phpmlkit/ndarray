@@ -56,7 +56,7 @@ echo $mixed->dtype()->name;  // Float64
 
 **See Also:**
 - [Data Types](/guide/fundamentals/data-types)
-- [Array Creation Guide](/guide/operations/creation)
+- [Understanding Arrays](/guide/fundamentals/understanding-arrays)
 
 ---
 
@@ -315,7 +315,6 @@ echo $lower;
 
 **See Also:**
 - [diagonal()](/api/linear-algebra#diagonal)
-- [Linear Algebra Guide](/guide/operations/linear-algebra)
 
 ---
 
@@ -690,5 +689,4 @@ print_r($ints->toArray());  // [1, 2, 3]
 ## Next Steps
 
 - [NDArray Class](/api/ndarray-class)
-- [Array Creation Guide](/guide/operations/creation)
 - [Data Types](/guide/fundamentals/data-types)
