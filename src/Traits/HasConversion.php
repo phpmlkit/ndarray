@@ -141,15 +141,19 @@ trait HasConversion
     /**
      * Copy flattened C-order data into a caller-allocated C buffer.
      *
-     * @param CData $buffer Destination typed C buffer
-     * @param int   $start  Starting element offset (0-indexed)
-     * @param int   $len    Number of elements to copy
+     * @param CData    $buffer Destination typed C buffer
+     * @param int      $start  Starting element offset (0-indexed). Default: 0
+     * @param null|int $len    Number of elements to copy. Default: null (copy remaining elements)
      *
      * @return int Number of elements copied
      */
-    public function intoBuffer(CData $buffer, int $start, int $len): int
+    public function intoBuffer(CData $buffer, int $start = 0, ?int $len = null): int
     {
-        if (0 === $len) {
+        if (null === $len) {
+            $len = $this->size - $start;
+        }
+
+        if (0 === $len || $len < 0) {
             return 0;
         }
 

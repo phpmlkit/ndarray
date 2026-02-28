@@ -100,6 +100,58 @@ $zeros = NDArray::zeros([10], DType::Int32);
 
 ---
 
+## NDArray::fromBuffer()
+
+Create an array from an external C buffer pointer.
+
+```php
+public static function fromBuffer(
+    CData $buffer,
+    array $shape,
+    DType $dtype
+): self
+```
+
+Creates an NDArray by copying data from an external FFI buffer. The source buffer remains owned by the caller — this method creates an independent copy.
+
+**Parameters:**
+- `CData $buffer` - Pointer to raw C data buffer (e.g., `float*`, `int16_t*`)
+- `array $shape` - Array shape dimensions
+- `DType $dtype` - Data type of the buffer elements
+
+**Returns:** NDArray containing a copy of the buffer data
+
+**Throws:**
+- `ShapeException` - If shape has zero or negative dimensions
+
+**Examples:**
+
+```php
+$sndfile = FFI::cdef("...", "libsndfile.dylib");
+$buffer = $sndfile->sf_readf_float($file, $samples);
+
+$audio = NDArray::fromBuffer($buffer, [44100, 2], DType::Float32);
+
+$sndfile->free($buffer);
+```
+
+**Notes:**
+- Buffer must remain valid during the copy operation
+- Returns a standard NDArray that can be used like any other
+- No reference to original buffer is retained
+
+::: danger WARNING: Low-Level Operation
+This is a low-level FFI operation with no safety guards:
+
+- **Type must match exactly** — Passing `DType::Float32` with an `int*` buffer will read garbage values. No conversion is performed.
+- **Size must match exactly** — Buffer should contain exactly `array_product($shape)` elements. Undefined behavior if size mismatches.
+- **Buffer validity is your responsibility** — Pass a dangling pointer and you'll get an undefined behavior.
+
+Verify your buffer matches both the type and size before calling.
+:::
+
+---
+
 ## NDArray::ones()
 
 Create an array filled with ones.

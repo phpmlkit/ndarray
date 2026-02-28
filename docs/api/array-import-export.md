@@ -95,7 +95,7 @@ $bytes = $arr->toBytes();
 Copy flattened C-order data into a caller-allocated C buffer.
 
 ```php
-public function intoBuffer(CData $buffer, ?int $maxElements = null): int
+public function intoBuffer(CData $buffer, int $start = 0, ?int $len = null): int
 ```
 
 ### Parameters
@@ -103,7 +103,8 @@ public function intoBuffer(CData $buffer, ?int $maxElements = null): int
 | Name | Type | Description |
 |------|------|-------------|
 | `$buffer` | `CData` | Destination typed C buffer (FFI) |
-| `$maxElements` | `int\|null` | Maximum elements the destination can hold. Default: full size |
+| `$start` | `int` | Starting element offset (0-indexed). Default: 0 |
+| `$len` | `int\|null` | Number of elements to copy. Default: null (copy to end) |
 
 ### Returns
 
@@ -112,11 +113,23 @@ public function intoBuffer(CData $buffer, ?int $maxElements = null): int
 ### Examples
 
 ```php
-$arr = NDArray::array([1.0, 2.0, 3.0]);
+$arr = NDArray::array([1.0, 2.0, 3.0, 4.0, 5.0]);
 $ffi = \PhpMlKit\NDArray\FFI\Lib::get();
-$buffer = $ffi->new('double[3]');
+$buffer = $ffi->new('double[5]');
+
+// Copy all elements
 $n = $arr->intoBuffer($buffer);
-// $n === 3
+// $n === 5
+
+// Copy from offset
+$buffer = $ffi->new('double[3]');
+$n = $arr->intoBuffer($buffer, 2);  // Start at index 2
+// $n === 3 (elements 2, 3, 4)
+
+// Copy with explicit length
+$buffer = $ffi->new('double[2]');
+$n = $arr->intoBuffer($buffer, 1, 2);  // Start at 1, copy 2 elements
+// $n === 2 (elements 1, 2)
 ```
 
 ---

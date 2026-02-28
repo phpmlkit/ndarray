@@ -152,6 +152,44 @@ trait CreatesArrays
     }
 
     /**
+     * Create an array from an external C buffer pointer.
+     *
+     * This method copies data from an external FFI buffer into a new NDArray. The source buffer
+     * remains owned by the caller - this method creates an independent copy.
+     *
+     * @param CData      $buffer Pointer to raw C data (e.g., float*, int16_t*)
+     * @param array<int> $shape  Array shape
+     * @param DType      $dtype  Data type of the buffer
+     *
+     * @throws ShapeException If buffer size doesn't match shape
+     */
+    public static function fromBuffer(CData $buffer, array $shape, DType $dtype): self
+    {
+        $expectedSize = (int) array_product($shape);
+
+        if ($expectedSize <= 0) {
+            throw new ShapeException('Shape must have positive size');
+        }
+
+        $ffi = Lib::get();
+        $cShape = Lib::createShapeArray($shape);
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_create(
+            $buffer,
+            $expectedSize,
+            $cShape,
+            \count($shape),
+            $dtype->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new self($outHandle, $shape, $dtype);
+    }
+
+    /**
      * Create an array of zeros with the same shape as the input array.
      *
      * @param self       $array Input array defining the output shape

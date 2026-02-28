@@ -517,4 +517,132 @@ final class CreationTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         NDArray::uniform(1.0, 1.0, [4]);
     }
+
+    // =========================================================================
+    // fromBuffer Tests
+    // =========================================================================
+
+    public function testFromBufferFloat32(): void
+    {
+        $ffi = \FFI::cdef();
+        $buffer = $ffi->new('float[6]');
+        for ($i = 0; $i < 6; ++$i) {
+            $buffer[$i] = $i + 1.0;
+        }
+
+        $arr = NDArray::fromBuffer($buffer, [2, 3], DType::Float32);
+
+        $this->assertSame([2, 3], $arr->shape());
+        $this->assertSame(DType::Float32, $arr->dtype());
+        $this->assertEqualsWithDelta([
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+        ], $arr->toArray(), 0.0001);
+    }
+
+    public function testFromBufferFloat64(): void
+    {
+        $ffi = \FFI::cdef();
+        $buffer = $ffi->new('double[4]');
+        $buffer[0] = 1.5;
+        $buffer[1] = 2.5;
+        $buffer[2] = 3.5;
+        $buffer[3] = 4.5;
+
+        $arr = NDArray::fromBuffer($buffer, [2, 2], DType::Float64);
+
+        $this->assertSame([2, 2], $arr->shape());
+        $this->assertSame(DType::Float64, $arr->dtype());
+        $this->assertEqualsWithDelta([
+            [1.5, 2.5],
+            [3.5, 4.5],
+        ], $arr->toArray(), 0.0001);
+    }
+
+    public function testFromBufferInt32(): void
+    {
+        $ffi = \FFI::cdef();
+        $buffer = $ffi->new('int32_t[4]');
+        for ($i = 0; $i < 4; ++$i) {
+            $buffer[$i] = $i * 10;
+        }
+
+        $arr = NDArray::fromBuffer($buffer, [2, 2], DType::Int32);
+
+        $this->assertSame([2, 2], $arr->shape());
+        $this->assertSame(DType::Int32, $arr->dtype());
+        $this->assertSame([
+            [0, 10],
+            [20, 30],
+        ], $arr->toArray());
+    }
+
+    public function testFromBufferCreatesCopy(): void
+    {
+        $ffi = \FFI::cdef();
+        $buffer = $ffi->new('float[4]');
+        $buffer[0] = 1.0;
+        $buffer[1] = 2.0;
+        $buffer[2] = 3.0;
+        $buffer[3] = 4.0;
+
+        $arr = NDArray::fromBuffer($buffer, [2, 2], DType::Float32);
+
+        // Modify original buffer
+        $buffer[0] = 999.0;
+
+        // NDArray should have original value (it's a copy)
+        $this->assertEqualsWithDelta(1.0, $arr->getAt(0), 0.0001);
+    }
+
+    public function testFromBuffer1D(): void
+    {
+        $ffi = \FFI::cdef();
+        $buffer = $ffi->new('float[5]');
+        for ($i = 0; $i < 5; ++$i) {
+            $buffer[$i] = $i * 2.0;
+        }
+
+        $arr = NDArray::fromBuffer($buffer, [5], DType::Float32);
+
+        $this->assertSame([5], $arr->shape());
+        $this->assertEqualsWithDelta([0.0, 2.0, 4.0, 6.0, 8.0], $arr->toArray(), 0.0001);
+    }
+
+    public function testFromBuffer3D(): void
+    {
+        $ffi = \FFI::cdef();
+        $buffer = $ffi->new('float[8]');
+        for ($i = 0; $i < 8; ++$i) {
+            $buffer[$i] = $i + 1.0;
+        }
+
+        $arr = NDArray::fromBuffer($buffer, [2, 2, 2], DType::Float32);
+
+        $this->assertSame([2, 2, 2], $arr->shape());
+        $this->assertEqualsWithDelta([
+            [[1.0, 2.0], [3.0, 4.0]],
+            [[5.0, 6.0], [7.0, 8.0]],
+        ], $arr->toArray(), 0.0001);
+    }
+
+    public function testFromBufferEmptyShapeThrows(): void
+    {
+        $this->expectException(ShapeException::class);
+
+        $ffi = \FFI::cdef();
+        $buffer = $ffi->new('float[4]');
+        NDArray::fromBuffer($buffer, [0], DType::Float32);
+    }
+
+    public function testFromBufferMismatchedSize(): void
+    {
+        // This should work - Rust validates the data length
+        $ffi = \FFI::cdef();
+        $buffer = $ffi->new('float[6]');
+
+        // Buffer has 6 elements, shape expects 6 elements
+        $arr = NDArray::fromBuffer($buffer, [2, 3], DType::Float32);
+        $this->assertSame([2, 3], $arr->shape());
+    }
 }

@@ -56,6 +56,19 @@ $identity = NDArray::eye(3);  // 3x3 identity matrix
 //  [0. 0. 1.]]
 ```
 
+### From External Buffers
+
+You can also create an NDArray directly from a C buffer pointer without intermediate PHP arrays:
+
+```php
+$sndfile = FFI::cdef("...", "libsndfile.dylib");
+$buffer = $sndfile->sf_readf_float($file, $samples);
+
+$audio = NDArray::fromBuffer($buffer, [44100, 2], DType::Float32);
+
+$sndfile->free($buffer);
+```
+
 ### Sequences and Ranges
 
 ```php
