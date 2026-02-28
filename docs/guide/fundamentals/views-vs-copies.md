@@ -63,15 +63,18 @@ $copy = $arr->copy();  // Deep copy
 
 Views are created by operations that **access** or **reference** data without modifying it:
 
-| Operation        | Example                  | Memory Impact         |
+| Operation        | Example                 | Memory Impact         |
 |------------------|-------------------------|-----------------------|
-| Slicing          | `$arr[0:5]`             | No copy (O(1))        |
 | Indexing         | `$arr[0]`               | No copy (O(1))        |
-| Transpose        | `$arr->transpose()`      | No copy if contiguous |
+| Slicing          | `$arr['0:5']`           | No copy (O(1))        |
+| Transpose        | `$arr->transpose()`     | No copy if contiguous |
 | Reshape          | `$arr->reshape([3,4])`  | No copy if contiguous |
-| expandDims       | `$arr->expandDims(0)`   | No copy (O(1))        |
-| squeeze          | `$arr->squeeze()`       | No copy (O(1))        |
-| ravel            | `$arr->ravel()`         | No copy if contiguous |
+| Expand Dims      | `$arr->expandDims(0)`   | No copy (O(1))        |
+| Insert Axis      | `$arr->insertaxis(0)`   | No copy (O(1))        |
+| Squeeze          | `$arr->squeeze()`       | No copy (O(1))        |
+| Ravel            | `$arr->ravel()`         | No copy if contiguous |
+| Merge Axes       | `$arr->mergeaxes(0, 1)` | No copy (O(1))        |
+| Swap Axes        | `$arr->swapaxes(0, 1)`  | No copy (O(1))        |
 
 ### Slicing Returns Views
 
@@ -507,6 +510,7 @@ function safeModify(NDArray $arr): NDArray {
 | `$arr->abs()` | Copy | No |
 | `$arr->transpose()` | View | Yes (if modified) |
 | `$arr->reshape([...])` | View* | Yes (if modified) |
+| `$arr->mergeaxes(0, 1)` | View | Yes (if modified) |
 | `$arr->astype(...)` | Copy | No |
 | `$arr->add($b)` | Copy | No |
 | `$arr->set([0,0], 5)` | N/A | Yes |

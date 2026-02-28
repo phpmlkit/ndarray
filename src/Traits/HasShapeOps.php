@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
-use PhpMlKit\NDArray\DType;
-use PhpMlKit\NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
@@ -68,7 +66,7 @@ trait HasShapeOps
 
         if ($oldSize !== $newSize) {
             throw new ShapeException(
-                "Cannot reshape array of size {$oldSize} into shape ".json_encode($newShape)." with size {$newSize}"
+                "Cannot reshape array of size {$oldSize} into shape " . json_encode($newShape) . " with size {$newSize}"
             );
         }
 
@@ -166,12 +164,60 @@ trait HasShapeOps
     /**
      * Swap two axes of the array.
      *
+     * This is a zero-copy operation that returns a view with swapped
+     * shape and stride metadata. The underlying data is shared.
+     *
      * @param int $axis1 First axis to swap
      * @param int $axis2 Second axis to swap
      */
     public function swapaxes(int $axis1, int $axis2): NDArray
     {
-        return $this->unaryOp('ndarray_swap', $axis1, $axis2);
+        $ndim = $this->ndim();
+
+        // Normalize negative indices
+        if ($axis1 < 0) {
+            $axis1 += $ndim;
+        }
+        if ($axis2 < 0) {
+            $axis2 += $ndim;
+        }
+
+        // Validate indices
+        if ($axis1 < 0 || $axis1 >= $ndim) {
+            throw new ShapeException("Axis {$axis1} is out of bounds for array with {$ndim} dimensions");
+        }
+        if ($axis2 < 0 || $axis2 >= $ndim) {
+            throw new ShapeException("Axis {$axis2} is out of bounds for array with {$ndim} dimensions");
+        }
+
+        // No change needed if axes are the same
+        if ($axis1 === $axis2) {
+            return $this;
+        }
+
+        // Swap shape and strides
+        $newShape = $this->shape();
+        $newStrides = $this->strides();
+
+        $tempShape = $newShape[$axis1];
+        $newShape[$axis1] = $newShape[$axis2];
+        $newShape[$axis2] = $tempShape;
+
+        $tempStride = $newStrides[$axis1];
+        $newStrides[$axis1] = $newStrides[$axis2];
+        $newStrides[$axis2] = $tempStride;
+
+        // Return view
+        $root = $this->base ?? $this;
+
+        return new self(
+            handle: $this->handle,
+            shape: $newShape,
+            dtype: $this->dtype,
+            strides: $newStrides,
+            offset: $this->getOffset(),
+            base: $root,
+        );
     }
 
     /**
@@ -185,7 +231,7 @@ trait HasShapeOps
     public function permute(int ...$axes): NDArray
     {
         if (\count($axes) !== $this->ndim()) {
-            throw new ShapeException("permute requires {$this->ndim()} axes, got ".\count($axes));
+            throw new ShapeException("permute requires {$this->ndim()} axes, got " . \count($axes));
         }
 
         $normalizedAxes = [];
@@ -211,14 +257,66 @@ trait HasShapeOps
     /**
      * Merge axes by combining take into into.
      *
-     * If possible, merge in the axis take to into. Returns the merged array.
+     * Merges the axis 'take' into axis 'into' by folding the dimensions.
+     * The 'take' axis is removed and its size is multiplied into the 'into' axis.
+     * This is a zero-copy operation that returns a view with updated metadata.
      *
-     * @param int $take Axis to merge from
-     * @param int $into Axis to merge into
+     * For example, on an array with shape [2, 3, 4]:
+     * - mergeaxes(1, 0) merges axis 1 into axis 0, resulting in shape [6, 4]
+     * - mergeaxes(0, 1) merges axis 0 into axis 1, resulting in shape [3, 8]
+     *
+     * @param int $take Axis to merge from (will be removed)
+     * @param int $into Axis to merge into (size will be multiplied)
      */
-    public function merge(int $take, int $into): NDArray
+    public function mergeaxes(int $take, int $into): NDArray
     {
-        return $this->unaryOp('ndarray_merge', $take, $into);
+        $ndim = $this->ndim();
+
+        if ($take < 0) {
+            $take += $ndim;
+        }
+        if ($into < 0) {
+            $into += $ndim;
+        }
+
+        if ($take < 0 || $take >= $ndim) {
+            throw new ShapeException("Axis {$take} is out of bounds for array with {$ndim} dimensions");
+        }
+        if ($into < 0 || $into >= $ndim) {
+            throw new ShapeException("Axis {$into} is out of bounds for array with {$ndim} dimensions");
+        }
+
+        if ($take === $into) {
+            throw new ShapeException("Cannot merge axis into itself");
+        }
+
+        $shape = $this->shape();
+        $strides = $this->strides();
+
+        $newShape = $shape;
+        $newStrides = $strides;
+
+        $newShape[$into] = $shape[$into] * $shape[$take];
+
+        array_splice($newShape, $take, 1);
+        array_splice($newStrides, $take, 1);
+
+        if ($take < $into) {
+            $newStrides[$into - 1] = $strides[$take];
+        } else {
+            $newStrides[$into] = $strides[$into];
+        }
+
+        $root = $this->base ?? $this;
+
+        return new self(
+            handle: $this->handle,
+            shape: $newShape,
+            dtype: $this->dtype,
+            strides: $newStrides,
+            offset: $this->getOffset(),
+            base: $root,
+        );
     }
 
     /**
@@ -228,12 +326,6 @@ trait HasShapeOps
      */
     public function flip(array|int|null $axes = null): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
-
-        $meta = $this->viewMetadata()->toCData();
-
         if (null === $axes) {
             $axesArray = [];
             $numAxes = 0;
@@ -261,29 +353,7 @@ trait HasShapeOps
             $numAxes = \count($axesArray);
         }
 
-        $status = $ffi->ndarray_flip(
-            $this->handle,
-            Lib::addr($meta),
-            Lib::createCArray('int64_t', $axesArray),
-            $numAxes,
-            Lib::addr($outHandle),
-            Lib::addr($outDtypeBuf),
-            Lib::addr($outNdimBuf),
-            $outShapeBuf,
-            Lib::MAX_NDIM
-        );
-
-        Lib::checkStatus($status);
-
-        $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
-        if (null === $dtype) {
-            throw new NDArrayException('Invalid dtype returned from Rust');
-        }
-
-        $ndim = (int) $outNdimBuf->cdata;
-        $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
-
-        return new NDArray($outHandle, $shape, $dtype);
+        return $this->unaryOp('ndarray_flip', Lib::createCArray('int64_t', $axesArray), $numAxes);
     }
 
     /**
@@ -294,7 +364,7 @@ trait HasShapeOps
      *
      * @param int $axis Position where new axis is inserted
      */
-    public function insert(int $axis): NDArray
+    public function insertaxis(int $axis): NDArray
     {
         if ($axis < 0) {
             $axis = $this->ndim() + $axis + 1;
@@ -304,22 +374,14 @@ trait HasShapeOps
             throw new ShapeException("Axis {$axis} is out of bounds for array with {$this->ndim()} dimensions");
         }
 
-        // Get current shape and strides
         $shape = $this->shape();
         $strides = $this->strides();
 
-        // Insert size 1 into shape at position $axis
         array_splice($shape, $axis, 0, [1]);
 
-        // Insert appropriate stride
-        // The stride for the new axis should be the stride of the next axis,
-        // or if at the end, use the last axis's stride
         if ($axis < \count($strides)) {
-            // Insert the stride of the axis that will follow
             $strideToInsert = $strides[$axis];
         } else {
-            // At the end - stride should be the size of an element in bytes
-            // But we need to calculate based on the last dimension
             $strideToInsert = 1;
             if (\count($strides) > 0) {
                 $strideToInsert = $strides[\count($strides) - 1];
@@ -327,10 +389,8 @@ trait HasShapeOps
         }
         array_splice($strides, $axis, 0, [$strideToInsert]);
 
-        // Get the root array for proper view chain
         $root = $this->base ?? $this;
 
-        // Create view with new shape and strides
         return new self(
             handle: $this->handle,
             shape: $shape,
@@ -361,15 +421,11 @@ trait HasShapeOps
      */
     public function ravel(string $order = 'C'): NDArray
     {
-        // Check if we can create a zero-copy view
         if ($this->isContiguous()) {
             $n = $this->size();
 
-            // Get the root array for proper view chain
             $root = $this->base ?? $this;
 
-            // Create 1D view with stride 1 (element count, not bytes)
-            // For a contiguous array flattened to 1D, stride is always 1
             return new self(
                 handle: $this->handle,
                 shape: [$n],
@@ -380,7 +436,6 @@ trait HasShapeOps
             );
         }
 
-        // Non-contiguous: must copy data first via FFI
         $orderCode = 'F' === $order ? 1 : 0;
 
         return $this->unaryOp('ndarray_ravel', $orderCode);
@@ -399,9 +454,7 @@ trait HasShapeOps
         $shape = $this->shape();
         $strides = $this->strides();
 
-        // Determine which axes to squeeze
         if (null === $axes) {
-            // NumPy behavior: squeeze all length-1 axes
             $axesToRemove = [];
             foreach ($shape as $i => $dim) {
                 if (1 === $dim) {
@@ -409,7 +462,6 @@ trait HasShapeOps
                 }
             }
         } else {
-            // Validate and normalize the provided axes
             $axesToRemove = [];
             foreach ($axes as $axis) {
                 $normalizedAxis = $axis;
@@ -426,7 +478,6 @@ trait HasShapeOps
             }
         }
 
-        // Remove axes in reverse order to maintain correct indices
         rsort($axesToRemove);
         $newShape = $shape;
         $newStrides = $strides;
@@ -436,18 +487,14 @@ trait HasShapeOps
             array_splice($newStrides, $axis, 1);
         }
 
-        // NumPy behavior: if all dimensions were squeezed, keep at least 1 dimension
         if (empty($newShape)) {
-            // Keep the last dimension that was squeezed (shape [1], stride from original)
             $lastSqueezedAxis = $axesToRemove[\count($axesToRemove) - 1];
             $newShape = [1];
             $newStrides = [$strides[$lastSqueezedAxis]];
         }
 
-        // Get the root array for proper view chain
         $root = $this->base ?? $this;
 
-        // Create view with new shape and strides
         return new self(
             handle: $this->handle,
             shape: $newShape,
@@ -461,13 +508,13 @@ trait HasShapeOps
     /**
      * Expand dimensions by inserting a new axis.
      *
-     * Alias for insert().
+     * Alias for insertaxis().
      *
      * @param int $axis Position where new axis is inserted
      */
     public function expandDims(int $axis): NDArray
     {
-        return $this->insert($axis);
+        return $this->insertaxis($axis);
     }
 
     /**
@@ -627,7 +674,7 @@ trait HasShapeOps
 
         if (1 !== \count($flat) && 2 !== \count($flat) && \count($flat) !== $this->ndim() * 2) {
             throw new ShapeException(
-                'constantValues must be scalar, [before, after], or per-axis pairs of length '.($this->ndim() * 2)
+                'constantValues must be scalar, [before, after], or per-axis pairs of length ' . ($this->ndim() * 2)
             );
         }
 

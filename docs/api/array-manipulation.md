@@ -242,33 +242,33 @@ print_r($permuted->shape());
 
 ---
 
-## merge()
+## mergeaxes()
 
-Merge axes by combining the take axis into the into axis.
+Merge axes by combining one axis into another.
 
 ```php
-public function merge(int $take, int $into): NDArray
+public function mergeaxes(int $take, int $into): NDArray
 ```
 
-If possible, merge the axis `take` into `into`. Returns the merged array.
+Merges the axis `take` into axis `into` by combining their dimensions. The `take` axis is removed and its size is multiplied into the `into` axis.
 
 ### Parameters
 
 | Name | Type | Description |
 |------|------|-------------|
-| `$take` | `int` | Axis to merge from |
-| `$into` | `int` | Axis to merge into |
+| `$take` | `int` | Axis to merge from (will be removed) |
+| `$into` | `int` | Axis to merge into (size will be multiplied) |
 
 ### Returns
 
-- `NDArray` - Array with merged axes (view).
+- `NDArray` - A view of the array with merged axes. This is always a view into the original array with updated shape and strides.
 
 ### Examples
 
 ```php
 $tensor = NDArray::arange(24)->reshape([2, 3, 4]);
 
-$result = $tensor->merge(1, 0);
+$result = $tensor->mergeaxes(1, 0);
 print_r($result->shape());
 // Output: [6, 4]
 ```
@@ -321,12 +321,12 @@ print_r($result->toArray());
 
 ---
 
-## insert()
+## insertaxis()
 
 Insert a new axis at the specified position.
 
 ```php
-public function insert(int $axis): NDArray
+public function insertaxis(int $axis): NDArray
 ```
 
 The new axis always has length 1.
@@ -346,11 +346,11 @@ The new axis always has length 1.
 ```php
 $arr = NDArray::array([1, 2, 3]);
 
-$expanded = $arr->insert(0);
+$expanded = $arr->insertaxis(0);
 print_r($expanded->shape());
 // Output: [1, 3]
 
-$expanded = $arr->insert(1);
+$expanded = $arr->insertaxis(1);
 print_r($expanded->shape());
 // Output: [3, 1]
 ```
@@ -365,7 +365,7 @@ Expand dimensions by inserting a new axis.
 public function expandDims(int $axis): NDArray
 ```
 
-Alias for insert().
+Alias for insertaxis().
 
 ### Parameters
 
@@ -786,7 +786,7 @@ $parts = $arr->hsplit(2);
 | `permute()` | Reorder axes | Yes |
 | `merge()` | Merge two axes | Yes |
 | `flip()` | Reverse elements | No |
-| `insert()` / `expandDims()` | Add dimension | Yes |
+| `insertaxis()` / `expandDims()` | Add dimension | Yes |
 | `squeeze()` | Remove length-1 dimensions | Yes |
 | `pad()` | Pad with values | No |
 | `tile()` | Repeat array | No |

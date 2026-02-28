@@ -157,6 +157,45 @@ final class ShapeOpsTest extends TestCase
         $this->assertEqualsWithDelta([1, 4, 2, 5, 3, 6], $result->toArray(), 0.0001);
     }
 
+    public function testSwapAxesReturnsView(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $result = $a->swapaxes(0, 1);
+
+        // Verify it's a view
+        $this->assertTrue($result->isView());
+
+        // Verify modification affects original
+        $result->setAt(0, 999);
+        $this->assertEqualsWithDelta(999, $a->getAt(0), 0.0001);
+    }
+
+    public function testSwapAxes3D(): void
+    {
+        $a = NDArray::arange(24)->reshape([2, 3, 4]);
+        $result = $a->swapaxes(0, 2);
+
+        $this->assertSame([4, 3, 2], $result->shape());
+    }
+
+    public function testSwapAxesNegativeIndices(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4], [5, 6]], DType::Float64);
+        $result = $a->swapaxes(0, -1);
+
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[1, 3, 5], [2, 4, 6]], $result->toArray(), 0.0001);
+    }
+
+    public function testSwapAxesSameAxisNoOp(): void
+    {
+        $a = NDArray::array([1, 2, 3]);
+        $result = $a->swapaxes(0, 0);
+
+        // Should return the same object when swapping same axis
+        $this->assertSame($a, $result);
+    }
+
     public function testFlatten2D(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
@@ -235,7 +274,7 @@ final class ShapeOpsTest extends TestCase
     public function testInsertAxisAtBeginning(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
-        $result = $a->insert(0);
+        $result = $a->insertaxis(0);
 
         $this->assertSame([1, 3], $result->shape());
         $this->assertEqualsWithDelta([[1, 2, 3]], $result->toArray(), 0.0001);
@@ -244,7 +283,7 @@ final class ShapeOpsTest extends TestCase
     public function testInsertAxisAtEnd(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
-        $result = $a->insert(1);
+        $result = $a->insertaxis(1);
 
         $this->assertSame([3, 1], $result->shape());
         $this->assertEqualsWithDelta([[1], [2], [3]], $result->toArray(), 0.0001);
@@ -253,7 +292,7 @@ final class ShapeOpsTest extends TestCase
     public function testInsertAxisInMiddle(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->insert(1);
+        $result = $a->insertaxis(1);
 
         $this->assertSame([2, 1, 3], $result->shape());
     }
@@ -261,7 +300,7 @@ final class ShapeOpsTest extends TestCase
     public function testInsertAxisNegativeIndex(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
-        $result = $a->insert(-1);
+        $result = $a->insertaxis(-1);
 
         $this->assertSame([3, 1], $result->shape());
     }
@@ -269,7 +308,7 @@ final class ShapeOpsTest extends TestCase
     public function testMergeAxes2DInto1D(): void
     {
         $a = NDArray::array([[1, 2], [3, 4], [5, 6]], DType::Float64);
-        $result = $a->merge(0, 1);
+        $result = $a->mergeaxes(0, 1);
 
         // Merging axis 0 into axis 1: [3, 2] -> [6]
         $this->assertSame([6], $result->shape());
@@ -278,10 +317,32 @@ final class ShapeOpsTest extends TestCase
     public function testMergeAxes3D(): void
     {
         $a = NDArray::zeros([2, 3, 4], DType::Float64);
-        $result = $a->merge(1, 2);
+        $result = $a->mergeaxes(1, 2);
 
         // Merging axis 1 into axis 2: [2, 3, 4] -> [2, 12]
         $this->assertSame([2, 12], $result->shape());
+    }
+
+    public function testMergeReturnsView(): void
+    {
+        $a = NDArray::array([[1, 2], [3, 4], [5, 6]], DType::Float64);
+        $result = $a->mergeaxes(0, 1);
+
+        // Verify it returns a view
+        $this->assertTrue($result->isView());
+
+        // Verify modification affects original
+        $result->setAt(0, 999);
+        $this->assertEqualsWithDelta(999, $a->getAt(0), 0.0001);
+    }
+
+    public function testMergeWithNegativeIndices(): void
+    {
+        $a = NDArray::zeros([2, 3, 4], DType::Float64);
+        $result = $a->mergeaxes(-2, -1);  // Same as mergeaxes(1, 2)
+
+        $this->assertSame([2, 12], $result->shape());
+        $this->assertTrue($result->isView());
     }
 
     public function testFlip1D(): void
@@ -812,7 +873,7 @@ final class ShapeOpsTest extends TestCase
     public function testInsertAxisThenFlatten(): void
     {
         $a = NDArray::array([1, 2, 3], DType::Float64);
-        $result = $a->insert(0)->flatten();
+        $result = $a->insertaxis(0)->flatten();
 
         $this->assertSame([3], $result->shape());
         $this->assertEqualsWithDelta([1, 2, 3], $result->toArray(), 0.0001);
@@ -821,7 +882,7 @@ final class ShapeOpsTest extends TestCase
     public function testTransposeThenInsertAxis(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
-        $result = $a->transpose()->insert(1);
+        $result = $a->transpose()->insertaxis(1);
 
         $this->assertSame([3, 1, 2], $result->shape());
     }
@@ -841,9 +902,8 @@ final class ShapeOpsTest extends TestCase
         $a = NDArray::array([1, 2, 3, 4, 5, 6, 7, 8], DType::Float64);
         $result = $a->reshape([2, 2, 2])
             ->transpose()
-            ->insert(0)
-            ->flatten()
-        ;
+            ->insertaxis(0)
+            ->flatten();
 
         $this->assertSame([8], $result->shape());
     }
@@ -1116,7 +1176,7 @@ final class ShapeOpsTest extends TestCase
     {
         $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
         $view = $a->slice(['1:4']); // [2, 3, 4]
-        $result = $view->insert(0);
+        $result = $view->insertaxis(0);
 
         $this->assertSame([1, 3], $result->shape());
         $this->assertEqualsWithDelta([[2, 3, 4]], $result->toArray(), 0.0001);
@@ -1160,7 +1220,7 @@ final class ShapeOpsTest extends TestCase
             [[9, 10], [11, 12]],
         ], DType::Float64);
         $view = $a->slice(['0:2', ':', ':']); // First 2 rows of 3D array [2, 2, 2]
-        $result = $view->merge(0, 1);
+        $result = $view->mergeaxes(0, 1);
 
         // Merging axes: [2, 2, 2] -> squeeze removes length-1 axis
         $this->assertSame([4, 2], $result->shape());
@@ -1182,9 +1242,8 @@ final class ShapeOpsTest extends TestCase
         $view = $a->slice(['2:10']); // [3, 4, 5, 6, 7, 8, 9, 10]
         $result = $view->reshape([2, 2, 2])
             ->transpose()
-            ->insert(0)
-            ->flatten()
-        ;
+            ->insertaxis(0)
+            ->flatten();
 
         $this->assertSame([8], $result->shape());
     }
@@ -1294,9 +1353,8 @@ final class ShapeOpsTest extends TestCase
         // Chain: permute -> insert -> flatten
         $result = $view
             ->permute(2, 1, 0)
-            ->insert(0)
-            ->flatten()
-        ;
+            ->insertaxis(0)
+            ->flatten();
 
         $this->assertSame([4], $result->shape());
         // After permute [2,1,0]: [[[2],[5]],[[3],[6]]], after insert and flatten
