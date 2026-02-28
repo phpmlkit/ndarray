@@ -4,7 +4,7 @@ export default defineConfig({
   title: 'NDArray PHP',
   description: 'High-performance N-dimensional arrays for PHP, powered by Rust',
 
-  base: '/ndarray-php/',
+  base: '/ndarray/',
 
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }],
@@ -15,7 +15,7 @@ export default defineConfig({
   ],
 
   themeConfig: {
-    logo: '/logo.svg',
+    logo: '/logo.png',
 
     // outline: [2, 3],
 

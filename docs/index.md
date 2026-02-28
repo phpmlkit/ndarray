@@ -6,7 +6,7 @@ hero:
   text: "PHP"
   tagline: High-performance N-dimensional arrays for PHP, powered by Rust
   image:
-    src: /logo.svg
+    src: /logo.png
     alt: NDArray PHP
   actions:
     - theme: brand

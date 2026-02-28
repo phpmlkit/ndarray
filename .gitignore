@@ -48,3 +48,7 @@ node_modules
 docs/.vitepress/cache
 docs/.vitepress/dist
 
+# Docs files copied from root during build
+docs/changelog.md
+docs/contributing.md
+

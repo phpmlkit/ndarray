@@ -1,11 +1,17 @@
-# NDArray PHP
+<p align="center">
+  <img src="docs/public/logo.png" width="200" height="200" alt="NDArray PHP Logo">
+</p>
 
-High-performance N-dimensional arrays for PHP, powered by Rust via FFI.
+<h1 align="center">NDArray PHP</h1>
 
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![GitHub Workflow Status (main)](https://img.shields.io/github/actions/workflow/status/phpmlkit/ndarray/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/phpmlkit/ndarray/actions)
-[![Total Downloads](https://img.shields.io/packagist/dt/phpmlkit/ndarray?style=flat-square)](https://packagist.org/packages/phpmlkit/ndarray)
-[![Latest Version](https://img.shields.io/packagist/v/phpmlkit/ndarray?style=flat-square)](https://packagist.org/packages/phpmlkit/ndarray)
+<p align="center">High-performance N-dimensional arrays for PHP, powered by Rust via FFI</p>
+
+<p align="center">
+  <a href="https://packagist.org/packages/phpmlkit/ndarray"><img src="https://img.shields.io/packagist/v/phpmlkit/ndarray?style=flat-square" alt="Latest Version"></a>
+  <a href="https://github.com/phpmlkit/ndarray/actions"><img src="https://img.shields.io/github/actions/workflow/status/phpmlkit/ndarray/tests.yml?branch=main&label=tests&style=flat-square" alt="GitHub Workflow Status"></a>
+  <a href="https://packagist.org/packages/phpmlkit/ndarray"><img src="https://img.shields.io/packagist/dt/phpmlkit/ndarray?style=flat-square" alt="Total Downloads"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
+</p>
 
 ## Features
 
