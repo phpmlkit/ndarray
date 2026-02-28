@@ -79,6 +79,10 @@ trait HasSlicing
             $dimSize = $this->shape()[$dim];
             $stride = $this->strides()[$dim];
 
+            if (\is_string($selector) && !str_contains($selector, ':') && is_numeric($selector)) {
+                $selector = (int) $selector;
+            }
+
             if (\is_int($selector)) {
                 if ($selector < 0) {
                     $selector += $dimSize;

@@ -18,16 +18,13 @@ A **view** is a new array object that looks at the same memory as the original a
 
 **Visual Example:**
 
-|                |              |                |
-|:---------------|:-------------|:-----------------|
-| ![Original](https://dummyimage.com/120x80/eeeeee/888888&text=Original+Array) | ![View](https://dummyimage.com/120x80/eeeeee/888888&text=View) | ![Copy](https://dummyimage.com/120x80/eeeeee/888888&text=Copy) |
 | **Original Array**  | **View (shares memory)** | **Copy (independent)**   |
+|:-------------------|:-------------------------|:-------------------------|
 | Address: 0x1000     | Address: 0x1000 *(same!)* | Address: 0x2000 *(different)* |
 | Data: [1 2 3 4 5 6] | Data: [1 2 3 4 5 6]      | Data: [1 2 3 4 5 6]      |
 | Shape: [2,3]        | Shape: [1,3] (example)   | Shape: [2,3]             |
 | Owns: Yes           | Owns: No                 | Owns: Yes                |
 | Offset: 0           | Offset: 0 or >0 (view)   | Offset: 0                |
-| View of: —          | View of: Original        | View of: —               |
 
 <details>
 <summary>Equivalent memory diagrams</summary>

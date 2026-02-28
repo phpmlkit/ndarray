@@ -89,7 +89,6 @@ final class CreationTest extends TestCase
         $this->assertSame(DType::Float64, $arr->dtype());
         $this->assertSame(0, $arr->size());
         $this->assertSame([], $arr->toArray());
-        $this->assertSame([], $arr->flat()->toArray());
     }
 
     public function testEmptyWithZeroSizeShapeBool(): void
@@ -137,10 +136,6 @@ final class CreationTest extends TestCase
             [0.0, 1.0, 0.0],
         ], $arr->toArray());
     }
-
-    // =========================================================================
-    // arange Tests
-    // =========================================================================
 
     public function testArangeBasic(): void
     {
@@ -224,10 +219,6 @@ final class CreationTest extends TestCase
         NDArray::arange(0, 5, 1, DType::Bool);
     }
 
-    // =========================================================================
-    // linspace Tests
-    // =========================================================================
-
     public function testLinspaceDefault(): void
     {
         $arr = NDArray::linspace(0.0, 1.0);
@@ -284,10 +275,6 @@ final class CreationTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         NDArray::linspace(0.0, 1.0, 5, true, DType::Int32);
     }
-
-    // =========================================================================
-    // logspace Tests
-    // =========================================================================
 
     public function testLogspaceDefault(): void
     {
@@ -354,10 +341,6 @@ final class CreationTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         NDArray::logspace(0.0, 1.0, 5, 10.0, DType::Int32);
     }
-
-    // =========================================================================
-    // geomspace Tests
-    // =========================================================================
 
     public function testGeomspaceDefault(): void
     {
@@ -431,10 +414,6 @@ final class CreationTest extends TestCase
         NDArray::geomspace(1.0, 100.0, 5, DType::Int32);
     }
 
-    // =========================================================================
-    // Random Array Creation Tests (REQ-3.3)
-    // =========================================================================
-
     public function testRandomBasicAndRange(): void
     {
         $arr = NDArray::random([2, 3], DType::Float64, seed: 1234);
@@ -491,14 +470,9 @@ final class CreationTest extends TestCase
     public function testRandnStatisticalSanity(): void
     {
         $arr = NDArray::randn([20000], DType::Float64, seed: 77);
-        $flat = $arr->flat()->toArray();
 
-        $mean = array_sum($flat) / \count($flat);
-        $variance = array_sum(array_map(
-            static fn (float $x): float => ($x - $mean) ** 2,
-            $flat
-        )) / \count($flat);
-        $std = sqrt($variance);
+        $mean = $arr->mean();
+        $std = $arr->std();
 
         $this->assertEqualsWithDelta(0.0, $mean, 0.05);
         $this->assertEqualsWithDelta(1.0, $std, 0.08);
@@ -509,17 +483,12 @@ final class CreationTest extends TestCase
         $meanTarget = 3.5;
         $stdTarget = 2.0;
         $arr = NDArray::normal($meanTarget, $stdTarget, [20000], DType::Float64, seed: 91);
-        $flat = $arr->flat()->toArray();
 
-        $mean = array_sum($flat) / \count($flat);
-        $variance = array_sum(array_map(
-            static fn (float $x): float => ($x - $mean) ** 2,
-            $flat
-        )) / \count($flat);
-        $std = sqrt($variance);
+        $mean = $arr->mean();
+        $std = $arr->std();
 
-        $this->assertEqualsWithDelta($meanTarget, $mean, 0.1);
-        $this->assertEqualsWithDelta($stdTarget, $std, 0.1);
+        $this->assertEqualsWithDelta($meanTarget, $mean, 0.01);
+        $this->assertEqualsWithDelta($stdTarget, $std, 0.01);
     }
 
     public function testNormalRequiresPositiveStd(): void
@@ -533,14 +502,13 @@ final class CreationTest extends TestCase
         $low = -2.0;
         $high = 6.0;
         $arr = NDArray::uniform($low, $high, [20000], DType::Float64, seed: 123);
-        $flat = $arr->flat()->toArray();
 
-        foreach ($flat as $v) {
+        foreach ($arr->flat() as $v) {
             $this->assertGreaterThanOrEqual($low, $v);
             $this->assertLessThan($high, $v);
         }
 
-        $mean = array_sum($flat) / \count($flat);
+        $mean = $arr->mean();
         $this->assertEqualsWithDelta(($low + $high) / 2.0, $mean, 0.08);
     }
 

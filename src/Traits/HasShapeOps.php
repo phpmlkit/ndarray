@@ -169,7 +169,7 @@ trait HasShapeOps
      * @param int $axis1 First axis to swap
      * @param int $axis2 Second axis to swap
      */
-    public function swap(int $axis1, int $axis2): NDArray
+    public function swapaxes(int $axis1, int $axis2): NDArray
     {
         return $this->unaryOp('ndarray_swap', $axis1, $axis2);
     }

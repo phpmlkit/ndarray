@@ -20,10 +20,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class MemoryLifetimeTest extends TestCase
 {
-    // =========================================================================
-    // Basic Root-View Lifetime Tests
-    // =========================================================================
-
     public function testViewSurvivesRootRelease(): void
     {
         $view = (static function () {
@@ -57,10 +53,6 @@ final class MemoryLifetimeTest extends TestCase
         // Verify the change is visible in the root
         $this->assertSame(100, $arr->get(1, 0));
     }
-
-    // =========================================================================
-    // Nested View Chain Tests
-    // =========================================================================
 
     public function testNestedViewChain2D(): void
     {
@@ -146,10 +138,6 @@ final class MemoryLifetimeTest extends TestCase
         $this->assertSame([4, 5, 6], $leaf2->toArray());
     }
 
-    // =========================================================================
-    // Slice View Chain Tests
-    // =========================================================================
-
     public function testSliceViewChain(): void
     {
         $arr = NDArray::array([
@@ -188,10 +176,6 @@ final class MemoryLifetimeTest extends TestCase
 
         $this->assertSame([7, 8, 9], $view->toArray());
     }
-
-    // =========================================================================
-    // Mixed View Operations Tests
-    // =========================================================================
 
     public function testMixedGetAndSliceViews(): void
     {
@@ -233,10 +217,6 @@ final class MemoryLifetimeTest extends TestCase
         $this->assertSame([1, 2, 3], $row1->toArray());
         $this->assertSame([4, 5, 6], $row2->toArray());
     }
-
-    // =========================================================================
-    // Stress Tests
-    // =========================================================================
 
     public function testRepeatedViewCreationAndDestruction(): void
     {

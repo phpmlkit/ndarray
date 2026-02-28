@@ -2,17 +2,19 @@
 
 High-performance N-dimensional arrays for PHP, powered by Rust via FFI.
 
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://php.net)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![GitHub Workflow Status (main)](https://img.shields.io/github/actions/workflow/status/phpmlkit/ndarray/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/phpmlkit/ndarray/actions)
+[![Total Downloads](https://img.shields.io/packagist/dt/phpmlkit/ndarray?style=flat-square)](https://packagist.org/packages/phpmlkit/ndarray)
+[![Latest Version](https://img.shields.io/packagist/v/phpmlkit/ndarray?style=flat-square)](https://packagist.org/packages/phpmlkit/ndarray)
 
 ## Features
 
-- ⚡ **Blazing Fast** - Zero-copy views, Rust backend, minimal FFI overhead
-- 🔧 **NumPy Compatible** - Familiar API for Python developers
-- 🛡️ **Memory Safe** - Automatic memory management via Rust
-- 📊 **N-Dimensional** - Support for arbitrary dimensions
-- 🎯 **Type Safe** - Multiple data types with automatic inference
-- 🔬 **Scientific Computing** - Complete toolkit for ML and data science
+- **Blazing Fast** - Zero-copy views, Rust backend, minimal FFI overhead
+- **NumPy Compatible** - Familiar API for Python developers
+- **Memory Safe** - Automatic memory management via Rust
+- **N-Dimensional** - Support for arbitrary dimensions
+- **Type Safe** - Multiple data types with automatic inference
+- **Scientific Computing** - Complete toolkit for ML and data science
 
 ## Installation
 
@@ -31,13 +33,13 @@ use PhpMlKit\NDArray\NDArray;
 $a = NDArray::array([[1, 2], [3, 4]]);
 $b = NDArray::ones([2, 2]);
 
-// Mathematical operations (method calls, NOT operators)
-$c = $a->add($b);              // Element-wise addition
-$d = $a->matmul($b);          // Matrix multiplication
-$e = $a->sum();                // Sum all elements
+// Mathematical operations
+$c = $a->add($b);
+$d = $a->matmul($b);
+$e = $a->sum();
 
 // Slicing with zero-copy views
-$first_row = $a[0];            // View: no data copied!
+$first_row = $a[0];  // View: no data copied!
 $sub_matrix = $a->slice(['0:1', '0:1']);
 
 // Linear algebra
@@ -54,7 +56,7 @@ Work with large datasets efficiently:
 ```php
 $data = NDArray::random([10000, 1000]);  // 80 MB array
 $batch = $data->slice(['0:1000']);       // View: 0 bytes copied!
-$mean = $batch->mean();                   // Process on view
+$mean = $batch->mean();                  // Process on view
 ```
 
 ### NumPy Familiarity
@@ -72,24 +74,11 @@ Coming from Python? You'll feel at home (with PHP syntax):
 
 ## Documentation
 
-📚 **[Full Documentation](https://phpmlkit.github.io/ndarray/)**
-
+- [Full Documentation](https://phpmlkit.github.io/ndarray/)
 - [Installation Guide](https://phpmlkit.github.io/ndarray/guide/getting-started/installation)
 - [Quick Start](https://phpmlkit.github.io/ndarray/guide/getting-started/quick-start)
 - [NumPy Migration](https://phpmlkit.github.io/ndarray/guide/getting-started/numpy-migration)
 - [API Reference](https://phpmlkit.github.io/ndarray/api)
-
-## Performance
-
-```php
-// Create large array
-$data = NDArray::random([1000, 1000]);
-
-// Sum in ~0.001s (Rust-powered)
-$sum = $data->sum();
-
-// Compared to pure PHP: ~10-100x faster
-```
 
 ## Key Concepts
 
@@ -142,13 +131,15 @@ $value = $matrix['0,0'];
 $value = $matrix->get(0, 0);
 ```
 
-Slicing uses method calls:
+Slicing uses string syntax or method calls:
 
 ```php
-// ❌ This doesn't work
-$slice = $arr['0:5'];
+// ❌ Invalid PHP syntax
+$slice = $arr[0:5];
 
-// ✅ Use slice() method
+// ✅ Use string syntax
+$slice = $arr['0:5'];
+// or
 $slice = $arr->slice(['0:5']);
 ```
 
@@ -177,7 +168,10 @@ $slice = $arr->slice(['0:5']);
 ```bash
 # Clone repository
 git clone https://github.com/phpmlkit/ndarray.git
-cd ndarray-php
+cd ndarray
+
+# Build the rust library
+./scripts/build.sh debug
 
 # Install dependencies
 composer install

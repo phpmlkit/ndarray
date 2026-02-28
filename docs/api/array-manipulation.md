@@ -179,12 +179,12 @@ foreach ($matrix->flat() as $value) {
 
 ---
 
-## swap()
+## swapaxes()
 
 Swap two axes of the array.
 
 ```php
-public function swap(int $axis1, int $axis2): NDArray
+public function swapaxes(int $axis1, int $axis2): NDArray
 ```
 
 ### Parameters
@@ -203,7 +203,7 @@ public function swap(int $axis1, int $axis2): NDArray
 ```php
 $tensor = NDArray::arange(24)->reshape([2, 3, 4]);
 
-$result = $tensor->swap(0, 2);
+$result = $tensor->swapaxes(0, 2);
 print_r($result->shape());
 // Output: [4, 3, 2]
 ```
@@ -782,7 +782,7 @@ $parts = $arr->hsplit(2);
 | `transpose()` | Reverse axes | Yes |
 | `flatten()` | Flatten to 1D (copy) | No |
 | `ravel()` | Flatten to 1D (view if possible) | Sometimes |
-| `swap()` | Swap two axes | Yes |
+| `swapaxes()` | Swap two axes | Yes |
 | `permute()` | Reorder axes | Yes |
 | `merge()` | Merge two axes | Yes |
 | `flip()` | Reverse elements | No |

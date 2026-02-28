@@ -7,7 +7,6 @@ namespace PhpMlKit\NDArray\Tests\Unit;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\DTypeException;
 use PhpMlKit\NDArray\Exceptions\IndexException;
-use PhpMlKit\NDArray\Exceptions\MathException;
 use PhpMlKit\NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\NDArray;
@@ -25,10 +24,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class PanicMappingTest extends TestCase
 {
-    // =========================================================================
-    // ShapeException Tests
-    // =========================================================================
-
     public function testConcatenateIncompatibleShapesThrowsShapeException(): void
     {
         $a = NDArray::array([[1, 2], [3, 4]], DType::Float64);  // 2x2
@@ -149,10 +144,6 @@ final class PanicMappingTest extends TestCase
         NDArray::stack([], 0);
     }
 
-    // =========================================================================
-    // IndexException Tests
-    // =========================================================================
-
     public function testTakeWithInvalidIndicesThrowsIndexException(): void
     {
         $arr = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
@@ -162,10 +153,6 @@ final class PanicMappingTest extends TestCase
         $arr->take($indices);
     }
 
-    // =========================================================================
-    // DTypeException Tests
-    // =========================================================================
-
     public function testBincountOnFloatArrayThrowsDTypeException(): void
     {
         $arr = NDArray::array([1.5, 2.5, 3.5], DType::Float64);
@@ -173,10 +160,6 @@ final class PanicMappingTest extends TestCase
         $this->expectException(DTypeException::class);
         $arr->bincount();
     }
-
-    // =========================================================================
-    // MathException Tests
-    // =========================================================================
 
     public function testStdOnSingleElementThrowsException(): void
     {
@@ -197,10 +180,6 @@ final class PanicMappingTest extends TestCase
         $this->expectExceptionMessage('ddof');
         $arr->var(null, 1);
     }
-
-    // =========================================================================
-    // Error Message Quality Tests
-    // =========================================================================
 
     public function testShapeErrorMessageIsDescriptive(): void
     {
@@ -233,10 +212,6 @@ final class PanicMappingTest extends TestCase
             $this->assertStringNotContainsString('Rust panic occurred', $message);
         }
     }
-
-    // =========================================================================
-    // Multiple Error Code Coverage
-    // =========================================================================
 
     /**
      * @dataProvider reductionOperationsProvider

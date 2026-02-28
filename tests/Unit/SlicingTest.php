@@ -384,10 +384,6 @@ final class SlicingTest extends TestCase
         $this->assertSame($expected, $arr->toArray());
     }
 
-    // =========================================================================
-    // Error Cases
-    // =========================================================================
-
     public function testAssignShapeMismatchThrows(): void
     {
         $arr = NDArray::zeros([5]);
@@ -426,5 +422,109 @@ final class SlicingTest extends TestCase
         $this->expectExceptionMessage('Assignment value must be scalar or NDArray');
 
         $arr->slice(['0:3'])->assign([1, 2, 3]);
+    }
+
+    public function testSlice3DBasic(): void
+    {
+        $arr = NDArray::arange(8)->reshape([2, 2, 2]);
+
+        $slice = $arr->slice([0]);
+        $this->assertSame([2, 2], $slice->shape());
+        $this->assertSame([[0, 1], [2, 3]], $slice->toArray());
+
+        $slice = $arr->slice([':', ':', 0]);
+        $this->assertSame([2, 2], $slice->shape());
+        $this->assertSame([[0, 2], [4, 6]], $slice->toArray());
+    }
+
+    public function testSlice3DStrided(): void
+    {
+        $arr = NDArray::arange(27)->reshape([3, 3, 3]);
+
+        $slice = $arr->slice([':', '::2', ':']);
+        $this->assertSame([3, 2, 3], $slice->shape());
+        $this->assertEquals(6, $slice->get(0, 1, 0));
+    }
+
+    public function testAssignScalarTo3DSlice(): void
+    {
+        $arr = NDArray::zeros([3, 3, 3], DType::Int32);
+
+        $arr->slice([1])->assign(1);
+
+        $this->assertEquals(0, $arr->get(0, 0, 0));
+        $this->assertEquals(1, $arr->get(1, 0, 0));
+        $this->assertEquals(1, $arr->get(1, 2, 2));
+        $this->assertEquals(0, $arr->get(2, 0, 0));
+    }
+
+    public function testAssignScalarToStrided3DSlice(): void
+    {
+        $arr = NDArray::zeros([4, 4, 4], DType::Int32);
+
+        $arr->slice(['::2'])->assign(5);
+
+        $this->assertEquals(5, $arr->get(0, 0, 0));
+        $this->assertEquals(0, $arr->get(1, 0, 0));
+        $this->assertEquals(5, $arr->get(2, 0, 0));
+        $this->assertEquals(0, $arr->get(3, 0, 0));
+    }
+
+    public function testStringIndexConvertsToInteger(): void
+    {
+        $arr = NDArray::array([[1, 2, 3], [4, 5, 6]]);
+
+        $byString = $arr->slice([':', '0']);
+        $byInt = $arr->slice([':', 0]);
+
+        $this->assertSame($byInt->shape(), $byString->shape());
+        $this->assertEquals($byInt->toArray(), $byString->toArray());
+        $this->assertEquals([1, 4], $byString->toArray());
+    }
+
+    public function testStringIndexExtractsColumnFrom2D(): void
+    {
+        $arr = NDArray::array([[1, 2, 3], [4, 5, 6]]);
+
+        $col = $arr->slice([':', '1']);
+
+        $this->assertSame([2], $col->shape());
+        $this->assertEquals([2, 5], $col->toArray());
+    }
+
+    public function testStringIndexExtractsRowFrom3D(): void
+    {
+        $arr = NDArray::array([
+            [[1, 2], [3, 4]],
+            [[5, 6], [7, 8]],
+        ]);
+
+        $row = $arr->slice([':', '0', ':']);
+
+        $this->assertSame([2, 2], $row->shape());
+        $this->assertEquals([[1, 2], [5, 6]], $row->toArray());
+    }
+
+    public function testNegativeStringIndex(): void
+    {
+        $arr = NDArray::array([[1, 2, 3], [4, 5, 6]]);
+
+        $col = $arr->slice([':', '-1']);
+
+        $this->assertSame([2], $col->shape());
+        $this->assertEquals([3, 6], $col->toArray());
+    }
+
+    public function testMixedStringAndIntegerSelectors(): void
+    {
+        $arr = NDArray::array([
+            [[1, 2], [3, 4]],
+            [[5, 6], [7, 8]],
+        ]);
+
+        $slice = $arr->slice(['0', '0', ':']);
+
+        $this->assertSame([2], $slice->shape());
+        $this->assertEquals([1, 2], $slice->toArray());
     }
 }
