@@ -121,6 +121,10 @@ interface Bindings
 
     public function ndarray_hypot(CData $a, CData $a_meta, float $b, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
+    public function ndarray_minimum(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_maximum(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
     // =========================================================================
     // Comparison Operations
     // =========================================================================

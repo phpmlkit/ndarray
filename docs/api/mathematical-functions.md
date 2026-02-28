@@ -1028,6 +1028,84 @@ print_r($result->toArray());
 
 ---
 
+## minimum()
+
+```php
+public function minimum(NDArray $other): NDArray
+```
+
+Element-wise minimum of two arrays.
+
+Compares two arrays element-wise and returns a new array containing the smaller value at each position. Supports broadcasting.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$other` | `NDArray` | The array to compare with. |
+
+### Returns
+
+- `NDArray` - New array with element-wise minimum values.
+
+### Examples
+
+```php
+$a = NDArray::array([1, 5, 3, 8]);
+$b = NDArray::array([2, 4, 6, 7]);
+$result = $a->minimum($b);
+print_r($result->toArray());
+// Output: [1, 4, 3, 7]
+
+// With broadcasting
+$a = NDArray::array([[1, 2, 3], [4, 5, 6]]);
+$b = NDArray::array([2, 2, 2]);
+$result = $a->minimum($b);
+print_r($result->toArray());
+// Output: [[1, 2, 2], [2, 2, 2]]
+```
+
+---
+
+## maximum()
+
+```php
+public function maximum(NDArray $other): NDArray
+```
+
+Element-wise maximum of two arrays.
+
+Compares two arrays element-wise and returns a new array containing the larger value at each position. Supports broadcasting.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$other` | `NDArray` | The array to compare with. |
+
+### Returns
+
+- `NDArray` - New array with element-wise maximum values.
+
+### Examples
+
+```php
+$a = NDArray::array([1, 5, 3, 8]);
+$b = NDArray::array([2, 4, 6, 7]);
+$result = $a->maximum($b);
+print_r($result->toArray());
+// Output: [2, 5, 6, 8]
+
+// With broadcasting
+$a = NDArray::array([[1, 2, 3], [4, 5, 6]]);
+$b = NDArray::array([2, 2, 2]);
+$result = $a->maximum($b);
+print_r($result->toArray());
+// Output: [[2, 2, 3], [4, 5, 6]]
+```
+
+---
+
 ## sigmoid()
 
 ```php
@@ -1149,6 +1227,8 @@ print_r($result->toArray());
 | `signum()` | Sign | `signum([-5, 0, 3])` → `[-1, 0, 1]` |
 | `hypot()` | Hypotenuse | `hypot([3, 4], 4)` → `[5, 5.657]` |
 | `clamp()` / `clip()` | Clip range | `clamp([-5, 5, 15], 0, 10)` → `[0, 5, 10]` |
+| `minimum()` | Element-wise minimum | `minimum([1, 5], [2, 4])` → `[1, 4]` |
+| `maximum()` | Element-wise maximum | `maximum([1, 5], [2, 4])` → `[2, 5]` |
 | `sigmoid()` | Sigmoid | `sigmoid([0, 1])` → `[0.5, 0.731]` |
 | `softmax()` | Softmax | `softmax([1, 2, 3])` → `[0.09, 0.24, 0.67]` |
 

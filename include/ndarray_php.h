@@ -121,6 +121,34 @@ int32_t ndarray_div_scalar(const struct NdArrayHandle *a,
                            uintptr_t max_ndim);
 
 /**
+ * Element-wise minimum operation with broadcasting.
+ * Returns an array of the same shape containing the smaller value at each position.
+ */
+int32_t ndarray_minimum(const struct NdArrayHandle *a,
+                        const struct ViewMetadata *a_meta,
+                        const struct NdArrayHandle *b,
+                        const struct ViewMetadata *b_meta,
+                        struct NdArrayHandle **out,
+                        uint8_t *out_dtype_ptr,
+                        uintptr_t *out_ndim,
+                        uintptr_t *out_shape,
+                        uintptr_t max_ndim);
+
+/**
+ * Element-wise maximum operation with broadcasting.
+ * Returns an array of the same shape containing the larger value at each position.
+ */
+int32_t ndarray_maximum(const struct NdArrayHandle *a,
+                        const struct ViewMetadata *a_meta,
+                        const struct NdArrayHandle *b,
+                        const struct ViewMetadata *b_meta,
+                        struct NdArrayHandle **out,
+                        uint8_t *out_dtype_ptr,
+                        uintptr_t *out_ndim,
+                        uintptr_t *out_shape,
+                        uintptr_t max_ndim);
+
+/**
  * Multiply two arrays.
  */
 int32_t ndarray_mul(const struct NdArrayHandle *a,

@@ -63,6 +63,7 @@ export default defineConfig({
           items: [
             { text: 'Performance', link: '/guide/advanced/performance' },
             { text: 'FFI Internals', link: '/guide/advanced/ffi-internals' },
+            { text: 'FFI Interoperability', link: '/guide/advanced/ffi-interop'},
             { text: 'Troubleshooting', link: '/guide/advanced/troubleshooting' },
           ]
         },

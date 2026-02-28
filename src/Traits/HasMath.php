@@ -489,6 +489,36 @@ trait HasMath
     }
 
     /**
+     * Element-wise minimum of two arrays.
+     *
+     * Compares two arrays element-wise and returns a new array containing
+     * the smaller value at each position. Supports broadcasting.
+     *
+     * @param NDArray $other The array to compare with
+     *
+     * @return NDArray New array with element-wise minimum values
+     */
+    public function minimum(NDArray $other): NDArray
+    {
+        return $this->binaryOp('ndarray_minimum', $other);
+    }
+
+    /**
+     * Element-wise maximum of two arrays.
+     *
+     * Compares two arrays element-wise and returns a new array containing
+     * the larger value at each position. Supports broadcasting.
+     *
+     * @param NDArray $other The array to compare with
+     *
+     * @return NDArray New array with element-wise maximum values
+     */
+    public function maximum(NDArray $other): NDArray
+    {
+        return $this->binaryOp('ndarray_maximum', $other);
+    }
+
+    /**
      * Compute sigmoid element-wise: 1 / (1 + exp(-x)).
      */
     public function sigmoid(): NDArray

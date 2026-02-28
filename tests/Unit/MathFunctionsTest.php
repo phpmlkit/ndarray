@@ -293,6 +293,74 @@ final class MathFunctionsTest extends TestCase
         $this->assertEqualsWithDelta([1, 2, 3], $result->toArray(), 0.0001);
     }
 
+    public function testMinimum(): void
+    {
+        $a = NDArray::array([1, 5, 3, 8], DType::Float64);
+        $b = NDArray::array([2, 4, 6, 7], DType::Float64);
+        $result = $a->minimum($b);
+        $this->assertEqualsWithDelta([1, 4, 3, 7], $result->toArray(), 0.0001);
+    }
+
+    public function testMaximum(): void
+    {
+        $a = NDArray::array([1, 5, 3, 8], DType::Float64);
+        $b = NDArray::array([2, 4, 6, 7], DType::Float64);
+        $result = $a->maximum($b);
+        $this->assertEqualsWithDelta([2, 5, 6, 8], $result->toArray(), 0.0001);
+    }
+
+    public function testMinimumPreservesDtype(): void
+    {
+        $a = NDArray::array([1, 5, 3], DType::Int32);
+        $b = NDArray::array([2, 4, 6], DType::Int32);
+        $result = $a->minimum($b);
+        $this->assertSame(DType::Int32, $result->dtype());
+        $this->assertEquals([1, 4, 3], $result->toArray());
+    }
+
+    public function testMaximumPreservesDtype(): void
+    {
+        $a = NDArray::array([1, 5, 3], DType::Int32);
+        $b = NDArray::array([2, 4, 6], DType::Int32);
+        $result = $a->maximum($b);
+        $this->assertSame(DType::Int32, $result->dtype());
+        $this->assertEquals([2, 5, 6], $result->toArray());
+    }
+
+    public function testMinimumWithBroadcasting(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $b = NDArray::array([2, 2, 2], DType::Float64);
+        $result = $a->minimum($b);
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[1, 2, 2], [2, 2, 2]], $result->toArray(), 0.0001);
+    }
+
+    public function testMaximumWithBroadcasting(): void
+    {
+        $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
+        $b = NDArray::array([2, 2, 2], DType::Float64);
+        $result = $a->maximum($b);
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[2, 2, 3], [4, 5, 6]], $result->toArray(), 0.0001);
+    }
+
+    public function testMinimumWithNegativeNumbers(): void
+    {
+        $a = NDArray::array([-5, -2, 3, 0], DType::Float64);
+        $b = NDArray::array([-3, -4, 1, 2], DType::Float64);
+        $result = $a->minimum($b);
+        $this->assertEqualsWithDelta([-5, -4, 1, 0], $result->toArray(), 0.0001);
+    }
+
+    public function testMaximumWithNegativeNumbers(): void
+    {
+        $a = NDArray::array([-5, -2, 3, 0], DType::Float64);
+        $b = NDArray::array([-3, -4, 1, 2], DType::Float64);
+        $result = $a->maximum($b);
+        $this->assertEqualsWithDelta([-3, -2, 3, 2], $result->toArray(), 0.0001);
+    }
+
     public function testClamp(): void
     {
         $a = NDArray::array([0, 5, 10], DType::Float64);
