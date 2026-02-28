@@ -332,21 +332,13 @@ interface Bindings
 
     public function ndarray_transpose(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_swap(CData $handle, CData $meta, int $axis1, int $axis2, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_merge(CData $handle, CData $meta, int $take, int $into, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
     public function ndarray_flip(CData $handle, CData $meta, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_insert(CData $handle, CData $meta, int $axis, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_permute(CData $handle, CData $meta, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_flatten(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_ravel(CData $handle, CData $meta, int $order, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_squeeze(CData $handle, CData $meta, CData $axes, int $num_axes, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_pad(CData $handle, CData $meta, CData $pad_width, int $mode, CData $constant_values, int $constant_values_len, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 

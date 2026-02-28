@@ -339,7 +339,7 @@ final class ShapeOpsTest extends TestCase
     public function testMergeWithNegativeIndices(): void
     {
         $a = NDArray::zeros([2, 3, 4], DType::Float64);
-        $result = $a->mergeaxes(-2, -1);  // Same as mergeaxes(1, 2)
+        $result = $a->mergeaxes(-2, -1);  // Same as mergeaxes (1, 2)
 
         $this->assertSame([2, 12], $result->shape());
         $this->assertTrue($result->isView());
@@ -903,7 +903,8 @@ final class ShapeOpsTest extends TestCase
         $result = $a->reshape([2, 2, 2])
             ->transpose()
             ->insertaxis(0)
-            ->flatten();
+            ->flatten()
+        ;
 
         $this->assertSame([8], $result->shape());
     }
@@ -1243,7 +1244,8 @@ final class ShapeOpsTest extends TestCase
         $result = $view->reshape([2, 2, 2])
             ->transpose()
             ->insertaxis(0)
-            ->flatten();
+            ->flatten()
+        ;
 
         $this->assertSame([8], $result->shape());
     }
@@ -1354,7 +1356,8 @@ final class ShapeOpsTest extends TestCase
         $result = $view
             ->permute(2, 1, 0)
             ->insertaxis(0)
-            ->flatten();
+            ->flatten()
+        ;
 
         $this->assertSame([4], $result->shape());
         // After permute [2,1,0]: [[[2],[5]],[[3],[6]]], after insert and flatten

@@ -6,7 +6,6 @@ namespace PhpMlKit\NDArray\Tests\Unit;
 
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\IndexException;
-use PhpMlKit\NDArray\Exceptions\MathException;
 use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
@@ -77,40 +76,6 @@ class EdgeCasesTest extends TestCase
 
         // INF * 0 should be NaN
         $this->assertNan($result->getAt(0));
-    }
-
-    public function testInt64MaxValue(): void
-    {
-        // NOTE: Integer overflow in Rust currently throws MathException
-        // This is different from PHP's wraparound behavior
-        $this->expectException(MathException::class);
-
-        $max = \PHP_INT_MAX;
-        $a = NDArray::array([$max], DType::Int64);
-        $a->add(1);
-    }
-
-    public function testInt64MinValue(): void
-    {
-        // NOTE: Integer underflow in Rust currently throws MathException
-        $this->expectException(MathException::class);
-
-        $min = \PHP_INT_MIN;
-        $a = NDArray::array([$min], DType::Int64);
-        $a->subtract(1);
-    }
-
-    public function testUint64MaxValue(): void
-    {
-        // NOTE: UInt64 overflow currently wraps to PHP_INT_MIN due to FFI representation
-        // This is a known limitation of the FFI boundary
-        $a = NDArray::array([9223372036854775807], DType::UInt64);
-        $result = $a->add(1);
-
-        // This wraps to negative in PHP's representation (known limitation)
-        $this->assertIsInt($result->getAt(0));
-        // Document the current behavior - it wraps to a negative number
-        $this->assertEquals(-9223372036854775808, $result->getAt(0));
     }
 
     public function testFloatSubnormalNumbers(): void

@@ -1624,37 +1624,6 @@ int32_t ndarray_flip(const struct NdArrayHandle *handle,
                      uintptr_t max_ndim);
 
 /**
- * Insert new array axis at axis and return the result.
- *
- * The new axis always has length 1.
- */
-int32_t ndarray_insert(const struct NdArrayHandle *handle,
-                       const struct ViewMetadata *meta,
-                       uintptr_t axis,
-                       struct NdArrayHandle **out_handle,
-                       uint8_t *out_dtype,
-                       uintptr_t *out_ndim,
-                       uintptr_t *out_shape,
-                       uintptr_t max_ndim);
-
-/**
- * Merge in the axis take into into.
- *
- * Returns true if the axes are now merged.
- * This method merges the axes if movement along the two original axes can be
- * equivalently represented as movement along one (merged) axis.
- */
-int32_t ndarray_merge(const struct NdArrayHandle *handle,
-                      const struct ViewMetadata *meta,
-                      uintptr_t take,
-                      uintptr_t into,
-                      struct NdArrayHandle **out_handle,
-                      uint8_t *out_dtype,
-                      uintptr_t *out_ndim,
-                      uintptr_t *out_shape,
-                      uintptr_t max_ndim);
-
-/**
  * Pad an array with constant/symmetric/reflect mode.
  */
 int32_t ndarray_pad(const struct NdArrayHandle *handle,
@@ -1708,37 +1677,6 @@ int32_t ndarray_reshape(const struct NdArrayHandle *handle,
                         uintptr_t new_ndim,
                         int32_t order,
                         struct NdArrayHandle **out_handle);
-
-/**
- * Remove axes of length 1 from the array.
- *
- * If `axes` is null and `num_axes` is 0, removes all length-1 axes.
- * Otherwise, removes only the specified axes.
- */
-int32_t ndarray_squeeze(const struct NdArrayHandle *handle,
-                        const struct ViewMetadata *meta,
-                        const uintptr_t *axes,
-                        uintptr_t num_axes,
-                        struct NdArrayHandle **out_handle,
-                        uint8_t *out_dtype,
-                        uintptr_t *out_ndim,
-                        uintptr_t *out_shape,
-                        uintptr_t max_ndim);
-
-/**
- * Swap two axes of the array.
- *
- * Returns a copy with data in standard C-contiguous layout.
- */
-int32_t ndarray_swap(const struct NdArrayHandle *handle,
-                     const struct ViewMetadata *meta,
-                     uintptr_t axis1,
-                     uintptr_t axis2,
-                     struct NdArrayHandle **out_handle,
-                     uint8_t *out_dtype,
-                     uintptr_t *out_ndim,
-                     uintptr_t *out_shape,
-                     uintptr_t max_ndim);
 
 /**
  * Tile an array by repeating it.

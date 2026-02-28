@@ -66,7 +66,7 @@ trait HasShapeOps
 
         if ($oldSize !== $newSize) {
             throw new ShapeException(
-                "Cannot reshape array of size {$oldSize} into shape " . json_encode($newShape) . " with size {$newSize}"
+                "Cannot reshape array of size {$oldSize} into shape ".json_encode($newShape)." with size {$newSize}"
             );
         }
 
@@ -231,7 +231,7 @@ trait HasShapeOps
     public function permute(int ...$axes): NDArray
     {
         if (\count($axes) !== $this->ndim()) {
-            throw new ShapeException("permute requires {$this->ndim()} axes, got " . \count($axes));
+            throw new ShapeException("permute requires {$this->ndim()} axes, got ".\count($axes));
         }
 
         $normalizedAxes = [];
@@ -287,7 +287,7 @@ trait HasShapeOps
         }
 
         if ($take === $into) {
-            throw new ShapeException("Cannot merge axis into itself");
+            throw new ShapeException('Cannot merge axis into itself');
         }
 
         $shape = $this->shape();
@@ -674,7 +674,7 @@ trait HasShapeOps
 
         if (1 !== \count($flat) && 2 !== \count($flat) && \count($flat) !== $this->ndim() * 2) {
             throw new ShapeException(
-                'constantValues must be scalar, [before, after], or per-axis pairs of length ' . ($this->ndim() * 2)
+                'constantValues must be scalar, [before, after], or per-axis pairs of length '.($this->ndim() * 2)
             );
         }
 
