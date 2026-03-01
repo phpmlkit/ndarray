@@ -23,7 +23,7 @@ export default defineConfig({
       { text: 'User Guide', link: '/guide/getting-started/what-is-ndarray' },
       { text: 'API Reference', link: '/api/' },
       {
-        text: '0.1.0',
+        text: '1.0.0',
         items: [
           { text: 'Changelog', link: '/changelog' },
           { text: 'Contributing', link: '/contributing' },
