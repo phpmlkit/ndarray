@@ -1,6 +1,6 @@
 #!/bin/bash
 # Version bump script for NDArray PHP
-# Updates both Cargo.toml and composer.json, then creates a git tag
+# Updates Cargo.toml, composer.json, package.json, and config.ts, then creates a git tag
 
 set -e
 
@@ -116,12 +116,48 @@ else
     exit 1
 fi
 
+# Update package.json (docs)
+PACKAGE_FILE="package.json"
+if [ -f "$PACKAGE_FILE" ]; then
+    CURRENT_VERSION=$(grep '"version"' "$PACKAGE_FILE" | head -1 | grep -o '"[0-9.]*"' | tail -1 | tr -d '"')
+    print_info "Updating $PACKAGE_FILE: $CURRENT_VERSION → $NEW_VERSION"
+    
+    # Use sed to update version
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PACKAGE_FILE"
+    else
+        sed -i "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PACKAGE_FILE"
+    fi
+    
+    print_success "✓ Updated $PACKAGE_FILE"
+else
+    print_info "Skipping $PACKAGE_FILE (not found)"
+fi
+
+# Update config.ts (docs version in nav)
+CONFIG_FILE="docs/.vitepress/config.ts"
+if [ -f "$CONFIG_FILE" ]; then
+    # Extract current version from the nav text field
+    CURRENT_VERSION=$(grep -E "text: '[0-9]+\.[0-9]+\.[0-9]+'" "$CONFIG_FILE" | head -1 | grep -o "'[0-9.]*'" | tr -d "'")
+    if [ -n "$CURRENT_VERSION" ]; then
+        print_info "Updating $CONFIG_FILE: $CURRENT_VERSION → $NEW_VERSION"
+        
+        # Use sed to update version in nav text
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/text: '$CURRENT_VERSION'/text: '$NEW_VERSION'/" "$CONFIG_FILE"
+        else
+            sed -i "s/text: '$CURRENT_VERSION'/text: '$NEW_VERSION'/" "$CONFIG_FILE"
+        fi
+        
+        print_success "✓ Updated $CONFIG_FILE"
+    else
+        print_info "Could not find version in $CONFIG_FILE"
+    fi
+else
+    print_info "Skipping $CONFIG_FILE (not found)"
+fi
+
 echo ""
-
-# Show changes
-print_info "Changes made:"
-git diff --no-color
-
 echo ""
 
 # Ask for confirmation before committing
@@ -130,7 +166,7 @@ echo ""
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Commit changes
-    git add rust/Cargo.toml composer.json
+    git add rust/Cargo.toml composer.json package.json docs/.vitepress/config.ts
     git commit -m "Bump version to $NEW_VERSION"
     print_success "✓ Committed changes"
     
@@ -156,7 +192,7 @@ else
     print_info "Changes saved but not committed."
     echo ""
     echo "To commit manually:"
-    echo "  git add rust/Cargo.toml composer.json"
+    echo "  git add rust/Cargo.toml composer.json package.json docs/.vitepress/config.ts"
     echo "  git commit -m \"Bump version to $NEW_VERSION\""
     echo ""
     echo "Then create a release on GitHub with tag v$NEW_VERSION"
