@@ -166,8 +166,8 @@ echo ""
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Commit changes
-    git add rust/Cargo.toml composer.json package.json docs/.vitepress/config.ts
-    git commit -m "Bump version to $NEW_VERSION"
+    git add rust/Cargo.toml rust/Cargo.lock composer.json package.json docs/.vitepress/config.ts
+    git commit -m "chore: bump version to $NEW_VERSION"
     print_success "✓ Committed changes"
     
     echo ""
@@ -192,8 +192,8 @@ else
     print_info "Changes saved but not committed."
     echo ""
     echo "To commit manually:"
-    echo "  git add rust/Cargo.toml composer.json package.json docs/.vitepress/config.ts"
-    echo "  git commit -m \"Bump version to $NEW_VERSION\""
+    echo "  git add rust/Cargo.toml rust/Cargo.lock composer.json package.json docs/.vitepress/config.ts"
+    echo "  git commit -m \"chore: bump version to $NEW_VERSION\""
     echo ""
     echo "Then create a release on GitHub with tag v$NEW_VERSION"
 fi
