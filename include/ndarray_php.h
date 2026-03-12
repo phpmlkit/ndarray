@@ -866,9 +866,7 @@ int32_t ndarray_diagonal(const struct NdArrayHandle *handle,
                          uintptr_t max_ndim);
 
 /**
- * Compute dot product of two arrays with full view support.
- *
- * Works directly on views without converting to Vec first.
+ * Compute dot product of two arrays.
  */
 int32_t ndarray_dot(const struct NdArrayHandle *a,
                     const struct ArrayMetadata *a_meta,
@@ -882,6 +880,9 @@ int32_t ndarray_dot(const struct NdArrayHandle *a,
 
 /**
  * Matrix multiplication.
+ *
+ * Only supports Float32 and Float64 types (2D arrays).
+ * When BLAS is enabled, automatically uses BLAS gemm for f32/f64.
  */
 int32_t ndarray_matmul(const struct NdArrayHandle *a,
                        const struct ArrayMetadata *a_meta,
