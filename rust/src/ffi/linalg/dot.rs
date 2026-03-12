@@ -3,7 +3,7 @@
 use crate::core::view_helpers::{extract_view_as_f64, extract_view_f32, extract_view_f64};
 use crate::core::NDArrayWrapper;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 
 /// Compute dot product of two arrays with full view support.
 ///
@@ -11,9 +11,9 @@ use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_dot(
     a: *const NdArrayHandle,
-    a_meta: *const ViewMetadata,
+    a_meta: *const ArrayMetadata,
     b: *const NdArrayHandle,
-    b_meta: *const ViewMetadata,
+    b_meta: *const ArrayMetadata,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype_ptr: *mut u8,
     out_ndim: *mut usize,
@@ -66,9 +66,9 @@ pub unsafe extern "C" fn ndarray_dot(
 /// Compute dot product using views directly
 fn dot_impl(
     a_wrapper: &NDArrayWrapper,
-    a_meta: &ViewMetadata,
+    a_meta: &ArrayMetadata,
     b_wrapper: &NDArrayWrapper,
-    b_meta: &ViewMetadata,
+    b_meta: &ArrayMetadata,
 ) -> Result<NDArrayWrapper, String> {
     match (a_meta.ndim, b_meta.ndim) {
         (1, 1) => dot_1d_1d(a_wrapper, a_meta, b_wrapper, b_meta),
@@ -85,9 +85,9 @@ fn dot_impl(
 /// 1D @ 1D dot product - iterates directly on views
 fn dot_1d_1d(
     a_wrapper: &NDArrayWrapper,
-    a_meta: &ViewMetadata,
+    a_meta: &ArrayMetadata,
     b_wrapper: &NDArrayWrapper,
-    b_meta: &ViewMetadata,
+    b_meta: &ArrayMetadata,
 ) -> Result<NDArrayWrapper, String> {
     if unsafe { a_meta.shape_slice()[0] } != unsafe { b_meta.shape_slice()[0] } {
         return Err(format!(
@@ -141,9 +141,9 @@ fn dot_1d_1d(
 /// 2D @ 2D matrix multiplication
 fn dot_2d_2d(
     a_wrapper: &NDArrayWrapper,
-    a_meta: &ViewMetadata,
+    a_meta: &ArrayMetadata,
     b_wrapper: &NDArrayWrapper,
-    b_meta: &ViewMetadata,
+    b_meta: &ArrayMetadata,
 ) -> Result<NDArrayWrapper, String> {
     let a_shape = unsafe { a_meta.shape_slice() };
     let b_shape = unsafe { b_meta.shape_slice() };
@@ -212,9 +212,9 @@ fn dot_2d_2d(
 /// 2D @ 1D matrix-vector multiplication
 fn dot_2d_1d(
     a_wrapper: &NDArrayWrapper,
-    a_meta: &ViewMetadata,
+    a_meta: &ArrayMetadata,
     b_wrapper: &NDArrayWrapper,
-    b_meta: &ViewMetadata,
+    b_meta: &ArrayMetadata,
 ) -> Result<NDArrayWrapper, String> {
     let a_shape = unsafe { a_meta.shape_slice() };
     let b_shape = unsafe { b_meta.shape_slice() };
@@ -274,9 +274,9 @@ fn dot_2d_1d(
 /// 1D @ 2D vector-matrix multiplication
 fn dot_1d_2d(
     a_wrapper: &NDArrayWrapper,
-    a_meta: &ViewMetadata,
+    a_meta: &ArrayMetadata,
     b_wrapper: &NDArrayWrapper,
-    b_meta: &ViewMetadata,
+    b_meta: &ArrayMetadata,
 ) -> Result<NDArrayWrapper, String> {
     let a_shape = unsafe { a_meta.shape_slice() };
     let b_shape = unsafe { b_meta.shape_slice() };
@@ -336,7 +336,7 @@ fn dot_1d_2d(
 /// Extract view data as contiguous f64 Vec
 fn extract_as_contiguous_f64(
     wrapper: &NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
 ) -> Result<Vec<f64>, String> {
     unsafe {
         // Try native f64 first

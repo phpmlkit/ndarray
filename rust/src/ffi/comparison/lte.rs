@@ -8,16 +8,16 @@ use crate::core::view_helpers::{
 };
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
 use crate::scalar_cmp_op_arm;
 
 /// Element-wise less-or-equal comparison with broadcasting. Returns Bool array.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_lte(
     a: *const NdArrayHandle,
-    a_meta: *const ViewMetadata,
+    a_meta: *const ArrayMetadata,
     b: *const NdArrayHandle,
-    b_meta: *const ViewMetadata,
+    b_meta: *const ArrayMetadata,
     out: *mut *mut NdArrayHandle,
     out_dtype_ptr: *mut u8,
     out_ndim: *mut usize,
@@ -167,7 +167,7 @@ pub unsafe extern "C" fn ndarray_lte(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_lte_scalar(
     a: *const NdArrayHandle,
-    a_meta: *const ViewMetadata,
+    a_meta: *const ArrayMetadata,
     scalar: f64,
     out: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,

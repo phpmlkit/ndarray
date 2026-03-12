@@ -11,7 +11,7 @@ use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
 use crate::ffi::indexing::utils::normalize_index;
 use crate::ffi::output_meta::write_output_metadata;
 use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{NdArrayHandle, ArrayMetadata};
 use ndarray::{ArrayD, Dimension, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -20,9 +20,9 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_take_along_axis(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     indices_handle: *const NdArrayHandle,
-    indices_meta: *const ViewMetadata,
+    indices_meta: *const ArrayMetadata,
     axis: i32,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,

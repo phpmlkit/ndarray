@@ -22,7 +22,7 @@ pub mod stacking;
 pub mod to_string;
 mod types;
 
-pub use metadata::{HasViewMetadata, ViewMetadata};
+pub use metadata::ArrayMetadata;
 pub use output_meta::write_output_metadata;
 pub use types::NdArrayHandle;
 

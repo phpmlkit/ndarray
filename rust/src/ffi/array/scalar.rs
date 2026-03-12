@@ -9,7 +9,7 @@ use crate::core::view_helpers::{
 };
 use crate::dtype::DType;
 use crate::error::{set_last_error, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{NdArrayHandle, ArrayMetadata};
 
 /// Extract the scalar value from a 0-dimensional array or view.
 ///
@@ -22,7 +22,7 @@ use crate::ffi::{NdArrayHandle, ViewMetadata};
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_as_scalar(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     out_value: *mut c_void,
 ) -> i32 {
     if handle.is_null() || out_value.is_null() || meta.is_null() {

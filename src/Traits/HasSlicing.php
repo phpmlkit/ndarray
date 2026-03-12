@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
+use PhpMlKit\NDArray\ArrayMetadata;
 use PhpMlKit\NDArray\Exceptions\IndexException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Lib;
@@ -73,7 +74,7 @@ trait HasSlicing
 
         $newShape = [];
         $newStrides = [];
-        $newOffset = $this->getOffset();
+        $newOffset = $this->offset();
 
         foreach ($selection as $dim => $selector) {
             $dimSize = $this->shape()[$dim];
@@ -111,10 +112,8 @@ trait HasSlicing
 
         return new self(
             handle: $this->handle,
-            shape: $newShape,
+            meta: new ArrayMetadata($newShape, $newStrides, $newOffset),
             dtype: $this->dtype,
-            strides: $newStrides,
-            offset: $newOffset,
             base: $root,
         );
     }
@@ -155,7 +154,7 @@ trait HasSlicing
         $ffi = Lib::get();
         $cValue = $this->dtype->createCValue($value);
 
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $status = $ffi->ndarray_fill($this->handle, Lib::addr($meta), Lib::addr($cValue));
 
         Lib::checkStatus($status);
@@ -168,14 +167,14 @@ trait HasSlicing
      */
     private function assignFromNDArray(NDArray $value): void
     {
-        if ($value->size() !== $this->size) {
+        if ($value->size() !== $this->size()) {
             throw new ShapeException(
-                "Cannot assign array of size {$value->size()} to view of size {$this->size}"
+                "Cannot assign array of size {$value->size()} to view of size {$this->size()}"
             );
         }
 
         $ffi = Lib::get();
-        $dstMeta = $this->viewMetadata()->toCData();
+        $dstMeta = $this->meta()->toCData();
         $src = $value;
         if ($src->shape() !== $this->shape()) {
             if ($src->isContiguous()) {
@@ -184,7 +183,7 @@ trait HasSlicing
                 $src = $src->copy()->reshape($this->shape());
             }
         }
-        $srcMeta = $src->viewMetadata()->toCData();
+        $srcMeta = $src->meta()->toCData();
 
         $status = $ffi->ndarray_assign(
             $this->handle,

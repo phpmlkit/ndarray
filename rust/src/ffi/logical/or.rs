@@ -5,16 +5,16 @@
 
 use crate::binary_logical_op_arm;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
 
 /// Compute the logical OR of two arrays.
 /// Both arrays are converted to bool first, result is always Bool.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_logical_or(
     a: *const NdArrayHandle,
-    a_meta: *const ViewMetadata,
+    a_meta: *const ArrayMetadata,
     b: *const NdArrayHandle,
-    b_meta: *const ViewMetadata,
+    b_meta: *const ArrayMetadata,
     out: *mut *mut NdArrayHandle,
     out_dtype_ptr: *mut u8,
     out_ndim: *mut usize,

@@ -12,7 +12,7 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{NdArrayHandle, ArrayMetadata};
 
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -22,7 +22,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_astype(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     target_dtype: i32,
     out: *mut *mut NdArrayHandle,
 ) -> i32 {
@@ -54,7 +54,7 @@ pub unsafe extern "C" fn ndarray_astype(
 }
 
 /// Copy array data when source and target dtypes are the same.
-fn copy_same_dtype(wrapper: &NDArrayWrapper, meta: &ViewMetadata) -> NDArrayWrapper {
+fn copy_same_dtype(wrapper: &NDArrayWrapper, meta: &ArrayMetadata) -> NDArrayWrapper {
     unsafe {
         match &wrapper.data {
             ArrayData::Float64(_) => {
@@ -139,7 +139,7 @@ fn copy_same_dtype(wrapper: &NDArrayWrapper, meta: &ViewMetadata) -> NDArrayWrap
 }
 
 /// Cast array data from source dtype to a desired target dtype.
-fn cast_to_dtype(wrapper: &NDArrayWrapper, meta: &ViewMetadata, target: DType) -> NDArrayWrapper {
+fn cast_to_dtype(wrapper: &NDArrayWrapper, meta: &ArrayMetadata, target: DType) -> NDArrayWrapper {
     match target {
         DType::Float64 => NDArrayWrapper {
             data: ArrayData::Float64(Arc::new(RwLock::new(

@@ -196,9 +196,9 @@ macro_rules! impl_assign_slice {
             $(
                 pub unsafe fn $method(
                     &self,
-                    meta: &$crate::ffi::ViewMetadata,
+                    meta: &$crate::ffi::ArrayMetadata,
                     src: &$crate::core::NDArrayWrapper,
-                    src_meta: &$crate::ffi::ViewMetadata,
+                    src_meta: &$crate::ffi::ArrayMetadata,
                 ) -> Result<(), String> {
                     if let $crate::core::ArrayData::$variant(_) = &self.data {
                     } else {
@@ -309,7 +309,7 @@ macro_rules! impl_copy_view {
             $(
                 pub unsafe fn $method(
                     &self,
-                    meta: &$crate::ffi::ViewMetadata,
+                    meta: &$crate::ffi::ArrayMetadata,
                 ) -> Result<$crate::core::NDArrayWrapper, String> {
                     let shape = meta.shape_slice();
                     let strides = meta.strides_slice();
@@ -361,7 +361,7 @@ macro_rules! impl_fill_slice {
                 pub unsafe fn $method(
                     &self,
                     value: $type,
-                    meta: &$crate::ffi::ViewMetadata,
+                    meta: &$crate::ffi::ArrayMetadata,
                 ) -> Result<(), String> {
                     let shape = meta.shape_slice();
                     let strides = meta.strides_slice();

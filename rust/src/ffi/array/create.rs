@@ -6,7 +6,7 @@ use std::slice;
 use crate::core::NDArrayWrapper;
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{NdArrayHandle, ArrayMetadata};
 
 /// Create an NDArray from raw data with specified dtype.
 ///
@@ -102,7 +102,7 @@ pub unsafe extern "C" fn ndarray_create(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_copy(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
     if handle.is_null() || meta.is_null() || out_handle.is_null() {

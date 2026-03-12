@@ -10,7 +10,7 @@ use crate::core::view_helpers::{
 };
 use crate::dtype::DType;
 use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{ArrayMetadata, NdArrayHandle};
 use ndarray::ArrayViewD;
 
 /// Get flattened data for an array view with optional offset and length.
@@ -25,7 +25,7 @@ use ndarray::ArrayViewD;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_get_data(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     start: usize,
     len: usize,
     out_data: *mut c_void,

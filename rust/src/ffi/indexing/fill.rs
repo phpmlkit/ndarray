@@ -6,7 +6,7 @@ use std::ffi::c_void;
 
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, SUCCESS};
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{ArrayMetadata, NdArrayHandle};
 
 /// Fill a slice with a value.
 ///
@@ -17,7 +17,7 @@ use crate::ffi::{NdArrayHandle, ViewMetadata};
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_fill(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     value: *const c_void,
 ) -> i32 {
     if handle.is_null() || value.is_null() || meta.is_null() {

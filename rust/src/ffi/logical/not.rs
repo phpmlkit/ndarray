@@ -4,7 +4,7 @@
 //! Always returns a Bool array.
 
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 use crate::unary_logical_op_arm;
 
 /// Compute the logical NOT of an array.
@@ -12,7 +12,7 @@ use crate::unary_logical_op_arm;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_logical_not(
     a: *const NdArrayHandle,
-    a_meta: *const ViewMetadata,
+    a_meta: *const ArrayMetadata,
     out: *mut *mut NdArrayHandle,
     out_dtype_ptr: *mut u8,
     out_ndim: *mut usize,

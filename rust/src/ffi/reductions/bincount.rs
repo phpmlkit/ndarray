@@ -7,7 +7,7 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -47,7 +47,7 @@ where
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_bincount(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     minlength: usize,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,

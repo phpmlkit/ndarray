@@ -4,7 +4,7 @@
 
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, SUCCESS};
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{NdArrayHandle, ArrayMetadata};
 
 /// Assign values from source view to destination view.
 ///
@@ -16,9 +16,9 @@ use crate::ffi::{NdArrayHandle, ViewMetadata};
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_assign(
     dst: *const NdArrayHandle,
-    dst_meta: *const ViewMetadata,
+    dst_meta: *const ArrayMetadata,
     src: *const NdArrayHandle,
-    src_meta: *const ViewMetadata,
+    src_meta: *const ArrayMetadata,
 ) -> i32 {
     if dst.is_null() || src.is_null() || dst_meta.is_null() || src_meta.is_null() {
         return ERR_GENERIC;

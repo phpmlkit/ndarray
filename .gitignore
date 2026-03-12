@@ -52,3 +52,8 @@ docs/.vitepress/dist
 docs/changelog.md
 docs/contributing.md
 
+benchmark
+announcement
+.agents
+skills-lock.json
+

@@ -9,7 +9,7 @@ use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::write_output_metadata;
 use crate::ffi::NdArrayHandle;
-use crate::ffi::ViewMetadata;
+use crate::ffi::ArrayMetadata;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -20,7 +20,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_permute(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     axes: *const usize,
     num_axes: usize,
     out_handle: *mut *mut NdArrayHandle,

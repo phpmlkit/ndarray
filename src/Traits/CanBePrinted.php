@@ -29,7 +29,7 @@ trait CanBePrinted
         $ffi = Lib::get();
         $buffer = $ffi->new('char[8192]');
 
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $len = $ffi->ndarray_to_string(
             $this->handle,
             Lib::addr($meta),

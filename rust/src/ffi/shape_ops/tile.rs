@@ -15,14 +15,14 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{set_last_error, ERR_GENERIC, SUCCESS};
-use crate::ffi::ViewMetadata;
+use crate::ffi::ArrayMetadata;
 use crate::ffi::{write_output_metadata, NdArrayHandle};
 
 /// Tile an array by repeating it.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_tile(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     reps: *const usize,
     reps_len: usize,
     out_handle: *mut *mut NdArrayHandle,

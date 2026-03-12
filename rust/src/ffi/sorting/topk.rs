@@ -12,7 +12,7 @@ use crate::ffi::reductions::helpers::validate_axis;
 use crate::ffi::sorting::helpers::{
     cmp_f32_asc_nan_last, cmp_f64_asc_nan_last, topk_axis_generic, topk_flat_generic, SortKind,
 };
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{NdArrayHandle, ArrayMetadata};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -20,7 +20,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_topk_axis(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     axis: i32,
     k: usize,
     largest: bool,
@@ -327,7 +327,7 @@ pub unsafe extern "C" fn ndarray_topk_axis(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_topk_flat(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     k: usize,
     largest: bool,
     sorted: bool,

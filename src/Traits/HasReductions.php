@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
+use PhpMlKit\NDArray\ArrayMetadata;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
@@ -289,7 +290,7 @@ trait HasReductions
         $outValuesHandle = $ffi->new('struct NdArrayHandle*');
         $outIndicesHandle = $ffi->new('struct NdArrayHandle*');
 
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $outShapeBuf = Lib::createCArray('size_t', array_fill(0, Lib::MAX_NDIM, 0));
 
         $status = $ffi->ndarray_topk_axis(
@@ -312,8 +313,8 @@ trait HasReductions
         $outShape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
 
         return [
-            'values' => new NDArray($outValuesHandle, $outShape, $this->dtype),
-            'indices' => new NDArray($outIndicesHandle, $outShape, DType::Int64),
+            'values' => new NDArray($outValuesHandle, new ArrayMetadata($outShape), $this->dtype),
+            'indices' => new NDArray($outIndicesHandle, new ArrayMetadata($outShape), DType::Int64),
         ];
     }
 
@@ -328,7 +329,7 @@ trait HasReductions
         $outValuesHandle = $ffi->new('struct NdArrayHandle*');
         $outIndicesHandle = $ffi->new('struct NdArrayHandle*');
 
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $outShapeBuf = Lib::createCArray('size_t', [0]);
 
         $status = $ffi->ndarray_topk_flat(
@@ -348,8 +349,8 @@ trait HasReductions
         $outShape = [(int) $outShapeBuf[0]];
 
         return [
-            'values' => new NDArray($outValuesHandle, $outShape, $this->dtype),
-            'indices' => new NDArray($outIndicesHandle, $outShape, DType::Int64),
+            'values' => new NDArray($outValuesHandle, new ArrayMetadata($outShape), $this->dtype),
+            'indices' => new NDArray($outIndicesHandle, new ArrayMetadata($outShape), DType::Int64),
         ];
     }
 }

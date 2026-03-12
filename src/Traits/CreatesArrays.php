@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Traits;
 
 use FFI\CData;
+use PhpMlKit\NDArray\ArrayMetadata;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\DTypeException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
@@ -40,7 +41,7 @@ trait CreatesArrays
 
         $handle = self::createTyped($ffi, $dtype, $flatData, $shape, $len);
 
-        return new self($handle, $shape, $dtype);
+        return new self($handle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -64,7 +65,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $shape, $dtype);
+        return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -88,7 +89,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $shape, $dtype);
+        return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -148,7 +149,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $shape, $dtype);
+        return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -186,7 +187,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $shape, $dtype);
+        return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -249,7 +250,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, [$N, $M], $dtype);
+        return new self($outHandle, new ArrayMetadata([$N, $M]), $dtype);
     }
 
     /**
@@ -298,7 +299,7 @@ trait CreatesArrays
             $num = (int) ceil(($start - $stop) / -$step);
         }
 
-        return new self($outHandle, [$num], $dtype);
+        return new self($outHandle, new ArrayMetadata([$num]), $dtype);
     }
 
     /**
@@ -339,7 +340,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, [$num], $dtype);
+        return new self($outHandle, new ArrayMetadata([$num]), $dtype);
     }
 
     /**
@@ -380,7 +381,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, [$num], $dtype);
+        return new self($outHandle, new ArrayMetadata([$num]), $dtype);
     }
 
     /**
@@ -426,7 +427,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, [$num], $dtype);
+        return new self($outHandle, new ArrayMetadata([$num]), $dtype);
     }
 
     /**
@@ -454,7 +455,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $shape, $dtype);
+        return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -491,7 +492,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $shape, $dtype);
+        return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -519,7 +520,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $shape, $dtype);
+        return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -554,7 +555,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $shape, $dtype);
+        return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -589,7 +590,7 @@ trait CreatesArrays
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $shape, $dtype);
+        return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**

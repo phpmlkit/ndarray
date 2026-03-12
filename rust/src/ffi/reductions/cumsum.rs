@@ -10,7 +10,7 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
 use ndarray::Axis;
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -19,7 +19,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_cumsum(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
     out_ndim: *mut usize,
@@ -212,7 +212,7 @@ pub unsafe extern "C" fn ndarray_cumsum(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_cumsum_axis(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     axis: i32,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
