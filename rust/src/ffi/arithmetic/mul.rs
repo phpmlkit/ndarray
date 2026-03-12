@@ -48,7 +48,7 @@ pub unsafe extern "C" fn ndarray_mul(
 
         let out_dtype = DType::promote(a_wrapper.dtype, b_wrapper.dtype);
 
-        let (result_wrapper, result_shape) = match out_dtype {
+        let result_wrapper = match out_dtype {
             DType::Float64 => binary_op_arm!(
                 a_wrapper, a_meta,
                 b_wrapper, b_meta,
@@ -107,7 +107,6 @@ pub unsafe extern "C" fn ndarray_mul(
             }
         };
 
-        let _ = result_shape;
         if let Err(e) = write_output_metadata(
             &result_wrapper,
             out_dtype_ptr,

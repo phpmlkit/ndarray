@@ -44,8 +44,7 @@ pub(crate) fn panic_payload_to_string(payload: Box<dyn std::any::Any + Send>) ->
 pub(crate) fn classify_panic_message(msg: &str) -> (i32, String) {
     let msg_lower = msg.to_lowercase();
 
-    // ndarray ShapeError variants (from ndarray/src/error.rs)
-    // Display format: "ShapeError/IncompatibleShape: incompatible shapes"
+    // ndarray ShapeError variants
     if msg_lower.contains("incompatibleshape")
         || msg_lower.contains("incompatible shape")
         || msg_lower.contains("incompatible shapes")
@@ -55,8 +54,11 @@ pub(crate) fn classify_panic_message(msg: &str) -> (i32, String) {
         || msg_lower.contains("shape does not fit")
         || msg_lower.contains("dimension mismatch")
         || msg_lower.contains("shape mismatch")
+        || msg_lower.contains("are not compatible for matrix multiplication")
+        || msg_lower.contains("overflows isize")
+        || msg_lower.contains("ndarray: inputs")
     {
-        return (ERR_SHAPE, "incompatible shapes".to_string());
+        return (ERR_SHAPE, msg.to_string());
     }
 
     // ndarray OutOfBounds
@@ -67,7 +69,7 @@ pub(crate) fn classify_panic_message(msg: &str) -> (i32, String) {
         || msg_lower.contains("past end of axis")
         || msg_lower.contains("out of range")
     {
-        return (ERR_INDEX, "index out of bounds".to_string());
+        return (ERR_INDEX, msg.to_string());
     }
 
     // ndarray Overflow, division, NaN
@@ -76,7 +78,7 @@ pub(crate) fn classify_panic_message(msg: &str) -> (i32, String) {
         || msg_lower.contains("division by zero")
         || msg_lower.contains("attempt to divide")
     {
-        return (ERR_MATH, "math error".to_string());
+        return (ERR_MATH, msg.to_string());
     }
 
     // Cast/type errors
@@ -86,7 +88,7 @@ pub(crate) fn classify_panic_message(msg: &str) -> (i32, String) {
         || msg_lower.contains("dtype")
         || msg_lower.contains("not supported for")
     {
-        return (ERR_DTYPE, "type error".to_string());
+        return (ERR_DTYPE, msg.to_string());
     }
 
     // Unsupported (ndarray ErrorKind::Unsupported)
@@ -139,22 +141,20 @@ pub unsafe extern "C" fn ndarray_get_last_error(buf: *mut c_char, len: usize) ->
 /// since we convert panics to error codes.
 #[macro_export]
 macro_rules! ffi_guard {
-    ($body:block) => {
-        {
-            let prev_hook = std::panic::take_hook();
-            std::panic::set_hook(Box::new(|_| {}));
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| $body));
-            let _ = std::panic::take_hook();
-            std::panic::set_hook(prev_hook);
-            match result {
-                Ok(res) => res,
-                Err(payload) => {
-                    let msg = $crate::error::panic_payload_to_string(payload);
-                    let (code, display_msg) = $crate::error::classify_panic_message(&msg);
-                    $crate::error::set_last_error(display_msg);
-                    code
-                }
+    ($body:block) => {{
+        let prev_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(|_| {}));
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| $body));
+        let _ = std::panic::take_hook();
+        std::panic::set_hook(prev_hook);
+        match result {
+            Ok(res) => res,
+            Err(payload) => {
+                let msg = $crate::error::panic_payload_to_string(payload);
+                let (code, display_msg) = $crate::error::classify_panic_message(&msg);
+                $crate::error::set_last_error(display_msg);
+                code
             }
         }
-    };
+    }};
 }

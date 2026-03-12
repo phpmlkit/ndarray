@@ -6,7 +6,7 @@
 /// Macro to generate a binary operation match arm for FFI functions.
 ///
 /// Extracts both arrays as the target type, performs the operation,
-/// and returns the wrapper and shape.
+/// and returns the wrapper.
 #[macro_export]
 macro_rules! binary_op_arm {
     (
@@ -24,14 +24,10 @@ macro_rules! binary_op_arm {
                 return crate::error::ERR_GENERIC;
             };
             let result = a_view $op b_view;
-            let shape = result.shape().to_vec();
-            (
-                crate::core::NDArrayWrapper {
-                    data: $variant(::std::sync::Arc::new(::parking_lot::RwLock::new(result))),
-                    dtype: $dtype,
-                },
-                shape,
-            )
+            crate::core::NDArrayWrapper {
+                data: $variant(::std::sync::Arc::new(::parking_lot::RwLock::new(result))),
+                dtype: $dtype,
+            }
         }
     };
 }
