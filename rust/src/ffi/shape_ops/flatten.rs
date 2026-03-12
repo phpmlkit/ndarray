@@ -9,7 +9,7 @@ use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, SUCCESS};
 use crate::ffi::write_output_metadata;
 use crate::ffi::NdArrayHandle;
-use crate::ffi::ViewMetadata;
+use crate::ffi::ArrayMetadata;
 use ndarray::Order;
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -18,7 +18,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_flatten(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
     out_ndim: *mut usize,
@@ -182,7 +182,7 @@ pub unsafe extern "C" fn ndarray_flatten(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_ravel(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     order: i32,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,

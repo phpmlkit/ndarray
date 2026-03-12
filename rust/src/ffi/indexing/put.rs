@@ -9,7 +9,7 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
 use crate::ffi::indexing::utils::normalize_index;
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{NdArrayHandle, ArrayMetadata};
 use ndarray::ArrayD;
 use parking_lot::RwLock;
 use std::ffi::c_void;
@@ -43,9 +43,9 @@ fn put_impl<T: Copy>(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_put(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     indices_handle: *const NdArrayHandle,
-    indices_meta: *const ViewMetadata,
+    indices_meta: *const ArrayMetadata,
     values: *const c_void,
     values_len: usize,
     scalar_value: f64,

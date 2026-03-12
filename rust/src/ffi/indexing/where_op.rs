@@ -8,7 +8,7 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
 use ndarray::{ArrayD, ArrayViewD, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -57,11 +57,11 @@ fn where_impl<T: Copy>(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_where(
     cond_handle: *const NdArrayHandle,
-    cond_meta: *const ViewMetadata,
+    cond_meta: *const ArrayMetadata,
     x_handle: *const NdArrayHandle,
-    x_meta: *const ViewMetadata,
+    x_meta: *const ArrayMetadata,
     y_handle: *const NdArrayHandle,
-    y_meta: *const ViewMetadata,
+    y_meta: *const ArrayMetadata,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype_ptr: *mut u8,
     out_ndim: *mut usize,

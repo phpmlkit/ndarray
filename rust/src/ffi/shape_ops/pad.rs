@@ -11,7 +11,7 @@ use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::shape_ops::helpers::PadMode;
 use crate::ffi::write_output_metadata;
 use crate::ffi::NdArrayHandle;
-use crate::ffi::ViewMetadata;
+use crate::ffi::ArrayMetadata;
 use ndarray::{ArrayD, ArrayViewD, IxDyn};
 use parking_lot::RwLock;
 use std::slice;
@@ -159,7 +159,7 @@ fn pad_view<T: Copy>(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_pad(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     pad_width: *const usize,
     mode: i32,
     constant_values: *const f64,

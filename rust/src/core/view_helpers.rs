@@ -13,10 +13,10 @@ macro_rules! define_extract_view {
         /// Extract a view of the specific type from the wrapper.
         ///
         /// # Safety
-        /// The caller must ensure the ViewMetadata is valid.
+        /// The caller must ensure the ArrayMetadata is valid.
         pub unsafe fn $name<'a>(
             wrapper: &'a NDArrayWrapper,
-            meta: &'a crate::ffi::ViewMetadata,
+            meta: &'a crate::ffi::ArrayMetadata,
         ) -> Option<ArrayViewD<'a, $type>> {
             let offset = meta.offset;
             let shape = meta.shape_slice();
@@ -54,7 +54,7 @@ macro_rules! define_extract_view_as {
     ($name:ident, $target_type:ty, [$(($source_fn:ident, $conv:expr)),+ $(,)?]) => {
         pub fn $name(
             wrapper: &NDArrayWrapper,
-            meta: &crate::ffi::ViewMetadata,
+            meta: &crate::ffi::ArrayMetadata,
         ) -> Option<ArrayD<$target_type>> {
             unsafe {
                 $(

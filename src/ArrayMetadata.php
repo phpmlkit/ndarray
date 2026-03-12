@@ -8,20 +8,22 @@ use FFI\CData;
 use PhpMlKit\NDArray\FFI\Lib;
 
 /**
- * Holds shape, strides, offset and ndim for an array view.
+ * Holds shape, strides, offset and ndim for an array.
  *
  * NDArray uses this instead of storing those fields directly. When FFI needs
- * a C ViewMetadata struct, call toCData() to build and fill it; use
- * Lib::addr($viewMetadata->toCData()) when passing to FFI.
+ * a C ArrayMetadata struct, call toCData() to build and fill it; use
+ * Lib::addr($metadata->toCData()) when passing to FFI.
  *
  * @internal this is an internal implementation detail, not part of the public API
  */
-final class ViewMetadata
+final class ArrayMetadata
 {
     public readonly int $ndim;
 
     /** @var array<int> */
     public readonly array $strides;
+
+    public readonly int $size;
 
     /** Cached C struct and backing arrays so pointers stay valid. */
     private ?CData $cachedStruct = null;
@@ -42,10 +44,11 @@ final class ViewMetadata
     ) {
         $this->ndim = \count($shape);
         $this->strides = [] !== $strides ? $strides : self::computeStrides($shape);
+        $this->size = (int) array_product($shape);
     }
 
     /**
-     * Build and return the C ViewMetadata struct. Caches the struct and
+     * Build and return the C ArrayMetadata struct. Caches the struct and
      * shape/strides arrays so the returned struct remains valid. Pass
      * Lib::addr($this->toCData()) when an FFI function expects a pointer.
      *
@@ -60,7 +63,7 @@ final class ViewMetadata
         $ffi = Lib::get();
         $this->cachedShapeC = Lib::createShapeArray($this->shape);
         $this->cachedStridesC = Lib::createShapeArray($this->strides);
-        $this->cachedStruct = $ffi->new('struct ViewMetadata', false);
+        $this->cachedStruct = $ffi->new('struct ArrayMetadata', false);
         $this->cachedStruct->offset = $this->offset;
         $this->cachedStruct->shape = \FFI::addr($this->cachedShapeC[0]);
         $this->cachedStruct->strides = \FFI::addr($this->cachedStridesC[0]);

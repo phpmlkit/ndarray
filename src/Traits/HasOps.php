@@ -6,6 +6,7 @@ namespace PhpMlKit\NDArray\Traits;
 
 use FFI;
 use FFI\CData;
+use PhpMlKit\NDArray\ArrayMetadata;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\FFI\Lib;
@@ -33,7 +34,7 @@ trait HasOps
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
         [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
 
         // Normalize extra args: convert BackedEnum to their values
         $normalizedArgs = array_map(
@@ -64,7 +65,7 @@ trait HasOps
         $ndim = (int) $outNdimBuf->cdata;
         $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
 
-        return new NDArray($outHandle, $shape, $dtype);
+        return new NDArray($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -84,8 +85,8 @@ trait HasOps
         $outHandle = $ffi->new('struct NdArrayHandle*');
         [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
 
-        $aMeta = $this->viewMetadata()->toCData();
-        $bMeta = $other->viewMetadata()->toCData();
+        $aMeta = $this->meta()->toCData();
+        $bMeta = $other->meta()->toCData();
         $status = $ffi->{$funcName}(
             $this->handle,
             Lib::addr($aMeta),
@@ -108,7 +109,7 @@ trait HasOps
         $ndim = (int) $outNdimBuf->cdata;
         $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
 
-        return new NDArray($outHandle, $shape, $dtype);
+        return new NDArray($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -126,7 +127,7 @@ trait HasOps
         $outValue = $ffi->new('double');
         $outDtype = $ffi->new('uint8_t');
 
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $args = [
             $this->handle,
             Lib::addr($meta),

@@ -7,7 +7,7 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -18,7 +18,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_clamp(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     min_val: f64,
     max_val: f64,
     out_handle: *mut *mut NdArrayHandle,

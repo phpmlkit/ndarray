@@ -15,16 +15,16 @@ use crate::core::view_helpers::{
 use crate::core::ArrayData;
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 use crate::scalar_op_arm;
 
 /// Compute the bitwise AND of two arrays.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_bitand(
     a: *const NdArrayHandle,
-    a_meta: *const ViewMetadata,
+    a_meta: *const ArrayMetadata,
     b: *const NdArrayHandle,
-    b_meta: *const ViewMetadata,
+    b_meta: *const ArrayMetadata,
     out: *mut *mut NdArrayHandle,
     out_dtype_ptr: *mut u8,
     out_ndim: *mut usize,
@@ -126,7 +126,7 @@ pub unsafe extern "C" fn ndarray_bitand(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_bitand_scalar(
     a: *const NdArrayHandle,
-    a_meta: *const ViewMetadata,
+    a_meta: *const ArrayMetadata,
     scalar: i64,
     out: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,

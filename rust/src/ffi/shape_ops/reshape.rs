@@ -8,7 +8,7 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::NdArrayHandle;
-use crate::ffi::ViewMetadata;
+use crate::ffi::ArrayMetadata;
 use ndarray::IxDyn;
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -17,7 +17,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_reshape(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     new_shape: *const usize,
     new_ndim: usize,
     order: i32,

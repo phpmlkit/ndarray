@@ -1,7 +1,6 @@
 //! Concatenate N arrays along an axis.
 //!
-//! Accepts handles and metadata for each array. All arrays must have
-//! same dtype and matching shapes except along axis.
+//! All arrays must have same dtype and matching shapes except along axis.
 
 use ndarray::{concatenate, Axis};
 use parking_lot::RwLock;
@@ -16,16 +15,13 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::stacking::helpers::resolve_axis;
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 
 /// Concatenate N arrays along the given axis.
-///
-/// handles: pointer to array of num_arrays handles
-/// metas: pointer to array of num_arrays ViewMetadata pointers
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_concatenate(
     handles: *const *const NdArrayHandle,
-    metas: *const *const ViewMetadata,
+    metas: *const *const ArrayMetadata,
     num_arrays: usize,
     axis: i32,
     out_handle: *mut *mut NdArrayHandle,

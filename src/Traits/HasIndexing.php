@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Traits;
 
 use FFI\CData;
+use PhpMlKit\NDArray\ArrayMetadata;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\IndexException;
 use PhpMlKit\NDArray\Exceptions\NDArrayException;
@@ -104,7 +105,7 @@ trait HasIndexing
      */
     public function setAt(int $flatIndex, bool|float|int $value): void
     {
-        $normalized = $this->normalizeIndex($flatIndex, $this->size);
+        $normalized = $this->normalizeIndex($flatIndex, $this->size());
         $storageFlatIndex = $this->logicalFlatToStorageIndex($normalized);
         $this->setElement($storageFlatIndex, $value);
     }
@@ -120,7 +121,7 @@ trait HasIndexing
      */
     public function getAt(int $flatIndex): bool|float|int
     {
-        $normalized = $this->normalizeIndex($flatIndex, $this->size);
+        $normalized = $this->normalizeIndex($flatIndex, $this->size());
         $storageFlatIndex = $this->logicalFlatToStorageIndex($normalized);
 
         return $this->getElement($storageFlatIndex);
@@ -142,8 +143,8 @@ trait HasIndexing
         $outHandle = $ffi->new('struct NdArrayHandle*');
         [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
 
-        $meta = $this->viewMetadata()->toCData();
-        $indicesMeta = $indices->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
+        $indicesMeta = $indices->meta()->toCData();
 
         if (null !== $axis) {
             $status = $ffi->ndarray_take_axis(
@@ -182,7 +183,7 @@ trait HasIndexing
         $ndim = (int) $outNdimBuf->cdata;
         $outShape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
 
-        return new self($outHandle, $outShape, $dtype);
+        return new self($outHandle, new ArrayMetadata($outShape), $dtype);
     }
 
     /**
@@ -198,8 +199,8 @@ trait HasIndexing
         $outHandle = $ffi->new('struct NdArrayHandle*');
         [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
 
-        $meta = $this->viewMetadata()->toCData();
-        $indicesMeta = $indices->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
+        $indicesMeta = $indices->meta()->toCData();
         $status = $ffi->ndarray_take_along_axis(
             $this->handle,
             Lib::addr($meta),
@@ -223,7 +224,7 @@ trait HasIndexing
         $ndim = (int) $outNdimBuf->cdata;
         $outShape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
 
-        return new self($outHandle, $outShape, $dtype);
+        return new self($outHandle, new ArrayMetadata($outShape), $dtype);
     }
 
     /**
@@ -245,8 +246,8 @@ trait HasIndexing
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
-        $meta = $this->viewMetadata()->toCData();
-        $indicesMeta = $indices->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
+        $indicesMeta = $indices->meta()->toCData();
         $status = $ffi->ndarray_put(
             $this->handle,
             Lib::addr($meta),
@@ -261,7 +262,7 @@ trait HasIndexing
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $this->shape(), $this->dtype);
+        return new self($outHandle, new ArrayMetadata($this->shape()), $this->dtype);
     }
 
     /**
@@ -277,8 +278,8 @@ trait HasIndexing
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
-        $meta = $this->viewMetadata()->toCData();
-        $indicesMeta = $indices->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
+        $indicesMeta = $indices->meta()->toCData();
         $status = $ffi->ndarray_put_along_axis(
             $this->handle,
             Lib::addr($meta),
@@ -294,7 +295,7 @@ trait HasIndexing
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $this->shape(), $this->dtype);
+        return new self($outHandle, new ArrayMetadata($this->shape()), $this->dtype);
     }
 
     /**
@@ -311,8 +312,8 @@ trait HasIndexing
         $ffi = Lib::get();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
-        $meta = $this->viewMetadata()->toCData();
-        $indicesMeta = $indices->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
+        $indicesMeta = $indices->meta()->toCData();
         $status = $ffi->ndarray_scatter_add_flat(
             $this->handle,
             Lib::addr($meta),
@@ -327,7 +328,53 @@ trait HasIndexing
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $this->shape(), $this->dtype);
+        return new self($outHandle, new ArrayMetadata($this->shape()), $this->dtype);
+    }
+
+    /**
+     * Select values from x and y based on a boolean condition.
+     *
+     * @param bool|float|int|NDArray $condition Bool NDArray or scalar condition
+     * @param bool|float|int|NDArray $x         Values where condition is true
+     * @param bool|float|int|NDArray $y         Values where condition is false
+     */
+    public static function where(bool|float|int|NDArray $condition, bool|float|int|NDArray $x, bool|float|int|NDArray $y): NDArray
+    {
+        $condArray = self::coerceWhereOperand($condition, DType::Bool);
+        $xArray = self::coerceWhereOperand($x, null);
+        $yArray = self::coerceWhereOperand($y, null);
+
+        $ffi = Lib::get();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
+
+        $condMeta = $condArray->meta()->toCData();
+        $xMeta = $xArray->meta()->toCData();
+        $yMeta = $yArray->meta()->toCData();
+        $status = $ffi->ndarray_where(
+            $condArray->handle,
+            Lib::addr($condMeta),
+            $xArray->handle,
+            Lib::addr($xMeta),
+            $yArray->handle,
+            Lib::addr($yMeta),
+            Lib::addr($outHandle),
+            Lib::addr($outDtypeBuf),
+            Lib::addr($outNdimBuf),
+            $outShapeBuf,
+            Lib::MAX_NDIM
+        );
+
+        Lib::checkStatus($status);
+
+        $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
+        $ndim = (int) $outNdimBuf->cdata;
+        $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+        if (null === $dtype) {
+            throw new NDArrayException('Invalid dtype returned from Rust for where()');
+        }
+
+        return new NDArray($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
@@ -339,7 +386,7 @@ trait HasIndexing
      */
     private function calculateFlatIndex(array $indices): int
     {
-        $flatIndex = $this->getOffset();
+        $flatIndex = $this->offset();
         foreach ($indices as $dim => $index) {
             $flatIndex += $index * $this->strides()[$dim];
         }
@@ -353,10 +400,10 @@ trait HasIndexing
     private function logicalFlatToStorageIndex(int $logicalFlatIndex): int
     {
         if (1 === $this->ndim()) {
-            return $this->getOffset() + ($logicalFlatIndex * $this->strides()[0]);
+            return $this->offset() + ($logicalFlatIndex * $this->strides()[0]);
         }
 
-        $storageIndex = $this->getOffset();
+        $storageIndex = $this->offset();
         $remaining = $logicalFlatIndex;
 
         for ($dim = $this->ndim() - 1; $dim >= 0; --$dim) {
@@ -413,7 +460,7 @@ trait HasIndexing
     {
         $count = \count($indices);
 
-        $newOffset = $this->getOffset();
+        $newOffset = $this->offset();
         foreach ($indices as $dim => $index) {
             $newOffset += $index * $this->strides()[$dim];
         }
@@ -425,10 +472,8 @@ trait HasIndexing
 
         return new self(
             handle: $this->handle,
-            shape: $newShape,
+            meta: new ArrayMetadata($newShape, $newStrides, $newOffset),
             dtype: $this->dtype,
-            strides: $newStrides,
-            offset: $newOffset,
             base: $root,
         );
     }
@@ -452,6 +497,21 @@ trait HasIndexing
         $buffer = $this->dtype->createCArray(\count($flat), $flat);
 
         return [$buffer, \count($flat), 0.0, false];
+    }
+
+    private static function coerceWhereOperand(bool|float|int|NDArray $value, ?DType $forceDtype): NDArray
+    {
+        if ($value instanceof NDArray) {
+            if (null !== $forceDtype && $value->dtype !== $forceDtype) {
+                return $value->astype($forceDtype);
+            }
+
+            return $value;
+        }
+
+        $dtype = $forceDtype ?? DType::fromValue($value);
+
+        return NDArray::array([$value], $dtype);
     }
 
     /**

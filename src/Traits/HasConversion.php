@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Traits;
 
 use FFI\CData;
+use PhpMlKit\NDArray\ArrayMetadata;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Lib;
@@ -28,7 +29,7 @@ trait HasConversion
 
         $ffi = Lib::get();
         $buffer = $ffi->new("uint8_t[{$nbytes}]");
-        $this->intoBuffer($buffer, 0, $this->size);
+        $this->intoBuffer($buffer, 0, $this->size());
 
         return \FFI::string($buffer, $nbytes);
     }
@@ -48,7 +49,7 @@ trait HasConversion
         }
 
         $ffi = Lib::get();
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $out = $this->dtype->createCValue();
 
         $status = $ffi->ndarray_as_scalar(
@@ -75,7 +76,7 @@ trait HasConversion
             return $this->toScalar();
         }
 
-        $flat = $this->getData(0, $this->size);
+        $flat = $this->getData(0, $this->size());
         if (1 === $this->ndim()) {
             return $flat;
         }
@@ -92,7 +93,7 @@ trait HasConversion
     {
         $ffi = Lib::get();
 
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_copy(
@@ -103,7 +104,7 @@ trait HasConversion
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $this->shape(), $this->dtype);
+        return new self($outHandle, new ArrayMetadata($this->shape()), $this->dtype);
     }
 
     /**
@@ -123,7 +124,7 @@ trait HasConversion
         }
 
         $ffi = Lib::get();
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_astype(
@@ -135,7 +136,7 @@ trait HasConversion
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, $this->shape(), $dtype);
+        return new self($outHandle, new ArrayMetadata($this->shape()), $dtype);
     }
 
     /**
@@ -150,7 +151,7 @@ trait HasConversion
     public function intoBuffer(CData $buffer, int $start = 0, ?int $len = null): int
     {
         if (null === $len) {
-            $len = $this->size - $start;
+            $len = $this->size() - $start;
         }
 
         if (0 === $len || $len < 0) {
@@ -158,7 +159,7 @@ trait HasConversion
         }
 
         $ffi = Lib::get();
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $outLen = $ffi->new('size_t');
 
         $status = $ffi->ndarray_get_data(

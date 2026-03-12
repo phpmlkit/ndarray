@@ -1,19 +1,17 @@
-//! Matrix multiplication operation with view support.
+//! Matrix multiplication operation.
 
 use crate::core::view_helpers::{extract_view_as_f64, extract_view_f32, extract_view_f64};
 use crate::core::NDArrayWrapper;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
 
-/// Matrix multiplication with full view support.
-///
-/// Accepts ViewMetadata for both arrays to properly handle views.
+/// Matrix multiplication.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_matmul(
     a: *const NdArrayHandle,
-    a_meta: *const ViewMetadata,
+    a_meta: *const ArrayMetadata,
     b: *const NdArrayHandle,
-    b_meta: *const ViewMetadata,
+    b_meta: *const ArrayMetadata,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype_ptr: *mut u8,
     out_ndim: *mut usize,
@@ -97,7 +95,7 @@ pub unsafe extern "C" fn ndarray_matmul(
 /// Extract 2D array data from view
 fn extract_2d_data(
     wrapper: &NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
 ) -> Result<(ndarray::Array2<f64>, usize, usize), String> {
     let shape = unsafe { meta.shape_slice() };
     unsafe {

@@ -15,14 +15,14 @@ use crate::core::view_helpers::{
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{set_last_error, ERR_GENERIC, SUCCESS};
-use crate::ffi::ViewMetadata;
+use crate::ffi::ArrayMetadata;
 use crate::ffi::{write_output_metadata, NdArrayHandle};
 
 /// Repeat elements of an array.
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_repeat(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     repeats: *const usize,
     repeats_len: usize,
     axis: i32,

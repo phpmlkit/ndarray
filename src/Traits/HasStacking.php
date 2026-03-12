@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
+use PhpMlKit\NDArray\ArrayMetadata;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
@@ -46,9 +47,9 @@ trait HasStacking
         }
 
         $ffi = Lib::get();
-        $metaWrappers = array_map(static fn (NDArray $a) => $a->viewMetadata()->toCData(), $arrays);
+        $metaWrappers = array_map(static fn (NDArray $a) => $a->meta()->toCData(), $arrays);
         $cHandles = $ffi->new("struct NdArrayHandle*[{$numArrays}]");
-        $cMetas = $ffi->new("struct ViewMetadata*[{$numArrays}]");
+        $cMetas = $ffi->new("struct ArrayMetadata*[{$numArrays}]");
         for ($i = 0; $i < $numArrays; ++$i) {
             $cHandles[$i] = $arrays[$i]->handle;
             $cMetas[$i] = Lib::addr($metaWrappers[$i]);
@@ -74,7 +75,7 @@ trait HasStacking
         $outNdim = (int) $outNdimBuf->cdata;
         $outShape = Lib::extractShapeFromPointer($outShapeBuf, $outNdim);
 
-        return new self($outHandle, $outShape, $arrays[0]->dtype);
+        return new self($outHandle, new ArrayMetadata($outShape), $arrays[0]->dtype);
     }
 
     /**
@@ -108,9 +109,9 @@ trait HasStacking
         }
 
         $ffi = Lib::get();
-        $metaWrappers = array_map(static fn (NDArray $a) => $a->viewMetadata()->toCData(), $arrays);
+        $metaWrappers = array_map(static fn (NDArray $a) => $a->meta()->toCData(), $arrays);
         $cHandles = $ffi->new("struct NdArrayHandle*[{$numArrays}]");
-        $cMetas = $ffi->new("struct ViewMetadata*[{$numArrays}]");
+        $cMetas = $ffi->new("struct ArrayMetadata*[{$numArrays}]");
         for ($i = 0; $i < $numArrays; ++$i) {
             $cHandles[$i] = $arrays[$i]->handle;
             $cMetas[$i] = Lib::addr($metaWrappers[$i]);
@@ -136,7 +137,7 @@ trait HasStacking
         $outNdim = (int) $outNdimBuf->cdata;
         $outShape = Lib::extractShapeFromPointer($outShapeBuf, $outNdim);
 
-        return new self($outHandle, $outShape, $arrays[0]->dtype);
+        return new self($outHandle, new ArrayMetadata($outShape), $arrays[0]->dtype);
     }
 
     /**
@@ -200,7 +201,7 @@ trait HasStacking
         $cOutShapes = $ffi->new('size_t['.($numParts * $ndim).']');
         $cOutStrides = $ffi->new('size_t['.($numParts * $ndim).']');
 
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $status = $ffi->ndarray_split(
             $this->handle,
             Lib::addr($meta),
@@ -226,10 +227,8 @@ trait HasStacking
             $partOffset = (int) $cOutOffsets[$i];
             $result[] = new self(
                 $this->handle,
-                $partShape,
+                new ArrayMetadata($partShape, $partStrides, $partOffset),
                 $this->dtype,
-                $partStrides,
-                $partOffset,
                 $base
             );
         }

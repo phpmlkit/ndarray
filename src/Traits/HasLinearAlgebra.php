@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
+use PhpMlKit\NDArray\ArrayMetadata;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
@@ -43,7 +44,7 @@ trait HasLinearAlgebra
             throw new \InvalidArgumentException("Norm order '{$ord}' is only supported when axis is null");
         }
 
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         if (null === $axis) {
             $outValue = $ffi->new('double');
             $outDtype = $ffi->new('uint8_t');
@@ -74,7 +75,7 @@ trait HasLinearAlgebra
         Lib::checkStatus($status);
         $outShape = $this->computeNormOutputShape($axis, $keepdims);
 
-        return new NDArray($outHandle, $outShape, DType::Float64);
+        return new NDArray($outHandle, new ArrayMetadata($outShape), DType::Float64);
     }
 
     /**

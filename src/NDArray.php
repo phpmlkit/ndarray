@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray;
 
 use FFI\CData;
-use PhpMlKit\NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\Traits\CanBePrinted;
 use PhpMlKit\NDArray\Traits\CreatesArrays;
@@ -49,33 +48,20 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
     use HasSlicing;
     use HasStacking;
 
-    /** View metadata (shape, strides, offset, ndim). */
-    protected readonly ViewMetadata $viewMetadata;
-
-    /** Total number of elements in this array/view */
-    protected int $size;
-
     /**
      * Private constructor — use factory methods.
      *
-     * @param CData      $handle  Opaque pointer to Rust NDArrayWrapper
-     * @param array<int> $shape   Shape of this array/view
-     * @param DType      $dtype   Data type
-     * @param array<int> $strides Element strides per dimension
-     * @param int        $offset  Flat offset into root data
-     * @param null|self  $base    Parent array if this is a view
+     * @param CData         $handle Opaque pointer to Rust NDArrayWrapper
+     * @param ArrayMetadata $meta   View metadata
+     * @param DType         $dtype  Data type
+     * @param null|self     $base   Parent array if this is a view
      */
     protected function __construct(
         protected readonly CData $handle,
-        array $shape,
+        protected readonly ArrayMetadata $meta,
         protected readonly DType $dtype,
-        array $strides = [],
-        int $offset = 0,
         protected readonly ?self $base = null,
-    ) {
-        $this->viewMetadata = new ViewMetadata($shape, $strides, $offset);
-        $this->size = (int) array_product($shape);
-    }
+    ) {}
 
     /**
      * Destructor — only root arrays free Rust memory.
@@ -87,10 +73,6 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
         }
     }
 
-    // =========================================================================
-    // Properties
-    // =========================================================================
-
     /**
      * Get shape.
      *
@@ -98,7 +80,7 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
      */
     public function shape(): array
     {
-        return $this->viewMetadata->shape;
+        return $this->meta->shape;
     }
 
     /**
@@ -108,7 +90,7 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
      */
     public function strides(): array
     {
-        return $this->viewMetadata->strides;
+        return $this->meta->strides;
     }
 
     /**
@@ -116,7 +98,7 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
      */
     public function ndim(): int
     {
-        return $this->viewMetadata->ndim;
+        return $this->meta->ndim;
     }
 
     /**
@@ -124,7 +106,7 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
      */
     public function size(): int
     {
-        return $this->size;
+        return $this->meta->size;
     }
 
     /**
@@ -148,7 +130,7 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
      */
     public function nbytes(): int
     {
-        return $this->size * $this->itemsize();
+        return $this->meta->size * $this->itemsize();
     }
 
     /**
@@ -166,9 +148,9 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
      *
      * @internal
      */
-    public function viewMetadata(): ViewMetadata
+    public function meta(): ArrayMetadata
     {
-        return $this->viewMetadata;
+        return $this->meta;
     }
 
     /**
@@ -176,9 +158,9 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
      *
      * @internal
      */
-    public function getOffset(): int
+    public function offset(): int
     {
-        return $this->viewMetadata->offset;
+        return $this->meta->offset;
     }
 
     /**
@@ -194,55 +176,9 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
      */
     public function isContiguous(): bool
     {
-        $expected = ViewMetadata::computeStrides($this->viewMetadata->shape);
+        $expected = ArrayMetadata::computeStrides($this->meta->shape);
 
-        return $this->viewMetadata->strides === $expected;
-    }
-
-    /**
-     * Select values from x and y based on a boolean condition.
-     *
-     * @param bool|float|int|self $condition Bool NDArray or scalar condition
-     * @param bool|float|int|self $x         Values where condition is true
-     * @param bool|float|int|self $y         Values where condition is false
-     */
-    public static function where(bool|float|int|self $condition, bool|float|int|self $x, bool|float|int|self $y): self
-    {
-        $condArray = self::coerceWhereOperand($condition, DType::Bool);
-        $xArray = self::coerceWhereOperand($x, null);
-        $yArray = self::coerceWhereOperand($y, null);
-
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
-
-        $condMeta = $condArray->viewMetadata()->toCData();
-        $xMeta = $xArray->viewMetadata()->toCData();
-        $yMeta = $yArray->viewMetadata()->toCData();
-        $status = $ffi->ndarray_where(
-            $condArray->handle,
-            Lib::addr($condMeta),
-            $xArray->handle,
-            Lib::addr($xMeta),
-            $yArray->handle,
-            Lib::addr($yMeta),
-            Lib::addr($outHandle),
-            Lib::addr($outDtypeBuf),
-            Lib::addr($outNdimBuf),
-            $outShapeBuf,
-            Lib::MAX_NDIM
-        );
-
-        Lib::checkStatus($status);
-
-        $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
-        $ndim = (int) $outNdimBuf->cdata;
-        $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
-        if (null === $dtype) {
-            throw new NDArrayException('Invalid dtype returned from Rust for where()');
-        }
-
-        return new self($outHandle, $shape, $dtype);
+        return $this->meta->strides === $expected;
     }
 
     /**
@@ -256,12 +192,10 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
     public function getIterator(): \Generator
     {
         if (1 === $this->ndim()) {
-            // 1D: yield scalars from flat iteration
             foreach ($this->flat() as $value) {
                 yield $value;
             }
         } else {
-            // 2D+: yield views along first axis
             $shape = $this->shape();
             for ($i = 0; $i < $shape[0]; ++$i) {
                 yield $this->slice([$i]);
@@ -282,20 +216,5 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
     public function flat(): FlatIterator
     {
         return new FlatIterator($this);
-    }
-
-    private static function coerceWhereOperand(bool|float|int|self $value, ?DType $forceDtype): self
-    {
-        if ($value instanceof self) {
-            if (null !== $forceDtype && $value->dtype !== $forceDtype) {
-                return $value->astype($forceDtype);
-            }
-
-            return $value;
-        }
-
-        $dtype = $forceDtype ?? DType::fromValue($value);
-
-        return self::array([$value], $dtype);
     }
 }

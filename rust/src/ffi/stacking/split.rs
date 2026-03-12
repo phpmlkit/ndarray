@@ -5,7 +5,7 @@
 
 use crate::error::{set_last_error, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
 use crate::ffi::stacking::helpers::resolve_axis;
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{NdArrayHandle, ArrayMetadata};
 
 /// Split array along axis at the given indices.
 ///
@@ -17,7 +17,7 @@ use crate::ffi::{NdArrayHandle, ViewMetadata};
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_split(
     _handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     axis: i32,
     indices: *const usize,
     num_indices: usize,

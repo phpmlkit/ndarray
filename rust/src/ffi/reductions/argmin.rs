@@ -8,7 +8,7 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::{compute_axis_output_shape, validate_axis, write_scalar};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
 use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
 use std::ffi::c_void;
@@ -18,7 +18,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_argmin_axis(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     axis: i32,
     keepdims: bool,
     out_handle: *mut *mut NdArrayHandle,
@@ -227,7 +227,7 @@ pub unsafe extern "C" fn ndarray_argmin_axis(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_argmin(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     out_value: *mut c_void,
     out_dtype: *mut u8,
 ) -> i32 {

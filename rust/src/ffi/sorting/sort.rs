@@ -12,7 +12,7 @@ use crate::ffi::reductions::helpers::validate_axis;
 use crate::ffi::sorting::helpers::{
     cmp_f32_asc_nan_last, cmp_f64_asc_nan_last, sort_axis_generic, sort_flat_generic, SortKind,
 };
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -20,7 +20,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_sort_axis(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     axis: i32,
     kind: i32,
     out_handle: *mut *mut NdArrayHandle,
@@ -198,7 +198,7 @@ pub unsafe extern "C" fn ndarray_sort_axis(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_sort_flat(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     kind: i32,
     out_handle: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,

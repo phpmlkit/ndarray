@@ -8,7 +8,7 @@ use crate::core::view_helpers::{
     extract_view_as_i32, extract_view_as_i64, extract_view_as_i8, extract_view_as_u16,
     extract_view_as_u32, extract_view_as_u64, extract_view_as_u8,
 };
-use crate::ffi::metadata::ViewMetadata;
+use crate::ffi::metadata::ArrayMetadata;
 use crate::ffi::types::NdArrayHandle;
 use std::io::Write;
 
@@ -16,7 +16,7 @@ use std::io::Write;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_to_string(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     buffer: *mut std::os::raw::c_char,
     buffer_size: usize,
     threshold: usize,
@@ -101,7 +101,7 @@ fn write_scalar<T: std::fmt::Display>(
 
 fn format_0d(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     buf: &mut Vec<u8>,
     precision: usize,
 ) -> std::io::Result<()> {
@@ -139,7 +139,7 @@ fn format_0d(
 
 fn format_1d(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     shape: &[usize],
     buf: &mut Vec<u8>,
     threshold: usize,
@@ -163,7 +163,7 @@ fn format_1d(
 
 fn format_1d_elements(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     buf: &mut Vec<u8>,
     start: usize,
     end: usize,
@@ -209,7 +209,7 @@ fn format_1d_elements(
 
 fn format_2d(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     shape: &[usize],
     buf: &mut Vec<u8>,
     threshold: usize,
@@ -250,7 +250,7 @@ fn format_2d(
 
 fn format_2d_row(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     buf: &mut Vec<u8>,
     row: usize,
     cols: usize,
@@ -298,7 +298,7 @@ fn format_2d_row(
 
 fn format_3d(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     shape: &[usize],
     buf: &mut Vec<u8>,
     threshold: usize,
@@ -341,7 +341,7 @@ fn format_3d(
 
 fn format_3d_slice(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     buf: &mut Vec<u8>,
     slice_idx: usize,
     rows: usize,
@@ -361,7 +361,7 @@ fn format_3d_slice(
 
 fn format_3d_row(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     buf: &mut Vec<u8>,
     start_idx: usize,
     cols: usize,
@@ -407,7 +407,7 @@ fn format_3d_row(
 
 fn format_nd(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     shape: &[usize],
     buf: &mut Vec<u8>,
     threshold: usize,
@@ -502,7 +502,7 @@ fn write_indent(buf: &mut Vec<u8>, depth: usize) {
 
 fn format_nd_slice(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     shape: &[usize],
     strides: &[usize],
     offset: usize,
@@ -616,7 +616,7 @@ fn format_nd_slice(
 
 fn format_element_at_offset(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     offset: usize,
     buf: &mut Vec<u8>,
     precision: usize,
@@ -661,7 +661,7 @@ fn format_element_at_offset(
 
 fn format_elements_at_offset(
     wrapper: &crate::core::NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     stride: usize,
     base_offset: usize,
     start: usize,

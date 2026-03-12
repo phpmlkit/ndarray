@@ -5,7 +5,7 @@ use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::{NdArrayHandle, ViewMetadata};
+use crate::ffi::{NdArrayHandle, ArrayMetadata};
 use ndarray::{ArrayD, Axis, IxDyn};
 use parking_lot::RwLock;
 use std::ffi::c_void;
@@ -38,7 +38,7 @@ impl NormOrd {
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_norm(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     ord: i32,
     out_value: *mut c_void,
     out_dtype: *mut u8,
@@ -81,7 +81,7 @@ pub unsafe extern "C" fn ndarray_norm(
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_norm_axis(
     handle: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     axis: i32,
     keepdims: bool,
     ord: i32,
@@ -134,7 +134,7 @@ pub unsafe extern "C" fn ndarray_norm_axis(
     })
 }
 
-fn scalar_norm(wrapper: &NDArrayWrapper, meta: &ViewMetadata, ord: NormOrd) -> Result<f64, String> {
+fn scalar_norm(wrapper: &NDArrayWrapper, meta: &ArrayMetadata, ord: NormOrd) -> Result<f64, String> {
     let view = extract_view_as_f64(wrapper, meta)
         .ok_or_else(|| "Failed to extract view for norm".to_string())?;
     let shape = unsafe { meta.shape_slice() };
@@ -164,7 +164,7 @@ fn scalar_norm(wrapper: &NDArrayWrapper, meta: &ViewMetadata, ord: NormOrd) -> R
 
 fn axis_norm(
     wrapper: &NDArrayWrapper,
-    meta: &ViewMetadata,
+    meta: &ArrayMetadata,
     axis: usize,
     keepdims: bool,
     ord: NormOrd,

@@ -265,7 +265,7 @@ $arr->add(5)     ───────▶   ndarray_add      ──────�
      │                    C ABI boundary                    │
      │                           │                          │
      ▼                           ▼                          ▼
-NDArray obj              ViewMetadata              NDArrayWrapper
+NDArray obj              ArrayMetadata              NDArrayWrapper
 (handle, shape)          (offset, strides)         (actual data)
 ```
 

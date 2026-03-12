@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
+use PhpMlKit\NDArray\ArrayMetadata;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
 use PhpMlKit\NDArray\PadMode;
-use PhpMlKit\NDArray\ViewMetadata;
 
 /**
  * Shape manipulation operations.
@@ -75,10 +75,8 @@ trait HasShapeOps
 
             return new self(
                 handle: $this->handle,
-                shape: $newShape,
+                meta: new ArrayMetadata($newShape, [], $this->offset()),
                 dtype: $this->dtype,
-                strides: [],
-                offset: $this->getOffset(),
                 base: $root,
             );
         }
@@ -92,17 +90,15 @@ trait HasShapeOps
                     $stride *= $dimSize;
                 }
             } else {
-                $newStrides = ViewMetadata::computeStrides($newShape);
+                $newStrides = ArrayMetadata::computeStrides($newShape);
             }
 
             $root = $this->base ?? $this;
 
             return new self(
                 handle: $this->handle,
-                shape: $newShape,
+                meta: new ArrayMetadata($newShape, $newStrides, $this->offset()),
                 dtype: $this->dtype,
-                strides: $newStrides,
-                offset: $this->getOffset(),
                 base: $root,
             );
         }
@@ -113,7 +109,7 @@ trait HasShapeOps
         $cShape = Lib::createShapeArray($newShape);
         $orderCode = 'F' === $order ? 1 : 0; // 0=C (RowMajor), 1=F (ColumnMajor)
 
-        $meta = $this->viewMetadata()->toCData();
+        $meta = $this->meta()->toCData();
         $status = $ffi->ndarray_reshape(
             $this->handle,
             Lib::addr($meta),
@@ -125,7 +121,7 @@ trait HasShapeOps
 
         Lib::checkStatus($status);
 
-        return new NDArray($outHandle, $newShape, $this->dtype);
+        return new NDArray($outHandle, new ArrayMetadata($newShape), $this->dtype);
     }
 
     /**
@@ -150,10 +146,8 @@ trait HasShapeOps
 
             return new self(
                 handle: $this->handle,
-                shape: $newShape,
+                meta: new ArrayMetadata($newShape, $newStrides, $this->offset()),
                 dtype: $this->dtype,
-                strides: $newStrides,
-                offset: $this->getOffset(),
                 base: $root,
             );
         }
@@ -212,10 +206,8 @@ trait HasShapeOps
 
         return new self(
             handle: $this->handle,
-            shape: $newShape,
+            meta: new ArrayMetadata($newShape, $newStrides, $this->offset()),
             dtype: $this->dtype,
-            strides: $newStrides,
-            offset: $this->getOffset(),
             base: $root,
         );
     }
@@ -311,10 +303,8 @@ trait HasShapeOps
 
         return new self(
             handle: $this->handle,
-            shape: $newShape,
+            meta: new ArrayMetadata($newShape, $newStrides, $this->offset()),
             dtype: $this->dtype,
-            strides: $newStrides,
-            offset: $this->getOffset(),
             base: $root,
         );
     }
@@ -393,10 +383,8 @@ trait HasShapeOps
 
         return new self(
             handle: $this->handle,
-            shape: $shape,
+            meta: new ArrayMetadata($shape, $strides, $this->offset()),
             dtype: $this->dtype,
-            strides: $strides,
-            offset: $this->getOffset(),
             base: $root,
         );
     }
@@ -428,10 +416,8 @@ trait HasShapeOps
 
             return new self(
                 handle: $this->handle,
-                shape: [$n],
+                meta: new ArrayMetadata([$n], [1], $this->offset()),
                 dtype: $this->dtype,
-                strides: [1],
-                offset: $this->getOffset(),
                 base: $root,
             );
         }
@@ -497,10 +483,8 @@ trait HasShapeOps
 
         return new self(
             handle: $this->handle,
-            shape: $newShape,
+            meta: new ArrayMetadata($newShape, $newStrides, $this->offset()),
             dtype: $this->dtype,
-            strides: $newStrides,
-            offset: $this->getOffset(),
             base: $root,
         );
     }

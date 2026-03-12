@@ -4,7 +4,7 @@ use crate::core::view_helpers::{extract_view_f32, extract_view_f64};
 use crate::core::{ArrayData, NDArrayWrapper};
 use crate::dtype::DType;
 use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ViewMetadata};
+use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -14,7 +14,7 @@ use std::sync::Arc;
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_powi(
     a: *const NdArrayHandle,
-    meta: *const ViewMetadata,
+    meta: *const ArrayMetadata,
     exp: i32,
     out: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
