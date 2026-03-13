@@ -1,10 +1,64 @@
-//! Comparison and logical operation helpers for element-wise operations.
+//! Operational helpers for element-wise operations.
 //!
-//! Uses ndarray's Zip and broadcast for broadcasting support.
-//! Output is always Bool (stored as u8).
+//! This module provides macros and helper functions for mathematical,
+//! comparison, and logical operations while preserving native types.
+
+// ============================================================================
+// Math Operations
+// ============================================================================
+
+/// Macro to generate a binary operation match arm for FFI functions.
+#[macro_export]
+macro_rules! binary_op_arm {
+    (
+        $a_wrapper:expr, $a_meta:expr,
+        $b_wrapper:expr, $b_meta:expr,
+        $dtype:path, $extract_fn:ident, $variant:path, $op:tt
+    ) => {
+        {
+            let Some(a_view) = $extract_fn($a_wrapper, $a_meta) else {
+                crate::error::set_last_error(format!("Failed to extract a as {}", stringify!($dtype)));
+                return crate::error::ERR_GENERIC;
+            };
+            let Some(b_view) = $extract_fn($b_wrapper, $b_meta) else {
+                crate::error::set_last_error(format!("Failed to extract b as {}", stringify!($dtype)));
+                return crate::error::ERR_GENERIC;
+            };
+            let result = a_view $op b_view;
+            crate::core::NDArrayWrapper {
+                data: $variant(::std::sync::Arc::new(::parking_lot::RwLock::new(result))),
+                dtype: $dtype,
+            }
+        }
+    };
+}
+
+/// Macro to generate a scalar operation match arm for FFI functions.
+#[macro_export]
+macro_rules! scalar_op_arm {
+    (
+        $wrapper:expr, $meta:expr,
+        $scalar:expr, $dtype:path, $extract_fn:ident, $variant:path, $op:tt
+    ) => {
+        {
+            let Some(view) = $extract_fn($wrapper, $meta) else {
+                crate::error::set_last_error(format!("Failed to extract view as {}", stringify!($dtype)));
+                return crate::error::ERR_GENERIC;
+            };
+            let result = view.mapv(|x| x $op $scalar);
+            crate::core::NDArrayWrapper {
+                data: $variant(::std::sync::Arc::new(::parking_lot::RwLock::new(result))),
+                dtype: $dtype,
+            }
+        }
+    };
+}
+
+// ============================================================================
+// Comparison Operations
+// ============================================================================
 
 /// Comparison functions for use with Zip::map_collect.
-/// Return u8 (0 or 1) directly to avoid an extra conversion step.
 pub mod comparison_ops {
     #[inline(always)]
     pub fn eq<A: PartialEq>(a: &A, b: &A) -> u8 {
@@ -38,7 +92,6 @@ pub mod comparison_ops {
 }
 
 /// Logical operations for use with Zip::map_collect.
-/// Works on u8 values (0 = false, non-zero = true).
 pub mod logical_ops {
     #[inline(always)]
     pub fn and(a: &u8, b: &u8) -> u8 {
@@ -62,9 +115,6 @@ pub mod logical_ops {
 }
 
 /// Macro to generate a binary comparison operation match arm.
-///
-/// Extracts both arrays, broadcasts to compatible shape, applies the comparison,
-/// and returns (NDArrayWrapper with Bool data, shape).
 #[macro_export]
 macro_rules! binary_cmp_op_arm {
     (
@@ -104,23 +154,17 @@ macro_rules! binary_cmp_op_arm {
         };
         let result = ndarray::Zip::from(&a_bc)
             .and(&b_bc)
-            .map_collect($crate::core::comparison_helpers::comparison_ops::$cmp_op);
-        let shape = result.shape().to_vec();
-        (
-            crate::core::NDArrayWrapper {
-                data: crate::core::ArrayData::Bool(::std::sync::Arc::new(
-                    ::parking_lot::RwLock::new(result),
-                )),
-                dtype: crate::dtype::DType::Bool,
-            },
-            shape,
-        )
+            .map_collect($crate::core::op_helpers::comparison_ops::$cmp_op);
+        crate::core::NDArrayWrapper {
+            data: crate::core::ArrayData::Bool(::std::sync::Arc::new(::parking_lot::RwLock::new(
+                result,
+            ))),
+            dtype: crate::dtype::DType::Bool,
+        }
     }};
 }
 
 /// Macro to generate a unary logical operation.
-///
-/// Extracts array as bool, applies the logical operation, and returns NDArrayWrapper with Bool data.
 #[macro_export]
 macro_rules! unary_logical_op_arm {
     (
@@ -131,23 +175,17 @@ macro_rules! unary_logical_op_arm {
             crate::error::set_last_error("Failed to extract view as bool".to_string());
             return crate::error::ERR_GENERIC;
         };
-        let result = view.mapv(|x| $crate::core::comparison_helpers::logical_ops::$op(&x));
-        (
-            crate::core::NDArrayWrapper {
-                data: crate::core::ArrayData::Bool(::std::sync::Arc::new(
-                    ::parking_lot::RwLock::new(result.clone()),
-                )),
-                dtype: crate::dtype::DType::Bool,
-            },
-            result.shape().to_vec(),
-        )
+        let result = view.mapv(|x| $crate::core::op_helpers::logical_ops::$op(&x));
+        crate::core::NDArrayWrapper {
+            data: crate::core::ArrayData::Bool(::std::sync::Arc::new(::parking_lot::RwLock::new(
+                result.clone(),
+            ))),
+            dtype: crate::dtype::DType::Bool,
+        }
     }};
 }
 
 /// Macro to generate a binary logical operation match arm.
-///
-/// Extracts both arrays as bool, broadcasts to compatible shape, applies the logical operation,
-/// and returns (NDArrayWrapper with Bool data, shape).
 #[macro_export]
 macro_rules! binary_logical_op_arm {
     (
@@ -195,24 +233,17 @@ macro_rules! binary_logical_op_arm {
         };
         let result = ndarray::Zip::from(&a_bc)
             .and(&b_bc)
-            .map_collect($crate::core::comparison_helpers::logical_ops::$op);
-        let shape = result.shape().to_vec();
-        (
-            crate::core::NDArrayWrapper {
-                data: crate::core::ArrayData::Bool(::std::sync::Arc::new(
-                    ::parking_lot::RwLock::new(result),
-                )),
-                dtype: crate::dtype::DType::Bool,
-            },
-            shape,
-        )
+            .map_collect($crate::core::op_helpers::logical_ops::$op);
+        crate::core::NDArrayWrapper {
+            data: crate::core::ArrayData::Bool(::std::sync::Arc::new(::parking_lot::RwLock::new(
+                result,
+            ))),
+            dtype: crate::dtype::DType::Bool,
+        }
     }};
 }
 
 /// Macro to generate a scalar comparison operation.
-///
-/// Uses extract_view_as_f64 to support all numeric types (converts for comparison).
-/// Returns NDArrayWrapper with Bool data.
 #[macro_export]
 macro_rules! scalar_cmp_op_arm {
     (

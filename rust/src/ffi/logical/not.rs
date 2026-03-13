@@ -33,7 +33,7 @@ pub unsafe extern "C" fn ndarray_logical_not(
         let a_meta = &*a_meta;
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
 
-        let (result_wrapper, _) = unary_logical_op_arm!(a_wrapper, a_meta, not);
+        let result_wrapper = unary_logical_op_arm!(a_wrapper, a_meta, not);
 
         if let Err(e) = write_output_metadata(
             &result_wrapper,

@@ -6,8 +6,7 @@
 mod array_data;
 #[macro_use]
 mod macros;
-pub mod comparison_helpers;
-pub mod math_helpers;
+pub mod op_helpers;
 pub mod view_helpers;
 mod wrapper;
 

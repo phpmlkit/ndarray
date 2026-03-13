@@ -39,7 +39,7 @@ pub unsafe extern "C" fn ndarray_logical_xor(
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
         let b_wrapper = NdArrayHandle::as_wrapper(b as *mut _);
 
-        let (result_wrapper, _) = binary_logical_op_arm!(a_wrapper, a_meta, b_wrapper, b_meta, xor);
+        let result_wrapper = binary_logical_op_arm!(a_wrapper, a_meta, b_wrapper, b_meta, xor);
 
         if let Err(e) = write_output_metadata(
             &result_wrapper,
