@@ -3,9 +3,15 @@
 //! Works with all input types (converts to bool first).
 //! Always returns a Bool array.
 
-use crate::binary_logical_op_arm;
-use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
+use crate::binary_op_logical;
+use crate::core::error::{ERR_GENERIC, SUCCESS};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+
+/// Logical AND for use with Zip::map_collect.
+#[inline(always)]
+fn and(a: &u8, b: &u8) -> u8 {
+    ((*a != 0) && (*b != 0)) as u8
+}
 
 /// Compute the logical AND of two arrays.
 /// Both arrays are converted to bool first, result is always Bool.
@@ -39,7 +45,7 @@ pub unsafe extern "C" fn ndarray_logical_and(
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
         let b_wrapper = NdArrayHandle::as_wrapper(b as *mut _);
 
-        let result_wrapper = binary_logical_op_arm!(a_wrapper, a_meta, b_wrapper, b_meta, and);
+        let result_wrapper = binary_op_logical!(a_wrapper, a_meta, b_wrapper, b_meta, and);
 
         if let Err(e) = write_output_metadata(
             &result_wrapper,
@@ -48,7 +54,7 @@ pub unsafe extern "C" fn ndarray_logical_and(
             out_shape,
             max_ndim,
         ) {
-            crate::error::set_last_error(e);
+            crate::core::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

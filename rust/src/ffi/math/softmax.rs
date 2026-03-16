@@ -4,10 +4,10 @@
 
 use crate::core::view_helpers::{extract_view_f32, extract_view_f64};
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 use ndarray::Axis;
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -41,7 +41,7 @@ pub unsafe extern "C" fn ndarray_softmax(
         let axis_usize = match validate_axis(&meta.shape_slice(), axis) {
             Ok(a) => a,
             Err(e) => {
-                crate::error::set_last_error(e);
+                crate::core::error::set_last_error(e);
                 return ERR_SHAPE;
             }
         };
@@ -49,7 +49,7 @@ pub unsafe extern "C" fn ndarray_softmax(
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract f64 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let mut result = view.to_owned();
@@ -78,7 +78,7 @@ pub unsafe extern "C" fn ndarray_softmax(
             }
             DType::Float32 => {
                 let Some(view) = extract_view_f32(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract f32 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let mut result = view.to_owned();
@@ -106,7 +106,7 @@ pub unsafe extern "C" fn ndarray_softmax(
                 }
             }
             _ => {
-                crate::error::set_last_error(
+                crate::core::error::set_last_error(
                     "softmax() requires float type (Float64 or Float32)".to_string(),
                 );
                 return ERR_GENERIC;
@@ -116,7 +116,7 @@ pub unsafe extern "C" fn ndarray_softmax(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::error::set_last_error(e);
+            crate::core::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

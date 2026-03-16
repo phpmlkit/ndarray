@@ -5,7 +5,7 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
+use crate::core::dtype::DType;
 
 /// Create evenly spaced numbers over a specified interval.
 ///
@@ -21,13 +21,13 @@ pub unsafe extern "C" fn ndarray_linspace(
     out_handle: *mut *mut crate::ffi::NdArrayHandle,
 ) -> i32 {
     if out_handle.is_null() || num == 0 {
-        return crate::error::ERR_GENERIC;
+        return crate::core::error::ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let dtype_enum = match DType::from_u8(dtype) {
             Some(d) => d,
-            None => return crate::error::ERR_DTYPE,
+            None => return crate::core::error::ERR_DTYPE,
         };
 
         match dtype_enum {
@@ -71,9 +71,9 @@ pub unsafe extern "C" fn ndarray_linspace(
                 };
                 *out_handle = crate::ffi::NdArrayHandle::from_wrapper(Box::new(wrapper));
             }
-            _ => return crate::error::ERR_DTYPE,
+            _ => return crate::core::error::ERR_DTYPE,
         }
 
-        crate::error::SUCCESS
+        crate::core::error::SUCCESS
     })
 }

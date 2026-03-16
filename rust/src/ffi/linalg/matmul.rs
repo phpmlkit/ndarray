@@ -10,7 +10,7 @@ use parking_lot::RwLock;
 
 use crate::core::view_helpers::{extract_view_f32, extract_view_f64};
 use crate::core::NDArrayWrapper;
-use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::core::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 use crate::{ArrayData, DType};
 

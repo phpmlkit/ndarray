@@ -6,9 +6,9 @@ use crate::core::view_helpers::{
     extract_view_as_u32, extract_view_as_u64, extract_view_as_u8, extract_view_bool,
 };
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 use ndarray::{ArrayD, ArrayViewD, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;

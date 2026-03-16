@@ -8,8 +8,8 @@ use rand_distr::{Distribution, Normal};
 use std::sync::Arc;
 
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
 use std::slice;
 
@@ -46,7 +46,7 @@ pub unsafe extern "C" fn ndarray_normal(
         return ERR_GENERIC;
     }
     if !(std > 0.0) {
-        crate::error::set_last_error(format!("normal requires std > 0, got {}", std));
+        crate::core::error::set_last_error(format!("normal requires std > 0, got {}", std));
         return ERR_GENERIC;
     }
 
@@ -55,7 +55,7 @@ pub unsafe extern "C" fn ndarray_normal(
         let len = match shape_len(shape_slice) {
             Ok(v) => v,
             Err(e) => {
-                crate::error::set_last_error(e);
+                crate::core::error::set_last_error(e);
                 return ERR_GENERIC;
             }
         };
@@ -72,7 +72,7 @@ pub unsafe extern "C" fn ndarray_normal(
                 let dist = match Normal::<f32>::new(mean as f32, std as f32) {
                     Ok(d) => d,
                     Err(e) => {
-                        crate::error::set_last_error(format!("Invalid normal params: {}", e));
+                        crate::core::error::set_last_error(format!("Invalid normal params: {}", e));
                         return ERR_GENERIC;
                     }
                 };
@@ -88,7 +88,7 @@ pub unsafe extern "C" fn ndarray_normal(
                 let dist = match Normal::<f64>::new(mean, std) {
                     Ok(d) => d,
                     Err(e) => {
-                        crate::error::set_last_error(format!("Invalid normal params: {}", e));
+                        crate::core::error::set_last_error(format!("Invalid normal params: {}", e));
                         return ERR_GENERIC;
                     }
                 };

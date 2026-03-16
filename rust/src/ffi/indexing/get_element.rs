@@ -4,8 +4,8 @@
 
 use std::ffi::c_void;
 
-use crate::dtype::DType;
-use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
 use crate::ffi::NdArrayHandle;
 
 /// Get an element at the given flat index.

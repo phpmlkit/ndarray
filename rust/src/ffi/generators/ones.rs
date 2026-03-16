@@ -5,8 +5,8 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
 use std::slice;
 

@@ -8,8 +8,7 @@ use crate::core::view_helpers::{
     extract_view_as_i32, extract_view_as_i64, extract_view_as_i8, extract_view_as_u16,
     extract_view_as_u32, extract_view_as_u64, extract_view_as_u8,
 };
-use crate::ffi::metadata::ArrayMetadata;
-use crate::ffi::types::NdArrayHandle;
+use crate::core::{ArrayMetadata, NdArrayHandle};
 use std::io::Write;
 
 /// Format an array into a string buffer.
@@ -116,17 +115,17 @@ fn format_0d(
     }
 
     match wrapper.dtype {
-        crate::dtype::DType::Float64 => format_scalar!(extract_view_as_f64),
-        crate::dtype::DType::Float32 => format_scalar!(extract_view_as_f32),
-        crate::dtype::DType::Int64 => format_scalar!(extract_view_as_i64),
-        crate::dtype::DType::Int32 => format_scalar!(extract_view_as_i32),
-        crate::dtype::DType::Int16 => format_scalar!(extract_view_as_i16),
-        crate::dtype::DType::Int8 => format_scalar!(extract_view_as_i8),
-        crate::dtype::DType::Uint64 => format_scalar!(extract_view_as_u64),
-        crate::dtype::DType::Uint32 => format_scalar!(extract_view_as_u32),
-        crate::dtype::DType::Uint16 => format_scalar!(extract_view_as_u16),
-        crate::dtype::DType::Uint8 => format_scalar!(extract_view_as_u8),
-        crate::dtype::DType::Bool => {
+        crate::core::dtype::DType::Float64 => format_scalar!(extract_view_as_f64),
+        crate::core::dtype::DType::Float32 => format_scalar!(extract_view_as_f32),
+        crate::core::dtype::DType::Int64 => format_scalar!(extract_view_as_i64),
+        crate::core::dtype::DType::Int32 => format_scalar!(extract_view_as_i32),
+        crate::core::dtype::DType::Int16 => format_scalar!(extract_view_as_i16),
+        crate::core::dtype::DType::Int8 => format_scalar!(extract_view_as_i8),
+        crate::core::dtype::DType::Uint64 => format_scalar!(extract_view_as_u64),
+        crate::core::dtype::DType::Uint32 => format_scalar!(extract_view_as_u32),
+        crate::core::dtype::DType::Uint16 => format_scalar!(extract_view_as_u16),
+        crate::core::dtype::DType::Uint8 => format_scalar!(extract_view_as_u8),
+        crate::core::dtype::DType::Bool => {
             if let Some(arr) = extract_view_as_bool(wrapper, meta) {
                 if let Some(val) = arr.iter().next() {
                     write!(buf, "{}", if *val != 0 { "true" } else { "false" })?;
@@ -183,17 +182,17 @@ fn format_1d_elements(
     }
 
     match wrapper.dtype {
-        crate::dtype::DType::Float64 => format_elements!(extract_view_as_f64),
-        crate::dtype::DType::Float32 => format_elements!(extract_view_as_f32),
-        crate::dtype::DType::Int64 => format_elements!(extract_view_as_i64),
-        crate::dtype::DType::Int32 => format_elements!(extract_view_as_i32),
-        crate::dtype::DType::Int16 => format_elements!(extract_view_as_i16),
-        crate::dtype::DType::Int8 => format_elements!(extract_view_as_i8),
-        crate::dtype::DType::Uint64 => format_elements!(extract_view_as_u64),
-        crate::dtype::DType::Uint32 => format_elements!(extract_view_as_u32),
-        crate::dtype::DType::Uint16 => format_elements!(extract_view_as_u16),
-        crate::dtype::DType::Uint8 => format_elements!(extract_view_as_u8),
-        crate::dtype::DType::Bool => {
+        crate::core::dtype::DType::Float64 => format_elements!(extract_view_as_f64),
+        crate::core::dtype::DType::Float32 => format_elements!(extract_view_as_f32),
+        crate::core::dtype::DType::Int64 => format_elements!(extract_view_as_i64),
+        crate::core::dtype::DType::Int32 => format_elements!(extract_view_as_i32),
+        crate::core::dtype::DType::Int16 => format_elements!(extract_view_as_i16),
+        crate::core::dtype::DType::Int8 => format_elements!(extract_view_as_i8),
+        crate::core::dtype::DType::Uint64 => format_elements!(extract_view_as_u64),
+        crate::core::dtype::DType::Uint32 => format_elements!(extract_view_as_u32),
+        crate::core::dtype::DType::Uint16 => format_elements!(extract_view_as_u16),
+        crate::core::dtype::DType::Uint8 => format_elements!(extract_view_as_u8),
+        crate::core::dtype::DType::Bool => {
             if let Some(arr) = extract_view_as_bool(wrapper, meta) {
                 for (i, val) in arr.iter().enumerate().skip(start).take(end - start) {
                     if i > start {
@@ -272,17 +271,17 @@ fn format_2d_row(
     }
 
     match wrapper.dtype {
-        crate::dtype::DType::Float64 => format_cols!(extract_view_as_f64),
-        crate::dtype::DType::Float32 => format_cols!(extract_view_as_f32),
-        crate::dtype::DType::Int64 => format_cols!(extract_view_as_i64),
-        crate::dtype::DType::Int32 => format_cols!(extract_view_as_i32),
-        crate::dtype::DType::Int16 => format_cols!(extract_view_as_i16),
-        crate::dtype::DType::Int8 => format_cols!(extract_view_as_i8),
-        crate::dtype::DType::Uint64 => format_cols!(extract_view_as_u64),
-        crate::dtype::DType::Uint32 => format_cols!(extract_view_as_u32),
-        crate::dtype::DType::Uint16 => format_cols!(extract_view_as_u16),
-        crate::dtype::DType::Uint8 => format_cols!(extract_view_as_u8),
-        crate::dtype::DType::Bool => {
+        crate::core::dtype::DType::Float64 => format_cols!(extract_view_as_f64),
+        crate::core::dtype::DType::Float32 => format_cols!(extract_view_as_f32),
+        crate::core::dtype::DType::Int64 => format_cols!(extract_view_as_i64),
+        crate::core::dtype::DType::Int32 => format_cols!(extract_view_as_i32),
+        crate::core::dtype::DType::Int16 => format_cols!(extract_view_as_i16),
+        crate::core::dtype::DType::Int8 => format_cols!(extract_view_as_i8),
+        crate::core::dtype::DType::Uint64 => format_cols!(extract_view_as_u64),
+        crate::core::dtype::DType::Uint32 => format_cols!(extract_view_as_u32),
+        crate::core::dtype::DType::Uint16 => format_cols!(extract_view_as_u16),
+        crate::core::dtype::DType::Uint8 => format_cols!(extract_view_as_u8),
+        crate::core::dtype::DType::Bool => {
             if let Some(arr) = extract_view_as_bool(wrapper, meta) {
                 for (i, val) in arr.iter().enumerate().skip(start_idx).take(cols) {
                     if i > start_idx {
@@ -381,17 +380,17 @@ fn format_3d_row(
     }
 
     match wrapper.dtype {
-        crate::dtype::DType::Float64 => format_cols!(extract_view_as_f64),
-        crate::dtype::DType::Float32 => format_cols!(extract_view_as_f32),
-        crate::dtype::DType::Int64 => format_cols!(extract_view_as_i64),
-        crate::dtype::DType::Int32 => format_cols!(extract_view_as_i32),
-        crate::dtype::DType::Int16 => format_cols!(extract_view_as_i16),
-        crate::dtype::DType::Int8 => format_cols!(extract_view_as_i8),
-        crate::dtype::DType::Uint64 => format_cols!(extract_view_as_u64),
-        crate::dtype::DType::Uint32 => format_cols!(extract_view_as_u32),
-        crate::dtype::DType::Uint16 => format_cols!(extract_view_as_u16),
-        crate::dtype::DType::Uint8 => format_cols!(extract_view_as_u8),
-        crate::dtype::DType::Bool => {
+        crate::core::dtype::DType::Float64 => format_cols!(extract_view_as_f64),
+        crate::core::dtype::DType::Float32 => format_cols!(extract_view_as_f32),
+        crate::core::dtype::DType::Int64 => format_cols!(extract_view_as_i64),
+        crate::core::dtype::DType::Int32 => format_cols!(extract_view_as_i32),
+        crate::core::dtype::DType::Int16 => format_cols!(extract_view_as_i16),
+        crate::core::dtype::DType::Int8 => format_cols!(extract_view_as_i8),
+        crate::core::dtype::DType::Uint64 => format_cols!(extract_view_as_u64),
+        crate::core::dtype::DType::Uint32 => format_cols!(extract_view_as_u32),
+        crate::core::dtype::DType::Uint16 => format_cols!(extract_view_as_u16),
+        crate::core::dtype::DType::Uint8 => format_cols!(extract_view_as_u8),
+        crate::core::dtype::DType::Bool => {
             if let Some(arr) = extract_view_as_bool(wrapper, meta) {
                 for (i, val) in arr.iter().enumerate().skip(start_idx).take(cols) {
                     if i > start_idx {
@@ -635,17 +634,17 @@ fn format_element_at_offset(
     }
 
     match wrapper.dtype {
-        crate::dtype::DType::Float64 => format_elem!(extract_view_as_f64),
-        crate::dtype::DType::Float32 => format_elem!(extract_view_as_f32),
-        crate::dtype::DType::Int64 => format_elem!(extract_view_as_i64),
-        crate::dtype::DType::Int32 => format_elem!(extract_view_as_i32),
-        crate::dtype::DType::Int16 => format_elem!(extract_view_as_i16),
-        crate::dtype::DType::Int8 => format_elem!(extract_view_as_i8),
-        crate::dtype::DType::Uint64 => format_elem!(extract_view_as_u64),
-        crate::dtype::DType::Uint32 => format_elem!(extract_view_as_u32),
-        crate::dtype::DType::Uint16 => format_elem!(extract_view_as_u16),
-        crate::dtype::DType::Uint8 => format_elem!(extract_view_as_u8),
-        crate::dtype::DType::Bool => {
+        crate::core::dtype::DType::Float64 => format_elem!(extract_view_as_f64),
+        crate::core::dtype::DType::Float32 => format_elem!(extract_view_as_f32),
+        crate::core::dtype::DType::Int64 => format_elem!(extract_view_as_i64),
+        crate::core::dtype::DType::Int32 => format_elem!(extract_view_as_i32),
+        crate::core::dtype::DType::Int16 => format_elem!(extract_view_as_i16),
+        crate::core::dtype::DType::Int8 => format_elem!(extract_view_as_i8),
+        crate::core::dtype::DType::Uint64 => format_elem!(extract_view_as_u64),
+        crate::core::dtype::DType::Uint32 => format_elem!(extract_view_as_u32),
+        crate::core::dtype::DType::Uint16 => format_elem!(extract_view_as_u16),
+        crate::core::dtype::DType::Uint8 => format_elem!(extract_view_as_u8),
+        crate::core::dtype::DType::Bool => {
             if let Some(arr) = extract_view_as_bool(wrapper, meta) {
                 for (i, val) in arr.iter().enumerate() {
                     if i == offset {
@@ -688,17 +687,17 @@ fn format_elements_at_offset(
     }
 
     match wrapper.dtype {
-        crate::dtype::DType::Float64 => format_elems!(extract_view_as_f64),
-        crate::dtype::DType::Float32 => format_elems!(extract_view_as_f32),
-        crate::dtype::DType::Int64 => format_elems!(extract_view_as_i64),
-        crate::dtype::DType::Int32 => format_elems!(extract_view_as_i32),
-        crate::dtype::DType::Int16 => format_elems!(extract_view_as_i16),
-        crate::dtype::DType::Int8 => format_elems!(extract_view_as_i8),
-        crate::dtype::DType::Uint64 => format_elems!(extract_view_as_u64),
-        crate::dtype::DType::Uint32 => format_elems!(extract_view_as_u32),
-        crate::dtype::DType::Uint16 => format_elems!(extract_view_as_u16),
-        crate::dtype::DType::Uint8 => format_elems!(extract_view_as_u8),
-        crate::dtype::DType::Bool => {
+        crate::core::dtype::DType::Float64 => format_elems!(extract_view_as_f64),
+        crate::core::dtype::DType::Float32 => format_elems!(extract_view_as_f32),
+        crate::core::dtype::DType::Int64 => format_elems!(extract_view_as_i64),
+        crate::core::dtype::DType::Int32 => format_elems!(extract_view_as_i32),
+        crate::core::dtype::DType::Int16 => format_elems!(extract_view_as_i16),
+        crate::core::dtype::DType::Int8 => format_elems!(extract_view_as_i8),
+        crate::core::dtype::DType::Uint64 => format_elems!(extract_view_as_u64),
+        crate::core::dtype::DType::Uint32 => format_elems!(extract_view_as_u32),
+        crate::core::dtype::DType::Uint16 => format_elems!(extract_view_as_u16),
+        crate::core::dtype::DType::Uint8 => format_elems!(extract_view_as_u8),
+        crate::core::dtype::DType::Bool => {
             if let Some(arr) = extract_view_as_bool(wrapper, meta) {
                 for (i, val) in arr.iter().enumerate() {
                     if i >= base_offset + start * stride && i < base_offset + end * stride {

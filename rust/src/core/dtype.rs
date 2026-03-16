@@ -87,30 +87,6 @@ impl DType {
         )
     }
 
-    /// Check if this is an integer type (signed or unsigned).
-    #[inline]
-    pub const fn is_integer(self) -> bool {
-        self.is_signed() || self.is_unsigned()
-    }
-
-    /// Check if this is a floating-point type.
-    #[inline]
-    pub const fn is_float(self) -> bool {
-        matches!(self, DType::Float32 | DType::Float64)
-    }
-
-    /// Check if this is a boolean type.
-    #[inline]
-    pub const fn is_bool(self) -> bool {
-        matches!(self, DType::Bool)
-    }
-
-    /// Check if this is a numeric type (integer or float).
-    #[inline]
-    pub const fn is_numeric(self) -> bool {
-        !self.is_bool()
-    }
-
     /// Get a human-readable name for this dtype.
     #[inline]
     pub const fn name(self) -> &'static str {
@@ -243,20 +219,6 @@ mod tests {
         assert_eq!(DType::Float32.item_size(), 4);
         assert_eq!(DType::Float64.item_size(), 8);
         assert_eq!(DType::Bool.item_size(), 1);
-    }
-
-    #[test]
-    fn test_type_checks() {
-        assert!(DType::Int32.is_signed());
-        assert!(!DType::Uint32.is_signed());
-        assert!(DType::Uint32.is_unsigned());
-        assert!(DType::Int32.is_integer());
-        assert!(DType::Uint32.is_integer());
-        assert!(!DType::Float64.is_integer());
-        assert!(DType::Float64.is_float());
-        assert!(DType::Float32.is_float());
-        assert!(DType::Bool.is_bool());
-        assert!(!DType::Float64.is_bool());
     }
 
     #[test]

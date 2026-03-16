@@ -185,7 +185,7 @@ final class BitwiseTest extends TestCase
     public function testLeftShiftFloatShouldError(): void
     {
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('only supported for integer');
+        $this->expectExceptionMessage('Bitwise operations not supported for float types');
 
         $a = NDArray::array([1.0, 2.0], DType::Float64);
         $result = $a->leftShift(1);
@@ -241,7 +241,7 @@ final class BitwiseTest extends TestCase
     public function testRightShiftFloatShouldError(): void
     {
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('only supported for integer');
+        $this->expectExceptionMessage('Bitwise operations not supported for float types');
 
         $a = NDArray::array([8.0, 16.0], DType::Float32);
         $result = $a->rightShift(1);

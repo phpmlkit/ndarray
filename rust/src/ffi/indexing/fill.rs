@@ -4,8 +4,8 @@
 
 use std::ffi::c_void;
 
-use crate::dtype::DType;
-use crate::error::{self, ERR_GENERIC, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_GENERIC, SUCCESS};
 use crate::ffi::{ArrayMetadata, NdArrayHandle};
 
 /// Fill a slice with a value.
