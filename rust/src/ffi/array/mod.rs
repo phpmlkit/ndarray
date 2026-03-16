@@ -2,13 +2,15 @@
 //!
 //! Provides core array functionality: creation, data access, properties, and serialization.
 
+pub mod as_scalar;
+pub mod copy;
 pub mod create;
-pub mod data;
 pub mod free;
-pub mod scalar;
+pub mod get_data;
 
 // Re-export all public functions
+pub use as_scalar::*;
+pub use copy::*;
 pub use create::*;
-pub use data::*;
 pub use free::*;
-pub use scalar::*;
+pub use get_data::*;

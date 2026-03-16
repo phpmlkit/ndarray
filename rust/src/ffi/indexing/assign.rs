@@ -2,9 +2,9 @@
 //!
 //! Provides assign operations between strided array views.
 
-use crate::dtype::DType;
-use crate::error::{self, ERR_GENERIC, SUCCESS};
-use crate::ffi::{NdArrayHandle, ArrayMetadata};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_GENERIC, SUCCESS};
+use crate::ffi::{ArrayMetadata, NdArrayHandle};
 
 /// Assign values from source view to destination view.
 ///

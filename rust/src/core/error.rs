@@ -1,8 +1,5 @@
 use std::cell::RefCell;
-use std::ffi::CString;
 use std::fmt::Display;
-use std::os::raw::c_char;
-use std::ptr;
 
 // Thread-local storage for the last error message
 thread_local! {
@@ -24,6 +21,11 @@ pub fn set_last_error<E: Display>(err: E) {
     LAST_ERROR.with(|e| {
         *e.borrow_mut() = Some(err.to_string());
     });
+}
+
+/// Get the last error message, if any.
+pub fn get_last_error_message() -> Option<String> {
+    LAST_ERROR.with(|e| e.borrow().clone())
 }
 
 /// Extract a string from a panic payload (Box<dyn Any + Send>).
@@ -98,63 +100,4 @@ pub(crate) fn classify_panic_message(msg: &str) -> (i32, String) {
 
     // Fallback: generic panic
     (ERR_PANIC, "Rust panic occurred".to_string())
-}
-
-/// Get the last error message.
-///
-/// Writes the message to `buf` up to `len` bytes.
-/// Returns the actual length of the message.
-#[no_mangle]
-pub unsafe extern "C" fn ndarray_get_last_error(buf: *mut c_char, len: usize) -> usize {
-    if buf.is_null() || len == 0 {
-        return 0;
-    }
-
-    LAST_ERROR.with(|e| {
-        if let Some(msg) = &*e.borrow() {
-            let c_str = match CString::new(msg.as_str()) {
-                Ok(s) => s,
-                Err(_) => return 0,
-            };
-            let bytes = c_str.as_bytes_with_nul();
-            let copy_len = bytes.len().min(len);
-
-            ptr::copy_nonoverlapping(bytes.as_ptr() as *const c_char, buf, copy_len);
-
-            // Ensure null termination if truncated
-            if copy_len == len {
-                *buf.add(len - 1) = 0;
-            }
-
-            copy_len
-        } else {
-            0
-        }
-    })
-}
-
-/// Macro to wrap FFI functions with error handling and panic catching.
-///
-/// Catches panics (e.g. from ndarray's unwrap on shape/index errors) and
-/// classifies them into the appropriate error code so PHP can throw the
-/// correct exception type. Suppresses the default panic output to stderr
-/// since we convert panics to error codes.
-#[macro_export]
-macro_rules! ffi_guard {
-    ($body:block) => {{
-        let prev_hook = std::panic::take_hook();
-        std::panic::set_hook(Box::new(|_| {}));
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| $body));
-        let _ = std::panic::take_hook();
-        std::panic::set_hook(prev_hook);
-        match result {
-            Ok(res) => res,
-            Err(payload) => {
-                let msg = $crate::error::panic_payload_to_string(payload);
-                let (code, display_msg) = $crate::error::classify_panic_message(&msg);
-                $crate::error::set_last_error(display_msg);
-                code
-            }
-        }
-    }};
 }

@@ -7,11 +7,11 @@ use crate::core::view_helpers::{
     extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
 use crate::ffi::reductions::helpers::write_scalar;
-use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 use ndarray::Axis;
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -36,76 +36,76 @@ pub unsafe extern "C" fn ndarray_sum(
         let (sum_result, result_dtype) = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract f64 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 (view.sum(), DType::Float64)
             }
             DType::Float32 => {
                 let Some(view) = extract_view_f32(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract f32 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 (view.sum() as f64, DType::Float32)
             }
             DType::Int64 => {
                 let Some(view) = extract_view_i64(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract i64 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 (view.sum() as f64, DType::Int64)
             }
             DType::Int32 => {
                 let Some(view) = extract_view_i32(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract i32 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 (view.sum() as f64, DType::Int32)
             }
             DType::Int16 => {
                 let Some(view) = extract_view_i16(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract i16 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 (view.sum() as f64, DType::Int16)
             }
             DType::Int8 => {
                 let Some(view) = extract_view_i8(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract i8 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
                 (view.sum() as f64, DType::Int8)
             }
             DType::Uint64 => {
                 let Some(view) = extract_view_u64(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract u64 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
                 (view.sum() as f64, DType::Uint64)
             }
             DType::Uint32 => {
                 let Some(view) = extract_view_u32(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract u32 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
                 (view.sum() as f64, DType::Uint32)
             }
             DType::Uint16 => {
                 let Some(view) = extract_view_u16(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract u16 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
                 (view.sum() as f64, DType::Uint16)
             }
             DType::Uint8 => {
                 let Some(view) = extract_view_u8(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract u8 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
                 (view.sum() as f64, DType::Uint8)
             }
             DType::Bool => {
-                crate::error::set_last_error("sum() not supported for Bool type".to_string());
+                crate::core::error::set_last_error("sum() not supported for Bool type".to_string());
                 return ERR_GENERIC;
             }
         };
@@ -148,7 +148,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
         let axis_usize = match validate_axis(shape_slice, axis) {
             Ok(a) => a,
             Err(e) => {
-                crate::error::set_last_error(e);
+                crate::core::error::set_last_error(e);
                 return ERR_SHAPE;
             }
         };
@@ -157,7 +157,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract f64 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.sum_axis(Axis(axis_usize));
@@ -173,7 +173,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
             }
             DType::Float32 => {
                 let Some(view) = extract_view_f32(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract f32 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.sum_axis(Axis(axis_usize));
@@ -189,7 +189,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
             }
             DType::Int64 => {
                 let Some(view) = extract_view_i64(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract i64 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.sum_axis(Axis(axis_usize));
@@ -205,7 +205,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
             }
             DType::Int32 => {
                 let Some(view) = extract_view_i32(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract i32 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.sum_axis(Axis(axis_usize));
@@ -221,7 +221,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
             }
             DType::Int16 => {
                 let Some(view) = extract_view_i16(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract i16 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.sum_axis(Axis(axis_usize));
@@ -237,7 +237,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
             }
             DType::Int8 => {
                 let Some(view) = extract_view_i8(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract i8 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.sum_axis(Axis(axis_usize));
@@ -253,7 +253,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
             }
             DType::Uint64 => {
                 let Some(view) = extract_view_u64(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract u64 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.sum_axis(Axis(axis_usize));
@@ -269,7 +269,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
             }
             DType::Uint32 => {
                 let Some(view) = extract_view_u32(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract u32 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.sum_axis(Axis(axis_usize));
@@ -285,7 +285,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
             }
             DType::Uint16 => {
                 let Some(view) = extract_view_u16(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract u16 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.sum_axis(Axis(axis_usize));
@@ -301,7 +301,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
             }
             DType::Uint8 => {
                 let Some(view) = extract_view_u8(wrapper, meta) else {
-                    crate::error::set_last_error("Failed to extract u8 view".to_string());
+                    crate::core::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.sum_axis(Axis(axis_usize));
@@ -316,7 +316,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
                 }
             }
             DType::Bool => {
-                crate::error::set_last_error("sum_axis() not supported for Bool type".to_string());
+                crate::core::error::set_last_error("sum_axis() not supported for Bool type".to_string());
                 return ERR_GENERIC;
             }
         };
@@ -324,7 +324,7 @@ pub unsafe extern "C" fn ndarray_sum_axis(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::error::set_last_error(e);
+            crate::core::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

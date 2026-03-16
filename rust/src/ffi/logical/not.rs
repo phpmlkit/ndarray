@@ -3,9 +3,18 @@
 //! Works with all input types (converts to bool first).
 //! Always returns a Bool array.
 
-use crate::error::{ERR_GENERIC, SUCCESS};
+use crate::core::{view_helpers::extract_view_as_bool, ArrayData, NDArrayWrapper};
+use crate::core::dtype::DType;
+use crate::core::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
-use crate::unary_logical_op_arm;
+use std::sync::Arc;
+use parking_lot::RwLock;
+
+/// Logical NOT for use with mapv.
+#[inline(always)]
+fn not(a: &u8) -> u8 {
+    (*a == 0) as u8
+}
 
 /// Compute the logical NOT of an array.
 /// Array is converted to bool first, result is always Bool.
@@ -33,7 +42,15 @@ pub unsafe extern "C" fn ndarray_logical_not(
         let a_meta = &*a_meta;
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
 
-        let result_wrapper = unary_logical_op_arm!(a_wrapper, a_meta, not);
+        let Some(view) = extract_view_as_bool(a_wrapper, a_meta) else {
+            set_last_error("Failed to extract view as bool".to_string());
+            return ERR_GENERIC;
+        };
+        let result = view.mapv(|x| not(&x));
+        let result_wrapper = NDArrayWrapper {
+            data: ArrayData::Bool(Arc::new(RwLock::new(result))),
+            dtype: DType::Bool,
+        };
 
         if let Err(e) = write_output_metadata(
             &result_wrapper,
@@ -42,7 +59,7 @@ pub unsafe extern "C" fn ndarray_logical_not(
             out_shape,
             max_ndim,
         ) {
-            crate::error::set_last_error(e);
+            set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

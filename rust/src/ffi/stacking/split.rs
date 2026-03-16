@@ -3,9 +3,9 @@
 //! Returns view metadata (offset, shape, strides) for each part. No new allocations -
 //! parts are views into the original. PHP creates NDArray objects with same handle.
 
-use crate::error::{set_last_error, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
+use crate::core::error::{set_last_error, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
 use crate::ffi::stacking::helpers::resolve_axis;
-use crate::ffi::{NdArrayHandle, ArrayMetadata};
+use crate::ffi::{ArrayMetadata, NdArrayHandle};
 
 /// Split array along axis at the given indices.
 ///

@@ -7,8 +7,8 @@ use rand::{RngExt, SeedableRng};
 use std::sync::Arc;
 
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
 use std::slice;
 
@@ -132,7 +132,7 @@ pub unsafe extern "C" fn ndarray_random_int(
         let len = match shape_len(shape_slice) {
             Ok(v) => v,
             Err(e) => {
-                crate::error::set_last_error(e);
+                crate::core::error::set_last_error(e);
                 return ERR_GENERIC;
             }
         };
@@ -149,7 +149,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_i8(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::error::set_last_error(e);
+                        crate::core::error::set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -165,7 +165,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_i16(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::error::set_last_error(e);
+                        crate::core::error::set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -181,7 +181,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_i32(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::error::set_last_error(e);
+                        crate::core::error::set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -197,7 +197,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_i64(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::error::set_last_error(e);
+                        crate::core::error::set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -213,7 +213,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_u8(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::error::set_last_error(e);
+                        crate::core::error::set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -229,7 +229,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_u16(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::error::set_last_error(e);
+                        crate::core::error::set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -245,7 +245,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_u32(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::error::set_last_error(e);
+                        crate::core::error::set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -261,7 +261,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_u64(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::error::set_last_error(e);
+                        crate::core::error::set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };

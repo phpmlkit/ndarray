@@ -5,8 +5,8 @@ use crate::core::view_helpers::{
     extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
 use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;

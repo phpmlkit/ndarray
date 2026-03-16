@@ -6,8 +6,8 @@ use crate::core::view_helpers::{
     extract_view_u8,
 };
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
 use crate::ffi::indexing::utils::normalize_index;
 use crate::ffi::reductions::helpers::validate_axis;
 use crate::ffi::{ArrayMetadata, NdArrayHandle};

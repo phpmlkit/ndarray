@@ -1,22 +1,8 @@
-//! Macros for reducing type dispatch boilerplate.
+//! Core macros for NDArray operations.
 //!
-//! These macros generate repetitive code for handling all 11 data types
-//! without manual duplication.
-//!
-//! Note: FFI functions (extern "C") must be written explicitly because
-//! cbindgen cannot expand Rust macros when generating the C header.
+//! These macros generate repetitive implementations for handling all 11 data types.
 
 /// Dispatch an operation across all ArrayData variants.
-///
-/// This macro expands a match expression that handles all 11 type variants,
-/// binding the inner Arc<RwLock<ArrayD<T>>> to the specified identifier.
-///
-/// # Example
-/// ```ignore
-/// match_array_data!(self.data, arr => {
-///     arr.read().shape().to_vec()
-/// })
-/// ```
 #[macro_export]
 macro_rules! match_array_data {
     ($data:expr, $arr:ident => $body:expr) => {
@@ -37,15 +23,6 @@ macro_rules! match_array_data {
 }
 
 /// Generate from_slice_* methods for NDArrayWrapper.
-///
-/// This macro generates type-specific constructors that create an NDArrayWrapper
-/// from a slice of the given type.
-///
-/// # Arguments
-/// * `$method` - Method name (e.g., `from_slice_i8`)
-/// * `$type` - Rust type (e.g., `i8`)
-/// * `$variant` - ArrayData variant (e.g., `Int8`)
-/// * `$dtype` - DType variant (e.g., `Int8`)
 #[macro_export]
 macro_rules! impl_from_slice {
     ($($method:ident, $type:ty, $variant:ident, $dtype:ident);* $(;)?) => {
@@ -57,9 +34,7 @@ macro_rules! impl_from_slice {
                     if data.len() != expected_len {
                         return Err(format!(
                             "Data length {} does not match shape {:?} (expected {})",
-                            data.len(),
-                            shape,
-                            expected_len
+                            data.len(), shape, expected_len
                         ));
                     }
 
@@ -72,7 +47,7 @@ macro_rules! impl_from_slice {
                         data: $crate::core::ArrayData::$variant(
                             std::sync::Arc::new(parking_lot::RwLock::new(arr))
                         ),
-                        dtype: $crate::dtype::DType::$dtype,
+                        dtype: $crate::core::dtype::DType::$dtype,
                     })
                 }
             )*
@@ -81,10 +56,6 @@ macro_rules! impl_from_slice {
 }
 
 /// Generate get_element_* methods for NDArrayWrapper.
-///
-/// Each method reads a single element at a flat index and returns the value
-/// in its native type. Returns an error if the dtype doesn't match or the
-/// index is out of bounds.
 #[macro_export]
 macro_rules! impl_get_element {
     ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
@@ -107,7 +78,6 @@ macro_rules! impl_get_element {
                                 }
                             }
                             None => {
-                                // Non-contiguous array: use iterator
                                 guard.iter().nth(flat_index).copied().ok_or_else(|| {
                                     format!(
                                         "Index {} out of bounds for array with {} elements",
@@ -129,9 +99,6 @@ macro_rules! impl_get_element {
 }
 
 /// Generate set_element_* methods for NDArrayWrapper.
-///
-/// Each method writes a single element at a flat index.
-/// Returns an error if the dtype doesn't match or the index is out of bounds.
 #[macro_export]
 macro_rules! impl_set_element {
     ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
@@ -155,7 +122,6 @@ macro_rules! impl_set_element {
                                 }
                             }
                             None => {
-                                // Non-contiguous: fall back to indexed iteration
                                 let len = guard.len();
                                 if flat_index >= len {
                                     return Err(format!(
@@ -186,9 +152,48 @@ macro_rules! impl_set_element {
     };
 }
 
+/// Generate fill_slice_* methods for NDArrayWrapper.
+#[macro_export]
+macro_rules! impl_fill_slice {
+    ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
+        impl $crate::core::NDArrayWrapper {
+            $(
+                pub unsafe fn $method(
+                    &self,
+                    value: $type,
+                    meta: &$crate::core::ArrayMetadata,
+                ) -> Result<(), String> {
+                    let shape = meta.shape_slice();
+                    let strides = meta.strides_slice();
+                    let offset = meta.offset;
+
+                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
+                        let mut guard = arr.write();
+                        let raw_ptr = guard.as_mut_ptr();
+
+                        unsafe {
+                            let ptr = raw_ptr.add(offset);
+                            let strides_ix = ndarray::IxDyn(strides);
+                            let mut view = ndarray::ArrayViewMut::from_shape_ptr(
+                                ndarray::ShapeBuilder::strides(ndarray::IxDyn(shape), strides_ix),
+                                ptr
+                            );
+                            view.fill(value);
+                        }
+                        Ok(())
+                    } else {
+                        Err(format!(
+                            "Type mismatch: expected {}, got {:?}",
+                            stringify!($variant), self.dtype
+                        ))
+                    }
+                }
+            )*
+        }
+    };
+}
+
 /// Generate assign_slice_* methods for NDArrayWrapper.
-///
-/// Each method assigns elements from a source array view to a destination view.
 #[macro_export]
 macro_rules! impl_assign_slice {
     ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
@@ -196,18 +201,17 @@ macro_rules! impl_assign_slice {
             $(
                 pub unsafe fn $method(
                     &self,
-                    meta: &$crate::ffi::ArrayMetadata,
+                    meta: &$crate::core::ArrayMetadata,
                     src: &$crate::core::NDArrayWrapper,
-                    src_meta: &$crate::ffi::ArrayMetadata,
+                    src_meta: &$crate::core::ArrayMetadata,
                 ) -> Result<(), String> {
                     if let $crate::core::ArrayData::$variant(_) = &self.data {
                     } else {
-                         return Err(format!(
+                        return Err(format!(
                             "Type mismatch: expected {}, got {:?}",
                             stringify!($variant), self.dtype
                         ));
                     }
-
 
                     if self.dtype != src.dtype {
                         return Err(format!(
@@ -217,7 +221,6 @@ macro_rules! impl_assign_slice {
                     }
 
                     let is_same = self.is_same_array(src);
-
                     let src_shape = src_meta.shape_slice();
                     let src_strides = src_meta.strides_slice();
                     let src_offset = src_meta.offset;
@@ -254,10 +257,8 @@ macro_rules! impl_assign_slice {
                                     ndarray::ShapeBuilder::strides(ndarray::IxDyn(dst_shape), strides_ix),
                                     ptr
                                 );
-
                                 let temp_view = ndarray::ArrayView::from_shape(ndarray::IxDyn(dst_shape), &temp_data)
                                     .map_err(|e| e.to_string())?;
-
                                 view.assign(&temp_view);
                             }
                         }
@@ -265,7 +266,6 @@ macro_rules! impl_assign_slice {
                         if let ($crate::core::ArrayData::$variant(dst_arr), $crate::core::ArrayData::$variant(src_arr)) = (&self.data, &src.data) {
                             let src_guard = src_arr.read();
                             let src_ptr = src_guard.as_ptr();
-
                             let mut dst_guard = dst_arr.write();
                             let dst_ptr = dst_guard.as_mut_ptr();
 
@@ -276,32 +276,26 @@ macro_rules! impl_assign_slice {
                                     ndarray::ShapeBuilder::strides(ndarray::IxDyn(src_shape), s_strides),
                                     s_ptr
                                 );
-
                                 let d_ptr = dst_ptr.add(dst_offset);
                                 let d_strides = ndarray::IxDyn(dst_strides);
                                 let mut dst_view = ndarray::ArrayViewMut::from_shape_ptr(
                                     ndarray::ShapeBuilder::strides(ndarray::IxDyn(dst_shape), d_strides),
                                     d_ptr
                                 );
-
                                 dst_view.assign(&src_view);
                             }
                         } else {
                             unreachable!("DType checked above");
                         }
                     }
-
                     Ok(())
                 }
-
             )*
         }
     };
 }
 
 /// Generate copy_view_* methods for NDArrayWrapper.
-///
-/// Each method copies a view (defined by offset, shape, strides) to a new NDArrayWrapper.
 #[macro_export]
 macro_rules! impl_copy_view {
     ($($method:ident, $type:ty, $variant:ident, $dtype:ident);* $(;)?) => {
@@ -309,7 +303,7 @@ macro_rules! impl_copy_view {
             $(
                 pub unsafe fn $method(
                     &self,
-                    meta: &$crate::ffi::ArrayMetadata,
+                    meta: &$crate::core::ArrayMetadata,
                 ) -> Result<$crate::core::NDArrayWrapper, String> {
                     let shape = meta.shape_slice();
                     let strides = meta.strides_slice();
@@ -326,16 +320,12 @@ macro_rules! impl_copy_view {
                                 ndarray::ShapeBuilder::strides(ndarray::IxDyn(shape), strides_ix),
                                 ptr
                             );
-
-                            // Create a new owned array from the view
-                            // to_owned() creates a standard layout array
                             let new_arr = view.to_owned();
-
                             Ok($crate::core::NDArrayWrapper {
                                 data: $crate::core::ArrayData::$variant(
                                     std::sync::Arc::new(parking_lot::RwLock::new(new_arr))
                                 ),
-                                dtype: $crate::dtype::DType::$dtype,
+                                dtype: $crate::core::dtype::DType::$dtype,
                             })
                         }
                     } else {
@@ -343,81 +333,6 @@ macro_rules! impl_copy_view {
                             "Type mismatch: expected {}, got {:?}",
                             stringify!($variant), self.dtype
                         ))
-                    }
-                }
-            )*
-        }
-    };
-}
-
-/// Generate fill_slice_* methods for NDArrayWrapper.
-///
-/// Each method fills a view (defined by offset, shape, strides) with a scalar value.
-#[macro_export]
-macro_rules! impl_fill_slice {
-    ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
-        impl $crate::core::NDArrayWrapper {
-            $(
-                pub unsafe fn $method(
-                    &self,
-                    value: $type,
-                    meta: &$crate::ffi::ArrayMetadata,
-                ) -> Result<(), String> {
-                    let shape = meta.shape_slice();
-                    let strides = meta.strides_slice();
-                    let offset = meta.offset;
-
-                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
-                        let mut guard = arr.write();
-                        let raw_ptr = guard.as_mut_ptr();
-
-                        // Safety: The caller (PHP) is responsible for ensuring the view
-                        // is within bounds of the allocated memory.
-                        // We construct a view from the raw pointer offset.
-
-                        unsafe {
-                            let ptr = raw_ptr.add(offset);
-                            // Convert strides to IxDyn (which expects usize, negative strides are wrapped)
-                            let strides_ix = ndarray::IxDyn(strides);
-
-                            // Construct the view
-                            // We use from_shape_ptr which is unsafe.
-                            let mut view = ndarray::ArrayViewMut::from_shape_ptr(
-                                ndarray::ShapeBuilder::strides(ndarray::IxDyn(shape), strides_ix),
-                                ptr
-                            );
-
-                            view.fill(value);
-                        }
-
-                        Ok(())
-                    } else {
-                        Err(format!(
-                            "Type mismatch: expected {}, got {:?}",
-                            stringify!($variant), self.dtype
-                        ))
-                    }
-                }
-            )*
-        }
-    };
-}
-
-/// Generate to_vec_* methods for NDArrayWrapper.
-///
-/// This macro generates type-specific accessors that return a copy of the
-/// data as a `Vec<T>`.
-#[macro_export]
-macro_rules! impl_to_vec {
-    ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
-        impl $crate::core::NDArrayWrapper {
-            $(
-                #[doc = concat!("Get array data as `Vec<", stringify!($type), ">` if type matches.")]
-                pub fn $method(&self) -> Option<Vec<$type>> {
-                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
-                        Some(arr.read().iter().cloned().collect())
-                    } else {
-                        None
                     }
                 }
             )*

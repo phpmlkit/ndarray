@@ -2,7 +2,7 @@
 
 use std::ffi::c_void;
 
-use crate::dtype::DType;
+use crate::core::dtype::DType;
 
 /// Write a scalar result to FFI output buffers
 ///

@@ -2,10 +2,10 @@
 
 use crate::core::view_helpers::extract_view_as_f64;
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::{NdArrayHandle, ArrayMetadata};
+use crate::ffi::{ArrayMetadata, NdArrayHandle};
 use ndarray::{ArrayD, Axis, IxDyn};
 use parking_lot::RwLock;
 use std::ffi::c_void;
@@ -134,7 +134,11 @@ pub unsafe extern "C" fn ndarray_norm_axis(
     })
 }
 
-fn scalar_norm(wrapper: &NDArrayWrapper, meta: &ArrayMetadata, ord: NormOrd) -> Result<f64, String> {
+fn scalar_norm(
+    wrapper: &NDArrayWrapper,
+    meta: &ArrayMetadata,
+    ord: NormOrd,
+) -> Result<f64, String> {
     let view = extract_view_as_f64(wrapper, meta)
         .ok_or_else(|| "Failed to extract view for norm".to_string())?;
     let shape = unsafe { meta.shape_slice() };

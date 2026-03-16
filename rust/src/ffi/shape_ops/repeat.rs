@@ -13,8 +13,8 @@ use crate::core::view_helpers::{
     extract_view_u8,
 };
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{set_last_error, ERR_GENERIC, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::ffi::ArrayMetadata;
 use crate::ffi::{write_output_metadata, NdArrayHandle};
 

@@ -6,9 +6,9 @@ use crate::core::view_helpers::{
     extract_view_u8,
 };
 use crate::core::NDArrayWrapper;
-use crate::dtype::DType;
-use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 
 /// Compute trace (sum of diagonal elements).
 #[no_mangle]

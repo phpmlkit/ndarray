@@ -63,14 +63,6 @@ typedef struct ArrayMetadata {
 } ArrayMetadata;
 
 /**
- * Get the last error message.
- *
- * Writes the message to `buf` up to `len` bytes.
- * Returns the actual length of the message.
- */
-uintptr_t ndarray_get_last_error(char *buf, uintptr_t len);
-
-/**
  * Add two arrays.
  */
 int32_t ndarray_add(const struct NdArrayHandle *a,
@@ -121,10 +113,9 @@ int32_t ndarray_div_scalar(const struct NdArrayHandle *a,
                            uintptr_t max_ndim);
 
 /**
- * Element-wise minimum operation with broadcasting.
- * Returns an array of the same shape containing the smaller value at each position.
+ * Element-wise maximum with broadcasting.
  */
-int32_t ndarray_minimum(const struct NdArrayHandle *a,
+int32_t ndarray_maximum(const struct NdArrayHandle *a,
                         const struct ArrayMetadata *a_meta,
                         const struct NdArrayHandle *b,
                         const struct ArrayMetadata *b_meta,
@@ -135,10 +126,9 @@ int32_t ndarray_minimum(const struct NdArrayHandle *a,
                         uintptr_t max_ndim);
 
 /**
- * Element-wise maximum operation with broadcasting.
- * Returns an array of the same shape containing the larger value at each position.
+ * Element-wise minimum with broadcasting.
  */
-int32_t ndarray_maximum(const struct NdArrayHandle *a,
+int32_t ndarray_minimum(const struct NdArrayHandle *a,
                         const struct ArrayMetadata *a_meta,
                         const struct NdArrayHandle *b,
                         const struct ArrayMetadata *b_meta,
@@ -224,15 +214,28 @@ int32_t ndarray_sub_scalar(const struct NdArrayHandle *a,
                            uintptr_t max_ndim);
 
 /**
- * Create an NDArray from raw data with specified dtype.
+ * Extract the scalar value from a 0-dimensional array or view.
  *
- * # Arguments
- * * `data` - Pointer to raw data (type depends on dtype)
- * * `len` - Number of elements
- * * `shape` - Pointer to shape array
- * * `ndim` - Number of dimensions
- * * `dtype` - Data type enum value
- * * `out_handle` - Output handle pointer
+ * The array must have ndim == 0.
+ * Writes the value to out_value; the caller must allocate a buffer of at least
+ * 8 bytes and interpret based on the array's dtype.
+ *
+ * For bool: writes 0 or 1 to the first byte.
+ * For numeric types: writes the native value (up to 8 bytes).
+ */
+int32_t ndarray_as_scalar(const struct NdArrayHandle *handle,
+                          const struct ArrayMetadata *meta,
+                          void *out_value);
+
+/**
+ * Create a deep copy of an array view.
+ */
+int32_t ndarray_copy(const struct NdArrayHandle *handle,
+                     const struct ArrayMetadata *meta,
+                     struct NdArrayHandle **out_handle);
+
+/**
+ * Create an NDArray from raw data with specified dtype.
  */
 int32_t ndarray_create(const void *data,
                        uintptr_t len,
@@ -242,11 +245,9 @@ int32_t ndarray_create(const void *data,
                        struct NdArrayHandle **out_handle);
 
 /**
- * Create a deep copy of an array view.
+ * Destroy an NDArray and free its memory.
  */
-int32_t ndarray_copy(const struct NdArrayHandle *handle,
-                     const struct ArrayMetadata *meta,
-                     struct NdArrayHandle **out_handle);
+int32_t ndarray_free(struct NdArrayHandle *handle);
 
 /**
  * Get flattened data for an array view with optional offset and length.
@@ -265,25 +266,6 @@ int32_t ndarray_get_data(const struct NdArrayHandle *handle,
                          uintptr_t len,
                          void *out_data,
                          uintptr_t *out_len);
-
-/**
- * Destroy an NDArray and free its memory.
- */
-int32_t ndarray_free(struct NdArrayHandle *handle);
-
-/**
- * Extract the scalar value from a 0-dimensional array or view.
- *
- * The array must have ndim == 0.
- * Writes the value to out_value; the caller must allocate a buffer of at least
- * 8 bytes and interpret based on the array's dtype.
- *
- * For bool: writes 0 or 1 to the first byte.
- * For numeric types: writes the native value (up to 8 bytes).
- */
-int32_t ndarray_as_scalar(const struct NdArrayHandle *handle,
-                          const struct ArrayMetadata *meta,
-                          void *out_value);
 
 /**
  * Compute the bitwise AND of two arrays.
@@ -409,15 +391,6 @@ int32_t ndarray_right_shift_scalar(const struct NdArrayHandle *a,
                                    uintptr_t *out_ndim,
                                    uintptr_t *out_shape,
                                    uintptr_t max_ndim);
-
-/**
- * Cast an NDArray to a different dtype.
- *
- */
-int32_t ndarray_astype(const struct NdArrayHandle *handle,
-                       const struct ArrayMetadata *meta,
-                       int32_t target_dtype,
-                       struct NdArrayHandle **out);
 
 /**
  * Element-wise equal comparison with broadcasting. Returns Bool array.
@@ -1811,6 +1784,15 @@ int32_t ndarray_topk_flat(const struct NdArrayHandle *handle,
                           uintptr_t *out_shape);
 
 /**
+ * Cast an NDArray to a different dtype.
+ *
+ */
+int32_t ndarray_astype(const struct NdArrayHandle *handle,
+                       const struct ArrayMetadata *meta,
+                       int32_t target_dtype,
+                       struct NdArrayHandle **out);
+
+/**
  * Clamp array values to [min, max] range.
  *
  * Similar to NumPy's clip function.
@@ -1825,6 +1807,25 @@ int32_t ndarray_clamp(const struct NdArrayHandle *handle,
                       uintptr_t *out_ndim,
                       uintptr_t *out_shape,
                       uintptr_t max_ndim);
+
+/**
+ * Get the last error message.
+ *
+ * Writes the message to `buf` up to `len` bytes.
+ * Returns the actual length of the message.
+ */
+uintptr_t ndarray_get_last_error(char *buf, uintptr_t len);
+
+/**
+ * Format an array into a string buffer.
+ */
+uintptr_t ndarray_to_string(const struct NdArrayHandle *handle,
+                            const struct ArrayMetadata *meta,
+                            char *buffer,
+                            uintptr_t buffer_size,
+                            uintptr_t threshold,
+                            uintptr_t edgeitems,
+                            uintptr_t precision);
 
 /**
  * Concatenate N arrays along the given axis.
@@ -1867,16 +1868,5 @@ int32_t ndarray_stack(const struct NdArrayHandle *const *handles,
                       uintptr_t *out_ndim,
                       uintptr_t *out_shape,
                       uintptr_t max_ndim);
-
-/**
- * Format an array into a string buffer.
- */
-uintptr_t ndarray_to_string(const struct NdArrayHandle *handle,
-                            const struct ArrayMetadata *meta,
-                            char *buffer,
-                            uintptr_t buffer_size,
-                            uintptr_t threshold,
-                            uintptr_t edgeitems,
-                            uintptr_t precision);
 
 #endif /* NDARRAY_PHP_H */

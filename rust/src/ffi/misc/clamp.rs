@@ -5,9 +5,9 @@ use crate::core::view_helpers::{
     extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{self, ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_GENERIC, SUCCESS};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -175,7 +175,7 @@ pub unsafe extern "C" fn ndarray_clamp(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::error::set_last_error(e);
+            crate::core::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

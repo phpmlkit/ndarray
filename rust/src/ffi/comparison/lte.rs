@@ -1,15 +1,15 @@
 //! Element-wise less-or-equal (<=) comparison with broadcasting.
 
-use crate::binary_cmp_op_arm;
-use crate::core::view_helpers::{
-    extract_view_as_bool, extract_view_as_f32, extract_view_as_f64, extract_view_as_i16,
-    extract_view_as_i32, extract_view_as_i64, extract_view_as_i8, extract_view_as_u16,
-    extract_view_as_u32, extract_view_as_u64, extract_view_as_u8,
-};
-use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
-use crate::scalar_cmp_op_arm;
+use crate::binary_op_comparison;
+use crate::core::error::{ERR_GENERIC, SUCCESS};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::scalar_op_comparison;
+
+/// Less-than-or-equal comparison (<=) for use with Zip::map_collect.
+#[inline(always)]
+fn lte<A: PartialOrd>(a: &A, b: &A) -> u8 {
+    (a <= b) as u8
+}
 
 /// Element-wise less-or-equal comparison with broadcasting. Returns Bool array.
 #[no_mangle]
@@ -43,109 +43,7 @@ pub unsafe extern "C" fn ndarray_lte(
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
         let b_wrapper = NdArrayHandle::as_wrapper(b as *mut _);
 
-        let out_dtype = DType::promote(a_wrapper.dtype, b_wrapper.dtype);
-
-        let result_wrapper = match out_dtype {
-            DType::Float64 => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Float64,
-                extract_view_as_f64,
-                lte
-            ),
-            DType::Float32 => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Float32,
-                extract_view_as_f32,
-                lte
-            ),
-            DType::Int64 => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Int64,
-                extract_view_as_i64,
-                lte
-            ),
-            DType::Int32 => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Int32,
-                extract_view_as_i32,
-                lte
-            ),
-            DType::Int16 => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Int16,
-                extract_view_as_i16,
-                lte
-            ),
-            DType::Int8 => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Int8,
-                extract_view_as_i8,
-                lte
-            ),
-            DType::Uint64 => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Uint64,
-                extract_view_as_u64,
-                lte
-            ),
-            DType::Uint32 => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Uint32,
-                extract_view_as_u32,
-                lte
-            ),
-            DType::Uint16 => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Uint16,
-                extract_view_as_u16,
-                lte
-            ),
-            DType::Uint8 => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Uint8,
-                extract_view_as_u8,
-                lte
-            ),
-            DType::Bool => binary_cmp_op_arm!(
-                a_wrapper,
-                a_meta,
-                b_wrapper,
-                b_meta,
-                DType::Bool,
-                extract_view_as_bool,
-                lte
-            ),
-        };
+        let result_wrapper = binary_op_comparison!(a_wrapper, a_meta, b_wrapper, b_meta, lte);
 
         if let Err(e) = write_output_metadata(
             &result_wrapper,
@@ -154,7 +52,7 @@ pub unsafe extern "C" fn ndarray_lte(
             out_shape,
             max_ndim,
         ) {
-            crate::error::set_last_error(e);
+            crate::core::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
@@ -189,14 +87,12 @@ pub unsafe extern "C" fn ndarray_lte_scalar(
 
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
 
-        let result_wrapper = scalar_cmp_op_arm!(
-            a_wrapper, a_meta, scalar, <=
-        );
+        let result_wrapper = scalar_op_comparison!(a_wrapper, a_meta, scalar, <=);
 
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::error::set_last_error(e);
+            crate::core::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

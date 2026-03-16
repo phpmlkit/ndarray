@@ -1,6 +1,6 @@
 //! NDArray free function.
 
-use crate::error::SUCCESS;
+use crate::core::error::SUCCESS;
 use crate::ffi::NdArrayHandle;
 
 /// Destroy an NDArray and free its memory.

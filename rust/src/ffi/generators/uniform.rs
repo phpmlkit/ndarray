@@ -7,8 +7,8 @@ use rand::{RngExt, SeedableRng};
 use std::sync::Arc;
 
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
 use crate::ffi::NdArrayHandle;
 use std::slice;
 
@@ -45,7 +45,7 @@ pub unsafe extern "C" fn ndarray_uniform(
         return ERR_GENERIC;
     }
     if high <= low {
-        crate::error::set_last_error(format!(
+        crate::core::error::set_last_error(format!(
             "uniform requires high > low, got [{}, {})",
             low, high
         ));
@@ -57,7 +57,7 @@ pub unsafe extern "C" fn ndarray_uniform(
         let len = match shape_len(shape_slice) {
             Ok(v) => v,
             Err(e) => {
-                crate::error::set_last_error(e);
+                crate::core::error::set_last_error(e);
                 return ERR_GENERIC;
             }
         };

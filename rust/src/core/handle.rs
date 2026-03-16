@@ -1,6 +1,6 @@
-//! FFI type definitions.
+//! Opaque handle type for FFI communication.
 //!
-//! This module defines opaque handle types used for FFI communication
+//! This module defines the NdArrayHandle type used for FFI communication
 //! between PHP and Rust.
 
 use crate::core::NDArrayWrapper;

@@ -5,32 +5,24 @@
 pub mod arithmetic;
 pub mod array;
 pub mod bitwise;
-pub mod cast;
 pub mod comparison;
 pub mod generators;
 pub mod indexing;
 pub mod linalg;
 pub mod logical;
 pub mod math;
-pub mod metadata;
-mod output_meta;
 pub mod reductions;
 pub mod shape_ops;
 pub mod sorting;
-pub mod special;
+pub mod misc;
 pub mod stacking;
-pub mod to_string;
-mod types;
 
-pub use metadata::ArrayMetadata;
-pub use output_meta::write_output_metadata;
-pub use types::NdArrayHandle;
+pub use crate::core::{ArrayMetadata, NdArrayHandle, write_output_metadata};
 
 // Re-export all FFI functions for lib.rs
 pub use arithmetic::*;
 pub use array::*;
 pub use bitwise::*;
-pub use cast::*;
 pub use comparison::*;
 pub use generators::*;
 pub use indexing::*;
@@ -40,6 +32,5 @@ pub use math::*;
 pub use reductions::*;
 pub use shape_ops::*;
 pub use sorting::*;
-pub use special::*;
+pub use misc::*;
 pub use stacking::*;
-pub use to_string::ndarray_to_string;

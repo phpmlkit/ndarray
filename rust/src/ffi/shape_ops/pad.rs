@@ -6,12 +6,12 @@ use crate::core::view_helpers::{
     extract_view_u8,
 };
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::ffi::shape_ops::helpers::PadMode;
 use crate::ffi::write_output_metadata;
-use crate::ffi::NdArrayHandle;
 use crate::ffi::ArrayMetadata;
+use crate::ffi::NdArrayHandle;
 use ndarray::{ArrayD, ArrayViewD, IxDyn};
 use parking_lot::RwLock;
 use std::slice;

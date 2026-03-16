@@ -1,15 +1,15 @@
 //! Element-wise not-equal (!=) comparison with broadcasting.
 
-use crate::binary_cmp_op_arm;
-use crate::core::view_helpers::{
-    extract_view_as_bool, extract_view_as_f32, extract_view_as_f64, extract_view_as_i16,
-    extract_view_as_i32, extract_view_as_i64, extract_view_as_i8, extract_view_as_u16,
-    extract_view_as_u32, extract_view_as_u64, extract_view_as_u8,
-};
-use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, NdArrayHandle, ArrayMetadata};
-use crate::scalar_cmp_op_arm;
+use crate::binary_op_comparison;
+use crate::core::error::{ERR_GENERIC, SUCCESS};
+use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::scalar_op_comparison;
+
+/// Not-equal comparison (!=) for use with Zip::map_collect.
+#[inline(always)]
+fn ne<A: PartialEq>(a: &A, b: &A) -> u8 {
+    (a != b) as u8
+}
 
 /// Element-wise not-equal comparison with broadcasting. Returns Bool array.
 #[no_mangle]
@@ -43,109 +43,7 @@ pub unsafe extern "C" fn ndarray_ne(
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
         let b_wrapper = NdArrayHandle::as_wrapper(b as *mut _);
 
-        let out_dtype = DType::promote(a_wrapper.dtype, b_wrapper.dtype);
-
-        let result_wrapper = match out_dtype {
-            DType::Float64 => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Float64,
-                extract_view_as_f64,
-                ne
-            ),
-            DType::Float32 => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Float32,
-                extract_view_as_f32,
-                ne
-            ),
-            DType::Int64 => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Int64,
-                extract_view_as_i64,
-                ne
-            ),
-            DType::Int32 => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Int32,
-                extract_view_as_i32,
-                ne
-            ),
-            DType::Int16 => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Int16,
-                extract_view_as_i16,
-                ne
-            ),
-            DType::Int8 => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Int8,
-                extract_view_as_i8,
-                ne
-            ),
-            DType::Uint64 => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Uint64,
-                extract_view_as_u64,
-                ne
-            ),
-            DType::Uint32 => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Uint32,
-                extract_view_as_u32,
-                ne
-            ),
-            DType::Uint16 => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Uint16,
-                extract_view_as_u16,
-                ne
-            ),
-            DType::Uint8 => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Uint8,
-                extract_view_as_u8,
-                ne
-            ),
-            DType::Bool => binary_cmp_op_arm!(
-                a_wrapper,
-                &*a_meta,
-                b_wrapper,
-                &*b_meta,
-                DType::Bool,
-                extract_view_as_bool,
-                ne
-            ),
-        };
+        let result_wrapper = binary_op_comparison!(a_wrapper, a_meta, b_wrapper, b_meta, ne);
 
         if let Err(e) = write_output_metadata(
             &result_wrapper,
@@ -154,7 +52,7 @@ pub unsafe extern "C" fn ndarray_ne(
             out_shape,
             max_ndim,
         ) {
-            crate::error::set_last_error(e);
+            crate::core::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
@@ -189,15 +87,12 @@ pub unsafe extern "C" fn ndarray_ne_scalar(
 
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
 
-        let result_wrapper = scalar_cmp_op_arm!(
-            a_wrapper, a_meta,
-            scalar, !=
-        );
+        let result_wrapper = scalar_op_comparison!(a_wrapper, a_meta, scalar, !=);
 
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::error::set_last_error(e);
+            crate::core::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

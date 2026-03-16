@@ -4,10 +4,8 @@
 //! and provides the core array operations.
 
 use crate::core::ArrayData;
-use crate::dtype::DType;
-use ndarray::{ArrayD, IxDyn};
-use parking_lot::RwLock;
-use std::sync::Arc;
+use crate::core::dtype::DType;
+use crate::match_array_data;
 
 /// Main wrapper around ndarray with type information.
 pub struct NDArrayWrapper {
@@ -38,13 +36,6 @@ impl NDArrayWrapper {
         self.len() == 0
     }
 
-    /// Get data as f64 slice (for FFI - converts from actual type).
-    pub fn to_f64_vec(&self) -> Vec<f64> {
-        match_array_data!(self.data, arr => {
-            arr.read().iter().map(|&x| x as f64).collect()
-        })
-    }
-
     /// Check if this wrapper points to the same underlying array data as another.
     pub fn is_same_array(&self, other: &Self) -> bool {
         use crate::core::ArrayData::*;
@@ -65,107 +56,6 @@ impl NDArrayWrapper {
             _ => false,
         }
     }
-
-    /// Create a 0-dimensional (scalar) array wrapper from an f64 value with specified dtype.
-    ///
-    /// The value is converted to the target dtype. For Float64, this is a no-op conversion.
-    pub fn create_scalar_wrapper(value: f64, dtype: DType) -> NDArrayWrapper {
-        let shape: Vec<usize> = vec![];
-
-        match dtype {
-            DType::Float64 => {
-                let arr = ArrayD::<f64>::from_shape_vec(IxDyn(&shape), vec![value])
-                    .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Float64(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Float32 => {
-                let arr = ArrayD::<f32>::from_shape_vec(IxDyn(&shape), vec![value as f32])
-                    .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Float32(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Int64 => {
-                let arr = ArrayD::<i64>::from_shape_vec(IxDyn(&shape), vec![value as i64])
-                    .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Int64(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Int32 => {
-                let arr = ArrayD::<i32>::from_shape_vec(IxDyn(&shape), vec![value as i32])
-                    .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Int32(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Int16 => {
-                let arr = ArrayD::<i16>::from_shape_vec(IxDyn(&shape), vec![value as i16])
-                    .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Int16(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Int8 => {
-                let arr = ArrayD::<i8>::from_shape_vec(IxDyn(&shape), vec![value as i8])
-                    .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Int8(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Uint64 => {
-                let arr = ArrayD::<u64>::from_shape_vec(IxDyn(&shape), vec![value as u64])
-                    .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Uint64(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Uint32 => {
-                let arr = ArrayD::<u32>::from_shape_vec(IxDyn(&shape), vec![value as u32])
-                    .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Uint32(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Uint16 => {
-                let arr = ArrayD::<u16>::from_shape_vec(IxDyn(&shape), vec![value as u16])
-                    .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Uint16(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Uint8 => {
-                let arr = ArrayD::<u8>::from_shape_vec(IxDyn(&shape), vec![value as u8])
-                    .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Uint8(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-            DType::Bool => {
-                let arr = ArrayD::<u8>::from_shape_vec(
-                    IxDyn(&shape),
-                    vec![if value != 0.0 { 1 } else { 0 }],
-                )
-                .expect("Failed to create scalar array");
-                NDArrayWrapper {
-                    data: ArrayData::Bool(Arc::new(RwLock::new(arr))),
-                    dtype,
-                }
-            }
-        }
-    }
 }
 
 // Generate all from_slice_* methods using the macro
@@ -181,21 +71,6 @@ crate::impl_from_slice!(
     from_slice_f32, f32, Float32, Float32;
     from_slice_f64, f64, Float64, Float64;
     from_slice_bool, u8, Bool, Bool
-);
-
-// Generate to_vec_* methods for type-safe data access
-crate::impl_to_vec!(
-    to_int8_vec, i8, Int8;
-    to_int16_vec, i16, Int16;
-    to_int32_vec, i32, Int32;
-    to_int64_vec, i64, Int64;
-    to_uint8_vec, u8, Uint8;
-    to_uint16_vec, u16, Uint16;
-    to_uint32_vec, u32, Uint32;
-    to_uint64_vec, u64, Uint64;
-    to_float32_vec, f32, Float32;
-    to_float64_vec, f64, Float64;
-    to_bool_vec, u8, Bool
 );
 
 // Generate get_element_* methods for single-element access
@@ -306,15 +181,5 @@ mod tests {
         let result = NDArrayWrapper::from_slice_f64(&data, &shape);
 
         assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_to_f64_vec() {
-        let data = vec![1i32, 2, 3, 4];
-        let shape = vec![2, 2];
-        let arr = NDArrayWrapper::from_slice_i32(&data, &shape).unwrap();
-
-        let f64_data = arr.to_f64_vec();
-        assert_eq!(f64_data, vec![1.0, 2.0, 3.0, 4.0]);
     }
 }

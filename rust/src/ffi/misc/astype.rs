@@ -10,9 +10,9 @@ use crate::core::view_helpers::{
     extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{NdArrayHandle, ArrayMetadata};
+use crate::core::dtype::DType;
+use crate::core::error::{ERR_GENERIC, SUCCESS};
+use crate::ffi::{ArrayMetadata, NdArrayHandle};
 
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -37,7 +37,7 @@ pub unsafe extern "C" fn ndarray_astype(
         let target = match DType::from_u8(target_dtype as u8) {
             Some(dt) => dt,
             None => {
-                crate::error::set_last_error(format!("Invalid target dtype: {}", target_dtype));
+                crate::core::error::set_last_error(format!("Invalid target dtype: {}", target_dtype));
                 return ERR_GENERIC;
             }
         };

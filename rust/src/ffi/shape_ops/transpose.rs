@@ -5,8 +5,8 @@ use crate::core::view_helpers::{
     extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::core::{ArrayData, NDArrayWrapper};
-use crate::dtype::DType;
-use crate::error::{self, ERR_GENERIC, SUCCESS};
+use crate::core::dtype::DType;
+use crate::core::error::{self, ERR_GENERIC, SUCCESS};
 use crate::ffi::write_output_metadata;
 use crate::ffi::ArrayMetadata;
 use crate::ffi::NdArrayHandle;

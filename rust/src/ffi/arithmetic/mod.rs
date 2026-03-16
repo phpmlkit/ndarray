@@ -5,7 +5,8 @@
 
 pub mod add;
 pub mod div;
-pub mod minmax;
+pub mod maximum;
+pub mod minimum;
 pub mod mul;
 pub mod rem;
 pub mod sub;
@@ -13,7 +14,8 @@ pub mod sub;
 // Re-export all FFI functions
 pub use add::*;
 pub use div::*;
-pub use minmax::*;
+pub use maximum::*;
+pub use minimum::*;
 pub use mul::*;
 pub use rem::*;
 pub use sub::*;

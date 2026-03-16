@@ -3,38 +3,10 @@
 //! This module provides methods to extract views from ArrayData,
 //! properly handling offset, shape, and strides for non-contiguous arrays.
 
-use ndarray::{ArrayD, ArrayViewD, IxDyn, ShapeBuilder};
-
-use crate::core::{ArrayData, NDArrayWrapper};
-
-// Macro to generate `extract_view` functions for each type
-macro_rules! define_extract_view {
-    ($name:ident, $variant:path, $type:ty) => {
-        /// Extract a view of the specific type from the wrapper.
-        ///
-        /// # Safety
-        /// The caller must ensure the ArrayMetadata is valid.
-        pub unsafe fn $name<'a>(
-            wrapper: &'a NDArrayWrapper,
-            meta: &'a crate::ffi::ArrayMetadata,
-        ) -> Option<ArrayViewD<'a, $type>> {
-            let offset = meta.offset;
-            let shape = meta.shape_slice();
-            let strides = meta.strides_slice();
-            match &wrapper.data {
-                $variant(arr) => {
-                    let guard = arr.read();
-                    let ptr = guard.as_ptr();
-                    let view_ptr = ptr.add(offset);
-                    let strides_ix = IxDyn(strides);
-                    ArrayViewD::<$type>::from_shape_ptr(IxDyn(shape).strides(strides_ix), view_ptr)
-                        .into()
-                }
-                _ => None,
-            }
-        }
-    };
-}
+use crate::core::ArrayData;
+use crate::define_extract_view;
+use crate::define_extract_view_as;
+use ndarray::ShapeBuilder;
 
 // Generate `extract_view` functions for all types
 define_extract_view!(extract_view_f64, ArrayData::Float64, f64);
@@ -48,34 +20,6 @@ define_extract_view!(extract_view_u32, ArrayData::Uint32, u32);
 define_extract_view!(extract_view_u16, ArrayData::Uint16, u16);
 define_extract_view!(extract_view_u8, ArrayData::Uint8, u8);
 define_extract_view!(extract_view_bool, ArrayData::Bool, u8);
-
-// Macro to generate `extract_view_as` functions.
-macro_rules! define_extract_view_as {
-    (
-        $name:ident,
-        $target_type:ty,
-        $native_fn:ident,
-        [$(($fallback_fn:ident, $conv:expr)),+ $(,)?]
-    ) => {
-        pub fn $name(
-            wrapper: &NDArrayWrapper,
-            meta: &crate::ffi::ArrayMetadata,
-        ) -> Option<ArrayD<$target_type>> {
-            unsafe {
-                if let Some(view) = $native_fn(wrapper, meta) {
-                    return Some(view.to_owned());
-                }
-
-                $(
-                    if let Some(view) = $fallback_fn(wrapper, meta) {
-                        return Some(view.mapv($conv));
-                    }
-                )+
-            }
-            None
-        }
-    };
-}
 
 // Generate `extract_view_as` functions for all types
 define_extract_view_as!(
