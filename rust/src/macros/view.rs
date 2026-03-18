@@ -9,8 +9,8 @@ macro_rules! define_extract_view {
         /// # Safety
         /// The caller must ensure the ArrayMetadata is valid.
         pub unsafe fn $name<'a>(
-            wrapper: &'a crate::core::NDArrayWrapper,
-            meta: &'a crate::core::ArrayMetadata,
+            wrapper: &'a crate::types::NDArrayWrapper,
+            meta: &'a crate::types::ArrayMetadata,
         ) -> Option<ndarray::ArrayViewD<'a, $type>> {
             let offset = meta.offset;
             let shape = meta.shape_slice();
@@ -43,8 +43,8 @@ macro_rules! define_extract_view_as {
         [$(($fallback_fn:ident, $conv:expr)),+ $(,)?]
     ) => {
         pub fn $name(
-            wrapper: &crate::core::NDArrayWrapper,
-            meta: &crate::core::ArrayMetadata,
+            wrapper: &crate::types::NDArrayWrapper,
+            meta: &crate::types::ArrayMetadata,
         ) -> Option<ndarray::ArrayD<$target_type>> {
             unsafe {
                 if let Some(view) = $native_fn(wrapper, meta) {

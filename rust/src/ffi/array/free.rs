@@ -1,7 +1,7 @@
 //! NDArray free function.
 
-use crate::core::error::SUCCESS;
-use crate::ffi::NdArrayHandle;
+use crate::helpers::error::SUCCESS;
+use crate::types::NdArrayHandle;
 
 /// Destroy an NDArray and free its memory.
 #[no_mangle]

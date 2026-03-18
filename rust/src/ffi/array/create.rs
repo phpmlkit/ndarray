@@ -3,10 +3,9 @@
 use std::ffi::c_void;
 use std::slice;
 
-use crate::core::NDArrayWrapper;
-use crate::core::dtype::DType;
-use crate::core::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::NdArrayHandle;
+use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::types::dtype::DType;
+use crate::types::{NDArrayWrapper, NdArrayHandle};
 
 /// Create an NDArray from raw data with specified dtype.
 #[no_mangle]

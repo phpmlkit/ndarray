@@ -1,35 +1,14 @@
-use std::cell::RefCell;
-use std::fmt::Display;
+//! Macro to wrap FFI functions with error handling and panic catching.
+//!
+//! Catches panics (e.g. from ndarray's unwrap on shape/index errors) and
+//! classifies them into the appropriate error code so PHP can throw
+//! the correct exception type. Suppresses the default panic output to stderr
+//! since we convert panics to error codes.
 
-// Thread-local storage for the last error message
-thread_local! {
-    static LAST_ERROR: RefCell<Option<String>> = const { RefCell::new(None) };
-}
-
-// Error codes
-pub const SUCCESS: i32 = 0;
-pub const ERR_GENERIC: i32 = 1;
-pub const ERR_SHAPE: i32 = 2;
-pub const ERR_DTYPE: i32 = 3;
-pub const ERR_ALLOC: i32 = 4;
-pub const ERR_PANIC: i32 = 5;
-pub const ERR_INDEX: i32 = 6;
-pub const ERR_MATH: i32 = 7;
-
-/// Set the last error message.
-pub fn set_last_error<E: Display>(err: E) {
-    LAST_ERROR.with(|e| {
-        *e.borrow_mut() = Some(err.to_string());
-    });
-}
-
-/// Get the last error message, if any.
-pub fn get_last_error_message() -> Option<String> {
-    LAST_ERROR.with(|e| e.borrow().clone())
-}
+use crate::helpers::error::{ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_MATH, ERR_PANIC, ERR_SHAPE};
 
 /// Extract a string from a panic payload (Box<dyn Any + Send>).
-pub(crate) fn panic_payload_to_string(payload: Box<dyn std::any::Any + Send>) -> String {
+pub fn panic_payload_to_string(payload: Box<dyn std::any::Any + Send>) -> String {
     if let Some(s) = payload.downcast_ref::<String>() {
         return s.clone();
     }
@@ -43,7 +22,7 @@ pub(crate) fn panic_payload_to_string(payload: Box<dyn std::any::Any + Send>) ->
 ///
 /// Maps ndarray and Rust error patterns to our error codes so PHP can throw
 /// the correct exception type (ShapeException, IndexException, etc.).
-pub(crate) fn classify_panic_message(msg: &str) -> (i32, String) {
+pub fn classify_panic_message(msg: &str) -> (i32, String) {
     let msg_lower = msg.to_lowercase();
 
     // ndarray ShapeError variants
@@ -100,4 +79,24 @@ pub(crate) fn classify_panic_message(msg: &str) -> (i32, String) {
 
     // Fallback: generic panic
     (ERR_PANIC, "Rust panic occurred".to_string())
+}
+
+#[macro_export]
+macro_rules! ffi_guard {
+    ($body:block) => {{
+        let prev_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(|_| {}));
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| $body));
+        let _ = std::panic::take_hook();
+        std::panic::set_hook(prev_hook);
+        match result {
+            Ok(res) => res,
+            Err(payload) => {
+                let msg = $crate::macros::ffi_guard::panic_payload_to_string(payload);
+                let (code, display_msg) = $crate::macros::ffi_guard::classify_panic_message(&msg);
+                $crate::helpers::error::set_last_error(display_msg);
+                code
+            }
+        }
+    }};
 }

@@ -34,16 +34,16 @@ echo "Detected platform: $PLATFORM"
 BUILD_MODE="${1:-release}"
 
 if [ "$BUILD_MODE" = "debug" ]; then
-    echo "Building Rust library (debug mode)..."
+    echo "Building Rust library (debug mode) with FFI..."
     cd rust
-    cargo build
+    cargo build --features ffi
     cd ..
     
     SOURCE_DIR="rust/target/debug"
 else
-    echo "Building Rust library (release mode)..."
+    echo "Building Rust library (release mode) with FFI..."
     cd rust
-    cargo build --release
+    cargo build --release --features ffi
     cd ..
     
     SOURCE_DIR="rust/target/release"
@@ -56,8 +56,8 @@ mkdir -p "$PLATFORM_DIR"
 # Copy binary with versioned name based on platform conventions
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Linux: lib<name>.so.<version>
-    cp "${SOURCE_DIR}/libndarray_php.so" "${PLATFORM_DIR}/libndarray_php.so.${VERSION}"
-    echo "Created: ${PLATFORM_DIR}/libndarray_php.so.${VERSION}"
+    cp "${SOURCE_DIR}/libndarray_php.so" "${PLATFORM_DIR}/libndarray_php-${VERSION}.so"
+    echo "Created: ${PLATFORM_DIR}/libndarray_php-${VERSION}.so"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS: lib<name>-<version>.dylib
     cp "${SOURCE_DIR}/libndarray_php.dylib" "${PLATFORM_DIR}/libndarray_php-${VERSION}.dylib"

@@ -3,7 +3,7 @@
 //! This module defines the NdArrayHandle type used for FFI communication
 //! between PHP and Rust.
 
-use crate::core::NDArrayWrapper;
+use crate::types::NDArrayWrapper;
 
 /// Opaque pointer type for FFI.
 ///

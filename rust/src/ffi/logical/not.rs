@@ -3,12 +3,13 @@
 //! Works with all input types (converts to bool first).
 //! Always returns a Bool array.
 
-use crate::core::{view_helpers::extract_view_as_bool, ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{set_last_error, ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
-use std::sync::Arc;
+use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
+use crate::helpers::extract_view_as_bool;
+use crate::helpers::write_output_metadata;
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use parking_lot::RwLock;
+use std::sync::Arc;
 
 /// Logical NOT for use with mapv.
 #[inline(always)]

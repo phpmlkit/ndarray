@@ -18,19 +18,16 @@
 #[macro_export]
 macro_rules! binary_op_comparison {
     ($a_wrapper:expr, $a_meta:expr, $b_wrapper:expr, $b_meta:expr, $cmp_op:ident) => {{
-        use crate::core::dtype::DType;
-        use crate::core::error::{set_last_error, ERR_GENERIC};
-        use crate::core::{
-            view_helpers::{
-                extract_view_as_bool, extract_view_as_f32, extract_view_as_f64,
-                extract_view_as_i16, extract_view_as_i32, extract_view_as_i64, extract_view_as_i8,
-                extract_view_as_u16, extract_view_as_u32, extract_view_as_u64, extract_view_as_u8,
-                extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16,
-                extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
-                extract_view_u32, extract_view_u64, extract_view_u8,
-            },
-            ArrayData, NDArrayWrapper,
+        use crate::helpers::{
+            extract_view_as_bool, extract_view_as_f32, extract_view_as_f64, extract_view_as_i16,
+            extract_view_as_i32, extract_view_as_i64, extract_view_as_i8, extract_view_as_u16,
+            extract_view_as_u32, extract_view_as_u64, extract_view_as_u8, extract_view_bool,
+            extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
+            extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32,
+            extract_view_u64, extract_view_u8, set_last_error, ERR_GENERIC,
         };
+        use crate::types::dtype::DType;
+        use crate::types::{ArrayData, NDArrayWrapper};
 
         let out_dtype = DType::promote($a_wrapper.dtype, $b_wrapper.dtype);
 

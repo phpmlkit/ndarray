@@ -1,9 +1,10 @@
 //! Addition operation.
 
 use crate::binary_op_arithmetic;
-use crate::core::error::{set_last_error, ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
+use crate::helpers::write_output_metadata;
 use crate::scalar_op_arithmetic;
+use crate::types::{ArrayMetadata, NdArrayHandle};
 use std::ops::Add;
 
 #[inline(always)]

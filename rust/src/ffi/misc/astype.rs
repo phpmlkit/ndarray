@@ -2,17 +2,16 @@
 //!
 //! Provides astype() functionality to copy arrays with type conversion.
 
-use crate::core::view_helpers::{
+use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
+use crate::helpers::{
     extract_view_as_bool, extract_view_as_f32, extract_view_as_f64, extract_view_as_i16,
     extract_view_as_i32, extract_view_as_i64, extract_view_as_i8, extract_view_as_u16,
     extract_view_as_u32, extract_view_as_u64, extract_view_as_u8, extract_view_bool,
     extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
     extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{ArrayMetadata, NdArrayHandle};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -37,7 +36,7 @@ pub unsafe extern "C" fn ndarray_astype(
         let target = match DType::from_u8(target_dtype as u8) {
             Some(dt) => dt,
             None => {
-                crate::core::error::set_last_error(format!("Invalid target dtype: {}", target_dtype));
+                set_last_error(format!("Invalid target dtype: {}", target_dtype));
                 return ERR_GENERIC;
             }
         };

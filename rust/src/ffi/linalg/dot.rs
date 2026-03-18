@@ -8,11 +8,10 @@ use ndarray::linalg::Dot;
 use ndarray::{Ix1, Ix2};
 use parking_lot::RwLock;
 
-use crate::core::view_helpers::{extract_view_f32, extract_view_f64};
-use crate::core::NDArrayWrapper;
-use crate::core::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
-use crate::{ArrayData, DType};
+use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::helpers::write_output_metadata;
+use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::types::{ArrayData, ArrayMetadata, DType, NDArrayWrapper, NdArrayHandle};
 
 /// Compute dot product of two arrays.
 #[no_mangle]

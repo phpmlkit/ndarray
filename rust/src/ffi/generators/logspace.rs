@@ -4,8 +4,8 @@ use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, NDArrayWrapper, NdArrayHandle};
 
 /// Create numbers spaced evenly on a log scale.
 ///
@@ -18,16 +18,16 @@ pub unsafe extern "C" fn ndarray_logspace(
     num: usize,
     base: f64,
     dtype: u8,
-    out_handle: *mut *mut crate::ffi::NdArrayHandle,
+    out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
     if out_handle.is_null() || num == 0 {
-        return crate::core::error::ERR_GENERIC;
+        return crate::helpers::error::ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let dtype_enum = match DType::from_u8(dtype) {
             Some(d) => d,
-            None => return crate::core::error::ERR_DTYPE,
+            None => return crate::helpers::error::ERR_DTYPE,
         };
 
         match dtype_enum {
@@ -46,7 +46,7 @@ pub unsafe extern "C" fn ndarray_logspace(
                     data: ArrayData::Float32(Arc::new(RwLock::new(arr))),
                     dtype: DType::Float32,
                 };
-                *out_handle = crate::ffi::NdArrayHandle::from_wrapper(Box::new(wrapper));
+                *out_handle = NdArrayHandle::from_wrapper(Box::new(wrapper));
             }
             DType::Float64 => {
                 let data: Vec<f64> = if num == 1 {
@@ -63,11 +63,11 @@ pub unsafe extern "C" fn ndarray_logspace(
                     data: ArrayData::Float64(Arc::new(RwLock::new(arr))),
                     dtype: DType::Float64,
                 };
-                *out_handle = crate::ffi::NdArrayHandle::from_wrapper(Box::new(wrapper));
+                *out_handle = NdArrayHandle::from_wrapper(Box::new(wrapper));
             }
-            _ => return crate::core::error::ERR_DTYPE,
+            _ => return crate::helpers::error::ERR_DTYPE,
         }
 
-        crate::core::error::SUCCESS
+        crate::helpers::error::SUCCESS
     })
 }

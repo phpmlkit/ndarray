@@ -1,14 +1,14 @@
 //! where(condition, x, y) operation with broadcasting.
 
-use crate::core::view_helpers::{
+use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::helpers::write_output_metadata;
+use crate::helpers::{
     broadcast_shape, extract_view_as_f32, extract_view_as_f64, extract_view_as_i16,
     extract_view_as_i32, extract_view_as_i64, extract_view_as_i8, extract_view_as_u16,
     extract_view_as_u32, extract_view_as_u64, extract_view_as_u8, extract_view_bool,
 };
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use ndarray::{ArrayD, ArrayViewD, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;

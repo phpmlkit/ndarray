@@ -2,8 +2,8 @@
 #[macro_export]
 macro_rules! broadcast_binary {
     ($a:expr, $b:expr, $fn:path) => {{
-        use crate::core::view_helpers::broadcast_shape;
-        use crate::core::error::{set_last_error, ERR_SHAPE};
+        use crate::helpers::broadcast_shape;
+        use crate::helpers::error::{set_last_error, ERR_SHAPE};
         use ndarray::Zip;
 
         let broadcast_shape = match broadcast_shape($a.shape(), $b.shape()) {

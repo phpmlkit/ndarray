@@ -17,12 +17,11 @@
 #[macro_export]
 macro_rules! binary_op_logical {
     ($a_wrapper:expr, $a_meta:expr, $b_wrapper:expr, $b_meta:expr, $logical_op:ident) => {{
-        use crate::core::dtype::DType;
-        use crate::core::error::{set_last_error, ERR_GENERIC};
-        use crate::core::{
-            view_helpers::{extract_view_as_bool, extract_view_bool},
-            ArrayData, NDArrayWrapper,
+        use crate::helpers::{
+            extract_view_as_bool, extract_view_bool, set_last_error, ERR_GENERIC,
         };
+        use crate::types::dtype::DType;
+        use crate::types::{ArrayData, NDArrayWrapper};
 
         if $a_wrapper.dtype == DType::Bool && $b_wrapper.dtype == DType::Bool {
             let Some(a_view) = extract_view_bool($a_wrapper, $a_meta) else {

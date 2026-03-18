@@ -1,4 +1,4 @@
-//! Helper functions for shape operations.
+//! Padding mode type for array padding operations.
 
 /// Padding mode for ndarray_pad.
 #[repr(i32)]

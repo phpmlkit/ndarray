@@ -3,9 +3,10 @@
 //! Works with all integer types (signed and unsigned) and Bool.
 
 use crate::binary_op_bitwise;
-use crate::core::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::helpers::error::{ERR_GENERIC, SUCCESS};
+use crate::helpers::write_output_metadata;
 use crate::scalar_op_bitwise;
+use crate::types::{ArrayMetadata, NdArrayHandle};
 use std::ops::BitAnd;
 
 #[inline(always)]
@@ -53,7 +54,7 @@ pub unsafe extern "C" fn ndarray_bitand(
             out_shape,
             max_ndim,
         ) {
-            crate::core::error::set_last_error(e);
+            crate::helpers::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
@@ -93,7 +94,7 @@ pub unsafe extern "C" fn ndarray_bitand_scalar(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::core::error::set_last_error(e);
+            crate::helpers::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

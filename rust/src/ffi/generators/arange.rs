@@ -4,8 +4,9 @@ use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
+use crate::helpers::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, NDArrayWrapper, NdArrayHandle};
 
 /// Create evenly spaced values within a given interval.
 ///
@@ -17,16 +18,16 @@ pub unsafe extern "C" fn ndarray_arange(
     stop: f64,
     step: f64,
     dtype: u8,
-    out_handle: *mut *mut crate::ffi::NdArrayHandle,
+    out_handle: *mut *mut NdArrayHandle,
 ) -> i32 {
     if out_handle.is_null() || step == 0.0 {
-        return crate::core::error::ERR_GENERIC;
+        return ERR_GENERIC;
     }
 
     crate::ffi_guard!({
         let dtype_enum = match DType::from_u8(dtype) {
             Some(d) => d,
-            None => return crate::core::error::ERR_DTYPE,
+            None => return ERR_DTYPE,
         };
 
         // Calculate number of elements
@@ -108,15 +109,15 @@ pub unsafe extern "C" fn ndarray_arange(
                     dtype: DType::Bool,
                 },
             };
-            *out_handle = crate::ffi::NdArrayHandle::from_wrapper(Box::new(wrapper));
-            return crate::core::error::SUCCESS;
+            *out_handle = NdArrayHandle::from_wrapper(Box::new(wrapper));
+            return SUCCESS;
         }
 
         let wrapper = match dtype_enum {
             DType::Int8 => {
                 let s = step as i8;
                 if s == 0 {
-                    return crate::core::error::ERR_GENERIC;
+                    return ERR_GENERIC;
                 }
                 let data: Vec<i8> = (0..n).map(|i| (start as i8) + (i as i8) * s).collect();
                 let arr = ArrayD::<i8>::from_shape_vec(IxDyn(&[n]), data)
@@ -129,7 +130,7 @@ pub unsafe extern "C" fn ndarray_arange(
             DType::Int16 => {
                 let s = step as i16;
                 if s == 0 {
-                    return crate::core::error::ERR_GENERIC;
+                    return ERR_GENERIC;
                 }
                 let data: Vec<i16> = (0..n).map(|i| (start as i16) + (i as i16) * s).collect();
                 let arr = ArrayD::<i16>::from_shape_vec(IxDyn(&[n]), data)
@@ -142,7 +143,7 @@ pub unsafe extern "C" fn ndarray_arange(
             DType::Int32 => {
                 let s = step as i32;
                 if s == 0 {
-                    return crate::core::error::ERR_GENERIC;
+                    return ERR_GENERIC;
                 }
                 let data: Vec<i32> = (0..n).map(|i| (start as i32) + (i as i32) * s).collect();
                 let arr = ArrayD::<i32>::from_shape_vec(IxDyn(&[n]), data)
@@ -155,7 +156,7 @@ pub unsafe extern "C" fn ndarray_arange(
             DType::Int64 => {
                 let s = step as i64;
                 if s == 0 {
-                    return crate::core::error::ERR_GENERIC;
+                    return ERR_GENERIC;
                 }
                 let data: Vec<i64> = (0..n).map(|i| (start as i64) + (i as i64) * s).collect();
                 let arr = ArrayD::<i64>::from_shape_vec(IxDyn(&[n]), data)
@@ -168,7 +169,7 @@ pub unsafe extern "C" fn ndarray_arange(
             DType::Uint8 => {
                 let s = step as u8;
                 if s == 0 {
-                    return crate::core::error::ERR_GENERIC;
+                    return ERR_GENERIC;
                 }
                 let data: Vec<u8> = (0..n).map(|i| (start as u8) + (i as u8) * s).collect();
                 let arr = ArrayD::<u8>::from_shape_vec(IxDyn(&[n]), data)
@@ -181,7 +182,7 @@ pub unsafe extern "C" fn ndarray_arange(
             DType::Uint16 => {
                 let s = step as u16;
                 if s == 0 {
-                    return crate::core::error::ERR_GENERIC;
+                    return ERR_GENERIC;
                 }
                 let data: Vec<u16> = (0..n).map(|i| (start as u16) + (i as u16) * s).collect();
                 let arr = ArrayD::<u16>::from_shape_vec(IxDyn(&[n]), data)
@@ -194,7 +195,7 @@ pub unsafe extern "C" fn ndarray_arange(
             DType::Uint32 => {
                 let s = step as u32;
                 if s == 0 {
-                    return crate::core::error::ERR_GENERIC;
+                    return crate::helpers::error::ERR_GENERIC;
                 }
                 let data: Vec<u32> = (0..n).map(|i| (start as u32) + (i as u32) * s).collect();
                 let arr = ArrayD::<u32>::from_shape_vec(IxDyn(&[n]), data)
@@ -207,7 +208,7 @@ pub unsafe extern "C" fn ndarray_arange(
             DType::Uint64 => {
                 let s = step as u64;
                 if s == 0 {
-                    return crate::core::error::ERR_GENERIC;
+                    return ERR_GENERIC;
                 }
                 let data: Vec<u64> = (0..n).map(|i| (start as u64) + (i as u64) * s).collect();
                 let arr = ArrayD::<u64>::from_shape_vec(IxDyn(&[n]), data)
@@ -238,11 +239,11 @@ pub unsafe extern "C" fn ndarray_arange(
                 }
             }
             DType::Bool => {
-                return crate::core::error::ERR_DTYPE;
+                return ERR_DTYPE;
             }
         };
 
-        *out_handle = crate::ffi::NdArrayHandle::from_wrapper(Box::new(wrapper));
-        crate::core::error::SUCCESS
+        *out_handle = NdArrayHandle::from_wrapper(Box::new(wrapper));
+        SUCCESS
     })
 }

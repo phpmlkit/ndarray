@@ -3,8 +3,9 @@
 //! Returns the larger value at each position (like NumPy's np.maximum).
 
 use crate::binary_op_arithmetic;
-use crate::core::error::{set_last_error, ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
+use crate::helpers::write_output_metadata;
+use crate::types::{ArrayMetadata, NdArrayHandle};
 
 #[inline(always)]
 fn maximum<T: Copy + PartialOrd>(a: &T, b: &T) -> T {
