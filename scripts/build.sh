@@ -56,8 +56,8 @@ mkdir -p "$PLATFORM_DIR"
 # Copy binary with versioned name based on platform conventions
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Linux: lib<name>.so.<version>
-    cp "${SOURCE_DIR}/libndarray_php.so" "${PLATFORM_DIR}/libndarray_php-${VERSION}.so"
-    echo "Created: ${PLATFORM_DIR}/libndarray_php-${VERSION}.so"
+    cp "${SOURCE_DIR}/libndarray_php.so" "${PLATFORM_DIR}/libndarray_php.so.${VERSION}"
+    echo "Created: ${PLATFORM_DIR}/libndarray_php.so.${VERSION}"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS: lib<name>-<version>.dylib
     cp "${SOURCE_DIR}/libndarray_php.dylib" "${PLATFORM_DIR}/libndarray_php-${VERSION}.dylib"
