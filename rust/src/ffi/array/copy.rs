@@ -1,8 +1,8 @@
 //! Array copy FFI function.
 
-use crate::core::dtype::DType;
-use crate::core::error::{self, ERR_GENERIC, SUCCESS};
-use crate::ffi::{ArrayMetadata, NdArrayHandle};
+use crate::helpers::error::{self, ERR_GENERIC, SUCCESS};
+use crate::types::dtype::DType;
+use crate::types::{ArrayMetadata, NdArrayHandle};
 
 /// Create a deep copy of an array view.
 #[no_mangle]

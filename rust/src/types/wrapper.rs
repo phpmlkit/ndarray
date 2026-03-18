@@ -3,9 +3,9 @@
 //! This module wraps ndarray's ArrayD with support for multiple data types
 //! and provides the core array operations.
 
-use crate::core::ArrayData;
-use crate::core::dtype::DType;
 use crate::match_array_data;
+use crate::types::dtype::DType;
+use crate::types::ArrayData;
 
 /// Main wrapper around ndarray with type information.
 pub struct NDArrayWrapper {
@@ -38,7 +38,7 @@ impl NDArrayWrapper {
 
     /// Check if this wrapper points to the same underlying array data as another.
     pub fn is_same_array(&self, other: &Self) -> bool {
-        use crate::core::ArrayData::*;
+        use crate::types::ArrayData::*;
         use std::sync::Arc;
 
         match (&self.data, &other.data) {

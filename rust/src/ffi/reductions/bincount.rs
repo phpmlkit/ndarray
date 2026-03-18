@@ -1,13 +1,13 @@
 //! bincount operation for integer arrays.
 
-use crate::core::view_helpers::{
+use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
+use crate::helpers::write_output_metadata;
+use crate::helpers::{
     extract_view_bool, extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8,
     extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;

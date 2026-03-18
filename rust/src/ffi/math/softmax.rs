@@ -2,12 +2,12 @@
 //!
 //! Numerically stable implementation. Float-only. Output shape equals input shape.
 
-use crate::core::view_helpers::{extract_view_f32, extract_view_f64};
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::helpers::error::{ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::helpers::normalize_axis;
+use crate::helpers::write_output_metadata;
+use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use ndarray::Axis;
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -38,10 +38,10 @@ pub unsafe extern "C" fn ndarray_softmax(
         let meta = &*meta;
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
 
-        let axis_usize = match validate_axis(&meta.shape_slice(), axis) {
+        let axis_usize = match normalize_axis(&meta.shape_slice(), axis, false) {
             Ok(a) => a,
             Err(e) => {
-                crate::core::error::set_last_error(e);
+                crate::helpers::error::set_last_error(e);
                 return ERR_SHAPE;
             }
         };
@@ -49,7 +49,7 @@ pub unsafe extern "C" fn ndarray_softmax(
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract f64 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let mut result = view.to_owned();
@@ -78,7 +78,7 @@ pub unsafe extern "C" fn ndarray_softmax(
             }
             DType::Float32 => {
                 let Some(view) = extract_view_f32(wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract f32 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let mut result = view.to_owned();
@@ -106,7 +106,7 @@ pub unsafe extern "C" fn ndarray_softmax(
                 }
             }
             _ => {
-                crate::core::error::set_last_error(
+                crate::helpers::error::set_last_error(
                     "softmax() requires float type (Float64 or Float32)".to_string(),
                 );
                 return ERR_GENERIC;
@@ -116,7 +116,7 @@ pub unsafe extern "C" fn ndarray_softmax(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::core::error::set_last_error(e);
+            crate::helpers::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

@@ -6,10 +6,9 @@ use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};
 use std::sync::Arc;
 
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
-use crate::ffi::NdArrayHandle;
+use crate::helpers::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, NDArrayWrapper, NdArrayHandle};
 use std::slice;
 
 fn shape_len(shape: &[usize]) -> Result<usize, String> {
@@ -48,7 +47,7 @@ pub unsafe extern "C" fn ndarray_random(
         let len = match shape_len(shape_slice) {
             Ok(v) => v,
             Err(e) => {
-                crate::core::error::set_last_error(e);
+                crate::helpers::error::set_last_error(e);
                 return ERR_GENERIC;
             }
         };

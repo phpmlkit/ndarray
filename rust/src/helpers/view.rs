@@ -3,9 +3,9 @@
 //! This module provides methods to extract views from ArrayData,
 //! properly handling offset, shape, and strides for non-contiguous arrays.
 
-use crate::core::ArrayData;
 use crate::define_extract_view;
 use crate::define_extract_view_as;
+use crate::types::ArrayData;
 use ndarray::ShapeBuilder;
 
 // Generate `extract_view` functions for all types

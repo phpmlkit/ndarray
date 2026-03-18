@@ -3,9 +3,9 @@
 //! Returns view metadata (offset, shape, strides) for each part. No new allocations -
 //! parts are views into the original. PHP creates NDArray objects with same handle.
 
-use crate::core::error::{set_last_error, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
-use crate::ffi::stacking::helpers::resolve_axis;
-use crate::ffi::{ArrayMetadata, NdArrayHandle};
+use crate::helpers::error::{set_last_error, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
+use crate::helpers::normalize_axis;
+use crate::types::{ArrayMetadata, NdArrayHandle};
 
 /// Split array along axis at the given indices.
 ///
@@ -40,7 +40,7 @@ pub unsafe extern "C" fn ndarray_split(
         let strides_slice = meta.strides_slice();
         let indices_slice = std::slice::from_raw_parts(indices, num_indices);
 
-        let axis_usize = match resolve_axis(shape_slice, axis) {
+        let axis_usize = match normalize_axis(shape_slice, axis, false) {
             Ok(a) => a,
             Err(e) => {
                 set_last_error(e);

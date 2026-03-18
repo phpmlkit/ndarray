@@ -7,17 +7,17 @@
 macro_rules! match_array_data {
     ($data:expr, $arr:ident => $body:expr) => {
         match &$data {
-            $crate::core::ArrayData::Int8($arr) => $body,
-            $crate::core::ArrayData::Int16($arr) => $body,
-            $crate::core::ArrayData::Int32($arr) => $body,
-            $crate::core::ArrayData::Int64($arr) => $body,
-            $crate::core::ArrayData::Uint8($arr) => $body,
-            $crate::core::ArrayData::Uint16($arr) => $body,
-            $crate::core::ArrayData::Uint32($arr) => $body,
-            $crate::core::ArrayData::Uint64($arr) => $body,
-            $crate::core::ArrayData::Float32($arr) => $body,
-            $crate::core::ArrayData::Float64($arr) => $body,
-            $crate::core::ArrayData::Bool($arr) => $body,
+            $crate::types::ArrayData::Int8($arr) => $body,
+            $crate::types::ArrayData::Int16($arr) => $body,
+            $crate::types::ArrayData::Int32($arr) => $body,
+            $crate::types::ArrayData::Int64($arr) => $body,
+            $crate::types::ArrayData::Uint8($arr) => $body,
+            $crate::types::ArrayData::Uint16($arr) => $body,
+            $crate::types::ArrayData::Uint32($arr) => $body,
+            $crate::types::ArrayData::Uint64($arr) => $body,
+            $crate::types::ArrayData::Float32($arr) => $body,
+            $crate::types::ArrayData::Float64($arr) => $body,
+            $crate::types::ArrayData::Bool($arr) => $body,
         }
     };
 }
@@ -26,7 +26,7 @@ macro_rules! match_array_data {
 #[macro_export]
 macro_rules! impl_from_slice {
     ($($method:ident, $type:ty, $variant:ident, $dtype:ident);* $(;)?) => {
-        impl $crate::core::NDArrayWrapper {
+        impl $crate::types::NDArrayWrapper {
             $(
                 #[doc = concat!("Create array from ", stringify!($type), " slice.")]
                 pub fn $method(data: &[$type], shape: &[usize]) -> Result<Self, String> {
@@ -44,10 +44,10 @@ macro_rules! impl_from_slice {
                     ).map_err(|e| format!("Shape error: {}", e))?;
 
                     Ok(Self {
-                        data: $crate::core::ArrayData::$variant(
+                        data: $crate::types::ArrayData::$variant(
                             std::sync::Arc::new(parking_lot::RwLock::new(arr))
                         ),
-                        dtype: $crate::core::dtype::DType::$dtype,
+                        dtype: $crate::types::dtype::DType::$dtype,
                     })
                 }
             )*
@@ -59,11 +59,11 @@ macro_rules! impl_from_slice {
 #[macro_export]
 macro_rules! impl_get_element {
     ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
-        impl $crate::core::NDArrayWrapper {
+        impl $crate::types::NDArrayWrapper {
             $(
                 #[doc = concat!("Get element at flat index as `", stringify!($type), "`.")]
                 pub fn $method(&self, flat_index: usize) -> Result<$type, String> {
-                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
+                    if let $crate::types::ArrayData::$variant(arr) = &self.data {
                         let guard = arr.read();
                         let flat = guard.as_slice_memory_order();
                         match flat {
@@ -102,11 +102,11 @@ macro_rules! impl_get_element {
 #[macro_export]
 macro_rules! impl_set_element {
     ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
-        impl $crate::core::NDArrayWrapper {
+        impl $crate::types::NDArrayWrapper {
             $(
                 #[doc = concat!("Set element at flat index from `", stringify!($type), "`.")]
                 pub fn $method(&self, flat_index: usize, value: $type) -> Result<(), String> {
-                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
+                    if let $crate::types::ArrayData::$variant(arr) = &self.data {
                         let mut guard = arr.write();
                         let flat = guard.as_slice_memory_order_mut();
                         match flat {
@@ -156,18 +156,18 @@ macro_rules! impl_set_element {
 #[macro_export]
 macro_rules! impl_fill_slice {
     ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
-        impl $crate::core::NDArrayWrapper {
+        impl $crate::types::NDArrayWrapper {
             $(
                 pub unsafe fn $method(
                     &self,
                     value: $type,
-                    meta: &$crate::core::ArrayMetadata,
+                    meta: &$crate::types::ArrayMetadata,
                 ) -> Result<(), String> {
                     let shape = meta.shape_slice();
                     let strides = meta.strides_slice();
                     let offset = meta.offset;
 
-                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
+                    if let $crate::types::ArrayData::$variant(arr) = &self.data {
                         let mut guard = arr.write();
                         let raw_ptr = guard.as_mut_ptr();
 
@@ -197,15 +197,15 @@ macro_rules! impl_fill_slice {
 #[macro_export]
 macro_rules! impl_assign_slice {
     ($($method:ident, $type:ty, $variant:ident);* $(;)?) => {
-        impl $crate::core::NDArrayWrapper {
+        impl $crate::types::NDArrayWrapper {
             $(
                 pub unsafe fn $method(
                     &self,
-                    meta: &$crate::core::ArrayMetadata,
-                    src: &$crate::core::NDArrayWrapper,
-                    src_meta: &$crate::core::ArrayMetadata,
+                    meta: &$crate::types::ArrayMetadata,
+                    src: &$crate::types::NDArrayWrapper,
+                    src_meta: &$crate::types::ArrayMetadata,
                 ) -> Result<(), String> {
-                    if let $crate::core::ArrayData::$variant(_) = &self.data {
+                    if let $crate::types::ArrayData::$variant(_) = &self.data {
                     } else {
                         return Err(format!(
                             "Type mismatch: expected {}, got {:?}",
@@ -230,7 +230,7 @@ macro_rules! impl_assign_slice {
 
                     if is_same {
                         let temp_data: Vec<$type> = {
-                            if let $crate::core::ArrayData::$variant(arr) = &src.data {
+                            if let $crate::types::ArrayData::$variant(arr) = &src.data {
                                 let guard = arr.read();
                                 let raw_ptr = guard.as_ptr();
                                 unsafe {
@@ -247,7 +247,7 @@ macro_rules! impl_assign_slice {
                             }
                         };
 
-                        if let $crate::core::ArrayData::$variant(arr) = &self.data {
+                        if let $crate::types::ArrayData::$variant(arr) = &self.data {
                             let mut guard = arr.write();
                             let raw_ptr = guard.as_mut_ptr();
                             unsafe {
@@ -263,7 +263,7 @@ macro_rules! impl_assign_slice {
                             }
                         }
                     } else {
-                        if let ($crate::core::ArrayData::$variant(dst_arr), $crate::core::ArrayData::$variant(src_arr)) = (&self.data, &src.data) {
+                        if let ($crate::types::ArrayData::$variant(dst_arr), $crate::types::ArrayData::$variant(src_arr)) = (&self.data, &src.data) {
                             let src_guard = src_arr.read();
                             let src_ptr = src_guard.as_ptr();
                             let mut dst_guard = dst_arr.write();
@@ -299,17 +299,17 @@ macro_rules! impl_assign_slice {
 #[macro_export]
 macro_rules! impl_copy_view {
     ($($method:ident, $type:ty, $variant:ident, $dtype:ident);* $(;)?) => {
-        impl $crate::core::NDArrayWrapper {
+        impl $crate::types::NDArrayWrapper {
             $(
                 pub unsafe fn $method(
                     &self,
-                    meta: &$crate::core::ArrayMetadata,
-                ) -> Result<$crate::core::NDArrayWrapper, String> {
+                    meta: &$crate::types::ArrayMetadata,
+                ) -> Result<$crate::types::NDArrayWrapper, String> {
                     let shape = meta.shape_slice();
                     let strides = meta.strides_slice();
                     let offset = meta.offset;
 
-                    if let $crate::core::ArrayData::$variant(arr) = &self.data {
+                    if let $crate::types::ArrayData::$variant(arr) = &self.data {
                         let guard = arr.read();
                         let raw_ptr = guard.as_ptr();
 
@@ -321,11 +321,11 @@ macro_rules! impl_copy_view {
                                 ptr
                             );
                             let new_arr = view.to_owned();
-                            Ok($crate::core::NDArrayWrapper {
-                                data: $crate::core::ArrayData::$variant(
+                            Ok($crate::types::NDArrayWrapper {
+                                data: $crate::types::ArrayData::$variant(
                                     std::sync::Arc::new(parking_lot::RwLock::new(new_arr))
                                 ),
-                                dtype: $crate::core::dtype::DType::$dtype,
+                                dtype: $crate::types::dtype::DType::$dtype,
                             })
                         }
                     } else {

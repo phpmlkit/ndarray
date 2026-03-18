@@ -1,11 +1,19 @@
 [package]
-name = "ndarray_php"
+name = "ndarray-php"
 version = "1.0.0"
 edition = "2021"
+authors = ["Kyrian Obikwelu"]
+license = "MIT"
+repository = "https://github.com/phpmlkit/ndarray"
+description = "Core types and FFI layer for NDArray PHP"
 
 [lib]
 name = "ndarray_php"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+ffi = []
 
 [dependencies]
 ndarray = { version = "0.17.2", features = ["std"] }
@@ -15,9 +23,6 @@ rand_distr = "0.6.0"
 
 [build-dependencies]
 cbindgen = "0.26"
-
-[dev-dependencies]
-# For testing
 
 [profile.release]
 opt-level = 3

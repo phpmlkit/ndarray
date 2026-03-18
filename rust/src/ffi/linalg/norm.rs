@@ -1,11 +1,10 @@
 //! Vector and matrix norms.
 
-use crate::core::view_helpers::extract_view_as_f64;
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::{ArrayMetadata, NdArrayHandle};
+use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::helpers::extract_view_as_f64;
+use crate::helpers::normalize_axis;
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use ndarray::{ArrayD, Axis, IxDyn};
 use parking_lot::RwLock;
 use std::ffi::c_void;
@@ -109,7 +108,7 @@ pub unsafe extern "C" fn ndarray_norm_axis(
             return ERR_SHAPE;
         }
 
-        let axis = match validate_axis(shape_slice, axis) {
+        let axis = match normalize_axis(shape_slice, axis, false) {
             Ok(v) => v,
             Err(e) => {
                 error::set_last_error(e);

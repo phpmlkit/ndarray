@@ -12,7 +12,6 @@ pub mod scatter_add;
 pub mod set_element;
 pub mod take;
 pub mod take_along_axis;
-pub mod utils;
 pub mod where_op;
 
 // Re-export all public functions for convenient access

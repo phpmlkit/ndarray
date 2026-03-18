@@ -11,15 +11,12 @@ pub mod indexing;
 pub mod linalg;
 pub mod logical;
 pub mod math;
+pub mod misc;
 pub mod reductions;
 pub mod shape_ops;
 pub mod sorting;
-pub mod misc;
 pub mod stacking;
 
-pub use crate::core::{ArrayMetadata, NdArrayHandle, write_output_metadata};
-
-// Re-export all FFI functions for lib.rs
 pub use arithmetic::*;
 pub use array::*;
 pub use bitwise::*;
@@ -29,8 +26,8 @@ pub use indexing::*;
 pub use linalg::*;
 pub use logical::*;
 pub use math::*;
+pub use misc::*;
 pub use reductions::*;
 pub use shape_ops::*;
 pub use sorting::*;
-pub use misc::*;
 pub use stacking::*;

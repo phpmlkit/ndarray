@@ -1,72 +1,45 @@
-//! Binary operation macro for arithmetic operations on NDArrayWrapper instances.
+//! Binary operation macro for bitwise operations on integer types and Bool.
 //!
-//! This module provides the `binary_op_arithmetic` macro which:
+//! This module provides the `binary_op_bitwise` macro which:
 //! - Extracts views for native type pairs (zero-copy for matching types)
 //! - Promotes mixed types and converts before operation
 //! - Performs element-wise operations with broadcasting
-//! - Only works with numeric types and NOT Bool
+//! - Only works with integer types and Bool (NOT Float types)
+//!
+//! Supported types: Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64, Bool
 
-/// Binary operation macro for performing arithmetic operations on NDArrayWrapper instances.
-/// Takes a function (e.g. add, sub, minimum) that maps (a, b) -> result element-wise.
+/// Binary operation macro for bitwise operations (integer types and Bool only).
+/// Takes a function (e.g. bitand, bitor, left_shift) that maps (a, b) -> result element-wise.
 ///
 /// Usage:
 /// ```rust
-/// let result = binary_op_arithmetic!(a_wrapper, a_meta, b_wrapper, b_meta, add);
+/// let result = binary_op_bitwise!(a_wrapper, a_meta, b_wrapper, b_meta, bitand);
 /// ```
 #[macro_export]
-macro_rules! binary_op_arithmetic {
+macro_rules! binary_op_bitwise {
     ($a_wrapper:expr, $a_meta:expr, $b_wrapper:expr, $b_meta:expr, $fn:path) => {{
-        use crate::core::{
-            view_helpers::{
-                extract_view_as_f32, extract_view_as_f64, extract_view_as_i16, extract_view_as_i32,
-                extract_view_as_i64, extract_view_as_i8, extract_view_as_u16, extract_view_as_u32,
-                extract_view_as_u64, extract_view_as_u8, extract_view_f32, extract_view_f64,
-                extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8,
-                extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
-            },
-            ArrayData, NDArrayWrapper,
+        use crate::helpers::{
+            extract_view_as_i16, extract_view_as_i32, extract_view_as_i64, extract_view_as_i8,
+            extract_view_as_u16, extract_view_as_u32, extract_view_as_u64, extract_view_as_u8,
+            extract_view_bool, extract_view_i16, extract_view_i32, extract_view_i64,
+            extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+            set_last_error, ERR_GENERIC,
         };
-        use crate::core::dtype::DType;
-        use crate::core::error::{set_last_error, ERR_GENERIC};
+        use crate::types::dtype::DType;
+        use crate::types::{ArrayData, NDArrayWrapper};
 
         let out_dtype = DType::promote($a_wrapper.dtype, $b_wrapper.dtype);
 
+        match out_dtype {
+            DType::Float64 | DType::Float32 => {
+                set_last_error("Bitwise operations not supported for float types".to_string());
+                return ERR_GENERIC;
+            }
+            _ => {}
+        }
+
         if $a_wrapper.dtype == $b_wrapper.dtype {
             match out_dtype {
-                DType::Float64 => {
-                    let Some(a_view) = extract_view_f64($a_wrapper, $a_meta) else {
-                        set_last_error("Failed to extract Float64 operand a".to_string());
-                        return ERR_GENERIC;
-                    };
-                    let Some(b_view) = extract_view_f64($b_wrapper, $b_meta) else {
-                        set_last_error("Failed to extract Float64 operand b".to_string());
-                        return ERR_GENERIC;
-                    };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
-                    NDArrayWrapper {
-                        data: ArrayData::Float64(::std::sync::Arc::new(
-                            ::parking_lot::RwLock::new(result),
-                        )),
-                        dtype: DType::Float64,
-                    }
-                }
-                DType::Float32 => {
-                    let Some(a_view) = extract_view_f32($a_wrapper, $a_meta) else {
-                        set_last_error("Failed to extract Float32 operand a".to_string());
-                        return ERR_GENERIC;
-                    };
-                    let Some(b_view) = extract_view_f32($b_wrapper, $b_meta) else {
-                        set_last_error("Failed to extract Float32 operand b".to_string());
-                        return ERR_GENERIC;
-                    };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
-                    NDArrayWrapper {
-                        data: ArrayData::Float32(::std::sync::Arc::new(
-                            ::parking_lot::RwLock::new(result),
-                        )),
-                        dtype: DType::Float32,
-                    }
-                }
                 DType::Int64 => {
                     let Some(a_view) = extract_view_i64($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Int64 operand a".to_string());
@@ -204,46 +177,28 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Bool => {
-                    set_last_error("Arithmetic operations not supported for Bool type".to_string());
-                    return ERR_GENERIC;
+                    let Some(a_view) = extract_view_bool($a_wrapper, $a_meta) else {
+                        set_last_error("Failed to extract Bool operand a".to_string());
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_view) = extract_view_bool($b_wrapper, $b_meta) else {
+                        set_last_error("Failed to extract Bool operand b".to_string());
+                        return ERR_GENERIC;
+                    };
+                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    NDArrayWrapper {
+                        data: ArrayData::Bool(::std::sync::Arc::new(::parking_lot::RwLock::new(
+                            result,
+                        ))),
+                        dtype: DType::Bool,
+                    }
+                }
+                DType::Float64 | DType::Float32 => {
+                    unreachable!("Float types already rejected");
                 }
             }
         } else {
             match out_dtype {
-                DType::Float64 => {
-                    let Some(a_arr) = extract_view_as_f64($a_wrapper, $a_meta) else {
-                        set_last_error("Failed to extract operand a as Float64".to_string());
-                        return ERR_GENERIC;
-                    };
-                    let Some(b_arr) = extract_view_as_f64($b_wrapper, $b_meta) else {
-                        set_last_error("Failed to extract operand b as Float64".to_string());
-                        return ERR_GENERIC;
-                    };
-                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
-                    NDArrayWrapper {
-                        data: ArrayData::Float64(::std::sync::Arc::new(
-                            ::parking_lot::RwLock::new(result),
-                        )),
-                        dtype: DType::Float64,
-                    }
-                }
-                DType::Float32 => {
-                    let Some(a_arr) = extract_view_as_f32($a_wrapper, $a_meta) else {
-                        set_last_error("Failed to extract operand a as Float32".to_string());
-                        return ERR_GENERIC;
-                    };
-                    let Some(b_arr) = extract_view_as_f32($b_wrapper, $b_meta) else {
-                        set_last_error("Failed to extract operand b as Float32".to_string());
-                        return ERR_GENERIC;
-                    };
-                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
-                    NDArrayWrapper {
-                        data: ArrayData::Float32(::std::sync::Arc::new(
-                            ::parking_lot::RwLock::new(result),
-                        )),
-                        dtype: DType::Float32,
-                    }
-                }
                 DType::Int64 => {
                     let Some(a_arr) = extract_view_as_i64($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Int64".to_string());
@@ -381,8 +336,14 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Bool => {
-                    set_last_error("Arithmetic operations not supported for Bool type".to_string());
+                    set_last_error(
+                        "Bitwise operations on Bool arrays should be handled separately"
+                            .to_string(),
+                    );
                     return ERR_GENERIC;
+                }
+                DType::Float64 | DType::Float32 => {
+                    unreachable!("Float types already rejected");
                 }
             }
         }

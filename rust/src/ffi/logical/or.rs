@@ -4,8 +4,9 @@
 //! Always returns a Bool array.
 
 use crate::binary_op_logical;
-use crate::core::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::helpers::error::{ERR_GENERIC, SUCCESS};
+use crate::helpers::write_output_metadata;
+use crate::types::{ArrayMetadata, NdArrayHandle};
 
 /// Logical OR for use with Zip::map_collect.
 #[inline(always)]
@@ -54,7 +55,7 @@ pub unsafe extern "C" fn ndarray_logical_or(
             out_shape,
             max_ndim,
         ) {
-            crate::core::error::set_last_error(e);
+            crate::helpers::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

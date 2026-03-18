@@ -1,4 +1,4 @@
-use crate::core::NDArrayWrapper;
+use crate::types::NDArrayWrapper;
 
 /// Write output metadata into caller-provided buffers.
 ///

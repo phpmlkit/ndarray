@@ -1326,6 +1326,50 @@ int32_t ndarray_softmax(const struct NdArrayHandle *handle,
                         uintptr_t max_ndim);
 
 /**
+ * Cast an NDArray to a different dtype.
+ *
+ */
+int32_t ndarray_astype(const struct NdArrayHandle *handle,
+                       const struct ArrayMetadata *meta,
+                       int32_t target_dtype,
+                       struct NdArrayHandle **out);
+
+/**
+ * Clamp array values to [min, max] range.
+ *
+ * Similar to NumPy's clip function.
+ * Returns error if min > max.
+ */
+int32_t ndarray_clamp(const struct NdArrayHandle *handle,
+                      const struct ArrayMetadata *meta,
+                      double min_val,
+                      double max_val,
+                      struct NdArrayHandle **out_handle,
+                      uint8_t *out_dtype,
+                      uintptr_t *out_ndim,
+                      uintptr_t *out_shape,
+                      uintptr_t max_ndim);
+
+/**
+ * Get the last error message.
+ *
+ * Writes the message to `buf` up to `len` bytes.
+ * Returns the actual length of the message.
+ */
+uintptr_t ndarray_get_last_error(char *buf, uintptr_t len);
+
+/**
+ * Format an array into a string buffer.
+ */
+uintptr_t ndarray_to_string(const struct NdArrayHandle *handle,
+                            const struct ArrayMetadata *meta,
+                            char *buffer,
+                            uintptr_t buffer_size,
+                            uintptr_t threshold,
+                            uintptr_t edgeitems,
+                            uintptr_t precision);
+
+/**
  * Argmax along axis.
  */
 int32_t ndarray_argmax_axis(const struct NdArrayHandle *handle,
@@ -1782,50 +1826,6 @@ int32_t ndarray_topk_flat(const struct NdArrayHandle *handle,
                           struct NdArrayHandle **out_values,
                           struct NdArrayHandle **out_indices,
                           uintptr_t *out_shape);
-
-/**
- * Cast an NDArray to a different dtype.
- *
- */
-int32_t ndarray_astype(const struct NdArrayHandle *handle,
-                       const struct ArrayMetadata *meta,
-                       int32_t target_dtype,
-                       struct NdArrayHandle **out);
-
-/**
- * Clamp array values to [min, max] range.
- *
- * Similar to NumPy's clip function.
- * Returns error if min > max.
- */
-int32_t ndarray_clamp(const struct NdArrayHandle *handle,
-                      const struct ArrayMetadata *meta,
-                      double min_val,
-                      double max_val,
-                      struct NdArrayHandle **out_handle,
-                      uint8_t *out_dtype,
-                      uintptr_t *out_ndim,
-                      uintptr_t *out_shape,
-                      uintptr_t max_ndim);
-
-/**
- * Get the last error message.
- *
- * Writes the message to `buf` up to `len` bytes.
- * Returns the actual length of the message.
- */
-uintptr_t ndarray_get_last_error(char *buf, uintptr_t len);
-
-/**
- * Format an array into a string buffer.
- */
-uintptr_t ndarray_to_string(const struct NdArrayHandle *handle,
-                            const struct ArrayMetadata *meta,
-                            char *buffer,
-                            uintptr_t buffer_size,
-                            uintptr_t threshold,
-                            uintptr_t edgeitems,
-                            uintptr_t precision);
 
 /**
  * Concatenate N arrays along the given axis.

@@ -1,17 +1,16 @@
 //! Gather values by indices.
 
-use crate::core::view_helpers::{
+use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
+use crate::helpers::normalize_axis;
+use crate::helpers::normalize_index;
+use crate::helpers::write_output_metadata;
+use crate::helpers::{
     extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
     extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
     extract_view_u8,
 };
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_SHAPE, SUCCESS};
-use crate::ffi::indexing::utils::normalize_index;
-use crate::core::write_output_metadata;
-use crate::ffi::reductions::helpers::validate_axis;
-use crate::ffi::{ArrayMetadata, NdArrayHandle};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use ndarray::{ArrayD, Dimension, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -438,7 +437,7 @@ pub unsafe extern "C" fn ndarray_take_axis(
         let idx_slice = indices_view.as_slice().unwrap_or(&[]);
         let idx_shape_slice = indices_meta_ref.shape_slice();
 
-        let axis_usize = match validate_axis(meta_ref.shape_slice(), axis) {
+        let axis_usize = match normalize_axis(meta_ref.shape_slice(), axis, false) {
             Ok(v) => v,
             Err(e) => {
                 error::set_last_error(e);

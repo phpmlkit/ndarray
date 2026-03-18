@@ -4,7 +4,7 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 use std::ptr;
 
-use crate::core::error::get_last_error_message;
+use crate::helpers::error::get_last_error_message;
 
 /// Get the last error message.
 ///

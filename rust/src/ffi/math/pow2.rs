@@ -1,13 +1,13 @@
 //! Square operation (x^2).
 
-use crate::core::view_helpers::{
+use crate::helpers::error::{ERR_GENERIC, SUCCESS};
+use crate::helpers::write_output_metadata;
+use crate::helpers::{
     extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
     extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -39,7 +39,7 @@ pub unsafe extern "C" fn ndarray_pow2(
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract f64 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.pow2();
@@ -50,7 +50,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Float32 => {
                 let Some(view) = extract_view_f32(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract f32 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.pow2();
@@ -61,7 +61,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Int64 => {
                 let Some(view) = extract_view_i64(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract i64 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.mapv(|x| x * x);
@@ -72,7 +72,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Int32 => {
                 let Some(view) = extract_view_i32(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract i32 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.mapv(|x| x * x);
@@ -83,7 +83,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Int16 => {
                 let Some(view) = extract_view_i16(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract i16 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.mapv(|x| x * x);
@@ -94,7 +94,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Int8 => {
                 let Some(view) = extract_view_i8(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract i8 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.mapv(|x| x * x);
@@ -105,7 +105,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Uint64 => {
                 let Some(view) = extract_view_u64(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract u64 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.mapv(|x| x * x);
@@ -116,7 +116,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Uint32 => {
                 let Some(view) = extract_view_u32(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract u32 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.mapv(|x| x * x);
@@ -127,7 +127,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Uint16 => {
                 let Some(view) = extract_view_u16(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract u16 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.mapv(|x| x * x);
@@ -138,7 +138,7 @@ pub unsafe extern "C" fn ndarray_pow2(
             }
             DType::Uint8 => {
                 let Some(view) = extract_view_u8(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract u8 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.mapv(|x| x * x);
@@ -148,7 +148,9 @@ pub unsafe extern "C" fn ndarray_pow2(
                 }
             }
             DType::Bool => {
-                crate::core::error::set_last_error("pow2() not supported for Bool type".to_string());
+                crate::helpers::error::set_last_error(
+                    "pow2() not supported for Bool type".to_string(),
+                );
                 return ERR_GENERIC;
             }
         };
@@ -156,7 +158,7 @@ pub unsafe extern "C" fn ndarray_pow2(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::core::error::set_last_error(e);
+            crate::helpers::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

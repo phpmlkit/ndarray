@@ -1,10 +1,10 @@
 //! Float power operation.
 
-use crate::core::view_helpers::{extract_view_f32, extract_view_f64};
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{ERR_GENERIC, SUCCESS};
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::helpers::error::{ERR_GENERIC, SUCCESS};
+use crate::helpers::write_output_metadata;
+use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -37,7 +37,7 @@ pub unsafe extern "C" fn ndarray_powf(
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract f64 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.powf(exp);
@@ -48,7 +48,7 @@ pub unsafe extern "C" fn ndarray_powf(
             }
             DType::Float32 => {
                 let Some(view) = extract_view_f32(a_wrapper, meta) else {
-                    crate::core::error::set_last_error("Failed to extract f32 view".to_string());
+                    crate::helpers::error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.powf(exp as f32);
@@ -58,7 +58,7 @@ pub unsafe extern "C" fn ndarray_powf(
                 }
             }
             _ => {
-                crate::core::error::set_last_error(
+                crate::helpers::error::set_last_error(
                     "powf() requires float type (Float64 or Float32)".to_string(),
                 );
                 return ERR_GENERIC;
@@ -68,7 +68,7 @@ pub unsafe extern "C" fn ndarray_powf(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::core::error::set_last_error(e);
+            crate::helpers::error::set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

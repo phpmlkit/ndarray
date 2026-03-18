@@ -4,10 +4,9 @@ use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
-use crate::ffi::NdArrayHandle;
+use crate::helpers::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, NDArrayWrapper, NdArrayHandle};
 use std::slice;
 
 /// Create an array filled with ones.

@@ -6,16 +6,16 @@ use ndarray::{stack, Axis};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::core::view_helpers::{
+use crate::helpers::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::helpers::normalize_axis;
+use crate::helpers::write_output_metadata;
+use crate::helpers::{
     extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
     extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
     extract_view_u8,
 };
-use crate::core::{ArrayData, NDArrayWrapper};
-use crate::core::dtype::DType;
-use crate::core::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::ffi::stacking::helpers::resolve_axis_for_stack;
-use crate::ffi::{write_output_metadata, ArrayMetadata, NdArrayHandle};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 
 /// Stack N arrays along a new axis.
 #[no_mangle]
@@ -63,7 +63,7 @@ pub unsafe extern "C" fn ndarray_stack(
 
         let meta_0 = &**metas_slice.get(0).unwrap();
         let shape_0 = meta_0.shape_slice();
-        let axis_usize = match resolve_axis_for_stack(shape_0, axis) {
+        let axis_usize = match normalize_axis(shape_0, axis, true) {
             Ok(a) => a,
             Err(e) => {
                 set_last_error(e);
