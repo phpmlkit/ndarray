@@ -12,7 +12,7 @@
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.91",
     "phpunit/phpunit": "^10.0",
-    "phpstan/phpstan": "^2.1",
+    "phpstan/phpstan": "2.1.39",
     "symfony/var-dumper": "^6.4.11|^7.1.5|^8.0"
   },
   "autoload": {
