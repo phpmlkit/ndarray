@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.1.0 - 2026-03-23
+
+### What's Changed
+
+* refactor: consolidate array metadata and simplify NDArray constructor by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/2
+* feat: optimize dot product and matrix multiplication implementations by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/3
+* refactor: optimize view extraction and consolidate operation helpers by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/4
+* Refactor: Unify binary operation macros with optimized same-type fast paths by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/5
+* Refactor: reorganize crate structure for extension system by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/6
+* refactor(rust): use ndarray's built-in generator functions by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/7
+* refactor(rust): simplify FFI array operations using view helpers by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/8
+
+**Full Changelog**: https://github.com/phpmlkit/ndarray/compare/1.0.0...1.1.0
+
 ## v1.0.0 - 2026-03-01
 
 ### Added
