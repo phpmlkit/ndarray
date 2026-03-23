@@ -5,10 +5,11 @@
 
 use crate::define_extract_view;
 use crate::define_extract_view_as;
+use crate::define_extract_view_mut;
 use crate::types::ArrayData;
 use ndarray::ShapeBuilder;
 
-// Generate `extract_view` functions for all types
+// Generate `extract_view` functions for all types (immutable)
 define_extract_view!(extract_view_f64, ArrayData::Float64, f64);
 define_extract_view!(extract_view_f32, ArrayData::Float32, f32);
 define_extract_view!(extract_view_i64, ArrayData::Int64, i64);
@@ -20,6 +21,19 @@ define_extract_view!(extract_view_u32, ArrayData::Uint32, u32);
 define_extract_view!(extract_view_u16, ArrayData::Uint16, u16);
 define_extract_view!(extract_view_u8, ArrayData::Uint8, u8);
 define_extract_view!(extract_view_bool, ArrayData::Bool, u8);
+
+// Generate `extract_view_mut` functions for all types (mutable)
+define_extract_view_mut!(extract_view_mut_f64, ArrayData::Float64, f64);
+define_extract_view_mut!(extract_view_mut_f32, ArrayData::Float32, f32);
+define_extract_view_mut!(extract_view_mut_i64, ArrayData::Int64, i64);
+define_extract_view_mut!(extract_view_mut_i32, ArrayData::Int32, i32);
+define_extract_view_mut!(extract_view_mut_i16, ArrayData::Int16, i16);
+define_extract_view_mut!(extract_view_mut_i8, ArrayData::Int8, i8);
+define_extract_view_mut!(extract_view_mut_u64, ArrayData::Uint64, u64);
+define_extract_view_mut!(extract_view_mut_u32, ArrayData::Uint32, u32);
+define_extract_view_mut!(extract_view_mut_u16, ArrayData::Uint16, u16);
+define_extract_view_mut!(extract_view_mut_u8, ArrayData::Uint8, u8);
+define_extract_view_mut!(extract_view_mut_bool, ArrayData::Bool, u8);
 
 // Generate `extract_view_as` functions for all types
 define_extract_view_as!(
