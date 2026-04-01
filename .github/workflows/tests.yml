@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -16,22 +16,24 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: ffi
           coverage: none
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build Rust library
+        shell: bash
         run: ./scripts/build.sh debug
 
       - name: Install Composer
-        uses: "ramsey/composer-install@v3"
+        uses: ramsey/composer-install@v4
 
       - name: Run tests
         run: composer test
@@ -40,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -49,7 +51,7 @@ jobs:
           coverage: none
 
       - name: Install Composer
-        uses: "ramsey/composer-install@v3"
+        uses: ramsey/composer-install@v4
 
       - name: Run CS check
         run: composer cs:check
@@ -58,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -67,7 +69,7 @@ jobs:
           coverage: none
 
       - name: Install Composer
-        uses: "ramsey/composer-install@v3"
+        uses: ramsey/composer-install@v4
 
       - name: Run PHPStan
         run: composer lint
