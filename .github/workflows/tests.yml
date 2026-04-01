@@ -29,6 +29,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build Rust library
+        shell: bash
         run: ./scripts/build.sh debug
 
       - name: Install Composer
