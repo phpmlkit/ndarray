@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.2.0 - 2026-04-01
+
+### What's Changed
+
+* chore: bump platform package installer to v2 by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/9
+* chore: update GitHub Actions workflow to use matrix for OS selection by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/10
+
+**Full Changelog**: https://github.com/phpmlkit/ndarray/compare/1.1.0...1.2.0
+
 ## v1.1.0 - 2026-03-23
 
 ### What's Changed
