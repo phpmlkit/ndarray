@@ -7,7 +7,7 @@
   "require": {
     "php": "^8.1",
     "ext-ffi": "*",
-    "codewithkyrian/platform-package-installer": "^1.1"
+    "codewithkyrian/platform-package-installer": "^1.1|^2.1"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.91",
@@ -31,7 +31,7 @@
     }
   },
   "extra": {
-    "platform-urls": {
+    "artifacts": {
       "linux-x86_64": "https://github.com/phpmlkit/ndarray/releases/download/{version}/dist-linux-x86_64.tar.gz",
       "linux-arm64": "https://github.com/phpmlkit/ndarray/releases/download/{version}/dist-linux-arm64.tar.gz",
       "darwin-x86_64": "https://github.com/phpmlkit/ndarray/releases/download/{version}/dist-darwin-x86_64.tar.gz",
