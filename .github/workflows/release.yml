@@ -23,7 +23,7 @@ jobs:
             runner: ubuntu-24.04-arm
             archive_ext: tar.gz
           - platform: darwin-x86_64
-            runner: macos-15
+            runner: macos-15-intel
             archive_ext: tar.gz
           - platform: darwin-arm64
             runner: macos-latest
