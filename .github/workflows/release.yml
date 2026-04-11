@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build for ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x86_64
+            runner: ubuntu-latest
+            archive_ext: tar.gz
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            archive_ext: tar.gz
+          - platform: darwin-x86_64
+            runner: macos-15
+            archive_ext: tar.gz
+          - platform: darwin-arm64
+            runner: macos-latest
+            archive_ext: tar.gz
+          - platform: windows-x64
+            runner: windows-latest
+            archive_ext: zip
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build library
+        shell: bash
+        run: ./scripts/build.sh release
+
+      - name: Create distribution package (Unix)
+        if: matrix.archive_ext == 'tar.gz'
+        shell: bash
+        run: |
+          DIST_NAME="dist-${{ matrix.platform }}"
+          mkdir -p "${DIST_NAME}"
+          
+          # Copy all files except .git and dist directory itself
+          find . -maxdepth 1 -not -path "./.git" -not -path "." -not -path "./${DIST_NAME}" -exec cp -r {} "${DIST_NAME}/" \;
+          
+          # Create tarball
+          tar -czf "${DIST_NAME}.tar.gz" "${DIST_NAME}"
+          
+          echo "Created ${DIST_NAME}.tar.gz"
+          ls -lh "${DIST_NAME}.tar.gz"
+
+      - name: Create distribution package (Windows)
+        if: matrix.archive_ext == 'zip'
+        shell: pwsh
+        run: |
+          $distName = "dist-${{ matrix.platform }}"
+          New-Item -ItemType Directory -Name $distName -Force
+          
+          # Copy all files except .git and dist directory
+          $exclude = @('.git', $distName)
+          Get-ChildItem -Path . -Force | Where-Object { $_.Name -notin $exclude } | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination $distName -Recurse -Force
+          }
+          
+          # Create zip
+          Compress-Archive -Path $distName -DestinationPath "${distName}.zip" -Force
+          
+          Write-Host "Created ${distName}.zip"
+          Get-ChildItem "${distName}.zip"
+
+      - name: Upload to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-${{ matrix.platform }}.${{ matrix.archive_ext }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to Artifacts (workflow dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.platform }}
+          path: dist-${{ matrix.platform }}.${{ matrix.archive_ext }}
+          retention-days: 7
