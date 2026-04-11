@@ -57,6 +57,7 @@ echo $mixed->dtype()->name;  // Float64
 **See Also:**
 - [Data Types](/guide/fundamentals/data-types)
 - [Understanding Arrays](/guide/fundamentals/understanding-arrays)
+- [fromArray()](#ndarray-fromarray)
 
 ---
 
@@ -97,6 +98,115 @@ $zeros = NDArray::zeros([10], DType::Int32);
 - [ones()](#ndarray-ones)
 - [full()](#ndarray-full)
 - [empty()](#ndarray-empty)
+
+---
+
+## NDArray::ones()
+
+Create an array filled with ones.
+
+```php
+public static function ones(array $shape, DType $dtype = DType::Float64): self
+```
+
+**Parameters:**
+- `array $shape` - Array dimensions
+- `DType $dtype` - Data type (default: Float64)
+
+**Examples:**
+
+```php
+$ones = NDArray::ones([2, 3]);
+echo $ones;
+// [[1. 1. 1.]
+//  [1. 1. 1.]]
+
+// Useful for multiplicative operations
+$data = NDArray::random([100, 100]);
+$multiplier = NDArray::ones([100, 100])->multiply(2);
+```
+
+---
+
+## NDArray::full()
+
+Create an array filled with a specific value.
+
+```php
+public static function full(
+    float|int|bool $value,
+    array $shape,
+    ?DType $dtype = null
+): self
+```
+
+**Parameters:**
+- `float|int|bool $value` - Value to fill array with
+- `array $shape` - Array dimensions
+- `?DType $dtype` - Data type (inferred from fillValue if null)
+
+**Examples:**
+
+```php
+// Fill with 5
+$full = NDArray::full(5, [2, 2]);
+echo $full;
+// [[5. 5.]
+//  [5. 5.]]
+
+// Fill with 3.14
+$pi_matrix = NDArray::full(3.14, [3, 3]);
+
+// With specific type
+$full = NDArray::full(100, [10], DType::Int32);
+```
+
+**See Also:**
+- [zeros()](#ndarray-zeros)
+- [ones()](#ndarray-ones)
+
+---
+
+## NDArray::fromArray()
+
+Create an NDArray from a PHP array with optional explicit shape.
+
+```php
+public static function fromArray(
+    array $data,
+    ?array $shape = null,
+    ?DType $dtype = null
+): self
+```
+
+This is an idiomatic alias for `array()` that follows the naming convention of other factory methods like `fromBuffer()`, `fromBytes()`, etc. It provides an optional shape parameter for explicit control.
+
+**Parameters:**
+- `array $data` - PHP array containing data
+- `?array $shape` - Optional array shape. If null, inferred from data structure
+- `?DType $dtype` - Optional data type. If null, inferred from data
+
+**Returns:** NDArray with shape from parameter or inferred from data
+
+**Examples:**
+
+```php
+// Same as array() - shape inferred from nested structure
+$arr = NDArray::fromArray([[1, 2], [3, 4]]);
+echo implode(',', $arr->shape());  // 2,3
+
+// With explicit shape validation
+$data = [1, 2, 3, 4, 5, 6];
+$arr = NDArray::fromArray($data, [2, 3]);  // Validates data size matches shape
+
+// With explicit dtype
+$arr = NDArray::fromArray([1, 2, 3], null, DType::Float32);
+```
+
+**See Also:**
+- [array()](#ndarray-array) - Original method
+- [fromBuffer()](#ndarray-frombuffer) - Create from C pointer
+- [fromBytes()](#ndarray-frombytes) - Create from binary string
 
 ---
 
@@ -152,71 +262,47 @@ Verify your buffer matches both the type and size before calling.
 
 ---
 
-## NDArray::ones()
+## NDArray::fromBytes()
 
-Create an array filled with ones.
-
-```php
-public static function ones(array $shape, DType $dtype = DType::Float64): self
-```
-
-**Parameters:**
-- `array $shape` - Array dimensions
-- `DType $dtype` - Data type (default: Float64)
-
-**Examples:**
+Create an array from a binary string.
 
 ```php
-$ones = NDArray::ones([2, 3]);
-echo $ones;
-// [[1. 1. 1.]
-//  [1. 1. 1.]]
-
-// Useful for multiplicative operations
-$data = NDArray::random([100, 100]);
-$multiplier = NDArray::ones([100, 100])->multiply(2);
-```
-
----
-
-## NDArray::full()
-
-Create an array filled with a specific value.
-
-```php
-public static function full(
+public static function fromBytes(
+    string $bytes,
     array $shape,
-    float|int|bool $value,
-    ?DType $dtype = null
+    DType $dtype
 ): self
 ```
 
+Creates an NDArray by interpreting a PHP binary string as raw array data. The bytes are copied into a new array with the specified shape and dtype. Data is assumed to be in little-endian format.
+
 **Parameters:**
-- `array $shape` - Array dimensions
-- `float|int $fillValue` - Value to fill array with
-- `?DType $dtype` - Data type (inferred from fillValue if null)
+- `string $bytes` - Binary string containing raw array data
+- `array $shape` - Array shape dimensions
+- `DType $dtype` - Data type of the data in the string
+
+**Returns:** NDArray containing a copy of the binary data
+
+**Throws:**
+- `ShapeException` - If byte string length doesn't match expected size for the shape and dtype
 
 **Examples:**
 
 ```php
-// Fill with 5
-$full = NDArray::full([2, 2], 5);
-echo $full;
-// [[5. 5.]
-//  [5. 5.]]
+$binaryData = file_get_contents('data.bin');
 
-// Fill with 3.14
-$pi_matrix = NDArray::full([3, 3], 3.14);
+$audio = NDArray::fromBytes($binaryData, [1000, 2], DType::Float32);
 
-// With specific type
-$full = NDArray::full([10], 100, DType::Int32);
+// Verify size matches
+// 1000 * 2 * 4 bytes = 8000 bytes expected for Float32
 ```
 
 **See Also:**
-- [zeros()](#ndarray-zeros)
-- [ones()](#ndarray-ones)
+- [toBytes()](/api/array-import-export#tbytes) — Export array to binary string
+- [fromBuffer()](#ndarray-frombuffer) — Import from C pointer
 
 ---
+
 
 ## NDArray::flat()
 
@@ -673,6 +759,9 @@ print_r($ints->toArray());  // [1, 2, 3]
 | `zerosLike()` | Zeros like input | Same shape as array |
 | `onesLike()` | Ones like input | Same shape as array |
 | `fullLike()` | Filled like input | Same shape as array |
+| `fromArray()` | From PHP array (with shape) | Import with explicit shape |
+| `fromBuffer()` | From C pointer | FFI interoperability |
+| `fromBytes()` | From binary string | File I/O, network data |
 | `eye()` | Identity matrix | Linear algebra |
 | `arange()` | Evenly spaced | Integer sequences |
 | `linspace()` | Linear spacing | Continuous ranges |

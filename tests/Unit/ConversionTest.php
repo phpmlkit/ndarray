@@ -228,7 +228,7 @@ final class ConversionTest extends TestCase
 
     public function testToScalarBool(): void
     {
-        $a = NDArray::full([], true, DType::Bool);
+        $a = NDArray::full(true, [], DType::Bool);
 
         $scalar = $a->toScalar();
 
@@ -238,7 +238,7 @@ final class ConversionTest extends TestCase
 
     public function testToScalarBoolFalse(): void
     {
-        $a = NDArray::full([], false, DType::Bool);
+        $a = NDArray::full(false, [], DType::Bool);
 
         $scalar = $a->toScalar();
 
@@ -248,7 +248,7 @@ final class ConversionTest extends TestCase
 
     public function testToScalarFromFull(): void
     {
-        $a = NDArray::full([], 7.5, DType::Float64);
+        $a = NDArray::full(7.5, [], DType::Float64);
 
         $scalar = $a->toScalar();
 
