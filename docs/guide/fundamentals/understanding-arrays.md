@@ -110,7 +110,7 @@ $zeros = NDArray::zeros([3, 4]);           // [[0, 0, 0, 0], ...]
 $ones = NDArray::ones([2, 3]);             // [[1, 1, 1], ...]
 
 // Full - specific value
-$filled = NDArray::full([3, 3], 42);       // All elements are 42
+$filled = NDArray::full(42, [3, 3]);       // All elements are 42
 
 // Identity matrix
 $identity = NDArray::eye(3);               // 3×3 identity matrix

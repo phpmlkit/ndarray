@@ -19,7 +19,7 @@ NDArray PHP is designed to feel familiar to NumPy users while respecting PHP idi
 | `np.array([1, 2, 3])` | `NDArray::array([1, 2, 3])` | Static method in PHP |
 | `np.zeros((3, 3))` | `NDArray::zeros([3, 3])` | Shape as array, not tuple |
 | `np.ones((2, 4))` | `NDArray::ones([2, 4])` | |
-| `np.full((2, 2), 5)` | `NDArray::full([2, 2], 5)` | |
+| `np.full((2, 2), 5)` | `NDArray::full(5, [2, 2])` | |
 | `np.eye(3)` | `NDArray::eye(3)` | Identity matrix |
 | `np.arange(0, 10, 2)` | `NDArray::arange(0, 10, 2)` | |
 | `np.linspace(0, 1, 50)` | `NDArray::linspace(0, 1, 50)` | |

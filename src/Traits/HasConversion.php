@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Traits;
 
 use FFI\CData;
-use PhpMlKit\NDArray\ArrayMetadata;
-use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Lib;
 
@@ -17,23 +15,6 @@ use PhpMlKit\NDArray\FFI\Lib;
  */
 trait HasConversion
 {
-    /**
-     * Return raw bytes of the array/view in C-order.
-     */
-    public function toBytes(): string
-    {
-        $nbytes = $this->nbytes();
-        if (0 === $nbytes) {
-            return '';
-        }
-
-        $ffi = Lib::get();
-        $buffer = $ffi->new("uint8_t[{$nbytes}]");
-        $this->intoBuffer($buffer, 0, $this->size());
-
-        return \FFI::string($buffer, $nbytes);
-    }
-
     /**
      * Convert 0-dimensional array to scalar.
      *
@@ -85,62 +66,52 @@ trait HasConversion
     }
 
     /**
-     * Create a deep copy of the array (or view).
+     * Copy flattened C-order data into a C buffer.
      *
-     * The returned array is always C-contiguous and owns its data.
+     * If no buffer is provided, allocates a new C array of the appropriate type.
+     * The returned CData is owned by PHP and will be garbage collected when no
+     * longer referenced.
+     *
+     * @param null|CData $buffer Optional destination typed C buffer. If null, a new buffer is allocated.
+     * @param int        $start  Starting element offset (0-indexed). Default: 0
+     * @param null|int   $len    Number of elements to copy. Default: null (copy remaining elements)
+     *
+     * @return CData The buffer (either provided or newly allocated)
      */
-    public function copy(): self
+    public function toBuffer(?CData $buffer = null, int $start = 0, ?int $len = null): CData
     {
-        $ffi = Lib::get();
-
-        $meta = $this->meta()->toCData();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-
-        $status = $ffi->ndarray_copy(
-            $this->handle,
-            Lib::addr($meta),
-            Lib::addr($outHandle)
-        );
-
-        Lib::checkStatus($status);
-
-        return new self($outHandle, new ArrayMetadata($this->shape()), $this->dtype);
-    }
-
-    /**
-     * Cast array to a different data type.
-     *
-     * Returns a new array with the specified dtype. If the target dtype
-     * is the same as the current dtype, this is equivalent to copy().
-     *
-     * @param DType $dtype Target data type
-     *
-     * @return self New array with converted data
-     */
-    public function astype(DType $dtype): self
-    {
-        if ($this->dtype === $dtype) {
-            return $this->copy();
+        if (null === $len) {
+            $len = $this->size() - $start;
         }
 
         $ffi = Lib::get();
-        $meta = $this->meta()->toCData();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_astype(
+        if (0 === $len || $len < 0) {
+            return $buffer ?? $this->dtype->createCArray(1);
+        }
+
+        $buffer ??= $this->dtype->createCArray($len);
+        $meta = $this->meta()->toCData();
+        $outLen = $ffi->new('size_t');
+
+        $status = $ffi->ndarray_get_data(
             $this->handle,
             Lib::addr($meta),
-            $dtype->value,
-            Lib::addr($outHandle)
+            $start,
+            $len,
+            $buffer,
+            Lib::addr($outLen),
         );
 
         Lib::checkStatus($status);
 
-        return new self($outHandle, new ArrayMetadata($this->shape()), $dtype);
+        return $buffer;
     }
 
     /**
      * Copy flattened C-order data into a caller-allocated C buffer.
+     *
+     * @deprecated Use toBuffer() instead. intoBuffer() will be removed in a future version.
      *
      * @param CData    $buffer Destination typed C buffer
      * @param int      $start  Starting element offset (0-indexed). Default: 0
@@ -177,6 +148,23 @@ trait HasConversion
     }
 
     /**
+     * Return raw bytes of the array/view in C-order.
+     *
+     * The returned string contains the raw binary data in little-endian format.
+     */
+    public function toBytes(): string
+    {
+        $nbytes = $this->nbytes();
+        if (0 === $nbytes) {
+            return '';
+        }
+
+        $buffer = $this->toBuffer();
+
+        return \FFI::string($buffer, $nbytes);
+    }
+
+    /**
      * Fetch a range of flattened view data from Rust.
      *
      * @param int $start Starting element offset (0-indexed)
@@ -190,13 +178,11 @@ trait HasConversion
             return [];
         }
 
-        $buffer = $this->dtype->createCArray($len);
-
-        $actualLen = $this->intoBuffer($buffer, $start, $len);
+        $buffer = $this->toBuffer(null, $start, $len);
 
         $out = [];
 
-        for ($i = 0; $i < $actualLen; ++$i) {
+        for ($i = 0; $i < $len; ++$i) {
             $out[] = $this->dtype->castFromCValue($buffer[$i]);
         }
 

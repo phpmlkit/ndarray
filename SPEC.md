@@ -61,7 +61,7 @@ The primary array type representing N-dimensional arrays.
 - [x] 3.1.1: `NDArray::array($data, $dtype = null)` - From PHP array
 - [x] 3.1.2: `NDArray::zeros($shape, $dtype = 'float64')` - Array of zeros
 - [x] 3.1.3: `NDArray::ones($shape, $dtype = 'float64')` - Array of ones
-- [x] 3.1.4: `NDArray::full($shape, $fill_value, $dtype = null)` - Filled array
+- [x] 3.1.4: `NDArray::full($value, $shape, $dtype = null)` - Filled array
 - [x] 3.1.5: `NDArray::empty($shape, $dtype = 'float64')` - Uninitialized array
 - [x] 3.1.6: `NDArray::eye($n, $m = null, $k = 0, $dtype = 'float64')` - Identity matrix
 

@@ -51,7 +51,7 @@ final class CreationTest extends TestCase
 
     public function testFull(): void
     {
-        $arr = NDArray::full([3], 42.5, DType::Float64);
+        $arr = NDArray::full(42.5, [3], DType::Float64);
 
         $this->assertSame([3], $arr->shape());
         $this->assertSame(DType::Float64, $arr->dtype());
@@ -60,11 +60,11 @@ final class CreationTest extends TestCase
 
     public function testFullInferred(): void
     {
-        $arr = NDArray::full([2], 100);
+        $arr = NDArray::full(100, [2]);
         $this->assertSame(DType::Int64, $arr->dtype());
         $this->assertSame([100, 100], $arr->toArray());
 
-        $arrBool = NDArray::full([2], true);
+        $arrBool = NDArray::full(true, [2]);
         $this->assertSame(DType::Bool, $arrBool->dtype());
         $this->assertSame([true, true], $arrBool->toArray());
     }

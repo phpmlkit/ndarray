@@ -474,7 +474,7 @@ print_r($result->toArray());
 // Creating a masked array
 $data = NDArray::array([1, 2, 3, 4]);
 $mask = NDArray::array([true, false, true, false]);
-$masked = NDArray::where($mask, $data, NDArray::full([4], -999));
+$masked = NDArray::where($mask, $data, NDArray::full(-999, [4]));
 print_r($masked->toArray());
 // Output: [1, -999, 3, -999]
 ```

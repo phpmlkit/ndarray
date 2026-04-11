@@ -114,11 +114,11 @@ trait CreatesArrays
     /**
      * Create an array filled with a specific value.
      *
-     * @param array<int>     $shape Array shape
      * @param bool|float|int $value Value to fill array with
+     * @param array<int>     $shape Array shape
      * @param null|DType     $dtype Data type (default: inferred from value)
      */
-    public static function full(array $shape, bool|float|int $value, ?DType $dtype = null): self
+    public static function full(bool|float|int $value, array $shape, ?DType $dtype = null): self
     {
         if (null === $dtype) {
             if (\is_int($value)) {
@@ -153,6 +153,23 @@ trait CreatesArrays
     }
 
     /**
+     * Create array from PHP array (alias for array()).
+     *
+     * This is an idiomatic alias for array() that follows the naming convention
+     * of other factory methods like fromBuffer(), fromBytes(), etc.
+     *
+     * @param array<mixed>    $data  Nested PHP array
+     * @param null|array<int> $shape Optional shape. If null, inferred from data.
+     * @param null|DType      $dtype Data type (auto-inferred if null)
+     */
+    public static function fromArray(array $data, ?array $shape = null, ?DType $dtype = null): self
+    {
+        $shape ??= self::inferShape($data);
+
+        return self::array($data, $dtype);
+    }
+
+    /**
      * Create an array from an external C buffer pointer.
      *
      * This method copies data from an external FFI buffer into a new NDArray. The source buffer
@@ -173,6 +190,56 @@ trait CreatesArrays
         }
 
         $ffi = Lib::get();
+        $cShape = Lib::createShapeArray($shape);
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_create(
+            $buffer,
+            $expectedSize,
+            $cShape,
+            \count($shape),
+            $dtype->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new self($outHandle, new ArrayMetadata($shape), $dtype);
+    }
+
+    /**
+     * Create an array from a binary string.
+     *
+     * This method interprets a PHP binary string as raw array data in little-endian format.
+     * The bytes are copied into a new NDArray with the specified shape and dtype.
+     *
+     * @param string     $bytes Binary string containing raw array data (little-endian)
+     * @param array<int> $shape Array shape
+     * @param DType      $dtype Data type of the buffer
+     *
+     * @throws ShapeException If buffer size doesn't match shape
+     */
+    public static function fromBytes(string $bytes, array $shape, DType $dtype): self
+    {
+        $expectedSize = (int) array_product($shape);
+
+        if ($expectedSize <= 0) {
+            throw new ShapeException('Shape must have positive size');
+        }
+
+        $expectedBytes = $expectedSize * $dtype->itemSize();
+
+        if (\strlen($bytes) !== $expectedBytes) {
+            throw new ShapeException(
+                'Byte string length ('.\strlen($bytes).") doesn't match expected size ({$expectedBytes} bytes for shape "
+                .json_encode($shape).' and dtype '.$dtype->name
+            );
+        }
+
+        $ffi = Lib::get();
+        $buffer = $ffi->new("uint8_t[{$expectedBytes}]");
+        \FFI::memcpy($buffer, $bytes, $expectedBytes);
+
         $cShape = Lib::createShapeArray($shape);
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
@@ -223,7 +290,7 @@ trait CreatesArrays
     {
         $dtype ??= $array->dtype();
 
-        return self::full($array->shape(), $value, $dtype);
+        return self::full($value, $array->shape(), $dtype);
     }
 
     /**
@@ -630,6 +697,61 @@ trait CreatesArrays
         }
 
         return $a->repeat($repeats, $axis);
+    }
+
+    /**
+     * Create a deep copy of the array (or view).
+     *
+     * The returned array is always C-contiguous and owns its data.
+     */
+    public function copy(): self
+    {
+        $ffi = Lib::get();
+
+        $meta = $this->meta()->toCData();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_copy(
+            $this->handle,
+            Lib::addr($meta),
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new self($outHandle, new ArrayMetadata($this->shape()), $this->dtype);
+    }
+
+    /**
+     * Cast array to a different data type.
+     *
+     * Returns a new array with the specified dtype. If the target dtype
+     * is the same as the current dtype, this is equivalent to copy().
+     *
+     * @param DType $dtype Target data type
+     *
+     * @return self New array with converted data
+     */
+    public function astype(DType $dtype): self
+    {
+        if ($this->dtype === $dtype) {
+            return $this->copy();
+        }
+
+        $ffi = Lib::get();
+        $meta = $this->meta()->toCData();
+        $outHandle = $ffi->new('struct NdArrayHandle*');
+
+        $status = $ffi->ndarray_astype(
+            $this->handle,
+            Lib::addr($meta),
+            $dtype->value,
+            Lib::addr($outHandle)
+        );
+
+        Lib::checkStatus($status);
+
+        return new self($outHandle, new ArrayMetadata($this->shape()), $dtype);
     }
 
     // =========================================================================
