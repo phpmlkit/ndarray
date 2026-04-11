@@ -50,8 +50,14 @@ jobs:
           DIST_NAME="dist-${{ matrix.platform }}"
           mkdir -p "${DIST_NAME}"
           
-          # Copy all files except .git and dist directory itself
-          find . -maxdepth 1 -not -path "./.git" -not -path "." -not -path "./${DIST_NAME}" -exec cp -r {} "${DIST_NAME}/" \;
+          # Copy all files except excluded directories
+          find . -maxdepth 1 \
+            -not -path "./.git" \
+            -not -path "." \
+            -not -path "./${DIST_NAME}" \
+            -not -path "./rust" \
+            -not -path "./docs" \
+            -exec cp -r {} "${DIST_NAME}/" \;
           
           # Create tarball
           tar -czf "${DIST_NAME}.tar.gz" "${DIST_NAME}"
@@ -66,9 +72,11 @@ jobs:
           $distName = "dist-${{ matrix.platform }}"
           New-Item -ItemType Directory -Name $distName -Force
           
-          # Copy all files except .git and dist directory
-          $exclude = @('.git', $distName)
-          Get-ChildItem -Path . -Force | Where-Object { $_.Name -notin $exclude } | ForEach-Object {
+          # Copy all files except excluded directories
+          $exclude = @('.git', $distName, 'rust', 'docs')
+          Get-ChildItem -Path . -Force | Where-Object { 
+            $_.Name -notin $exclude
+          } | ForEach-Object {
             Copy-Item -Path $_.FullName -Destination $distName -Recurse -Force
           }
           
