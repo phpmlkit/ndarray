@@ -47,7 +47,6 @@ pub unsafe extern "C" fn ndarray_matmul(
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
         let b_wrapper = NdArrayHandle::as_wrapper(b as *mut _);
 
-        // Check dtypes match and are float types
         if a_wrapper.dtype != b_wrapper.dtype {
             error::set_last_error(
                 "Matrix multiplication requires both arrays to have the same dtype".to_string(),
@@ -55,15 +54,76 @@ pub unsafe extern "C" fn ndarray_matmul(
             return ERR_GENERIC;
         }
 
-        // Check dimensions
         if a_meta_ref.ndim < 2 || b_meta_ref.ndim < 2 {
             error::set_last_error("Matmul requires at least 2D arrays".to_string());
             return ERR_SHAPE;
         }
 
-        let result = match a_wrapper.dtype {
-            DType::Float64 => matmul_f64(a_wrapper, a_meta_ref, b_wrapper, b_meta_ref),
-            DType::Float32 => matmul_f32(a_wrapper, a_meta_ref, b_wrapper, b_meta_ref),
+        let result_wrapper = match a_wrapper.dtype {
+            DType::Float64 => {
+                let Some(a_view) = extract_view_f64(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract f64 view for array a".to_string());
+                    return ERR_GENERIC;
+                };
+                let Some(b_view) = extract_view_f64(b_wrapper, b_meta_ref) else {
+                    error::set_last_error("Failed to extract f64 view for array b".to_string());
+                    return ERR_GENERIC;
+                };
+
+                let a_view_2d = match a_view.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(format!("Failed to convert to 2D: {}", e));
+                        return ERR_SHAPE;
+                    }
+                };
+                let b_view_2d = match b_view.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(format!("Failed to convert to 2D: {}", e));
+                        return ERR_SHAPE;
+                    }
+                };
+
+                let result = a_view_2d.dot(&b_view_2d);
+
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(result.into_dyn()))),
+                    dtype: DType::Float64,
+                }
+            }
+            DType::Float32 => {
+                let Some(a_view) = extract_view_f32(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract f32 view for array a".to_string());
+                    return ERR_GENERIC;
+                };
+                let Some(b_view) = extract_view_f32(b_wrapper, b_meta_ref) else {
+                    error::set_last_error("Failed to extract f32 view for array b".to_string());
+                    return ERR_GENERIC;
+                };
+
+                let a_view_2d = match a_view.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(format!("Failed to convert to 2D: {}", e));
+                        return ERR_SHAPE;
+                    }
+                };
+                let b_view_2d = match b_view.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(format!("Failed to convert to 2D: {}", e));
+                        return ERR_SHAPE;
+                    }
+                };
+
+                let result = a_view_2d.dot(&b_view_2d);
+
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(result.into_dyn()))),
+                    dtype: DType::Float32,
+                }
+            }
             _ => {
                 error::set_last_error(
                     "Matrix multiplication only supports Float64 and Float32 types".to_string(),
@@ -72,85 +132,17 @@ pub unsafe extern "C" fn ndarray_matmul(
             }
         };
 
-        match result {
-            Ok(new_wrapper) => {
-                if let Err(e) = write_output_metadata(
-                    &new_wrapper,
-                    out_dtype_ptr,
-                    out_ndim,
-                    out_shape,
-                    max_ndim,
-                ) {
-                    error::set_last_error(e);
-                    return ERR_GENERIC;
-                }
-                *out_handle = NdArrayHandle::from_wrapper(Box::new(new_wrapper));
-                SUCCESS
-            }
-            Err(e) => {
-                error::set_last_error(format!("Matrix multiplication failed: {}", e));
-                ERR_SHAPE
-            }
+        if let Err(e) = write_output_metadata(
+            &result_wrapper,
+            out_dtype_ptr,
+            out_ndim,
+            out_shape,
+            max_ndim,
+        ) {
+            error::set_last_error(e);
+            return ERR_GENERIC;
         }
+        *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
+        SUCCESS
     })
-}
-
-fn matmul_f64(
-    a_wrapper: &NDArrayWrapper,
-    a_meta: &ArrayMetadata,
-    b_wrapper: &NDArrayWrapper,
-    b_meta: &ArrayMetadata,
-) -> Result<NDArrayWrapper, String> {
-    unsafe {
-        let a_view =
-            extract_view_f64(a_wrapper, a_meta).ok_or("Failed to extract view for array a")?;
-        let b_view =
-            extract_view_f64(b_wrapper, b_meta).ok_or("Failed to extract view for array b")?;
-
-        let a_arr = a_view
-            .into_dimensionality::<Ix2>()
-            .map_err(|e| format!("Failed to convert to 2D: {}", e))?
-            .into_owned();
-        let b_arr = b_view
-            .into_dimensionality::<Ix2>()
-            .map_err(|e| format!("Failed to convert to 2D: {}", e))?
-            .into_owned();
-
-        let result = a_arr.dot(&b_arr);
-
-        Ok(NDArrayWrapper {
-            data: ArrayData::Float64(Arc::new(RwLock::new(result.into_dyn()))),
-            dtype: DType::Float64,
-        })
-    }
-}
-
-fn matmul_f32(
-    a_wrapper: &NDArrayWrapper,
-    a_meta: &ArrayMetadata,
-    b_wrapper: &NDArrayWrapper,
-    b_meta: &ArrayMetadata,
-) -> Result<NDArrayWrapper, String> {
-    unsafe {
-        let a_view =
-            extract_view_f32(a_wrapper, a_meta).ok_or("Failed to extract view for array a")?;
-        let b_view =
-            extract_view_f32(b_wrapper, b_meta).ok_or("Failed to extract view for array b")?;
-
-        let a_arr = a_view
-            .into_dimensionality::<Ix2>()
-            .map_err(|e| format!("Failed to convert to 2D: {}", e))?
-            .into_owned();
-        let b_arr = b_view
-            .into_dimensionality::<Ix2>()
-            .map_err(|e| format!("Failed to convert to 2D: {}", e))?
-            .into_owned();
-
-        let result = a_arr.dot(&b_arr);
-
-        Ok(NDArrayWrapper {
-            data: ArrayData::Float32(Arc::new(RwLock::new(result.into_dyn()))),
-            dtype: DType::Float32,
-        })
-    }
 }

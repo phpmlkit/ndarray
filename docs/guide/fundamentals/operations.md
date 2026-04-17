@@ -166,6 +166,9 @@ $a->matmul($b);     // Same as dot() for 2D
 $v1 = NDArray::array([1, 2, 3]);
 $v2 = NDArray::array([4, 5, 6]);
 $v1->dot($v2);      // 32 (scalar)
+
+// Singular Value Decomposition
+[$u, $s, $vt] = $a->svd();
 ```
 
 **Important Distinction:**
@@ -175,9 +178,11 @@ $v1->dot($v2);      // 32 (scalar)
 **Available Operations:**
 - `dot()`, `matmul()` - Matrix/vector multiplication
 - `transpose()` - Transpose matrix
-- `diagonal()` - Extract diagonal
-- `trace()` - Sum of diagonal
+- `diagonal()`, `trace()` - Diagonal operations
 - `norm()` - Vector/matrix norms
+- `svd()`, `qr()`, `cholesky()` - Matrix decompositions
+- `inv()`, `det()`, `pinv()`, `cond()`, `rank()` - Matrix properties
+- `solve()`, `lstsq()` - Linear system solvers
 
 See [Linear Algebra API](/api/linear-algebra) for complete reference.
 

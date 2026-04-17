@@ -334,29 +334,29 @@ Sort kind selection is enum-based via `SortKind`:
 **Priority**: MEDIUM (requires BLAS)
 
 **Requirements**:
-- [ ] 9.2.1: `$array->svd($full_matrices = true)` - Singular value decomposition
-- [ ] 9.2.2: `$array->qr()` - QR decomposition
-- [ ] 9.2.3: `$array->cholesky()` - Cholesky decomposition
-- [ ] 9.2.4: `$array->eig()` - Eigenvalue decomposition
-- [ ] 9.2.5: `$array->lu()` - LU decomposition
+- [x] 9.2.1: `$array->svd($full_matrices = true)` - Singular value decomposition
+- [x] 9.2.2: `$array->qr()` - QR decomposition
+- [x] 9.2.3: `$array->cholesky()` - Cholesky decomposition
+- [ ] 9.2.4: `$array->eig()` - Eigenvalue decomposition (blocked on complex number support)
+- [ ] 9.2.5: `$array->lu()` - LU decomposition (not exposed; used internally by solve/inv/det)
 
 ### 9.3 Matrix Properties (REQ-9.3)
 **Priority**: MEDIUM (requires BLAS)
 
 **Requirements**:
-- [ ] 9.3.1: `$array->det()` - Determinant
-- [ ] 9.3.2: `$array->inv()` - Matrix inverse
-- [ ] 9.3.3: `$array->pinv()` - Pseudo-inverse
+- [x] 9.3.1: `$array->det()` - Determinant
+- [x] 9.3.2: `$array->inv()` - Matrix inverse
+- [x] 9.3.3: `$array->pinv()` - Pseudo-inverse
 - [x] 9.3.4: `$array->norm($ord = null, $axis = null, $keepdims = false)` - Matrix/vector norm (supports 1, 2, inf, -inf, fro)
-- [ ] 9.3.5: `$array->cond($p = null)` - Condition number
-- [ ] 9.3.6: `$array->rank()` - Matrix rank
+- [x] 9.3.5: `$array->cond($p = null)` - Condition number
+- [x] 9.3.6: `$array->rank()` - Matrix rank
 
 ### 9.4 Solving Linear Systems (REQ-9.4)
 **Priority**: MEDIUM (requires BLAS)
 
 **Requirements**:
-- [ ] 9.4.1: `NDArray::solve($a, $b)` - Solve linear equations
-- [ ] 9.4.2: `NDArray::lstsq($a, $b)` - Least squares solution
+- [x] 9.4.1: `$a->solve($b)` - Solve linear equations
+- [x] 9.4.2: `$a->lstsq($b)` - Least squares solution
 
 ## 10. Iteration and Application
 
@@ -419,11 +419,11 @@ Sort kind selection is enum-based via `SortKind`:
 **Priority**: MEDIUM
 
 **Requirements**:
-- [ ] 12.2.1: Matrix multiplication (GEMM)
-- [ ] 12.2.2: Dot products (DOT)
-- [ ] 12.2.3: Matrix-vector operations (GEMV)
-- [ ] 12.2.4: Linear system solving
-- [ ] 12.2.5: Eigenvalue/SVD decompositions
+- [x] 12.2.1: Matrix multiplication (GEMM)
+- [x] 12.2.2: Dot products (DOT)
+- [x] 12.2.3: Matrix-vector operations (GEMV)
+- [x] 12.2.4: Linear system solving
+- [x] 12.2.5: SVD decompositions (eigenvalue blocked on complex number support)
 
 ## 13. Memory Management
 
@@ -617,7 +617,7 @@ Sort kind selection is enum-based via `SortKind`:
 | Broadcasting | Automatic | CRITICAL | Done |
 | Matrix mult | `@` operator | HIGH | Planned |
 | Reductions | `sum()`, `mean()` | HIGH | Planned |
-| SVD | `np.linalg.svd()` | MEDIUM | Planned |
+| SVD | `np.linalg.svd()` | MEDIUM | Done |
 | FFT | `np.fft.fft()` | LOW | Future |
 
 ## Appendix B: Glossary

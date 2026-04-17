@@ -354,13 +354,106 @@ interface Bindings
 
     public function ndarray_matmul(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_diagonal(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_diagonal(CData $handle, CData $meta, int $offset, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_from_diag(CData $handle, CData $meta, int $offset, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_trace(CData $handle, CData $meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_norm(CData $handle, CData $meta, int $ord, CData $out_value, CData $out_dtype_ptr): int;
 
     public function ndarray_norm_axis(CData $handle, CData $meta, int $axis, bool $keepdims, int $ord, CData $out_handle): int;
+
+    // =========================================================================
+    // BLAS Linear Algebra Operations
+    // =========================================================================
+
+    public function ndarray_solve(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_inv(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_det(CData $a, CData $a_meta, CData $out_value, CData $out_dtype_ptr): int;
+
+    public function ndarray_svd(
+        CData $a,
+        CData $a_meta,
+        int $calc_u,
+        int $calc_vt,
+        CData $out_u,
+        CData $out_dtype_u,
+        CData $out_ndim_u,
+        CData $out_shape_u,
+        int $max_ndim,
+        CData $out_s,
+        CData $out_dtype_s,
+        CData $out_ndim_s,
+        CData $out_shape_s,
+        CData $out_vt,
+        CData $out_dtype_vt,
+        CData $out_ndim_vt,
+        CData $out_shape_vt
+    ): int;
+
+    public function ndarray_qr(
+        CData $a,
+        CData $a_meta,
+        CData $out_q,
+        CData $out_dtype_q,
+        CData $out_ndim_q,
+        CData $out_shape_q,
+        int $max_ndim,
+        CData $out_r,
+        CData $out_dtype_r,
+        CData $out_ndim_r,
+        CData $out_shape_r,
+    ): int;
+
+    public function ndarray_cholesky(
+        CData $a,
+        CData $a_meta,
+        int $upper,
+        CData $out_handle,
+        CData $out_dtype_ptr,
+        CData $out_ndim,
+        CData $out_shape,
+        int $max_ndim,
+    ): int;
+
+    public function ndarray_lstsq(
+        CData $a,
+        CData $a_meta,
+        CData $b,
+        CData $b_meta,
+        CData $out_solution,
+        CData $out_residuals,
+        CData $out_rank,
+        CData $out_s,
+        CData $out_dtype_sol,
+        CData $out_ndim_sol,
+        CData $out_shape_sol,
+        CData $out_dtype_res,
+        CData $out_ndim_res,
+        CData $out_shape_res,
+        CData $out_dtype_s,
+        CData $out_ndim_s,
+        CData $out_shape_s,
+        int $max_ndim,
+    ): int;
+
+    public function ndarray_pinv(
+        CData $a,
+        CData $a_meta,
+        CData $rcond,
+        CData $out_handle,
+        CData $out_dtype_ptr,
+        CData $out_ndim,
+        CData $out_shape,
+        int $max_ndim,
+    ): int;
+
+    public function ndarray_cond(CData $a, CData $a_meta, CData $out_value, CData $out_dtype_ptr): int;
+
+    public function ndarray_rank(CData $a, CData $a_meta, CData $tol, CData $out_rank): int;
 
     // =========================================================================
     // Stacking (Joining and Splitting)

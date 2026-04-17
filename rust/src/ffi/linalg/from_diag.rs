@@ -1,6 +1,8 @@
-//! Diagonal extraction with optional offset.
+//! Create a 2D matrix from a 1D diagonal vector with optional offset.
 
-use ndarray::s;
+use ndarray::{s, Array2};
+use parking_lot::RwLock;
+use std::sync::Arc;
 
 use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
@@ -11,28 +13,35 @@ use crate::helpers::{
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
-use parking_lot::RwLock;
-use std::sync::Arc;
 
-fn extract_offset_diag<T: Clone>(
-    view: ndarray::ArrayViewD<T>,
+fn matrix_from_diag<T: Clone + ndarray::ScalarOperand + num_traits::Zero>(
+    diag: ndarray::ArrayViewD<T>,
     offset: isize,
 ) -> ndarray::ArrayD<T> {
-    let result = if offset >= 0 {
-        view.slice(s![.., offset as usize..]).diag().to_owned()
+    let n = diag.len();
+    let size = n + offset.abs() as usize;
+    let mut arr = Array2::<T>::zeros((size, size));
+    if offset >= 0 {
+        let k = offset as usize;
+        if k < size {
+            arr.slice_mut(s![.., k..]).diag_mut().assign(&diag);
+        }
     } else {
-        view.slice(s![(-offset) as usize.., ..]).diag().to_owned()
-    };
-    result.into_dyn()
+        let k = (-offset) as usize;
+        if k < size {
+            arr.slice_mut(s![k.., ..]).diag_mut().assign(&diag);
+        }
+    }
+    arr.into_dyn()
 }
 
-/// Extract diagonal elements with an optional offset.
+/// Create a 2D array with the given 1D data on a diagonal.
 ///
 /// * offset = 0: main diagonal
 /// * offset > 0: upper diagonal
 /// * offset < 0: lower diagonal
 #[no_mangle]
-pub unsafe extern "C" fn ndarray_diagonal(
+pub unsafe extern "C" fn ndarray_from_diag(
     handle: *const NdArrayHandle,
     meta: *const ArrayMetadata,
     offset: isize,
@@ -57,8 +66,8 @@ pub unsafe extern "C" fn ndarray_diagonal(
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
         let shape_slice = meta.shape_slice();
 
-        if shape_slice.len() != 2 {
-            error::set_last_error("Diagonal requires a 2D array".to_string());
+        if shape_slice.len() != 1 {
+            error::set_last_error("from_diag requires a 1D array".to_string());
             return ERR_SHAPE;
         }
 
@@ -68,7 +77,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
                     dtype: DType::Float64,
@@ -79,7 +88,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
                     dtype: DType::Float32,
@@ -90,7 +99,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Int64(Arc::new(RwLock::new(result))),
                     dtype: DType::Int64,
@@ -101,7 +110,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Int32(Arc::new(RwLock::new(result))),
                     dtype: DType::Int32,
@@ -112,7 +121,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Int16(Arc::new(RwLock::new(result))),
                     dtype: DType::Int16,
@@ -123,7 +132,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Int8(Arc::new(RwLock::new(result))),
                     dtype: DType::Int8,
@@ -134,7 +143,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint64,
@@ -145,7 +154,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint32,
@@ -156,7 +165,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint16,
@@ -167,7 +176,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint8,
@@ -178,7 +187,7 @@ pub unsafe extern "C" fn ndarray_diagonal(
                     error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = matrix_from_diag(view, offset);
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),
                     dtype: DType::Bool,

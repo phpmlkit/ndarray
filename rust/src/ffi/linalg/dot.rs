@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use ndarray::linalg::Dot;
-use ndarray::{Ix1, Ix2};
+use ndarray::{ArrayD, ArrayViewD, Ix1, Ix2, IxDyn, LinalgScalar};
 use parking_lot::RwLock;
 
 use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
@@ -62,112 +62,17 @@ pub unsafe extern "C" fn ndarray_dot(
                     return ERR_GENERIC;
                 };
 
-                match (a_meta_ref.ndim, b_meta_ref.ndim) {
-                    (1, 1) => {
-                        // Validate shape lengths match for 1D @ 1D
-                        let a_shape = unsafe { a_meta_ref.shape_slice() };
-                        let b_shape = unsafe { b_meta_ref.shape_slice() };
-                        if a_shape[0] != b_shape[0] {
-                            error::set_last_error(format!(
-                                "Shape mismatch: {} and {}",
-                                a_shape[0], b_shape[0]
-                            ));
-                            return ERR_SHAPE;
-                        }
-
-                        let a_arr = match a_view.into_dimensionality::<Ix1>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let b_arr = match b_view.into_dimensionality::<Ix1>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let result = a_arr.dot(&b_arr);
-                        match NDArrayWrapper::from_slice_f64(&[result], &[]) {
-                            Ok(w) => w,
-                            Err(e) => {
-                                error::set_last_error(e);
-                                return ERR_GENERIC;
-                            }
-                        }
-                    }
-                    (1, 2) => {
-                        let a_arr = match a_view.into_dimensionality::<Ix1>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let b_arr = match b_view.into_dimensionality::<Ix2>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let result = a_arr.dot(&b_arr);
-                        NDArrayWrapper {
-                            data: ArrayData::Float64(Arc::new(RwLock::new(result.into_dyn()))),
-                            dtype: DType::Float64,
-                        }
-                    }
-                    (2, 1) => {
-                        let a_arr = match a_view.into_dimensionality::<Ix2>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let b_arr = match b_view.into_dimensionality::<Ix1>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let result = a_arr.dot(&b_arr);
-                        NDArrayWrapper {
-                            data: ArrayData::Float64(Arc::new(RwLock::new(result.into_dyn()))),
-                            dtype: DType::Float64,
-                        }
-                    }
-                    (2, 2) => {
-                        let a_arr = match a_view.into_dimensionality::<Ix2>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let b_arr = match b_view.into_dimensionality::<Ix2>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let result = a_arr.dot(&b_arr);
-                        NDArrayWrapper {
-                            data: ArrayData::Float64(Arc::new(RwLock::new(result.into_dyn()))),
-                            dtype: DType::Float64,
-                        }
-                    }
-                    _ => {
-                        error::set_last_error(format!(
-                            "Dot product not supported for dimensions {}D @ {}D",
-                            a_meta_ref.ndim, b_meta_ref.ndim
-                        ));
+                let result = match dot_dispatch(a_view, b_view) {
+                    Ok(r) => r,
+                    Err(e) => {
+                        error::set_last_error(e);
                         return ERR_SHAPE;
                     }
+                };
+
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float64,
                 }
             }
             DType::Float32 => {
@@ -180,112 +85,17 @@ pub unsafe extern "C" fn ndarray_dot(
                     return ERR_GENERIC;
                 };
 
-                match (a_meta_ref.ndim, b_meta_ref.ndim) {
-                    (1, 1) => {
-                        // Validate shape lengths match for 1D @ 1D
-                        let a_shape = unsafe { a_meta_ref.shape_slice() };
-                        let b_shape = unsafe { b_meta_ref.shape_slice() };
-                        if a_shape[0] != b_shape[0] {
-                            error::set_last_error(format!(
-                                "Shape mismatch: {} and {}",
-                                a_shape[0], b_shape[0]
-                            ));
-                            return ERR_SHAPE;
-                        }
-
-                        let a_arr = match a_view.into_dimensionality::<Ix1>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let b_arr = match b_view.into_dimensionality::<Ix1>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let result = a_arr.dot(&b_arr);
-                        match NDArrayWrapper::from_slice_f32(&[result], &[]) {
-                            Ok(w) => w,
-                            Err(e) => {
-                                error::set_last_error(e);
-                                return ERR_GENERIC;
-                            }
-                        }
-                    }
-                    (1, 2) => {
-                        let a_arr = match a_view.into_dimensionality::<Ix1>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let b_arr = match b_view.into_dimensionality::<Ix2>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let result = a_arr.dot(&b_arr);
-                        NDArrayWrapper {
-                            data: ArrayData::Float32(Arc::new(RwLock::new(result.into_dyn()))),
-                            dtype: DType::Float32,
-                        }
-                    }
-                    (2, 1) => {
-                        let a_arr = match a_view.into_dimensionality::<Ix2>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let b_arr = match b_view.into_dimensionality::<Ix1>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let result = a_arr.dot(&b_arr);
-                        NDArrayWrapper {
-                            data: ArrayData::Float32(Arc::new(RwLock::new(result.into_dyn()))),
-                            dtype: DType::Float32,
-                        }
-                    }
-                    (2, 2) => {
-                        let a_arr = match a_view.into_dimensionality::<Ix2>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let b_arr = match b_view.into_dimensionality::<Ix2>() {
-                            Ok(v) => v.into_owned(),
-                            Err(e) => {
-                                error::set_last_error(format!("Failed to convert: {}", e));
-                                return ERR_SHAPE;
-                            }
-                        };
-                        let result = a_arr.dot(&b_arr);
-                        NDArrayWrapper {
-                            data: ArrayData::Float32(Arc::new(RwLock::new(result.into_dyn()))),
-                            dtype: DType::Float32,
-                        }
-                    }
-                    _ => {
-                        error::set_last_error(format!(
-                            "Dot product not supported for dimensions {}D @ {}D",
-                            a_meta_ref.ndim, b_meta_ref.ndim
-                        ));
+                let result = match dot_dispatch(a_view, b_view) {
+                    Ok(r) => r,
+                    Err(e) => {
+                        error::set_last_error(e);
                         return ERR_SHAPE;
                     }
+                };
+
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float32,
                 }
             }
             _ => {
@@ -309,4 +119,43 @@ pub unsafe extern "C" fn ndarray_dot(
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
         SUCCESS
     })
+}
+
+/// Dispatch dot product for dynamic views.
+///
+/// Returns `ArrayD<A>` where the result is 0D (scalar), 1D, or 2D depending on inputs.
+fn dot_dispatch<A>(a: ArrayViewD<A>, b: ArrayViewD<A>) -> Result<ArrayD<A>, String>
+where
+    A: LinalgScalar,
+{
+    match (a.ndim(), b.ndim()) {
+        (1, 1) => {
+            let a1 = a.into_dimensionality::<Ix1>().map_err(|e| e.to_string())?;
+            let b1 = b.into_dimensionality::<Ix1>().map_err(|e| e.to_string())?;
+            if a1.len() != b1.len() {
+                return Err(format!("Shape mismatch: {} and {}", a1.len(), b1.len()));
+            }
+            Ok(ArrayD::from_elem(vec![], a1.dot(&b1)))
+        }
+        (1, 2) => {
+            let a1 = a.into_dimensionality::<Ix1>().map_err(|e| e.to_string())?;
+            let b2 = b.into_dimensionality::<Ix2>().map_err(|e| e.to_string())?;
+            Ok(a1.dot(&b2).into_dimensionality::<IxDyn>().unwrap())
+        }
+        (2, 1) => {
+            let a2 = a.into_dimensionality::<Ix2>().map_err(|e| e.to_string())?;
+            let b1 = b.into_dimensionality::<Ix1>().map_err(|e| e.to_string())?;
+            Ok(a2.dot(&b1).into_dimensionality::<IxDyn>().unwrap())
+        }
+        (2, 2) => {
+            let a2 = a.into_dimensionality::<Ix2>().map_err(|e| e.to_string())?;
+            let b2 = b.into_dimensionality::<Ix2>().map_err(|e| e.to_string())?;
+            Ok(a2.dot(&b2).into_dimensionality::<IxDyn>().unwrap())
+        }
+        _ => Err(format!(
+            "Dot product not supported for dimensions {}D @ {}D",
+            a.ndim(),
+            b.ndim()
+        )),
+    }
 }
