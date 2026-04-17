@@ -43,14 +43,6 @@ jobs:
         shell: bash
         run: ./scripts/build.sh release
 
-      - name: Install zip (Windows)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          if (!(Get-Command zip -ErrorAction SilentlyContinue)) {
-            choco install zip --no-progress -y
-          }
-
       - name: Create distribution package
         shell: bash
         run: ./scripts/package.sh '${{ matrix.platform }}'
