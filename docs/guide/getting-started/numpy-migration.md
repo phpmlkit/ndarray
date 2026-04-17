@@ -162,8 +162,19 @@ $mask = $a->gt($b);
 | `np.matmul(a, b)` | `$a->matmul($b)` | |
 | `a.trace()` | `$a->trace()` | |
 | `np.diag(a)` | `$a->diagonal()` | Extract diagonal |
+| `np.diag(v)` | `NDArray::diag($v)` | Create diagonal matrix from 1D vector |
 | `a.transpose()` | `$a->transpose()` | |
 | `a.T` | `$a->transpose()` | Use method instead |
+| `np.linalg.svd(a)` | `$a->svd()` | Singular value decomposition |
+| `np.linalg.qr(a)` | `$a->qr()` | QR decomposition |
+| `np.linalg.cholesky(a)` | `$a->cholesky()` | Cholesky decomposition |
+| `np.linalg.inv(a)` | `$a->inv()` | Matrix inverse |
+| `np.linalg.det(a)` | `$a->det()` | Determinant |
+| `np.linalg.pinv(a)` | `$a->pinv()` | Pseudo-inverse |
+| `np.linalg.cond(a)` | `$a->cond()` | Condition number |
+| `np.linalg.matrix_rank(a)` | `$a->rank()` | Matrix rank |
+| `np.linalg.solve(a, b)` | `$a->solve($b)` | Solve linear system |
+| `np.linalg.lstsq(a, b)` | `$a->lstsq($b)` | Least squares solution |
 
 ### Shape Manipulation
 
@@ -425,7 +436,53 @@ $d = $a->transpose();
 $diag = $a->diagonal();
 ```
 
-### Example 3: Image Processing Pattern
+### Example 3: Linear Algebra Decompositions
+
+**NumPy:**
+```python
+import numpy as np
+
+a = np.array([[1, 1, 1],
+              [2, 3, 4],
+              [3, 5, 2],
+              [4, 2, 5],
+              [5, 4, 3]])
+b = np.array([-10, 12, 14, 16, 18])
+
+# Least squares
+x, residuals, rank, s = np.linalg.lstsq(a, b, rcond=None)
+
+# SVD
+u, s_vals, vt = np.linalg.svd(a)
+
+# Matrix inverse
+inv = np.linalg.inv(np.array([[4, 7], [2, 6]]))
+```
+
+**NDArray PHP:**
+```php
+use PhpMlKit\NDArray\NDArray;
+
+$a = NDArray::array([
+    [1, 1, 1],
+    [2, 3, 4],
+    [3, 5, 2],
+    [4, 2, 5],
+    [5, 4, 3]
+]);
+$b = NDArray::array([-10, 12, 14, 16, 18]);
+
+// Least squares
+[$x, $residuals, $rank, $s] = $a->lstsq($b);
+
+// SVD
+[$u, $sVals, $vt] = $a->svd();
+
+// Matrix inverse
+$inv = NDArray::array([[4, 7], [2, 6]])->inv();
+```
+
+### Example 4: Image Processing Pattern
 
 **NumPy:**
 ```python

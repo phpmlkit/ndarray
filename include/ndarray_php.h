@@ -828,10 +828,47 @@ int32_t ndarray_where(const struct NdArrayHandle *cond_handle,
                       uintptr_t max_ndim);
 
 /**
- * Extract diagonal elements.
+ * Compute Cholesky decomposition of a Hermitian positive-definite matrix.
+ *
+ * `upper` determines which triangular factor to return:
+ * - `upper = 0` (false): returns L such that A = L * L^H
+ * - `upper = 1` (true): returns U such that A = U^H * U
+ */
+int32_t ndarray_cholesky(const struct NdArrayHandle *a,
+                         const struct ArrayMetadata *a_meta,
+                         uint8_t upper,
+                         struct NdArrayHandle **out_handle,
+                         uint8_t *out_dtype,
+                         uintptr_t *out_ndim,
+                         uintptr_t *out_shape,
+                         uintptr_t max_ndim);
+
+/**
+ * Compute the condition number of a matrix.
+ */
+int32_t ndarray_cond(const struct NdArrayHandle *a,
+                     const struct ArrayMetadata *a_meta,
+                     double *out_value,
+                     uint8_t *out_dtype);
+
+/**
+ * Compute the determinant of a square matrix.
+ */
+int32_t ndarray_det(const struct NdArrayHandle *a,
+                    const struct ArrayMetadata *a_meta,
+                    void *out_value,
+                    uint8_t *out_dtype);
+
+/**
+ * Extract diagonal elements with an optional offset.
+ *
+ * * offset = 0: main diagonal
+ * * offset > 0: upper diagonal
+ * * offset < 0: lower diagonal
  */
 int32_t ndarray_diagonal(const struct NdArrayHandle *handle,
                          const struct ArrayMetadata *meta,
+                         intptr_t offset,
                          struct NdArrayHandle **out_handle,
                          uint8_t *out_dtype,
                          uintptr_t *out_ndim,
@@ -850,6 +887,55 @@ int32_t ndarray_dot(const struct NdArrayHandle *a,
                     uintptr_t *out_ndim,
                     uintptr_t *out_shape,
                     uintptr_t max_ndim);
+
+/**
+ * Create a 2D array with the given 1D data on a diagonal.
+ *
+ * * offset = 0: main diagonal
+ * * offset > 0: upper diagonal
+ * * offset < 0: lower diagonal
+ */
+int32_t ndarray_from_diag(const struct NdArrayHandle *handle,
+                          const struct ArrayMetadata *meta,
+                          intptr_t offset,
+                          struct NdArrayHandle **out_handle,
+                          uint8_t *out_dtype,
+                          uintptr_t *out_ndim,
+                          uintptr_t *out_shape,
+                          uintptr_t max_ndim);
+
+/**
+ * Compute the inverse of a square matrix.
+ */
+int32_t ndarray_inv(const struct NdArrayHandle *a,
+                    const struct ArrayMetadata *a_meta,
+                    struct NdArrayHandle **out_handle,
+                    uint8_t *out_dtype,
+                    uintptr_t *out_ndim,
+                    uintptr_t *out_shape,
+                    uintptr_t max_ndim);
+
+/**
+ * Solve a least-squares problem.
+ */
+int32_t ndarray_lstsq(const struct NdArrayHandle *a,
+                      const struct ArrayMetadata *a_meta,
+                      const struct NdArrayHandle *b,
+                      const struct ArrayMetadata *b_meta,
+                      struct NdArrayHandle **out_solution,
+                      struct NdArrayHandle **out_residuals,
+                      int32_t *out_rank,
+                      struct NdArrayHandle **out_s,
+                      uint8_t *out_dtype_sol,
+                      uintptr_t *out_ndim_sol,
+                      uintptr_t *out_shape_sol,
+                      uint8_t *out_dtype_res,
+                      uintptr_t *out_ndim_res,
+                      uintptr_t *out_shape_res,
+                      uint8_t *out_dtype_s,
+                      uintptr_t *out_ndim_s,
+                      uintptr_t *out_shape_s,
+                      uintptr_t max_ndim);
 
 /**
  * Matrix multiplication.
@@ -885,6 +971,102 @@ int32_t ndarray_norm_axis(const struct NdArrayHandle *handle,
                           bool keepdims,
                           int32_t ord,
                           struct NdArrayHandle **out_handle);
+
+/**
+ * Compute the Moore-Penrose pseudo-inverse of a matrix.
+ *
+ * `rcond` is passed as a pointer. If it is null, the default tolerance is used.
+ */
+int32_t ndarray_pinv(const struct NdArrayHandle *a,
+                     const struct ArrayMetadata *a_meta,
+                     const void *rcond,
+                     struct NdArrayHandle **out_handle,
+                     uint8_t *out_dtype,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
+
+/**
+ * Compute QR decomposition: A = Q * R.
+ */
+int32_t ndarray_qr(const struct NdArrayHandle *a,
+                   const struct ArrayMetadata *a_meta,
+                   struct NdArrayHandle **out_q,
+                   uint8_t *out_dtype_q,
+                   uintptr_t *out_ndim_q,
+                   uintptr_t *out_shape_q,
+                   uintptr_t max_ndim,
+                   struct NdArrayHandle **out_r,
+                   uint8_t *out_dtype_r,
+                   uintptr_t *out_ndim_r,
+                   uintptr_t *out_shape_r);
+
+/**
+ * Compute the rank of a matrix.
+ *
+ * `tol` is passed as a pointer. If null, the default tolerance is used:
+ * max(m, n) * eps * max(singular_value)
+ */
+int32_t ndarray_rank(const struct NdArrayHandle *a,
+                     const struct ArrayMetadata *a_meta,
+                     const double *tol,
+                     int32_t *out_rank);
+
+/**
+ * Solve a linear system A * x = b.
+ */
+int32_t ndarray_solve(const struct NdArrayHandle *a,
+                      const struct ArrayMetadata *a_meta,
+                      const struct NdArrayHandle *b,
+                      const struct ArrayMetadata *b_meta,
+                      struct NdArrayHandle **out_handle,
+                      uint8_t *out_dtype,
+                      uintptr_t *out_ndim,
+                      uintptr_t *out_shape,
+                      uintptr_t max_ndim);
+
+/**
+ * Compute SVD: A = U * S * V^T
+ *
+ * # Arguments
+ * * `a` - Input matrix handle (m x n, 2D)
+ * * `a_meta` - Array metadata
+ * * `calc_u` - If non-zero, compute U matrix
+ * * `calc_vt` - If non-zero, compute V^T matrix
+ * * `out_u` - Output U matrix handle (only written if calc_u is non-zero)
+ * * `out_dtype_u` - U dtype output
+ * * `out_ndim_u` - U ndim output
+ * * `out_shape_u` - U shape output
+ * * `max_ndim` - Maximum number of dimensions
+ * * `out_s` - Output singular values vector handle
+ * * `out_dtype_s` - S dtype output
+ * * `out_ndim_s` - S ndim output
+ * * `out_shape_s` - S shape output
+ * * `out_vt` - Output V^T matrix handle (only written if calc_vt is non-zero)
+ * * `out_dtype_vt` - VT dtype output
+ * * `out_ndim_vt` - VT ndim output
+ * * `out_shape_vt` - VT shape output
+ *
+ * # Returns
+ * * 0 on success, negative error code on failure
+ */
+int32_t ndarray_svd(const struct NdArrayHandle *a,
+                    const struct ArrayMetadata *a_meta,
+                    unsigned char calc_u,
+                    unsigned char calc_vt,
+                    struct NdArrayHandle **out_u,
+                    uint8_t *out_dtype_u,
+                    uintptr_t *out_ndim_u,
+                    uintptr_t *out_shape_u,
+                    uintptr_t max_ndim,
+                    struct NdArrayHandle **out_s,
+                    uint8_t *out_dtype_s,
+                    uintptr_t *out_ndim_s,
+                    uintptr_t *out_shape_s,
+                    struct NdArrayHandle **out_vt,
+                    uint8_t *out_dtype_vt,
+                    uintptr_t *out_ndim_vt,
+                    uintptr_t *out_shape_vt);
 
 /**
  * Compute trace (sum of diagonal elements).

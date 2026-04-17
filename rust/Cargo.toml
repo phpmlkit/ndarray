@@ -12,14 +12,21 @@ name = "ndarray_php"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = []
+default = ["ffi"]
 ffi = []
 
 [dependencies]
-ndarray = { version = "0.17.2", features = ["std"] }
+ndarray = { version = "0.17.2", features = ["std", "blas"] }
+num-traits = "0.2"
 parking_lot = "0.12"
 rand = "0.10.0"
 rand_distr = "0.6.0"
+
+[target.'cfg(unix)'.dependencies]
+ndarray-linalg = { version = "0.18", default-features = false, features = ["openblas-static"] }
+
+[target.'cfg(windows)'.dependencies]
+ndarray-linalg = { version = "0.18", default-features = false, features = ["intel-mkl-static-lp64-seq"] }
 
 [build-dependencies]
 cbindgen = "0.26"
