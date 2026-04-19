@@ -1235,4 +1235,403 @@ class LinearAlgebraTest extends TestCase
 
         $this->assertSame(1, $a->rank());
     }
+
+    // =========================================================================
+    // Eigenvalue Decomposition Tests
+    // =========================================================================
+
+    public function testEigDiagonalMatrix(): void
+    {
+        // Diagonal matrix has real eigenvalues equal to diagonal elements
+        $a = NDArray::array([
+            [3.0, 0.0],
+            [0.0, 2.0],
+        ], DType::Float64);
+
+        [$eigvals, $eigvecs] = $a->eig();
+
+        // Eigenvalues should be complex (since eig always returns complex for real input)
+        $this->assertSame(DType::Complex128, $eigvals->dtype());
+        $this->assertSame(DType::Complex128, $eigvecs->dtype());
+
+        // Eigenvalues should be [3, 2] (in some order)
+        $this->assertSame([2], $eigvals->shape());
+        $this->assertSame([2, 2], $eigvecs->shape());
+
+        $this->assertEqualsWithDelta(3.0, $eigvals[0]->real, 1e-10);
+        $this->assertEqualsWithDelta(0.0, $eigvals[0]->imag, 1e-10);
+        $this->assertEqualsWithDelta(2.0, $eigvals[1]->real, 1e-10);
+        $this->assertEqualsWithDelta(0.0, $eigvals[1]->imag, 1e-10);
+    }
+
+    public function testEigRotationMatrix(): void
+    {
+        // Rotation matrix [[0, -1], [1, 0]] has eigenvalues ±i
+        $a = NDArray::array([
+            [0.0, -1.0],
+            [1.0, 0.0],
+        ], DType::Float64);
+
+        [$eigvals, $eigvecs] = $a->eig();
+
+        $this->assertSame(DType::Complex128, $eigvals->dtype());
+        $this->assertSame(DType::Complex128, $eigvecs->dtype());
+
+        // Eigenvalues are ±i (in some order)
+        $this->assertEqualsWithDelta(0.0, $eigvals[0]->real, 1e-10);
+        $this->assertEqualsWithDelta(1.0, abs($eigvals[0]->imag), 1e-10);
+        $this->assertEqualsWithDelta(0.0, $eigvals[1]->real, 1e-10);
+        $this->assertEqualsWithDelta(1.0, abs($eigvals[1]->imag), 1e-10);
+    }
+
+    public function testEigVerifyAvEqualsLambdaV(): void
+    {
+        // Test A * v = λ * v for a known matrix
+        $a = NDArray::array([
+            [4.0, 2.0],
+            [1.0, 3.0],
+        ], DType::Float64);
+
+        [$eigvals, $eigvecs] = $a->eig();
+
+        // For each eigenvalue/eigenvector pair
+        for ($i = 0; $i < 2; ++$i) {
+            $lambda = $eigvals[$i];
+            $v = $eigvecs->slice([':', $i]);
+
+            // Compute A * v
+            $av = $a->astype(DType::Complex128)->matmul($v->reshape([2, 1]));
+
+            // Compute λ * v
+            $lv = $v->multiply($lambda)->reshape([2, 1]);
+
+            // Verify A*v ≈ λ*v by checking norm of difference is near zero
+            $diff = $av->subtract($lv);
+            $norm = $diff->norm(2);
+            $this->assertLessThan(1e-6, $norm, "Eigenpair {$i} does not satisfy A*v = lambda*v");
+        }
+    }
+
+    public function testEigComplexMatrix(): void
+    {
+        // Complex matrix eigenvalue decomposition
+        $a = NDArray::array([
+            [new Complex(1, 0), new Complex(0, 1)],
+            [new Complex(0, -1), new Complex(2, 0)],
+        ], DType::Complex128);
+
+        [$eigvals, $eigvecs] = $a->eig();
+
+        // For complex input, output should be complex
+        $this->assertSame(DType::Complex128, $eigvals->dtype());
+        $this->assertSame(DType::Complex128, $eigvecs->dtype());
+
+        $this->assertSame([2], $eigvals->shape());
+        $this->assertSame([2, 2], $eigvecs->shape());
+
+        // Verify A * v = λ * v for each eigenpair
+        for ($i = 0; $i < 2; ++$i) {
+            $lambda = $eigvals[$i];
+            $v = $eigvecs->slice([':', (string) $i]);
+
+            $av = $a->matmul($v->reshape([2, 1]));
+            $lv = $v->multiply($lambda)->reshape([2, 1]);
+
+            // Verify A*v ≈ λ*v by checking norm of difference is near zero
+            $diff = $av->subtract($lv);
+            $norm = $diff->norm(2);
+            $this->assertLessThan(1e-6, $norm, "Eigenpair {$i} does not satisfy A*v = lambda*v");
+        }
+    }
+
+    public function testEigRequires2D(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('Eig requires a 2D matrix');
+        $a->eig();
+    }
+
+    public function testEigRequiresSquare(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+        ], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('Eig requires a square matrix');
+        $a->eig();
+    }
+
+    public function testEigFloat32(): void
+    {
+        $a = NDArray::array([
+            [3.0, 0.0],
+            [0.0, 2.0],
+        ], DType::Float32);
+
+        [$eigvals, $eigvecs] = $a->eig();
+
+        // Float32 input should produce Complex64 output
+        $this->assertSame(DType::Complex64, $eigvals->dtype());
+        $this->assertSame(DType::Complex64, $eigvecs->dtype());
+
+        $this->assertEqualsWithDelta(3.0, $eigvals[0]->real, 1e-5);
+        $this->assertEqualsWithDelta(2.0, $eigvals[1]->real, 1e-5);
+    }
+
+    public function testEigComplex64(): void
+    {
+        $a = NDArray::array([
+            [new Complex(3, 0), new Complex(0, 0)],
+            [new Complex(0, 0), new Complex(2, 0)],
+        ], DType::Complex64);
+
+        [$eigvals, $eigvecs] = $a->eig();
+
+        $this->assertSame(DType::Complex64, $eigvals->dtype());
+        $this->assertSame(DType::Complex64, $eigvecs->dtype());
+
+        $this->assertEqualsWithDelta(3.0, $eigvals[0]->real, 1e-5);
+        $this->assertEqualsWithDelta(2.0, $eigvals[1]->real, 1e-5);
+    }
+
+    // =========================================================================
+    // Eigenvalues Only Tests
+    // =========================================================================
+
+    public function testEigvalsDiagonalMatrix(): void
+    {
+        $a = NDArray::array([
+            [3.0, 0.0],
+            [0.0, 2.0],
+        ], DType::Float64);
+
+        $eigvals = $a->eigvals();
+
+        $this->assertSame(DType::Complex128, $eigvals->dtype());
+        $this->assertSame([2], $eigvals->shape());
+
+        $this->assertEqualsWithDelta(3.0, $eigvals[0]->real, 1e-10);
+        $this->assertEqualsWithDelta(2.0, $eigvals[1]->real, 1e-10);
+    }
+
+    public function testEigvalsRotationMatrix(): void
+    {
+        $a = NDArray::array([
+            [0.0, -1.0],
+            [1.0, 0.0],
+        ], DType::Float64);
+
+        $eigvals = $a->eigvals();
+
+        $this->assertSame(DType::Complex128, $eigvals->dtype());
+
+        $this->assertEqualsWithDelta(0.0, $eigvals[0]->real, 1e-10);
+        $this->assertEqualsWithDelta(1.0, abs($eigvals[0]->imag), 1e-10);
+        $this->assertEqualsWithDelta(0.0, $eigvals[1]->real, 1e-10);
+        $this->assertEqualsWithDelta(1.0, abs($eigvals[1]->imag), 1e-10);
+    }
+
+    public function testEigvalsComplexMatrix(): void
+    {
+        $a = NDArray::array([
+            [new Complex(3, 0), new Complex(0, 0)],
+            [new Complex(0, 0), new Complex(2, 0)],
+        ], DType::Complex128);
+
+        $eigvals = $a->eigvals();
+
+        $this->assertSame(DType::Complex128, $eigvals->dtype());
+
+        $this->assertEqualsWithDelta(3.0, $eigvals[0]->real, 1e-10);
+        $this->assertEqualsWithDelta(2.0, $eigvals[1]->real, 1e-10);
+    }
+
+    public function testEigvalsRequires2D(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('EigVals requires a 2D matrix');
+        $a->eigvals();
+    }
+
+    public function testEigvalsRequiresSquare(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+        ], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('EigVals requires a square matrix');
+        $a->eigvals();
+    }
+
+    // =========================================================================
+    // Hermitian Eigenvalue Decomposition Tests
+    // =========================================================================
+
+    public function testEighSymmetricMatrix(): void
+    {
+        // Symmetric matrix [[4, 2], [2, 3]]
+        $a = NDArray::array([
+            [4.0, 2.0],
+            [2.0, 3.0],
+        ], DType::Float64);
+
+        [$eigvals, $eigvecs] = $a->eigh();
+
+        // Eigenvalues should be real
+        $this->assertSame(DType::Float64, $eigvals->dtype());
+        $this->assertSame(DType::Float64, $eigvecs->dtype());
+
+        $this->assertSame([2], $eigvals->shape());
+        $this->assertSame([2, 2], $eigvecs->shape());
+
+        // Eigenvalues of [[4, 2], [2, 3]] are approximately 5.56 and 1.44
+        $this->assertEqualsWithDelta(5.5615528, $eigvals[1], 1e-6);
+        $this->assertEqualsWithDelta(1.4384472, $eigvals[0], 1e-6);
+    }
+
+    public function testEighVerifyAvEqualsLambdaV(): void
+    {
+        $a = NDArray::array([
+            [4.0, 2.0],
+            [2.0, 3.0],
+        ], DType::Float64);
+
+        [$eigvals, $eigvecs] = $a->eigh();
+
+        for ($i = 0; $i < 2; ++$i) {
+            $lambda = $eigvals[$i];
+            $v = $eigvecs->slice([':', (string) $i]);
+
+            $av = $a->matmul($v->reshape([2, 1]));
+            $lv = $v->multiply($lambda)->reshape([2, 1]);
+
+            $diff = $av->subtract($lv);
+            $norm = $diff->norm(2);
+            $this->assertLessThan(1e-6, $norm, "Eigenpair {$i} does not satisfy A*v = lambda*v");
+        }
+    }
+
+    public function testEighUpper(): void
+    {
+        // Only upper triangle stored — lower triangle should be ignored
+        $a = NDArray::array([
+            [4.0, 2.0],
+            [99.0, 3.0],
+        ], DType::Float64);
+
+        [$eigvals, $eigvecs] = $a->eigh(upper: true);
+
+        $this->assertEqualsWithDelta(1.4384472, $eigvals[0], 1e-6);
+        $this->assertEqualsWithDelta(5.5615528, $eigvals[1], 1e-6);
+
+        $this->assertEqualsWithDelta(0.61541221, $eigvecs[0][0], 1e-6);
+        $this->assertEqualsWithDelta(-0.78820544, $eigvecs[0][1], 1e-6);
+        $this->assertEqualsWithDelta(-0.78820544, $eigvecs[1][0], 1e-6);
+        $this->assertEqualsWithDelta(-0.61541221, $eigvecs[1][1], 1e-6);
+    }
+
+    public function testEighComplexHermitian(): void
+    {
+        // Hermitian matrix [[2, 1-i], [1+i, 3]]
+        $a = NDArray::array([
+            [new Complex(2, 0), new Complex(1, -1)],
+            [new Complex(1, 1), new Complex(3, 0)],
+        ], DType::Complex128);
+
+        [$eigvals, $eigvecs] = $a->eigh();
+
+        // Eigenvalues should be real
+        $this->assertSame(DType::Float64, $eigvals->dtype());
+        $this->assertSame(DType::Complex128, $eigvecs->dtype());
+
+        $values = $eigvals->toArray();
+        // Eigenvalues should be positive and ordered
+        $this->assertGreaterThan(0, $values[0]);
+        $this->assertGreaterThan(0, $values[1]);
+    }
+
+    public function testEighRequires2D(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('Eigh requires a 2D matrix');
+        $a->eigh();
+    }
+
+    public function testEighRequiresSquare(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+        ], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('Eigh requires a square matrix');
+        $a->eigh();
+    }
+
+    // =========================================================================
+    // Hermitian Eigenvalues Only Tests
+    // =========================================================================
+
+    public function testEigvalshSymmetricMatrix(): void
+    {
+        $a = NDArray::array([
+            [4.0, 2.0],
+            [2.0, 3.0],
+        ], DType::Float64);
+
+        $eigvals = $a->eigvalsh();
+
+        $this->assertSame(DType::Float64, $eigvals->dtype());
+        $this->assertSame([2], $eigvals->shape());
+
+        $this->assertEqualsWithDelta(5.5615528, $eigvals[1], 1e-6);
+        $this->assertEqualsWithDelta(1.4384472, $eigvals[0], 1e-6);
+    }
+
+    public function testEigvalshComplexHermitian(): void
+    {
+        $a = NDArray::array([
+            [new Complex(2, 0), new Complex(1, -1)],
+            [new Complex(1, 1), new Complex(3, 0)],
+        ], DType::Complex128);
+
+        $eigvals = $a->eigvalsh();
+
+        $this->assertSame(DType::Float64, $eigvals->dtype());
+
+        $this->assertGreaterThan(0, $eigvals[0]);
+        $this->assertGreaterThan(0, $eigvals[1]);
+    }
+
+    public function testEigvalshRequires2D(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('EigValsH requires a 2D matrix');
+        $a->eigvalsh();
+    }
+
+    public function testEigvalshRequiresSquare(): void
+    {
+        $a = NDArray::array([
+            [1, 2, 3],
+            [4, 5, 6],
+        ], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('EigValsH requires a square matrix');
+        $a->eigvalsh();
+    }
 }

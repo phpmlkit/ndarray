@@ -395,6 +395,56 @@ interface Bindings
         CData $out_shape_r,
     ): int;
 
+    public function ndarray_eig(
+        CData $a,
+        CData $a_meta,
+        CData $out_eigvals,
+        CData $out_dtype_eigvals,
+        CData $out_ndim_eigvals,
+        CData $out_shape_eigvals,
+        int $max_ndim,
+        CData $out_eigvecs,
+        CData $out_dtype_eigvecs,
+        CData $out_ndim_eigvecs,
+        CData $out_shape_eigvecs,
+    ): int;
+
+    public function ndarray_eigvals(
+        CData $a,
+        CData $a_meta,
+        CData $out_eigvals,
+        CData $out_dtype_eigvals,
+        CData $out_ndim_eigvals,
+        CData $out_shape_eigvals,
+        int $max_ndim,
+    ): int;
+
+    public function ndarray_eigh(
+        CData $a,
+        CData $a_meta,
+        int $uplo,
+        CData $out_eigvals,
+        CData $out_dtype_eigvals,
+        CData $out_ndim_eigvals,
+        CData $out_shape_eigvals,
+        int $max_ndim,
+        CData $out_eigvecs,
+        CData $out_dtype_eigvecs,
+        CData $out_ndim_eigvecs,
+        CData $out_shape_eigvecs,
+    ): int;
+
+    public function ndarray_eigvalsh(
+        CData $a,
+        CData $a_meta,
+        int $uplo,
+        CData $out_eigvals,
+        CData $out_dtype_eigvals,
+        CData $out_ndim_eigvals,
+        CData $out_shape_eigvals,
+        int $max_ndim,
+    ): int;
+
     public function ndarray_cholesky(
         CData $a,
         CData $a_meta,
