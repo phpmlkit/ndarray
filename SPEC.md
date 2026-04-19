@@ -37,7 +37,7 @@ The primary array type representing N-dimensional arrays.
 - [x] 2.2.2: `uint8`, `uint16`, `uint32`, `uint64` - Unsigned integers
 - [x] 2.2.3: `float32`, `float64` - Floating-point numbers
 - [x] 2.2.4: `bool` - Boolean values
-- [ ] 2.2.5: `complex64`, `complex128` - Complex numbers (future)
+- [x] 2.2.5: `complex64`, `complex128` - Complex numbers
 
 ### 2.3 Array Properties (REQ-2.3)
 **Priority**: CRITICAL
@@ -337,8 +337,11 @@ Sort kind selection is enum-based via `SortKind`:
 - [x] 9.2.1: `$array->svd($full_matrices = true)` - Singular value decomposition
 - [x] 9.2.2: `$array->qr()` - QR decomposition
 - [x] 9.2.3: `$array->cholesky()` - Cholesky decomposition
-- [ ] 9.2.4: `$array->eig()` - Eigenvalue decomposition (blocked on complex number support)
-- [ ] 9.2.5: `$array->lu()` - LU decomposition (not exposed; used internally by solve/inv/det)
+- [x] 9.2.4: `$array->eig()` - General eigenvalue decomposition (eigenvalues and eigenvectors)
+- [x] 9.2.5: `$array->eigvals()` - Eigenvalues only (general matrix)
+- [x] 9.2.6: `$array->eigh($upper = false)` - Hermitian/symmetric eigen decomposition
+- [x] 9.2.7: `$array->eigvalsh($upper = false)` - Hermitian/symmetric eigenvalues only
+- [ ] 9.2.8: `$array->lu()` - LU decomposition (not exposed; used internally by solve/inv/det)
 
 ### 9.3 Matrix Properties (REQ-9.3)
 **Priority**: MEDIUM (requires BLAS)
@@ -423,7 +426,7 @@ Sort kind selection is enum-based via `SortKind`:
 - [x] 12.2.2: Dot products (DOT)
 - [x] 12.2.3: Matrix-vector operations (GEMV)
 - [x] 12.2.4: Linear system solving
-- [x] 12.2.5: SVD decompositions (eigenvalue blocked on complex number support)
+- [x] 12.2.5: SVD decompositions (complex support available, eigenvalue decomposition pending)
 
 ## 13. Memory Management
 
@@ -507,7 +510,7 @@ Sort kind selection is enum-based via `SortKind`:
 
 **Requirements**:
 - [ ] 16.1.1: Unit tests for all public methods
-- [ ] 16.1.2: Integration tests for complex workflows
+- [x] 16.1.2: Integration tests for complex workflows
 - [ ] 16.1.3: Property-based testing for mathematical correctness
 - [ ] 16.1.4: Benchmark suite for performance regression
 - [ ] 16.1.5: Memory leak detection tests
@@ -570,7 +573,7 @@ Sort kind selection is enum-based via `SortKind`:
 
 - [ ] 19.1.1: GPU acceleration via CUDA/ROCm
 - [ ] 19.1.2: Sparse matrix support
-- [ ] 19.1.3: Complex number support
+- [x] 19.1.3: Complex number support
 - [ ] 19.1.4: FFT operations
 - [ ] 19.1.5: Image processing utilities
 - [ ] 19.1.6: Pandas-like DataFrame functionality

@@ -305,6 +305,189 @@ trait HasLinearAlgebra
     }
 
     /**
+     * Compute eigenvalue decomposition.
+     *
+     * Decomposes square matrix A into eigenvalues and right eigenvectors:
+     * A * v_i = lambda_i * v_i
+     *
+     * For real input matrices, eigenvalues and eigenvectors are complex.
+     * For complex input matrices, output type matches input type.
+     *
+     * @return array{0: NDArray, 1: NDArray} [eigenvalues, eigenvectors]
+     */
+    public function eig(): array
+    {
+        $ffi = Lib::get();
+        $meta = $this->meta()->toCData();
+        $maxNdim = 8;
+
+        $outHandleEigvals = $ffi->new('struct NdArrayHandle*');
+        $outDtypeEigvals = $ffi->new('uint8_t');
+        $outNdimEigvals = $ffi->new('size_t');
+        $outShapeEigvals = $ffi->new("size_t[{$maxNdim}]");
+
+        $outHandleEigvecs = $ffi->new('struct NdArrayHandle*');
+        $outDtypeEigvecs = $ffi->new('uint8_t');
+        $outNdimEigvecs = $ffi->new('size_t');
+        $outShapeEigvecs = $ffi->new("size_t[{$maxNdim}]");
+
+        $status = $ffi->ndarray_eig(
+            $this->handle,
+            Lib::addr($meta),
+            Lib::addr($outHandleEigvals),
+            Lib::addr($outDtypeEigvals),
+            Lib::addr($outNdimEigvals),
+            $outShapeEigvals,
+            $maxNdim,
+            Lib::addr($outHandleEigvecs),
+            Lib::addr($outDtypeEigvecs),
+            Lib::addr($outNdimEigvecs),
+            $outShapeEigvecs,
+        );
+
+        Lib::checkStatus($status);
+
+        $eigvalsShape = Lib::extractShapeFromPointer($outShapeEigvals, $outNdimEigvals->cdata);
+        $eigvecsShape = Lib::extractShapeFromPointer($outShapeEigvecs, $outNdimEigvecs->cdata);
+
+        $eigvalsDtype = DType::from($outDtypeEigvals->cdata);
+        $eigvecsDtype = DType::from($outDtypeEigvecs->cdata);
+
+        $eigvals = new NDArray($outHandleEigvals, new ArrayMetadata($eigvalsShape), $eigvalsDtype);
+        $eigvecs = new NDArray($outHandleEigvecs, new ArrayMetadata($eigvecsShape), $eigvecsDtype);
+
+        return [$eigvals, $eigvecs];
+    }
+
+    /**
+     * Compute eigenvalues only (no eigenvectors) for a general matrix.
+     *
+     * For real input matrices, eigenvalues are complex.
+     * For complex input matrices, output type matches input type.
+     */
+    public function eigvals(): NDArray
+    {
+        $ffi = Lib::get();
+        $meta = $this->meta()->toCData();
+        $maxNdim = 8;
+
+        $outHandleEigvals = $ffi->new('struct NdArrayHandle*');
+        $outDtypeEigvals = $ffi->new('uint8_t');
+        $outNdimEigvals = $ffi->new('size_t');
+        $outShapeEigvals = $ffi->new("size_t[{$maxNdim}]");
+
+        $status = $ffi->ndarray_eigvals(
+            $this->handle,
+            Lib::addr($meta),
+            Lib::addr($outHandleEigvals),
+            Lib::addr($outDtypeEigvals),
+            Lib::addr($outNdimEigvals),
+            $outShapeEigvals,
+            $maxNdim,
+        );
+
+        Lib::checkStatus($status);
+
+        $eigvalsShape = Lib::extractShapeFromPointer($outShapeEigvals, $outNdimEigvals->cdata);
+        $eigvalsDtype = DType::from($outDtypeEigvals->cdata);
+
+        return new NDArray($outHandleEigvals, new ArrayMetadata($eigvalsShape), $eigvalsDtype);
+    }
+
+    /**
+     * Compute eigenvalue decomposition for a Hermitian/symmetric matrix.
+     *
+     * Eigenvalues are always real. Eigenvectors have the same type as input.
+     *
+     * @param bool $upper If true, use upper triangular part. If false, use lower.
+     *
+     * @return array{0: NDArray, 1: NDArray} [eigenvalues, eigenvectors]
+     */
+    public function eigh(bool $upper = false): array
+    {
+        $ffi = Lib::get();
+        $meta = $this->meta()->toCData();
+        $maxNdim = 8;
+        $uplo = $upper ? 1 : 0;
+
+        $outHandleEigvals = $ffi->new('struct NdArrayHandle*');
+        $outDtypeEigvals = $ffi->new('uint8_t');
+        $outNdimEigvals = $ffi->new('size_t');
+        $outShapeEigvals = $ffi->new("size_t[{$maxNdim}]");
+
+        $outHandleEigvecs = $ffi->new('struct NdArrayHandle*');
+        $outDtypeEigvecs = $ffi->new('uint8_t');
+        $outNdimEigvecs = $ffi->new('size_t');
+        $outShapeEigvecs = $ffi->new("size_t[{$maxNdim}]");
+
+        $status = $ffi->ndarray_eigh(
+            $this->handle,
+            Lib::addr($meta),
+            $uplo,
+            Lib::addr($outHandleEigvals),
+            Lib::addr($outDtypeEigvals),
+            Lib::addr($outNdimEigvals),
+            $outShapeEigvals,
+            $maxNdim,
+            Lib::addr($outHandleEigvecs),
+            Lib::addr($outDtypeEigvecs),
+            Lib::addr($outNdimEigvecs),
+            $outShapeEigvecs,
+        );
+
+        Lib::checkStatus($status);
+
+        $eigvalsShape = Lib::extractShapeFromPointer($outShapeEigvals, $outNdimEigvals->cdata);
+        $eigvecsShape = Lib::extractShapeFromPointer($outShapeEigvecs, $outNdimEigvecs->cdata);
+
+        $eigvalsDtype = DType::from($outDtypeEigvals->cdata);
+        $eigvecsDtype = DType::from($outDtypeEigvecs->cdata);
+
+        $eigvals = new NDArray($outHandleEigvals, new ArrayMetadata($eigvalsShape), $eigvalsDtype);
+        $eigvecs = new NDArray($outHandleEigvecs, new ArrayMetadata($eigvecsShape), $eigvecsDtype);
+
+        return [$eigvals, $eigvecs];
+    }
+
+    /**
+     * Compute eigenvalues only (no eigenvectors) for a Hermitian/symmetric matrix.
+     *
+     * Eigenvalues are always real.
+     *
+     * @param bool $upper If true, use upper triangular part. If false, use lower.
+     */
+    public function eigvalsh(bool $upper = false): NDArray
+    {
+        $ffi = Lib::get();
+        $meta = $this->meta()->toCData();
+        $maxNdim = 8;
+        $uplo = $upper ? 1 : 0;
+
+        $outHandleEigvals = $ffi->new('struct NdArrayHandle*');
+        $outDtypeEigvals = $ffi->new('uint8_t');
+        $outNdimEigvals = $ffi->new('size_t');
+        $outShapeEigvals = $ffi->new("size_t[{$maxNdim}]");
+
+        $status = $ffi->ndarray_eigvalsh(
+            $this->handle,
+            Lib::addr($meta),
+            $uplo,
+            Lib::addr($outHandleEigvals),
+            Lib::addr($outDtypeEigvals),
+            Lib::addr($outNdimEigvals),
+            $outShapeEigvals,
+            $maxNdim,
+        );
+
+        Lib::checkStatus($status);
+
+        $eigvalsShape = Lib::extractShapeFromPointer($outShapeEigvals, $outNdimEigvals->cdata);
+        $eigvalsDtype = DType::from($outDtypeEigvals->cdata);
+
+        return new NDArray($outHandleEigvals, new ArrayMetadata($eigvalsShape), $eigvalsDtype);
+    }
+
+    /**
      * Compute Cholesky decomposition.
      *
      * For a Hermitian positive-definite matrix A:

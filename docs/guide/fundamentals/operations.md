@@ -203,6 +203,10 @@ $v1->dot($v2);      // 32 (scalar)
 
 // Singular Value Decomposition
 [$u, $s, $vt] = $a->svd();
+
+// Eigen decomposition (square matrix)
+$a = NDArray::array([[4.0, 2.0], [1.0, 3.0]]);
+[$eigvals, $eigvecs] = $a->eig();
 ```
 
 **Important Distinction:**
@@ -214,7 +218,7 @@ $v1->dot($v2);      // 32 (scalar)
 - `transpose()` - Transpose matrix
 - `diagonal()`, `trace()` - Diagonal operations
 - `norm()` - Vector/matrix norms
-- `svd()`, `qr()`, `cholesky()` - Matrix decompositions
+- `svd()`, `qr()`, `eig()`, `eigvals()`, `eigh()`, `eigvalsh()`, `cholesky()` - Matrix decompositions
 - `inv()`, `det()`, `pinv()`, `cond()`, `rank()` - Matrix properties
 - `solve()`, `lstsq()` - Linear system solvers
 

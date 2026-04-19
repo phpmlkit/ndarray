@@ -303,6 +303,114 @@ $a = NDArray::array([
 $reconstructed = $q->matmul($r);
 ```
 
+## eig()
+
+```php
+public function eig(): array
+```
+
+Eigenvalue decomposition of a square matrix: `A v = λ v`.
+
+For real `Float32` / `Float64` input, eigenvalues and eigenvectors are complex. For complex input, output dtypes match the array dtype.
+
+### Returns
+
+- `array{0: NDArray, 1: NDArray}` - `[eigenvalues, eigenvectors]`
+
+### Examples
+
+```php
+$a = NDArray::array([
+    [4.0, 2.0],
+    [1.0, 3.0],
+]);
+
+[$w, $v] = $a->eig();
+// $w: eigenvalues (complex dtype for real input)
+// $v: eigenvector columns
+```
+
+## eigvals()
+
+```php
+public function eigvals(): NDArray
+```
+
+Eigenvalues only for a general square matrix (no eigenvectors).
+
+For real input, eigenvalues are complex. For complex input, output dtype matches the array dtype.
+
+### Returns
+
+- `NDArray` - 1D vector of eigenvalues
+
+### Examples
+
+```php
+$a = NDArray::array([[4.0, 2.0], [1.0, 3.0]]);
+$w = $a->eigvals();
+```
+
+## eigh()
+
+```php
+public function eigh(bool $upper = false): array
+```
+
+Eigen decomposition for Hermitian (or real symmetric) matrices.
+
+Eigenvalues are real. Eigenvectors use the same element type as `A`. Only the stored triangle is read: lower if `$upper` is false, upper if true.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$upper` | `bool` | If true, read the upper triangle; if false, the lower. Optional. Default: `false`. |
+
+### Returns
+
+- `array{0: NDArray, 1: NDArray}` - `[eigenvalues, eigenvectors]`
+
+### Examples
+
+```php
+$a = NDArray::array([
+    [2.0, 1.0],
+    [1.0, 2.0],
+]);
+
+[$w, $v] = $a->eigh();
+```
+
+## eigvalsh()
+
+```php
+public function eigvalsh(bool $upper = false): NDArray
+```
+
+Eigenvalues only for a Hermitian (or real symmetric) matrix. Same triangle convention as `eigh()`.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$upper` | `bool` | If true, read the upper triangle; if false, the lower. Optional. Default: `false`. |
+
+### Returns
+
+- `NDArray` - 1D vector of real eigenvalues
+
+### Examples
+
+```php
+$a = NDArray::array([
+    [2.0, 1.0],
+    [1.0, 2.0],
+]);
+
+$w = $a->eigvalsh();
+```
+
 ## cholesky()
 
 ```php

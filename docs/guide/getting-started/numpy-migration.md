@@ -167,6 +167,10 @@ $mask = $a->gt($b);
 | `a.T` | `$a->transpose()` | Use method instead |
 | `np.linalg.svd(a)` | `$a->svd()` | Singular value decomposition |
 | `np.linalg.qr(a)` | `$a->qr()` | QR decomposition |
+| `np.linalg.eig(a)` | `$a->eig()` | Eigenvalues and eigenvectors |
+| `np.linalg.eigvals(a)` | `$a->eigvals()` | Eigenvalues only |
+| `np.linalg.eigh(a)` | `$a->eigh()` | Hermitian / symmetric |
+| `np.linalg.eigvalsh(a)` | `$a->eigvalsh()` | Hermitian eigenvalues only |
 | `np.linalg.cholesky(a)` | `$a->cholesky()` | Cholesky decomposition |
 | `np.linalg.inv(a)` | `$a->inv()` | Matrix inverse |
 | `np.linalg.det(a)` | `$a->det()` | Determinant |

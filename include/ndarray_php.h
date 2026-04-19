@@ -905,6 +905,94 @@ int32_t ndarray_dot(const struct NdArrayHandle *a,
                     uintptr_t max_ndim);
 
 /**
+ * Compute eigenvalue decomposition: `A * v = lambda * v`.
+ *
+ * For real input, eigenvalues and eigenvectors are complex.
+ * For complex input, output type matches input type.
+ */
+int32_t ndarray_eig(const struct NdArrayHandle *a,
+                    const struct ArrayMetadata *a_meta,
+                    struct NdArrayHandle **out_eigvals,
+                    uint8_t *out_dtype_eigvals,
+                    uintptr_t *out_ndim_eigvals,
+                    uintptr_t *out_shape_eigvals,
+                    uintptr_t max_ndim,
+                    struct NdArrayHandle **out_eigvecs,
+                    uint8_t *out_dtype_eigvecs,
+                    uintptr_t *out_ndim_eigvecs,
+                    uintptr_t *out_shape_eigvecs);
+
+/**
+ * Compute eigenvalue decomposition for Hermitian/symmetric matrix.
+ *
+ * Eigenvalues are always real. Eigenvectors have the same type as input.
+ *
+ * # Arguments
+ * * `a` - Input matrix handle (n x n, 2D, square, Hermitian/symmetric)
+ * * `a_meta` - Array metadata
+ * * `uplo` - 0 for Lower triangle, 1 for Upper triangle
+ * * `out_eigvals` - Output eigenvalues vector handle (length n, real)
+ * * `out_dtype_eigvals` - Eigenvalues dtype output
+ * * `out_ndim_eigvals` - Eigenvalues ndim output
+ * * `out_shape_eigvals` - Eigenvalues shape output
+ * * `max_ndim` - Maximum number of dimensions
+ * * `out_eigvecs` - Output eigenvectors matrix handle (n x n)
+ * * `out_dtype_eigvecs` - Eigenvectors dtype output
+ * * `out_ndim_eigvecs` - Eigenvectors ndim output
+ * * `out_shape_eigvecs` - Eigenvectors shape output
+ */
+int32_t ndarray_eigh(const struct NdArrayHandle *a,
+                     const struct ArrayMetadata *a_meta,
+                     uint8_t uplo,
+                     struct NdArrayHandle **out_eigvals,
+                     uint8_t *out_dtype_eigvals,
+                     uintptr_t *out_ndim_eigvals,
+                     uintptr_t *out_shape_eigvals,
+                     uintptr_t max_ndim,
+                     struct NdArrayHandle **out_eigvecs,
+                     uint8_t *out_dtype_eigvecs,
+                     uintptr_t *out_ndim_eigvecs,
+                     uintptr_t *out_shape_eigvecs);
+
+/**
+ * Compute eigenvalues only (no eigenvectors) for a general matrix.
+ *
+ * For real input, eigenvalues are complex.
+ * For complex input, output type matches input type.
+ */
+int32_t ndarray_eigvals(const struct NdArrayHandle *a,
+                        const struct ArrayMetadata *a_meta,
+                        struct NdArrayHandle **out_eigvals,
+                        uint8_t *out_dtype_eigvals,
+                        uintptr_t *out_ndim_eigvals,
+                        uintptr_t *out_shape_eigvals,
+                        uintptr_t max_ndim);
+
+/**
+ * Compute eigenvalues only (no eigenvectors) for a Hermitian/symmetric matrix.
+ *
+ * Eigenvalues are always real.
+ *
+ * # Arguments
+ * * `a` - Input matrix handle (n x n, 2D, square, Hermitian/symmetric)
+ * * `a_meta` - Array metadata
+ * * `uplo` - 0 for Lower triangle, 1 for Upper triangle
+ * * `out_eigvals` - Output eigenvalues vector handle (length n, real)
+ * * `out_dtype_eigvals` - Eigenvalues dtype output
+ * * `out_ndim_eigvals` - Eigenvalues ndim output
+ * * `out_shape_eigvals` - Eigenvalues shape output
+ * * `max_ndim` - Maximum number of dimensions
+ */
+int32_t ndarray_eigvalsh(const struct NdArrayHandle *a,
+                         const struct ArrayMetadata *a_meta,
+                         uint8_t uplo,
+                         struct NdArrayHandle **out_eigvals,
+                         uint8_t *out_dtype_eigvals,
+                         uintptr_t *out_ndim_eigvals,
+                         uintptr_t *out_shape_eigvals,
+                         uintptr_t max_ndim);
+
+/**
  * Create a 2D array with the given 1D data on a diagonal.
  *
  * * offset = 0: main diagonal

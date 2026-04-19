@@ -7,6 +7,7 @@ pub mod error;
 pub mod indexing;
 pub mod output;
 pub mod scalar;
+pub mod validation;
 pub mod view;
 
 pub use indexing::{normalize_axis, normalize_index};
@@ -17,4 +18,5 @@ pub use error::{
 };
 pub use output::write_output_metadata;
 pub use scalar::*;
+pub use validation::*;
 pub use view::*;
