@@ -4,7 +4,7 @@
 
 use std::ops::Neg;
 
-use crate::helpers::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::helpers::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
     extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
@@ -44,7 +44,7 @@ pub unsafe extern "C" fn ndarray_neg(
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(a_wrapper, meta) else {
-                    crate::helpers::error::set_last_error("Failed to extract f64 view".to_string());
+                    set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.neg();
@@ -55,7 +55,7 @@ pub unsafe extern "C" fn ndarray_neg(
             }
             DType::Float32 => {
                 let Some(view) = extract_view_f32(a_wrapper, meta) else {
-                    crate::helpers::error::set_last_error("Failed to extract f32 view".to_string());
+                    set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.neg();
@@ -66,7 +66,7 @@ pub unsafe extern "C" fn ndarray_neg(
             }
             DType::Int64 => {
                 let Some(view) = extract_view_i64(a_wrapper, meta) else {
-                    crate::helpers::error::set_last_error("Failed to extract i64 view".to_string());
+                    set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.neg();
@@ -77,7 +77,7 @@ pub unsafe extern "C" fn ndarray_neg(
             }
             DType::Int32 => {
                 let Some(view) = extract_view_i32(a_wrapper, meta) else {
-                    crate::helpers::error::set_last_error("Failed to extract i32 view".to_string());
+                    set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.neg();
@@ -88,7 +88,7 @@ pub unsafe extern "C" fn ndarray_neg(
             }
             DType::Int16 => {
                 let Some(view) = extract_view_i16(a_wrapper, meta) else {
-                    crate::helpers::error::set_last_error("Failed to extract i16 view".to_string());
+                    set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.neg();
@@ -99,7 +99,7 @@ pub unsafe extern "C" fn ndarray_neg(
             }
             DType::Int8 => {
                 let Some(view) = extract_view_i8(a_wrapper, meta) else {
-                    crate::helpers::error::set_last_error("Failed to extract i8 view".to_string());
+                    set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.neg();
@@ -108,10 +108,30 @@ pub unsafe extern "C" fn ndarray_neg(
                     dtype: DType::Int8,
                 }
             }
+            DType::Complex64 => {
+                let Some(view) = crate::helpers::extract_view_c64(a_wrapper, meta) else {
+                    set_last_error("Failed to extract Complex64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.mapv(|x| -x);
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let Some(view) = crate::helpers::extract_view_c128(a_wrapper, meta) else {
+                    set_last_error("Failed to extract Complex128 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.mapv(|x| -x);
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex128,
+                }
+            }
             DType::Uint64 | DType::Uint32 | DType::Uint16 | DType::Uint8 | DType::Bool => {
-                crate::helpers::error::set_last_error(
-                    "Negation not supported for unsigned integers or bool".to_string(),
-                );
+                set_last_error("Negation not supported for unsigned integers or bool".to_string());
                 return ERR_DTYPE;
             }
         };
@@ -119,7 +139,7 @@ pub unsafe extern "C" fn ndarray_neg(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::helpers::error::set_last_error(e);
+            set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

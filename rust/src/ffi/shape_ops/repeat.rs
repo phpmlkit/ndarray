@@ -10,9 +10,9 @@ use parking_lot::RwLock;
 use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
-    extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
-    extract_view_u8,
+    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
+    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
+    extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -178,6 +178,30 @@ pub unsafe extern "C" fn ndarray_repeat(
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),
                     dtype: DType::Bool,
+                }
+            }
+            DType::Complex64 => {
+                let Some(view) = extract_view_c64(wrapper, meta) else {
+                    set_last_error("Failed to extract complex64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let arr = view.to_owned();
+                let result = repeat_array(arr, repeats_slice, axis);
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let Some(view) = extract_view_c128(wrapper, meta) else {
+                    set_last_error("Failed to extract complex128 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let arr = view.to_owned();
+                let result = repeat_array(arr, repeats_slice, axis);
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex128,
                 }
             }
         };

@@ -18,6 +18,8 @@ macro_rules! match_array_data {
             $crate::types::ArrayData::Float32($arr) => $body,
             $crate::types::ArrayData::Float64($arr) => $body,
             $crate::types::ArrayData::Bool($arr) => $body,
+            $crate::types::ArrayData::Complex64($arr) => $body,
+            $crate::types::ArrayData::Complex128($arr) => $body,
         }
     };
 }

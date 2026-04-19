@@ -1,6 +1,7 @@
 //! Create a 2D identity matrix.
 
 use ndarray::{s, Array2};
+use num_complex::Complex;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -140,6 +141,22 @@ pub unsafe extern "C" fn ndarray_eye(
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(arr.into_dyn()))),
                     dtype: DType::Bool,
+                }
+            }
+            DType::Complex64 => {
+                let arr = Array2::<Complex<f32>>::zeros((n, m));
+                let arr = fill_eye(arr, k, Complex::new(1.0, 0.0));
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let arr = Array2::<Complex<f64>>::zeros((n, m));
+                let arr = fill_eye(arr, k, Complex::new(1.0, 0.0));
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(arr.into_dyn()))),
+                    dtype: DType::Complex128,
                 }
             }
         };

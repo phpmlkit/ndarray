@@ -6,7 +6,7 @@ use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};
 use std::sync::Arc;
 
-use crate::helpers::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::helpers::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, SUCCESS};
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, NDArrayWrapper, NdArrayHandle};
 use std::slice;
@@ -131,7 +131,7 @@ pub unsafe extern "C" fn ndarray_random_int(
         let len = match shape_len(shape_slice) {
             Ok(v) => v,
             Err(e) => {
-                crate::helpers::error::set_last_error(e);
+                set_last_error(e);
                 return ERR_GENERIC;
             }
         };
@@ -148,7 +148,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_i8(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::helpers::error::set_last_error(e);
+                        set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -164,7 +164,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_i16(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::helpers::error::set_last_error(e);
+                        set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -180,7 +180,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_i32(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::helpers::error::set_last_error(e);
+                        set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -196,7 +196,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_i64(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::helpers::error::set_last_error(e);
+                        set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -212,7 +212,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_u8(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::helpers::error::set_last_error(e);
+                        set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -228,7 +228,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_u16(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::helpers::error::set_last_error(e);
+                        set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -244,7 +244,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_u32(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::helpers::error::set_last_error(e);
+                        set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -260,7 +260,7 @@ pub unsafe extern "C" fn ndarray_random_int(
                 let (lo, hi) = match bounds_u64(low, high) {
                     Ok(v) => v,
                     Err(e) => {
-                        crate::helpers::error::set_last_error(e);
+                        set_last_error(e);
                         return ERR_GENERIC;
                     }
                 };
@@ -272,7 +272,14 @@ pub unsafe extern "C" fn ndarray_random_int(
                     dtype: DType::Uint64,
                 }
             }
-            _ => return ERR_DTYPE,
+            DType::Complex64 | DType::Complex128 => {
+                set_last_error("randomInt() not supported for complex dtype".to_string());
+                return ERR_GENERIC;
+            }
+            _ => {
+                set_last_error("randomInt() requires integer type (Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64)".to_string());
+                return ERR_DTYPE;
+            }
         };
 
         *out_handle = NdArrayHandle::from_wrapper(Box::new(wrapper));

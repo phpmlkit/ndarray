@@ -4,11 +4,12 @@
 
 use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::{
-    extract_view_as_bool, extract_view_as_f32, extract_view_as_f64, extract_view_as_i16,
-    extract_view_as_i32, extract_view_as_i64, extract_view_as_i8, extract_view_as_u16,
-    extract_view_as_u32, extract_view_as_u64, extract_view_as_u8, extract_view_bool,
-    extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
-    extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_view_as_bool, extract_view_as_c128, extract_view_as_c64, extract_view_as_f32,
+    extract_view_as_f64, extract_view_as_i16, extract_view_as_i32, extract_view_as_i64,
+    extract_view_as_i8, extract_view_as_u16, extract_view_as_u32, extract_view_as_u64,
+    extract_view_as_u8, extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32,
+    extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8,
+    extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -17,7 +18,6 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 
 /// Cast an NDArray to a different dtype.
-///
 #[no_mangle]
 pub unsafe extern "C" fn ndarray_astype(
     handle: *const NdArrayHandle,
@@ -42,169 +42,274 @@ pub unsafe extern "C" fn ndarray_astype(
         };
 
         let result_wrapper = if wrapper.dtype == target {
-            copy_same_dtype(wrapper, meta)
+            match wrapper.dtype {
+                DType::Float64 => {
+                    let Some(view) = extract_view_f64(wrapper, meta) else {
+                        set_last_error("Failed to extract Float64 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Float64(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Float64,
+                    }
+                }
+                DType::Float32 => {
+                    let Some(view) = extract_view_f32(wrapper, meta) else {
+                        set_last_error("Failed to extract Float32 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Float32(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Float32,
+                    }
+                }
+                DType::Int64 => {
+                    let Some(view) = extract_view_i64(wrapper, meta) else {
+                        set_last_error("Failed to extract Int64 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int64(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Int64,
+                    }
+                }
+                DType::Int32 => {
+                    let Some(view) = extract_view_i32(wrapper, meta) else {
+                        set_last_error("Failed to extract Int32 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int32(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Int32,
+                    }
+                }
+                DType::Int16 => {
+                    let Some(view) = extract_view_i16(wrapper, meta) else {
+                        set_last_error("Failed to extract Int16 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int16(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Int16,
+                    }
+                }
+                DType::Int8 => {
+                    let Some(view) = extract_view_i8(wrapper, meta) else {
+                        set_last_error("Failed to extract Int8 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int8(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Int8,
+                    }
+                }
+                DType::Uint64 => {
+                    let Some(view) = extract_view_u64(wrapper, meta) else {
+                        set_last_error("Failed to extract Uint64 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint64(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Uint64,
+                    }
+                }
+                DType::Uint32 => {
+                    let Some(view) = extract_view_u32(wrapper, meta) else {
+                        set_last_error("Failed to extract Uint32 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint32(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Uint32,
+                    }
+                }
+                DType::Uint16 => {
+                    let Some(view) = extract_view_u16(wrapper, meta) else {
+                        set_last_error("Failed to extract Uint16 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint16(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Uint16,
+                    }
+                }
+                DType::Uint8 => {
+                    let Some(view) = extract_view_u8(wrapper, meta) else {
+                        set_last_error("Failed to extract Uint8 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint8(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Uint8,
+                    }
+                }
+                DType::Bool => {
+                    let Some(view) = extract_view_bool(wrapper, meta) else {
+                        set_last_error("Failed to extract Bool view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Bool(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Bool,
+                    }
+                }
+                DType::Complex64 => {
+                    let Some(view) = extract_view_c64(wrapper, meta) else {
+                        set_last_error("Failed to extract Complex64 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Complex64(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Complex64,
+                    }
+                }
+                DType::Complex128 => {
+                    let Some(view) = extract_view_c128(wrapper, meta) else {
+                        set_last_error("Failed to extract Complex128 view".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Complex128(Arc::new(RwLock::new(view.to_owned()))),
+                        dtype: DType::Complex128,
+                    }
+                }
+            }
         } else {
-            cast_to_dtype(wrapper, meta, target)
+            match target {
+                DType::Float64 => {
+                    let Some(arr) = extract_view_as_f64(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Float64".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Float64(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Float64,
+                    }
+                }
+                DType::Float32 => {
+                    let Some(arr) = extract_view_as_f32(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Float32".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Float32(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Float32,
+                    }
+                }
+                DType::Int64 => {
+                    let Some(arr) = extract_view_as_i64(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Int64".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int64(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Int64,
+                    }
+                }
+                DType::Int32 => {
+                    let Some(arr) = extract_view_as_i32(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Int32".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int32(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Int32,
+                    }
+                }
+                DType::Int16 => {
+                    let Some(arr) = extract_view_as_i16(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Int16".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int16(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Int16,
+                    }
+                }
+                DType::Int8 => {
+                    let Some(arr) = extract_view_as_i8(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Int8".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Int8(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Int8,
+                    }
+                }
+                DType::Uint64 => {
+                    let Some(arr) = extract_view_as_u64(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Uint64".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint64(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Uint64,
+                    }
+                }
+                DType::Uint32 => {
+                    let Some(arr) = extract_view_as_u32(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Uint32".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint32(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Uint32,
+                    }
+                }
+                DType::Uint16 => {
+                    let Some(arr) = extract_view_as_u16(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Uint16".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint16(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Uint16,
+                    }
+                }
+                DType::Uint8 => {
+                    let Some(arr) = extract_view_as_u8(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Uint8".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Uint8(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Uint8,
+                    }
+                }
+                DType::Bool => {
+                    let Some(arr) = extract_view_as_bool(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Bool".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Bool(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Bool,
+                    }
+                }
+                DType::Complex64 => {
+                    let Some(arr) = extract_view_as_c64(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Complex64".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Complex64(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Complex64,
+                    }
+                }
+                DType::Complex128 => {
+                    let Some(arr) = extract_view_as_c128(wrapper, meta) else {
+                        set_last_error("Failed to cast array to Complex128".to_string());
+                        return ERR_GENERIC;
+                    };
+                    NDArrayWrapper {
+                        data: ArrayData::Complex128(Arc::new(RwLock::new(arr))),
+                        dtype: DType::Complex128,
+                    }
+                }
+            }
         };
 
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
         SUCCESS
     })
-}
-
-/// Copy array data when source and target dtypes are the same.
-fn copy_same_dtype(wrapper: &NDArrayWrapper, meta: &ArrayMetadata) -> NDArrayWrapper {
-    unsafe {
-        match &wrapper.data {
-            ArrayData::Float64(_) => {
-                let view = extract_view_f64(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Float64(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Float64,
-                }
-            }
-            ArrayData::Float32(_) => {
-                let view = extract_view_f32(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Float32(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Float32,
-                }
-            }
-            ArrayData::Int64(_) => {
-                let view = extract_view_i64(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Int64(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Int64,
-                }
-            }
-            ArrayData::Int32(_) => {
-                let view = extract_view_i32(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Int32(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Int32,
-                }
-            }
-            ArrayData::Int16(_) => {
-                let view = extract_view_i16(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Int16(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Int16,
-                }
-            }
-            ArrayData::Int8(_) => {
-                let view = extract_view_i8(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Int8(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Int8,
-                }
-            }
-            ArrayData::Uint64(_) => {
-                let view = extract_view_u64(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Uint64(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Uint64,
-                }
-            }
-            ArrayData::Uint32(_) => {
-                let view = extract_view_u32(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Uint32(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Uint32,
-                }
-            }
-            ArrayData::Uint16(_) => {
-                let view = extract_view_u16(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Uint16(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Uint16,
-                }
-            }
-            ArrayData::Uint8(_) => {
-                let view = extract_view_u8(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Uint8(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Uint8,
-                }
-            }
-            ArrayData::Bool(_) => {
-                let view = extract_view_bool(wrapper, meta).unwrap();
-                NDArrayWrapper {
-                    data: ArrayData::Bool(Arc::new(RwLock::new(view.to_owned()))),
-                    dtype: DType::Bool,
-                }
-            }
-        }
-    }
-}
-
-/// Cast array data from source dtype to a desired target dtype.
-fn cast_to_dtype(wrapper: &NDArrayWrapper, meta: &ArrayMetadata, target: DType) -> NDArrayWrapper {
-    match target {
-        DType::Float64 => NDArrayWrapper {
-            data: ArrayData::Float64(Arc::new(RwLock::new(
-                extract_view_as_f64(wrapper, &meta).expect("Failed to cast to f64"),
-            ))),
-            dtype: DType::Float64,
-        },
-        DType::Float32 => NDArrayWrapper {
-            data: ArrayData::Float32(Arc::new(RwLock::new(
-                extract_view_as_f32(wrapper, &meta).expect("Failed to cast to f32"),
-            ))),
-            dtype: DType::Float32,
-        },
-        DType::Int64 => NDArrayWrapper {
-            data: ArrayData::Int64(Arc::new(RwLock::new(
-                extract_view_as_i64(wrapper, &meta).expect("Failed to cast to i64"),
-            ))),
-            dtype: DType::Int64,
-        },
-        DType::Int32 => NDArrayWrapper {
-            data: ArrayData::Int32(Arc::new(RwLock::new(
-                extract_view_as_i32(wrapper, &meta).expect("Failed to cast to i32"),
-            ))),
-            dtype: DType::Int32,
-        },
-        DType::Int16 => NDArrayWrapper {
-            data: ArrayData::Int16(Arc::new(RwLock::new(
-                extract_view_as_i16(wrapper, &meta).expect("Failed to cast to i16"),
-            ))),
-            dtype: DType::Int16,
-        },
-        DType::Int8 => NDArrayWrapper {
-            data: ArrayData::Int8(Arc::new(RwLock::new(
-                extract_view_as_i8(wrapper, &meta).expect("Failed to cast to i8"),
-            ))),
-            dtype: DType::Int8,
-        },
-        DType::Uint64 => NDArrayWrapper {
-            data: ArrayData::Uint64(Arc::new(RwLock::new(
-                extract_view_as_u64(wrapper, &meta).expect("Failed to cast to u64"),
-            ))),
-            dtype: DType::Uint64,
-        },
-        DType::Uint32 => NDArrayWrapper {
-            data: ArrayData::Uint32(Arc::new(RwLock::new(
-                extract_view_as_u32(wrapper, &meta).expect("Failed to cast to u32"),
-            ))),
-            dtype: DType::Uint32,
-        },
-        DType::Uint16 => NDArrayWrapper {
-            data: ArrayData::Uint16(Arc::new(RwLock::new(
-                extract_view_as_u16(wrapper, &meta).expect("Failed to cast to u16"),
-            ))),
-            dtype: DType::Uint16,
-        },
-        DType::Uint8 => NDArrayWrapper {
-            data: ArrayData::Uint8(Arc::new(RwLock::new(
-                extract_view_as_u8(wrapper, &meta).expect("Failed to cast to u8"),
-            ))),
-            dtype: DType::Uint8,
-        },
-        DType::Bool => NDArrayWrapper {
-            data: ArrayData::Bool(Arc::new(RwLock::new(
-                extract_view_as_bool(wrapper, &meta).expect("Failed to cast to bool"),
-            ))),
-            dtype: DType::Bool,
-        },
-    }
 }

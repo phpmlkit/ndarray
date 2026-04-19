@@ -10,7 +10,7 @@ use parking_lot::RwLock;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_MATH, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
 use crate::types::{ArrayData, ArrayMetadata, DType, NDArrayWrapper, NdArrayHandle};
 
 /// Compute the inverse of a square matrix.
@@ -92,8 +92,58 @@ pub unsafe extern "C" fn ndarray_inv(
                     dtype: DType::Float32,
                 }
             }
+            DType::Complex64 => {
+                let Some(a_view_dyn) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c64 view for inverse".to_string());
+                    return ERR_GENERIC;
+                };
+                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                let result = match a_view_2d.inv() {
+                    Ok(r) => r,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(result.into_dyn()))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let Some(a_view_dyn) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c128 view for inverse".to_string());
+                    return ERR_GENERIC;
+                };
+                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                let result = match a_view_2d.inv() {
+                    Ok(r) => r,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(result.into_dyn()))),
+                    dtype: DType::Complex128,
+                }
+            }
             _ => {
-                error::set_last_error("Inverse only supports Float32 and Float64".to_string());
+                error::set_last_error(
+                    "Inverse only supports Float32, Float64, Complex64, and Complex128".to_string(),
+                );
                 return ERR_DTYPE;
             }
         };

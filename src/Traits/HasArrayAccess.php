@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\Exceptions\IndexException;
 use PhpMlKit\NDArray\NDArray;
 
@@ -58,7 +59,7 @@ trait HasArrayAccess
      *
      * @param int|string $offset
      */
-    public function offsetGet(mixed $offset): bool|float|int|self
+    public function offsetGet(mixed $offset): bool|Complex|float|int|self
     {
         if ($this->isSlice($offset)) {
             return $this->slice($this->parseSelectors($offset));

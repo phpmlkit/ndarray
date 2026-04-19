@@ -30,6 +30,10 @@ pub enum DType {
 
     // Boolean
     Bool = 10,
+
+    // Complex numbers
+    Complex64 = 11,
+    Complex128 = 12,
 }
 
 impl DType {
@@ -48,6 +52,8 @@ impl DType {
             8 => Some(DType::Float32),
             9 => Some(DType::Float64),
             10 => Some(DType::Bool),
+            11 => Some(DType::Complex64),
+            12 => Some(DType::Complex128),
             _ => None,
         }
     }
@@ -66,6 +72,8 @@ impl DType {
             DType::Int16 | DType::Uint16 => 2,
             DType::Int32 | DType::Uint32 | DType::Float32 => 4,
             DType::Int64 | DType::Uint64 | DType::Float64 => 8,
+            DType::Complex64 => 8,
+            DType::Complex128 => 16,
         }
     }
 
@@ -87,6 +95,12 @@ impl DType {
         )
     }
 
+    /// Check if this is a complex number type.
+    #[inline]
+    pub const fn is_complex(self) -> bool {
+        matches!(self, DType::Complex64 | DType::Complex128)
+    }
+
     /// Get a human-readable name for this dtype.
     #[inline]
     pub const fn name(self) -> &'static str {
@@ -102,6 +116,8 @@ impl DType {
             DType::Float32 => "float32",
             DType::Float64 => "float64",
             DType::Bool => "bool",
+            DType::Complex64 => "complex64",
+            DType::Complex128 => "complex128",
         }
     }
 
@@ -110,6 +126,20 @@ impl DType {
     pub fn promote(a: DType, b: DType) -> DType {
         if a == b {
             return a;
+        }
+
+        // Complex promotion rules
+        if a.is_complex() || b.is_complex() {
+            if a == DType::Complex128 || b == DType::Complex128 {
+                return DType::Complex128;
+            }
+            // NumPy: result_type(float64, complex64) -> complex128
+            if (a == DType::Float64 && b == DType::Complex64)
+                || (b == DType::Float64 && a == DType::Complex64)
+            {
+                return DType::Complex128;
+            }
+            return DType::Complex64;
         }
 
         if a == DType::Float64 || b == DType::Float64 {
@@ -199,7 +229,9 @@ mod tests {
         assert_eq!(DType::from_u8(0), Some(DType::Int8));
         assert_eq!(DType::from_u8(9), Some(DType::Float64));
         assert_eq!(DType::from_u8(10), Some(DType::Bool));
-        assert_eq!(DType::from_u8(11), None);
+        assert_eq!(DType::from_u8(11), Some(DType::Complex64));
+        assert_eq!(DType::from_u8(12), Some(DType::Complex128));
+        assert_eq!(DType::from_u8(13), None);
         assert_eq!(DType::from_u8(255), None);
     }
 
@@ -208,6 +240,8 @@ mod tests {
         assert_eq!(DType::Int8.to_u8(), 0);
         assert_eq!(DType::Float64.to_u8(), 9);
         assert_eq!(DType::Bool.to_u8(), 10);
+        assert_eq!(DType::Complex64.to_u8(), 11);
+        assert_eq!(DType::Complex128.to_u8(), 12);
     }
 
     #[test]
@@ -219,6 +253,8 @@ mod tests {
         assert_eq!(DType::Float32.item_size(), 4);
         assert_eq!(DType::Float64.item_size(), 8);
         assert_eq!(DType::Bool.item_size(), 1);
+        assert_eq!(DType::Complex64.item_size(), 8);
+        assert_eq!(DType::Complex128.item_size(), 16);
     }
 
     #[test]
@@ -232,5 +268,17 @@ mod tests {
         assert_eq!(DType::promote(DType::Float32, DType::Int32), DType::Float32);
         assert_eq!(DType::promote(DType::Int64, DType::Int32), DType::Int64);
         assert_eq!(DType::promote(DType::Uint64, DType::Int32), DType::Float64);
+        assert_eq!(
+            DType::promote(DType::Complex64, DType::Float32),
+            DType::Complex64
+        );
+        assert_eq!(
+            DType::promote(DType::Complex64, DType::Complex128),
+            DType::Complex128
+        );
+        assert_eq!(
+            DType::promote(DType::Float64, DType::Complex64),
+            DType::Complex128
+        );
     }
 }

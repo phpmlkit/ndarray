@@ -4,30 +4,31 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
-use FFI;
 use FFI\CData;
 use PhpMlKit\NDArray\ArrayMetadata;
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
 
 /**
- * Shared operation helpers for FFI-backed unary, binary, and scalar reduction ops.
+ * Shared helpers for calling the Rust FFI layer from NDArray traits.
  *
- * Centralizes argument marshaling and status handling so all traits can
- * reuse consistent call patterns and exception mapping.
+ * Wraps common call shapes (unary/binary array ops, scalar reductions) and
+ * pairs {@see scalarToBuffer} with {@see bufferToScalar} so PHP values and
+ * raw C buffers stay in sync at the boundary.
  */
 trait HasOps
 {
     /**
-     * Execute a unary FFI operation that returns an NDArray handle.
+     * Call a unary FFI function that allocates a new array handle and fills output metadata.
      *
-     * All unary ops return metadata (dtype, ndim, shape) into caller-provided buffers.
-     * Signature: (handle, offset, shape, strides, ndim, ...$extraArgs, out_handle, out_dtype, out_ndim, out_shape, max_ndim).
+     * Signature: `(handle, metadata, ...$extraArgs, out_handle, out_dtype, out_ndim, out_shape, max_ndim)`.
+     * `BackedEnum` arguments (e.g. {@see DType}) are passed as their raw integer values.
      *
-     * @param string $funcName     FFI function name
-     * @param mixed  ...$extraArgs Extra FFI args inserted before out_handle (e.g. scalar, axis)
+     * @param string $funcName     FFI symbol
+     * @param mixed  ...$extraArgs Inserted after metadata (scalars, axes, packed scalar + dtype, …)
      */
     protected function unaryOp(string $funcName, mixed ...$extraArgs): NDArray
     {
@@ -69,13 +70,9 @@ trait HasOps
     }
 
     /**
-     * Execute a binary operation with NDArray RHS.
+     * Call a binary FFI function with this array as LHS and another {@see NDArray} as RHS.
      *
-     * FFI signature: (a..., b..., out_handle, out_dtype_ptr, out_ndim, out_shape, max_ndim).
-     * dtype and shape are always read from Rust output metadata.
-     *
-     * @param string  $funcName FFI function for NDArray RHS
-     * @param NDArray $other    RHS operand
+     * Signature: `(a_handle, a_meta, b_handle, b_meta, out_handle, out_dtype, out_ndim, out_shape, max_ndim)`.
      */
     protected function binaryOp(
         string $funcName,
@@ -113,18 +110,18 @@ trait HasOps
     }
 
     /**
-     * Execute a scalar reduction FFI operation that returns a single value.
+     * Run a reduction that returns one element (sum, mean, argmax, …) and decode it in PHP.
      *
-     * FFI signature: (handle, offset, shape, strides, ndim, ...$extraArgs, out_value, out_dtype).
-     * Examples: ndarray_sum (no extra args), ndarray_var (ddof before out_value).
+     * FFI: `(handle, metadata, ...$extraArgs, out_value, out_dtype)` — Rust writes the packed
+     * scalar and dtype; this method passes a `uint8_t[16]` for `out_value` then {@see bufferToScalar}.
      *
-     * @param string $funcName     FFI function name
-     * @param mixed  ...$extraArgs Extra FFI args inserted before out_value (e.g. ddof)
+     * @param string $funcName     FFI symbol (e.g. `ndarray_sum`)
+     * @param mixed  ...$extraArgs Placed before `out_value` (e.g. `ddof` for var/std)
      */
-    protected function scalarReductionOp(string $funcName, mixed ...$extraArgs): float|int
+    protected function scalarReductionOp(string $funcName, mixed ...$extraArgs): Complex|float|int
     {
         $ffi = Lib::get();
-        $outValue = $ffi->new('double');
+        $outValue = $ffi->new('uint8_t[16]');
         $outDtype = $ffi->new('uint8_t');
 
         $meta = $this->meta()->toCData();
@@ -144,24 +141,59 @@ trait HasOps
             throw new NDArrayException('Invalid dtype returned from Rust scalar reduction');
         }
 
-        return $this->interpretScalarValue($ffi, $outValue, $dtype);
+        return $this->bufferToScalar($outValue, $dtype);
     }
 
     /**
-     * Interpret 8-byte value buffer as PHP scalar based on dtype.
+     * Encode a PHP scalar as a typed FFI buffer plus {@see DType} for `*_scalar` entry points.
      *
-     * @param \FFI  $ffi      FFI instance
-     * @param CData $outValue 8-byte buffer (allocated as double)
-     * @param DType $dtype    Result dtype from Rust
+     * Uses {@see DType::fromValue} to pick the dtype, allocates a one-element buffer (or two
+     * floats/doubles for complex), and returns `[buffer, dtype]`. Spread into {@see unaryOp}:
+     * `unaryOp('ndarray_add_scalar', ...$this->scalarToBuffer($x))` — `unaryOp` turns the enum
+     * into its `uint8_t` FFI value.
+     *
+     * @return array{0: CData, 1: DType}
      */
-    private function interpretScalarValue(\FFI $ffi, CData $outValue, DType $dtype): float|int
+    protected function scalarToBuffer(Complex|float|int $value): array
     {
-        $addr = \FFI::addr($outValue);
+        $dtype = DType::fromValue($value);
+        $ffi = Lib::get();
+
+        if ($dtype->isComplex()) {
+            \assert($value instanceof Complex);
+            $buffer = $ffi->new("{$dtype->ffiType()}[2]");
+            $buffer[0] = $value->real;
+            $buffer[1] = $value->imag;
+
+            return [$buffer, $dtype];
+        }
+
+        $buffer = $ffi->new("{$dtype->ffiType()}[1]");
+        $buffer[0] = $dtype->isBool() ? ($value ? 1 : 0) : $value;
+
+        return [$buffer, $dtype];
+    }
+
+    /**
+     * Decode a raw scalar buffer from Rust into a PHP `float`, `int`, or {@see Complex}.
+     *
+     * Inverse of {@see scalarToBuffer}: used when the native side writes `out_value` (up to 16 bytes,
+     * e.g. complex128) and sets `out_dtype`. Reads layout according to `dtype` via FFI casts.
+     *
+     * @param CData $buffer memory Rust filled; typically `uint8_t[16]` from a scalar reduction
+     */
+    private function bufferToScalar(CData $buffer, DType $dtype): Complex|float|int
+    {
+        $ffi = Lib::get();
+        $base = Lib::addr($buffer);
 
         return match ($dtype) {
-            DType::Float64, DType::Float32 => $outValue->cdata,
-            DType::Int64, DType::Int32, DType::Int16, DType::Int8 => $ffi->cast('int64_t*', $addr)[0],
-            DType::UInt64, DType::UInt32, DType::UInt16, DType::UInt8 => $ffi->cast('uint64_t*', $addr)[0],
+            DType::Float64 => $ffi->cast('double*', $base)[0],
+            DType::Float32 => $ffi->cast('float*', $base)[0],
+            DType::Int64, DType::Int32, DType::Int16, DType::Int8 => $ffi->cast('int64_t*', $base)[0],
+            DType::UInt64, DType::UInt32, DType::UInt16, DType::UInt8 => $ffi->cast('uint64_t*', $base)[0],
+            DType::Complex64 => new Complex($ffi->cast('float*', $base)[0], $ffi->cast('float*', $base)[1]),
+            DType::Complex128 => new Complex($ffi->cast('double*', $base)[0], $ffi->cast('double*', $base)[1]),
             default => 0,
         };
     }

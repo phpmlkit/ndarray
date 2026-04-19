@@ -80,7 +80,8 @@ int32_t ndarray_add(const struct NdArrayHandle *a,
  */
 int32_t ndarray_add_scalar(const struct NdArrayHandle *a,
                            const struct ArrayMetadata *a_meta,
-                           double scalar,
+                           const void *scalar,
+                           uint8_t scalar_dtype,
                            struct NdArrayHandle **out,
                            uint8_t *out_dtype,
                            uintptr_t *out_ndim,
@@ -105,7 +106,8 @@ int32_t ndarray_div(const struct NdArrayHandle *a,
  */
 int32_t ndarray_div_scalar(const struct NdArrayHandle *a,
                            const struct ArrayMetadata *a_meta,
-                           double scalar,
+                           const void *scalar,
+                           uint8_t scalar_dtype,
                            struct NdArrayHandle **out,
                            uint8_t *out_dtype,
                            uintptr_t *out_ndim,
@@ -156,7 +158,8 @@ int32_t ndarray_mul(const struct NdArrayHandle *a,
  */
 int32_t ndarray_mul_scalar(const struct NdArrayHandle *a,
                            const struct ArrayMetadata *a_meta,
-                           double scalar,
+                           const void *scalar,
+                           uint8_t scalar_dtype,
                            struct NdArrayHandle **out,
                            uint8_t *out_dtype,
                            uintptr_t *out_ndim,
@@ -181,7 +184,8 @@ int32_t ndarray_rem(const struct NdArrayHandle *a,
  */
 int32_t ndarray_rem_scalar(const struct NdArrayHandle *a,
                            const struct ArrayMetadata *a_meta,
-                           double scalar,
+                           const void *scalar,
+                           uint8_t scalar_dtype,
                            struct NdArrayHandle **out,
                            uint8_t *out_dtype,
                            uintptr_t *out_ndim,
@@ -206,7 +210,8 @@ int32_t ndarray_sub(const struct NdArrayHandle *a,
  */
 int32_t ndarray_sub_scalar(const struct NdArrayHandle *a,
                            const struct ArrayMetadata *a_meta,
-                           double scalar,
+                           const void *scalar,
+                           uint8_t scalar_dtype,
                            struct NdArrayHandle **out,
                            uint8_t *out_dtype,
                            uintptr_t *out_ndim,
@@ -285,7 +290,8 @@ int32_t ndarray_bitand(const struct NdArrayHandle *a,
  */
 int32_t ndarray_bitand_scalar(const struct NdArrayHandle *a,
                               const struct ArrayMetadata *a_meta,
-                              int64_t scalar,
+                              const void *scalar,
+                              uint8_t scalar_dtype,
                               struct NdArrayHandle **out,
                               uint8_t *out_dtype,
                               uintptr_t *out_ndim,
@@ -310,7 +316,8 @@ int32_t ndarray_bitor(const struct NdArrayHandle *a,
  */
 int32_t ndarray_bitor_scalar(const struct NdArrayHandle *a,
                              const struct ArrayMetadata *a_meta,
-                             int64_t scalar,
+                             const void *scalar,
+                             uint8_t scalar_dtype,
                              struct NdArrayHandle **out,
                              uint8_t *out_dtype,
                              uintptr_t *out_ndim,
@@ -335,7 +342,8 @@ int32_t ndarray_bitxor(const struct NdArrayHandle *a,
  */
 int32_t ndarray_bitxor_scalar(const struct NdArrayHandle *a,
                               const struct ArrayMetadata *a_meta,
-                              int64_t scalar,
+                              const void *scalar,
+                              uint8_t scalar_dtype,
                               struct NdArrayHandle **out,
                               uint8_t *out_dtype,
                               uintptr_t *out_ndim,
@@ -360,7 +368,8 @@ int32_t ndarray_left_shift(const struct NdArrayHandle *a,
  */
 int32_t ndarray_left_shift_scalar(const struct NdArrayHandle *a,
                                   const struct ArrayMetadata *a_meta,
-                                  int64_t scalar,
+                                  const void *scalar,
+                                  uint8_t scalar_dtype,
                                   struct NdArrayHandle **out,
                                   uint8_t *out_dtype,
                                   uintptr_t *out_ndim,
@@ -385,7 +394,8 @@ int32_t ndarray_right_shift(const struct NdArrayHandle *a,
  */
 int32_t ndarray_right_shift_scalar(const struct NdArrayHandle *a,
                                    const struct ArrayMetadata *a_meta,
-                                   int64_t scalar,
+                                   const void *scalar,
+                                   uint8_t scalar_dtype,
                                    struct NdArrayHandle **out,
                                    uint8_t *out_dtype,
                                    uintptr_t *out_ndim,
@@ -410,7 +420,8 @@ int32_t ndarray_eq(const struct NdArrayHandle *a,
  */
 int32_t ndarray_eq_scalar(const struct NdArrayHandle *a,
                           const struct ArrayMetadata *a_meta,
-                          double scalar,
+                          const void *scalar,
+                          uint8_t scalar_dtype,
                           struct NdArrayHandle **out,
                           uint8_t *out_dtype,
                           uintptr_t *out_ndim,
@@ -432,7 +443,8 @@ int32_t ndarray_gt(const struct NdArrayHandle *a,
 
 int32_t ndarray_gt_scalar(const struct NdArrayHandle *a,
                           const struct ArrayMetadata *a_meta,
-                          double scalar,
+                          const void *scalar,
+                          uint8_t scalar_dtype,
                           struct NdArrayHandle **out,
                           uint8_t *out_dtype,
                           uintptr_t *out_ndim,
@@ -454,7 +466,8 @@ int32_t ndarray_gte(const struct NdArrayHandle *a,
 
 int32_t ndarray_gte_scalar(const struct NdArrayHandle *a,
                            const struct ArrayMetadata *a_meta,
-                           double scalar,
+                           const void *scalar,
+                           uint8_t scalar_dtype,
                            struct NdArrayHandle **out,
                            uint8_t *out_dtype,
                            uintptr_t *out_ndim,
@@ -476,7 +489,8 @@ int32_t ndarray_lt(const struct NdArrayHandle *a,
 
 int32_t ndarray_lt_scalar(const struct NdArrayHandle *a,
                           const struct ArrayMetadata *a_meta,
-                          double scalar,
+                          const void *scalar,
+                          uint8_t scalar_dtype,
                           struct NdArrayHandle **out,
                           uint8_t *out_dtype,
                           uintptr_t *out_ndim,
@@ -498,7 +512,8 @@ int32_t ndarray_lte(const struct NdArrayHandle *a,
 
 int32_t ndarray_lte_scalar(const struct NdArrayHandle *a,
                            const struct ArrayMetadata *a_meta,
-                           double scalar,
+                           const void *scalar,
+                           uint8_t scalar_dtype,
                            struct NdArrayHandle **out,
                            uint8_t *out_dtype,
                            uintptr_t *out_ndim,
@@ -520,7 +535,8 @@ int32_t ndarray_ne(const struct NdArrayHandle *a,
 
 int32_t ndarray_ne_scalar(const struct NdArrayHandle *a,
                           const struct ArrayMetadata *a_meta,
-                          double scalar,
+                          const void *scalar,
+                          uint8_t scalar_dtype,
                           struct NdArrayHandle **out,
                           uint8_t *out_dtype,
                           uintptr_t *out_ndim,
@@ -848,7 +864,7 @@ int32_t ndarray_cholesky(const struct NdArrayHandle *a,
  */
 int32_t ndarray_cond(const struct NdArrayHandle *a,
                      const struct ArrayMetadata *a_meta,
-                     double *out_value,
+                     void *out_value,
                      uint8_t *out_dtype);
 
 /**
@@ -954,7 +970,7 @@ int32_t ndarray_matmul(const struct NdArrayHandle *a,
                        uintptr_t max_ndim);
 
 /**
- * Compute scalar norm (axis=None).
+ * Compute scalar norm.
  */
 int32_t ndarray_norm(const struct NdArrayHandle *handle,
                      const struct ArrayMetadata *meta,
@@ -963,7 +979,7 @@ int32_t ndarray_norm(const struct NdArrayHandle *handle,
                      uint8_t *out_dtype);
 
 /**
- * Compute norm along axis.
+ * Compute norm along an axis.
  */
 int32_t ndarray_norm_axis(const struct NdArrayHandle *handle,
                           const struct ArrayMetadata *meta,
@@ -1508,8 +1524,74 @@ int32_t ndarray_softmax(const struct NdArrayHandle *handle,
                         uintptr_t max_ndim);
 
 /**
+ * Compute phase angle element-wise (always returns Float64).
+ */
+int32_t ndarray_angle(const struct NdArrayHandle *a,
+                      const struct ArrayMetadata *meta,
+                      uint8_t deg,
+                      struct NdArrayHandle **out,
+                      uint8_t *out_dtype,
+                      uintptr_t *out_ndim,
+                      uintptr_t *out_shape,
+                      uintptr_t max_ndim);
+
+/**
+ * Complex conjugate element-wise.
+ */
+int32_t ndarray_conjugate(const struct NdArrayHandle *a,
+                          const struct ArrayMetadata *meta,
+                          struct NdArrayHandle **out,
+                          uint8_t *out_dtype,
+                          uintptr_t *out_ndim,
+                          uintptr_t *out_shape,
+                          uintptr_t max_ndim);
+
+/**
+ * Extract imaginary part element-wise.
+ */
+int32_t ndarray_imag(const struct NdArrayHandle *a,
+                     const struct ArrayMetadata *meta,
+                     struct NdArrayHandle **out,
+                     uint8_t *out_dtype,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
+
+/**
+ * Returns bool array: true where element has non-zero imaginary part.
+ */
+int32_t ndarray_iscomplex(const struct NdArrayHandle *a,
+                          const struct ArrayMetadata *meta,
+                          struct NdArrayHandle **out,
+                          uint8_t *out_dtype,
+                          uintptr_t *out_ndim,
+                          uintptr_t *out_shape,
+                          uintptr_t max_ndim);
+
+/**
+ * Returns bool array: true where element has zero imaginary part (or is real dtype).
+ */
+int32_t ndarray_isreal(const struct NdArrayHandle *a,
+                       const struct ArrayMetadata *meta,
+                       struct NdArrayHandle **out,
+                       uint8_t *out_dtype,
+                       uintptr_t *out_ndim,
+                       uintptr_t *out_shape,
+                       uintptr_t max_ndim);
+
+/**
+ * Extract real part element-wise.
+ */
+int32_t ndarray_real(const struct NdArrayHandle *a,
+                     const struct ArrayMetadata *meta,
+                     struct NdArrayHandle **out,
+                     uint8_t *out_dtype,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
+
+/**
  * Cast an NDArray to a different dtype.
- *
  */
 int32_t ndarray_astype(const struct NdArrayHandle *handle,
                        const struct ArrayMetadata *meta,
@@ -1677,7 +1759,8 @@ int32_t ndarray_max_axis(const struct NdArrayHandle *handle,
 /**
  * Compute the mean of all elements in the array.
  *
- * Returns Float64 regardless of input dtype.
+ * Scalar output dtype matches the computation: `Float32` / `Complex64` / `Complex128` preserve
+ * native precision; integer inputs promote to `Float64` (NumPy-style); other reals use `Float64`.
  */
 int32_t ndarray_mean(const struct NdArrayHandle *handle,
                      const struct ArrayMetadata *meta,

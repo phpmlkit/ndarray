@@ -3,12 +3,14 @@
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_MATH, SUCCESS};
 use crate::helpers::normalize_index;
 use crate::helpers::{
-    extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
-    extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64, extract_view_i16,
+    extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32,
+    extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use ndarray::ArrayD;
+use num_complex::Complex;
 use parking_lot::RwLock;
 use std::ffi::c_void;
 use std::sync::Arc;
@@ -348,6 +350,60 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 NDArrayWrapper {
                     data: ArrayData::Uint8(Arc::new(RwLock::new(out))),
                     dtype: DType::Uint8,
+                }
+            }
+            DType::Complex64 => {
+                let Some(view) = extract_view_c64(wrapper, meta_ref) else {
+                    error::set_last_error("Failed to extract c64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let upd: &[Complex<f32>] = if updates.is_null() || updates_len == 0 {
+                    &[]
+                } else {
+                    std::slice::from_raw_parts(updates as *const Complex<f32>, updates_len)
+                };
+                let out = match scatter_add_impl(
+                    view,
+                    idx_slice,
+                    upd,
+                    has_scalar.then_some(Complex::new(scalar_update as f32, 0.0)),
+                ) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_INDEX;
+                    }
+                };
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(out))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let Some(view) = extract_view_c128(wrapper, meta_ref) else {
+                    error::set_last_error("Failed to extract c128 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let upd: &[Complex<f64>] = if updates.is_null() || updates_len == 0 {
+                    &[]
+                } else {
+                    std::slice::from_raw_parts(updates as *const Complex<f64>, updates_len)
+                };
+                let out = match scatter_add_impl(
+                    view,
+                    idx_slice,
+                    upd,
+                    has_scalar.then_some(Complex::new(scalar_update, 0.0)),
+                ) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_INDEX;
+                    }
+                };
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(out))),
+                    dtype: DType::Complex128,
                 }
             }
             DType::Bool => {

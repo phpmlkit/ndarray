@@ -380,6 +380,85 @@ print_r($result->toArray());
 
 ---
 
+## iscomplex()
+
+```php
+public function iscomplex(): NDArray
+```
+
+Returns a boolean array indicating which elements have a non-zero imaginary part.
+
+For complex arrays, checks if the imaginary component is non-zero. For real arrays (including float and integer types), always returns `false`.
+
+### Returns
+
+- `NDArray` - Boolean array. `true` where element is complex, `false` otherwise.
+
+### Examples
+
+```php
+use PhpMlKit\NDArray\Complex;
+
+// Complex array with mixed real/imaginary parts
+$arr = NDArray::array([
+    new Complex(1, 2),   // Has imaginary part
+    new Complex(3, 0),   // Pure real
+    new Complex(0, 4),   // Pure imaginary
+], DType::Complex128);
+
+$result = $arr->iscomplex();
+print_r($result->toArray());
+// Output: [true, false, true]
+
+// Real arrays are never complex
+$real = NDArray::array([1, 2, 3]);
+$result = $real->iscomplex();
+print_r($result->toArray());
+// Output: [false, false, false]
+```
+
+---
+
+## isreal()
+
+```php
+public function isreal(): NDArray
+```
+
+Returns a boolean array indicating which elements have a zero imaginary part.
+
+For complex arrays, checks if the imaginary component is zero. For real arrays, always returns `true`.
+
+This is the logical inverse of `iscomplex()`.
+
+### Returns
+
+- `NDArray` - Boolean array. `true` where element is real, `false` otherwise.
+
+### Examples
+
+```php
+use PhpMlKit\NDArray\Complex;
+
+$arr = NDArray::array([
+    new Complex(1, 2),   // Has imaginary part
+    new Complex(3, 0),   // Pure real
+    new Complex(0, 4),   // Pure imaginary
+], DType::Complex128);
+
+$result = $arr->isreal();
+print_r($result->toArray());
+// Output: [false, true, false]
+
+// Real arrays are always real
+$real = NDArray::array([1, 2, 3]);
+$result = $real->isreal();
+print_r($result->toArray());
+// Output: [true, true, true]
+```
+
+---
+
 ## Summary Table
 
 ### Comparison Operations
@@ -401,6 +480,13 @@ print_r($result->toArray());
 | `or()` | Logical OR | Any | Bool |
 | `not()` | Logical NOT | Any | Bool |
 | `xor()` | Logical XOR | Any | Bool |
+
+### Complex Predicates
+
+| Method | Operation | Input Types | Returns |
+|--------|-----------|-------------|---------|
+| `iscomplex()` | Has non-zero imaginary | Any | Bool |
+| `isreal()` | Has zero imaginary | Any | Bool |
 
 ---
 

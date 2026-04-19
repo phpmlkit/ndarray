@@ -4,11 +4,12 @@
 
 use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::view::{
-    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
-    extract_view_i64, extract_view_i8, extract_view_mut_bool, extract_view_mut_f32,
-    extract_view_mut_f64, extract_view_mut_i16, extract_view_mut_i32, extract_view_mut_i64,
-    extract_view_mut_i8, extract_view_mut_u16, extract_view_mut_u32, extract_view_mut_u64,
-    extract_view_mut_u8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
+    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_mut_bool,
+    extract_view_mut_c128, extract_view_mut_c64, extract_view_mut_f32, extract_view_mut_f64,
+    extract_view_mut_i16, extract_view_mut_i32, extract_view_mut_i64, extract_view_mut_i8,
+    extract_view_mut_u16, extract_view_mut_u32, extract_view_mut_u64, extract_view_mut_u8,
+    extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayMetadata, NdArrayHandle};
@@ -144,6 +145,26 @@ pub unsafe extern "C" fn ndarray_assign(
                 let src_view = extract_view_f64(src_wrapper, src_meta).expect("Type mismatch");
                 let mut dst_view =
                     extract_view_mut_f64(dst_wrapper, dst_meta).expect("Type mismatch");
+                if is_same {
+                    dst_view.assign(&src_view.to_owned());
+                } else {
+                    dst_view.assign(&src_view);
+                }
+            }
+            DType::Complex64 => {
+                let src_view = extract_view_c64(src_wrapper, src_meta).expect("Type mismatch");
+                let mut dst_view =
+                    extract_view_mut_c64(dst_wrapper, dst_meta).expect("Type mismatch");
+                if is_same {
+                    dst_view.assign(&src_view.to_owned());
+                } else {
+                    dst_view.assign(&src_view);
+                }
+            }
+            DType::Complex128 => {
+                let src_view = extract_view_c128(src_wrapper, src_meta).expect("Type mismatch");
+                let mut dst_view =
+                    extract_view_mut_c128(dst_wrapper, dst_meta).expect("Type mismatch");
                 if is_same {
                     dst_view.assign(&src_view.to_owned());
                 } else {

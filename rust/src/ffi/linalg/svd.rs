@@ -11,7 +11,7 @@ use parking_lot::RwLock;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_MATH, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
 use crate::types::{ArrayData, ArrayMetadata, DType, NDArrayWrapper, NdArrayHandle};
 
 /// Compute SVD: A = U * S * V^T
@@ -148,8 +148,84 @@ pub unsafe extern "C" fn ndarray_svd(
 
                 (u_wrapper, s_wrapper, vt_wrapper)
             }
+            DType::Complex64 => {
+                let Some(a_view_dyn) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c64 view for SVD".to_string());
+                    return ERR_GENERIC;
+                };
+                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                    Ok(a) => a,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                let (u_opt, s, vt_opt) = match a_view_2d.svd(calc_u_bool, calc_vt_bool) {
+                    Ok(triple) => triple,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+
+                let u_wrapper = u_opt.map(|u| NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(u.into_dyn()))),
+                    dtype: DType::Complex64,
+                });
+
+                let s_wrapper = NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(s.into_dyn()))),
+                    dtype: DType::Float32,
+                };
+
+                let vt_wrapper = vt_opt.map(|vt| NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(vt.into_dyn()))),
+                    dtype: DType::Complex64,
+                });
+
+                (u_wrapper, s_wrapper, vt_wrapper)
+            }
+            DType::Complex128 => {
+                let Some(a_view_dyn) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c128 view for SVD".to_string());
+                    return ERR_GENERIC;
+                };
+                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                    Ok(a) => a,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                let (u_opt, s, vt_opt) = match a_view_2d.svd(calc_u_bool, calc_vt_bool) {
+                    Ok(triple) => triple,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+
+                let u_wrapper = u_opt.map(|u| NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(u.into_dyn()))),
+                    dtype: DType::Complex128,
+                });
+
+                let s_wrapper = NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(s.into_dyn()))),
+                    dtype: DType::Float64,
+                };
+
+                let vt_wrapper = vt_opt.map(|vt| NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(vt.into_dyn()))),
+                    dtype: DType::Complex128,
+                });
+
+                (u_wrapper, s_wrapper, vt_wrapper)
+            }
             _ => {
-                error::set_last_error("SVD only supports Float32 and Float64".to_string());
+                error::set_last_error(
+                    "SVD only supports Float32, Float64, Complex64, and Complex128".to_string(),
+                );
                 return ERR_DTYPE;
             }
         };

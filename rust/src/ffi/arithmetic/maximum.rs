@@ -3,17 +3,14 @@
 //! Returns the larger value at each position (like NumPy's np.maximum).
 
 use crate::binary_op_arithmetic;
+use crate::helpers::elementwise_minmax::ElementwiseMaximum;
 use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::types::{ArrayMetadata, NdArrayHandle};
 
 #[inline(always)]
-fn maximum<T: Copy + PartialOrd>(a: &T, b: &T) -> T {
-    if a >= b {
-        *a
-    } else {
-        *b
-    }
+fn maximum<T: ElementwiseMaximum>(a: &T, b: &T) -> T {
+    T::elementwise_max(*a, *b)
 }
 
 /// Element-wise maximum with broadcasting.

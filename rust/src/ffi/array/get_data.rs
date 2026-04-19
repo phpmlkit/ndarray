@@ -5,9 +5,9 @@ use std::slice;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
 use crate::helpers::{
-    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
-    extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
-    extract_view_u8,
+    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
+    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
+    extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayMetadata, NdArrayHandle};
@@ -116,6 +116,32 @@ pub unsafe extern "C" fn ndarray_get_data(
                     return ERR_DTYPE;
                 };
                 copy_view_to_buffer(view, start, len, out_data as *mut u8, out_len)
+            }
+            DType::Complex64 => {
+                let Some(view) = extract_view_c64(wrapper, meta) else {
+                    error::set_last_error("Failed to extract Complex64 view");
+                    return ERR_DTYPE;
+                };
+                copy_view_to_buffer(
+                    view,
+                    start,
+                    len,
+                    out_data as *mut num_complex::Complex32,
+                    out_len,
+                )
+            }
+            DType::Complex128 => {
+                let Some(view) = extract_view_c128(wrapper, meta) else {
+                    error::set_last_error("Failed to extract Complex128 view");
+                    return ERR_DTYPE;
+                };
+                copy_view_to_buffer(
+                    view,
+                    start,
+                    len,
+                    out_data as *mut num_complex::Complex64,
+                    out_len,
+                )
             }
         };
 

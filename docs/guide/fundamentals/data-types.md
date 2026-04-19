@@ -31,6 +31,30 @@ NDArray provides these data types through the `DType` enum:
 | `Float32` | ~7 digits | 4 bytes | ML models, GPU computing |
 | `Float64` | ~15 digits | 8 bytes | Scientific computing (default) |
 
+### Complex Number Types
+
+| Type | Precision | Size | Use Case |
+|------|-----------|------|----------|
+| `Complex64` | ~7 digits (each part) | 8 bytes | Signal processing, ML with complex data |
+| `Complex128` | ~15 digits (each part) | 16 bytes | Scientific computing, quantum mechanics |
+
+Complex numbers consist of a real and imaginary part. Use the `Complex` value object to create complex values:
+
+```php
+use PhpMlKit\NDArray\Complex;
+use PhpMlKit\NDArray\DType;
+
+// Create a complex array
+$arr = NDArray::array([
+    new Complex(1, 2),   // 1 + 2i
+    new Complex(3, 4),   // 3 + 4i
+], DType::Complex128);
+
+// Complex numbers support automatic inference
+$inferred = NDArray::array([new Complex(1, 2), 3]);
+echo $inferred->dtype();  // DType::Complex128
+```
+
 ### Boolean
 
 | Type | Values | Size | Use Case |
@@ -111,9 +135,9 @@ echo $arr->itemsize();  // 8 (Float64)
 
 ## Type Promotion Rules
 
-When combining arrays of different types, NDArray promotes to a common type:
+When combining arrays of different types, NDArray promotes to a common type. This follows NumPy-compatible rules with two axes: **kind** (integer, float, complex) and **precision** within each kind.
 
-### Promotion Hierarchy
+### Quick Reference
 
 ```
 Bool → UInt8 → UInt16 → UInt32 → UInt64
@@ -121,6 +145,8 @@ Bool → UInt8 → UInt16 → UInt32 → UInt64
 Int8 → Int16 → Int32 → Int64
   ↓
 Float32 → Float64
+  ↓
+Complex64 → Complex128
 ```
 
 ### Examples
@@ -138,7 +164,17 @@ $u8 = NDArray::array([1, 2], DType::UInt8);
 $i8 = NDArray::array([1, 2], DType::Int8);
 $result = $u8->add($i8);
 echo $result->dtype();  // DType::Int16
+
+// Int64 + Complex128 = Complex128
+$int = NDArray::array([1, 2], DType::Int64);
+$complex = NDArray::array([new Complex(1, 2)], DType::Complex128);
+$result = $int->add($complex);
+echo $result->dtype();  // DType::Complex128
 ```
+
+::: tip Learn More
+For a comprehensive discussion of type promotion rules, including the distinction between binary (array-array) and scalar (array-scalar) promotion, see [Type Promotion](/guide/fundamentals/type-promotion).
+:::
 
 ## Type-Specific Behavior
 

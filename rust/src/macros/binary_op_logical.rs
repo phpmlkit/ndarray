@@ -23,6 +23,15 @@ macro_rules! binary_op_logical {
         use crate::types::dtype::DType;
         use crate::types::{ArrayData, NDArrayWrapper};
 
+        if $a_wrapper.dtype == DType::Complex64
+            || $a_wrapper.dtype == DType::Complex128
+            || $b_wrapper.dtype == DType::Complex64
+            || $b_wrapper.dtype == DType::Complex128
+        {
+            set_last_error("Logical operations not supported for complex dtype".to_string());
+            return ERR_GENERIC;
+        }
+
         if $a_wrapper.dtype == DType::Bool && $b_wrapper.dtype == DType::Bool {
             let Some(a_view) = extract_view_bool($a_wrapper, $a_meta) else {
                 set_last_error("Failed to extract Bool operand a".to_string());

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Traits;
 
 use FFI\CData;
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Lib;
 
@@ -21,7 +22,7 @@ trait HasConversion
      * Returns float, int, or bool depending on the array's dtype.
      * Throws if the array is not 0-dimensional.
      */
-    public function toScalar(): bool|float|int
+    public function toScalar(): bool|Complex|float|int
     {
         if (0 !== $this->ndim()) {
             throw new ShapeException(
@@ -41,6 +42,10 @@ trait HasConversion
 
         Lib::checkStatus($status);
 
+        if ($this->dtype->isComplex()) {
+            return $this->dtype->castFromCValue($out);
+        }
+
         return $this->dtype->castFromCValue($out->cdata);
     }
 
@@ -51,7 +56,7 @@ trait HasConversion
      *
      * @return array<mixed>|bool|float|int Returns array for N-dimensional arrays, scalar for 0-dimensional
      */
-    public function toArray(): array|bool|float|int
+    public function toArray(): array|bool|Complex|float|int
     {
         if (0 === $this->ndim()) {
             return $this->toScalar();
@@ -170,7 +175,7 @@ trait HasConversion
      * @param int $start Starting element offset (0-indexed)
      * @param int $len   Number of elements to fetch
      *
-     * @return array<bool|float|int>
+     * @return array<bool|Complex|float|int>
      */
     public function getData(int $start, int $len): array
     {
@@ -182,8 +187,14 @@ trait HasConversion
 
         $out = [];
 
-        for ($i = 0; $i < $len; ++$i) {
-            $out[] = $this->dtype->castFromCValue($buffer[$i]);
+        if ($this->dtype->isComplex()) {
+            for ($i = 0; $i < $len; ++$i) {
+                $out[] = new Complex((float) $buffer[$i * 2], (float) $buffer[$i * 2 + 1]);
+            }
+        } else {
+            for ($i = 0; $i < $len; ++$i) {
+                $out[] = $this->dtype->castFromCValue($buffer[$i]);
+            }
         }
 
         return $out;
@@ -192,8 +203,8 @@ trait HasConversion
     /**
      * Build nested arrays from a flat C-order vector using iterative chunking.
      *
-     * @param array<bool|float|int> $flat
-     * @param array<int>            $shape
+     * @param array<bool|Complex|float|int> $flat
+     * @param array<int>                    $shape
      *
      * @return array<mixed>
      */

@@ -4,12 +4,13 @@ use std::ffi::c_void;
 
 use crate::helpers::error::{set_last_error, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::{
-    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
-    extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
-    extract_view_u8,
+    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
+    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
+    extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayMetadata, NdArrayHandle};
+use num_complex::{Complex32, Complex64};
 
 /// Extract the scalar value from a 0-dimensional array or view.
 ///
@@ -136,6 +137,24 @@ pub unsafe extern "C" fn ndarray_as_scalar(
                 };
                 view.first().map(|v| {
                     *(out_value as *mut u8) = *v;
+                })
+            }
+            DType::Complex64 => {
+                let Some(view) = extract_view_c64(wrapper, meta) else {
+                    set_last_error("Failed to extract Complex64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.first().map(|v| {
+                    *(out_value as *mut Complex32) = *v;
+                })
+            }
+            DType::Complex128 => {
+                let Some(view) = extract_view_c128(wrapper, meta) else {
+                    set_last_error("Failed to extract Complex128 view".to_string());
+                    return ERR_GENERIC;
+                };
+                view.first().map(|v| {
+                    *(out_value as *mut Complex64) = *v;
                 })
             }
         };

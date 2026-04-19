@@ -33,6 +33,10 @@ enum DType: int
     // Boolean
     case Bool = 10;
 
+    // Complex numbers
+    case Complex64 = 11;
+    case Complex128 = 12;
+
     /**
      * Get the C FFI type string for this dtype.
      */
@@ -50,6 +54,8 @@ enum DType: int
             self::Float32 => 'float',
             self::Float64 => 'double',
             self::Bool => 'uint8_t',
+            self::Complex64 => 'float',
+            self::Complex128 => 'double',
         };
     }
 
@@ -63,6 +69,8 @@ enum DType: int
             self::Int16, self::UInt16 => 2,
             self::Int32, self::UInt32, self::Float32 => 4,
             self::Int64, self::UInt64, self::Float64 => 8,
+            self::Complex64 => 8,
+            self::Complex128 => 16,
         };
     }
 
@@ -108,6 +116,17 @@ enum DType: int
     }
 
     /**
+     * Check if this dtype is a complex number type.
+     */
+    public function isComplex(): bool
+    {
+        return match ($this) {
+            self::Complex64, self::Complex128 => true,
+            default => false,
+        };
+    }
+
+    /**
      * Check if this dtype is a boolean type.
      */
     public function isBool(): bool
@@ -122,6 +141,10 @@ enum DType: int
      */
     public static function fromValue(mixed $value): self
     {
+        if ($value instanceof Complex) {
+            return self::Complex128;
+        }
+
         if (\is_bool($value)) {
             return self::Bool;
         }
@@ -136,7 +159,7 @@ enum DType: int
 
         throw new \InvalidArgumentException(
             \sprintf(
-                "Cannot infer dtype from value of type '%s'. Expected bool, int, or float.",
+                "Cannot infer dtype from value of type '%s'. Expected bool, int, float, or Complex.",
                 get_debug_type($value)
             )
         );
@@ -155,6 +178,7 @@ enum DType: int
             return self::Float64;
         }
 
+        $hasComplex = false;
         $hasFloat = false;
         $hasInt = false;
         $hasBool = false;
@@ -165,6 +189,8 @@ enum DType: int
             foreach ($current as $item) {
                 if (\is_array($item)) {
                     $stack[] = $item;
+                } elseif ($item instanceof Complex) {
+                    $hasComplex = true;
                 } elseif (\is_float($item)) {
                     $hasFloat = true;
                 } elseif (\is_int($item)) {
@@ -182,6 +208,9 @@ enum DType: int
             }
         }
 
+        if ($hasComplex) {
+            return self::Complex128;
+        }
         if ($hasFloat) {
             return self::Float64;
         }
@@ -198,7 +227,7 @@ enum DType: int
     /**
      * Get the minimum value representable by this dtype.
      */
-    public function minValue(): float|int
+    public function minValue(): Complex|float|int
     {
         return match ($this) {
             self::Int8 => -128,
@@ -209,13 +238,15 @@ enum DType: int
             self::Float32 => -3.4028235e+38,
             self::Float64 => -\PHP_FLOAT_MAX,
             self::Bool => 0,
+            self::Complex64 => new Complex(-3.4028235e+38, -3.4028235e+38),
+            self::Complex128 => new Complex(-\PHP_FLOAT_MAX, -\PHP_FLOAT_MAX),
         };
     }
 
     /**
      * Get the maximum value representable by this dtype.
      */
-    public function maxValue(): float|int
+    public function maxValue(): Complex|float|int
     {
         return match ($this) {
             self::Int8 => 127,
@@ -229,6 +260,8 @@ enum DType: int
             self::Float32 => 3.4028235e+38,
             self::Float64 => \PHP_FLOAT_MAX,
             self::Bool => 1,
+            self::Complex64 => new Complex(3.4028235e+38, 3.4028235e+38),
+            self::Complex128 => new Complex(\PHP_FLOAT_MAX, \PHP_FLOAT_MAX),
         };
     }
 
@@ -238,13 +271,25 @@ enum DType: int
      * If a value is provided, it will be stored in the C value with appropriate
      * type handling (e.g., bool is converted to 1/0).
      *
-     * @param null|bool|float|int $value Optional value to store
+     * @param null|bool|Complex|float|int $value Optional value to store
      *
      * @return CData FFI CData representing this dtype
      */
-    public function createCValue(bool|float|int|null $value = null): CData
+    public function createCValue(bool|Complex|float|int|null $value = null): CData
     {
         $ffi = Lib::get();
+
+        if ($this->isComplex()) {
+            $cArray = $ffi->new("{$this->ffiType()}[2]");
+            if (null !== $value) {
+                $complex = $value instanceof Complex ? $value : new Complex((float) $value);
+                $cArray[0] = $complex->real;
+                $cArray[1] = $complex->imag;
+            }
+
+            return $cArray;
+        }
+
         $cValue = $ffi->new($this->ffiType());
 
         if (null !== $value) {
@@ -255,56 +300,79 @@ enum DType: int
     }
 
     /**
-     * Create a C array for this dtype.
+     * Create an FFI C array for this dtype.
      *
-     * @param int          $length Length of the array
-     * @param array<mixed> $values Values to initialize the array with
+     * If $values is non-empty, the array will be initialized with those values;
+     * otherwise, a zero-filled array of the given element count will be allocated.
+     * For complex types, the array length is $elementCount * 2 (real, imag).
      *
-     * @return CData The allocated C array
+     * @param int          $elementCount Number of logical elements (not primitives); e.g., 4 means 4 floats or 4 complex numbers.
+     * @param array<mixed> $values       Optional values to initialize the array with. Ignored if empty.
+     *
+     * @return CData allocated FFI C array for this dtype (primitive count, not logical elements, for complex types)
      */
-    public function createCArray(int $length, array $values = []): CData
+    public function createCArray(int $elementCount, array $values = []): CData
     {
         $ffi = Lib::get();
-        $cArray = $ffi->new("{$this->ffiType()}[{$length}]");
 
-        foreach ($values as $i => $value) {
-            $cArray[$i] = $value;
+        if (!empty($values)) {
+            $cArray = $ffi->new("{$this->ffiType()}[".\count($values).']');
+            foreach ($values as $i => $value) {
+                $cArray[$i] = $value;
+            }
+
+            return $cArray;
         }
 
-        return $cArray;
+        $primitiveCount = $this->isComplex() ? $elementCount * 2 : $elementCount;
+
+        return $ffi->new("{$this->ffiType()}[{$primitiveCount}]");
     }
 
     /**
      * Cast an FFI C value to the appropriate PHP type for this dtype.
      *
      * Handles type conversion: bools are cast from integer representation,
-     * floats are cast to float, integers to int.
+     * floats are cast to float, integers to int, complex to Complex object.
      *
-     * @param CData $cValue FFI CData containing the value
+     * @param null|bool|CData|float|int|string $cValue FFI CData containing the value
      *
-     * @return bool|float|int The value cast to the appropriate PHP type
+     * @return bool|Complex|float|int The value cast to the appropriate PHP type
      */
-    public function castFromCValue(bool|CData|float|int|string|null $cValue): bool|float|int
+    public function castFromCValue(bool|CData|float|int|string|null $cValue): bool|Complex|float|int
     {
         return match ($this) {
             self::Float64, self::Float32 => (float) $cValue,
             self::Bool => (bool) $cValue,
+            self::Complex64 => new Complex((float) $cValue[0], (float) $cValue[1]),
+            self::Complex128 => new Complex((float) $cValue[0], (float) $cValue[1]),
             default => (int) $cValue,
         };
     }
 
     /**
-     * Prepare array values for FFI by converting bools to 1/0.
+     * Prepare array values for FFI by converting bools to 1/0 and complex to flat pairs.
      *
      * This is necessary because FFI bools are represented as uint8_t,
      * so boolean values must be converted to integers.
      *
-     * @param array<bool|float|int> $values Array of values to prepare
+     * @param array<bool|Complex|float|int> $values Array of values to prepare
      *
-     * @return array<float|int> Prepared values with bools converted
+     * @return array<float|int> Prepared values with bools converted and complex flattened
      */
     public function prepareArrayValues(array $values): array
     {
+        if ($this->isComplex()) {
+            $result = [];
+            foreach ($values as $value) {
+                $complex = $value instanceof Complex ? $value : new Complex((float) $value);
+                $result[] = $complex->real;
+                $result[] = $complex->imag;
+            }
+
+            return $result;
+        }
+
         if (!$this->isBool()) {
             return $values;
         }

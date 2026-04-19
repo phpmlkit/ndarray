@@ -5,9 +5,9 @@ use ndarray::s;
 use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
-    extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
-    extract_view_u8,
+    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
+    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
+    extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -171,6 +171,28 @@ pub unsafe extern "C" fn ndarray_diagonal(
                 NDArrayWrapper {
                     data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint8,
+                }
+            }
+            DType::Complex64 => {
+                let Some(view) = extract_view_c64(wrapper, meta) else {
+                    error::set_last_error("Failed to extract c64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = extract_offset_diag(view, offset);
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let Some(view) = extract_view_c128(wrapper, meta) else {
+                    error::set_last_error("Failed to extract c128 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = extract_offset_diag(view, offset);
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex128,
                 }
             }
             DType::Bool => {

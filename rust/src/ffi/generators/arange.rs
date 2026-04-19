@@ -1,6 +1,7 @@
 //! Create evenly spaced values within a given interval.
 
 use ndarray::{ArrayD, IxDyn};
+use num_complex::Complex;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -107,6 +108,18 @@ pub unsafe extern "C" fn ndarray_arange(
                 DType::Bool => NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(ArrayD::<u8>::zeros(IxDyn(&[0]))))),
                     dtype: DType::Bool,
+                },
+                DType::Complex64 => NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(
+                        ArrayD::<Complex<f32>>::zeros(IxDyn(&[0])),
+                    ))),
+                    dtype: DType::Complex64,
+                },
+                DType::Complex128 => NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(
+                        ArrayD::<Complex<f64>>::zeros(IxDyn(&[0])),
+                    ))),
+                    dtype: DType::Complex128,
                 },
             };
             *out_handle = NdArrayHandle::from_wrapper(Box::new(wrapper));
@@ -240,6 +253,30 @@ pub unsafe extern "C" fn ndarray_arange(
             }
             DType::Bool => {
                 return ERR_DTYPE;
+            }
+            DType::Complex64 => {
+                let s = step as f32;
+                let data: Vec<Complex<f32>> = (0..n)
+                    .map(|i| Complex::new((start as f32) + (i as f32) * s, 0.0))
+                    .collect();
+                let arr = ArrayD::<Complex<f32>>::from_shape_vec(IxDyn(&[n]), data)
+                    .expect("Shape mismatch should not happen");
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let s = step;
+                let data: Vec<Complex<f64>> = (0..n)
+                    .map(|i| Complex::new(start + (i as f64) * s, 0.0))
+                    .collect();
+                let arr = ArrayD::<Complex<f64>>::from_shape_vec(IxDyn(&[n]), data)
+                    .expect("Shape mismatch should not happen");
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Complex128,
+                }
             }
         };
 

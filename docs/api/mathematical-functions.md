@@ -263,6 +263,159 @@ print_r($result->toArray());
 
 ---
 
+## real()
+
+```php
+public function real(): NDArray
+```
+
+Extract the real part of each element.
+
+For complex arrays, returns the real component as a float array. For real arrays, returns a copy with the same dtype.
+
+### Returns
+
+- `NDArray` - Real parts. Float array for complex input, copy for real input.
+
+### Examples
+
+```php
+use PhpMlKit\NDArray\Complex;
+
+$complex = NDArray::array([
+    new Complex(1, 2),
+    new Complex(3, 4),
+], DType::Complex128);
+
+$result = $complex->real();
+print_r($result->toArray());
+// Output: [1.0, 3.0]
+
+// Works on real arrays too
+$real = NDArray::array([1.5, 2.5, 3.5]);
+$result = $real->real();
+print_r($result->toArray());
+// Output: [1.5, 2.5, 3.5]
+```
+
+---
+
+## imag()
+
+```php
+public function imag(): NDArray
+```
+
+Extract the imaginary part of each element.
+
+For complex arrays, returns the imaginary component as a float array. For real arrays, returns zeros with the same dtype.
+
+### Returns
+
+- `NDArray` - Imaginary parts. Float array for complex input, zeros for real input.
+
+### Examples
+
+```php
+use PhpMlKit\NDArray\Complex;
+
+$complex = NDArray::array([
+    new Complex(1, 2),
+    new Complex(3, 4),
+], DType::Complex128);
+
+$result = $complex->imag();
+print_r($result->toArray());
+// Output: [2.0, 4.0]
+
+// Real arrays return zeros
+$real = NDArray::array([1.5, 2.5, 3.5]);
+$result = $real->imag();
+print_r($result->toArray());
+// Output: [0.0, 0.0, 0.0]
+```
+
+---
+
+## conjugate() / conj()
+
+```php
+public function conjugate(): NDArray
+public function conj(): NDArray
+```
+
+Compute the complex conjugate element-wise.
+
+For complex arrays, negates the imaginary part. For real arrays, returns a copy with the same dtype.
+
+### Returns
+
+- `NDArray` - Complex conjugate array.
+
+### Examples
+
+```php
+use PhpMlKit\NDArray\Complex;
+
+$complex = NDArray::array([
+    new Complex(1, 2),
+    new Complex(3, -4),
+], DType::Complex128);
+
+$result = $complex->conjugate();
+print_r($result->toArray());
+// Output: [1-2i, 3+4i]
+
+// Alias works the same way
+$result = $complex->conj();
+```
+
+---
+
+## angle()
+
+```php
+public function angle(bool $deg = false): NDArray
+```
+
+Compute the phase angle of each element.
+
+Returns the counterclockwise angle from the positive real axis on the complex plane. Always returns Float64, regardless of input dtype.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$deg` | `bool` | If true, returns angle in degrees. Optional. Default: `false`. |
+
+### Returns
+
+- `NDArray` - Float64 array with phase angles.
+
+### Examples
+
+```php
+use PhpMlKit\NDArray\Complex;
+
+$complex = NDArray::array([
+    new Complex(1, 0),    // On positive real axis
+    new Complex(0, 1),    // On positive imaginary axis
+    new Complex(1, 1),    // 45 degrees
+], DType::Complex128);
+
+// Radians (default)
+$result = $complex->angle();
+print_r($result->toArray());
+// Output: [0.0, 1.571..., 0.785...]
+
+// Degrees
+$result = $complex->angle(deg: true);
+print_r($result->toArray());
+// Output: [0.0, 90.0, 45.0]
+```
+
+---
+
 ## sqrt()
 
 ```php
@@ -1219,6 +1372,15 @@ print_r($result->toArray());
 | `floor()` | Round down | `floor([1.7, -1.2])` → `[1, -2]` |
 | `ceil()` | Round up | `ceil([1.2, -1.7])` → `[2, -1]` |
 | `round()` | Round nearest | `round([1.4, 1.5])` → `[1, 2]` |
+
+### Complex Number Operations
+
+| Method | Operation | Example |
+|--------|-----------|---------|
+| `real()` | Real part | `real([1+2i, 3+4i])` → `[1.0, 3.0]` |
+| `imag()` | Imaginary part | `imag([1+2i, 3+4i])` → `[2.0, 4.0]` |
+| `conjugate()` / `conj()` | Complex conjugate | `conj([1+2i, 3-4i])` → `[1-2i, 3+4i]` |
+| `angle()` | Phase angle | `angle([1+0i, 0+1i])` → `[0, π/2]` |
 
 ### Miscellaneous
 

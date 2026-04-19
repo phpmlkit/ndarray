@@ -1,9 +1,9 @@
 //! Array copy FFI function.
 
 use crate::helpers::view::{
-    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
-    extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
-    extract_view_u8,
+    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
+    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
+    extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -101,6 +101,20 @@ pub unsafe extern "C" fn ndarray_copy(
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(view.to_owned()))),
                     dtype: DType::Bool,
+                }
+            }
+            DType::Complex64 => {
+                let view = extract_view_c64(wrapper, meta).expect("Type mismatch");
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(view.to_owned()))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let view = extract_view_c128(wrapper, meta).expect("Type mismatch");
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(view.to_owned()))),
+                    dtype: DType::Complex128,
                 }
             }
         };

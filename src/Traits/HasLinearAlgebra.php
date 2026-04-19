@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Traits;
 
 use PhpMlKit\NDArray\ArrayMetadata;
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
@@ -81,14 +82,18 @@ trait HasLinearAlgebra
     /**
      * Compute dot product of two arrays.
      *
-     * For 1D arrays: returns scalar
-     * For 2D arrays: returns matrix multiplication
+     * - If both arrays are 1D, returns a scalar.
+     * - If either array is 2D, returns an NDArray.
      *
      * @param NDArray $other The other array
+     *
+     * @return Complex|float|int|NDArray scalar for 1D·1D, NDArray otherwise
      */
-    public function dot(NDArray $other): NDArray
+    public function dot(NDArray $other): Complex|float|int|NDArray
     {
-        return $this->binaryOp('ndarray_dot', $other);
+        $result = $this->binaryOp('ndarray_dot', $other);
+
+        return 0 === $result->ndim() ? $result->toScalar() : $result;
     }
 
     /**
@@ -133,11 +138,11 @@ trait HasLinearAlgebra
     /**
      * Compute trace (sum of diagonal elements).
      *
-     * Returns a scalar array.
+     * @return Complex|float|int scalar value
      */
-    public function trace(): NDArray
+    public function trace(): Complex|float|int
     {
-        return $this->unaryOp('ndarray_trace');
+        return $this->unaryOp('ndarray_trace')->toScalar();
     }
 
     /**
@@ -167,7 +172,7 @@ trait HasLinearAlgebra
      *
      * Requires a 2D square matrix.
      */
-    public function det(): float
+    public function det(): Complex|float|int
     {
         return $this->scalarReductionOp('ndarray_det');
     }
@@ -229,7 +234,8 @@ trait HasLinearAlgebra
         Lib::checkStatus($status);
 
         $sShape = Lib::extractShapeFromPointer($outShapeS, $outNdimS->cdata);
-        $s = new NDArray($outHandleS, new ArrayMetadata($sShape), $this->dtype);
+        $sDtype = DType::from($outDtypeS->cdata);
+        $s = new NDArray($outHandleS, new ArrayMetadata($sShape), $sDtype);
 
         if (!$computeUv) {
             return $s;
@@ -238,8 +244,11 @@ trait HasLinearAlgebra
         $uShape = Lib::extractShapeFromPointer($outShapeU, $outNdimU->cdata);
         $vtShape = Lib::extractShapeFromPointer($outShapeVt, $outNdimVt->cdata);
 
-        $u = new NDArray($outHandleU, new ArrayMetadata($uShape), $this->dtype);
-        $vt = new NDArray($outHandleVt, new ArrayMetadata($vtShape), $this->dtype);
+        $uDtype = DType::from($outDtypeU->cdata);
+        $vtDtype = DType::from($outDtypeVt->cdata);
+
+        $u = new NDArray($outHandleU, new ArrayMetadata($uShape), $uDtype);
+        $vt = new NDArray($outHandleVt, new ArrayMetadata($vtShape), $vtDtype);
 
         return [$u, $s, $vt];
     }
@@ -286,8 +295,11 @@ trait HasLinearAlgebra
         $qShape = Lib::extractShapeFromPointer($outShapeQ, $outNdimQ->cdata);
         $rShape = Lib::extractShapeFromPointer($outShapeR, $outNdimR->cdata);
 
-        $q = new NDArray($outHandleQ, new ArrayMetadata($qShape), $this->dtype);
-        $r = new NDArray($outHandleR, new ArrayMetadata($rShape), $this->dtype);
+        $qDtype = DType::from($outDtypeQ->cdata);
+        $rDtype = DType::from($outDtypeR->cdata);
+
+        $q = new NDArray($outHandleQ, new ArrayMetadata($qShape), $qDtype);
+        $r = new NDArray($outHandleR, new ArrayMetadata($rShape), $rDtype);
 
         return [$q, $r];
     }
@@ -363,16 +375,19 @@ trait HasLinearAlgebra
         Lib::checkStatus($status);
 
         $solShape = Lib::extractShapeFromPointer($outShapeSol, $outNdimSol->cdata);
-        $solution = new NDArray($outSolution, new ArrayMetadata($solShape), $this->dtype);
+        $solutionDtype = DType::from($outDtypeSol->cdata);
+        $solution = new NDArray($outSolution, new ArrayMetadata($solShape), $solutionDtype);
 
         $residuals = null;
         if (!\FFI::isNull($outResiduals)) {
             $resShape = Lib::extractShapeFromPointer($outShapeRes, $outNdimRes->cdata);
-            $residuals = new NDArray($outResiduals, new ArrayMetadata($resShape), $this->dtype);
+            $residualsDtype = DType::from($outDtypeRes->cdata);
+            $residuals = new NDArray($outResiduals, new ArrayMetadata($resShape), $residualsDtype);
         }
 
         $sShape = Lib::extractShapeFromPointer($outShapeS, $outNdimS->cdata);
-        $s = new NDArray($outS, new ArrayMetadata($sShape), $this->dtype);
+        $sDtype = DType::from($outDtypeS->cdata);
+        $s = new NDArray($outS, new ArrayMetadata($sShape), $sDtype);
 
         return [$solution, $residuals, (int) $outRank->cdata, $s];
     }
@@ -422,14 +437,15 @@ trait HasLinearAlgebra
         Lib::checkStatus($status);
 
         $shape = Lib::extractShapeFromPointer($outShape, $outNdim->cdata);
+        $dtype = DType::from($outDtype->cdata);
 
-        return new NDArray($outHandle, new ArrayMetadata($shape), $this->dtype);
+        return new NDArray($outHandle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
      * Compute the 2-norm condition number of a matrix.
      */
-    public function cond(): float
+    public function cond(): Complex|float|int
     {
         return $this->scalarReductionOp('ndarray_cond');
     }

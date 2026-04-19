@@ -3,17 +3,14 @@
 //! Returns the smaller value at each position (like NumPy's np.minimum).
 
 use crate::binary_op_arithmetic;
+use crate::helpers::elementwise_minmax::ElementwiseMinimum;
 use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::types::{ArrayMetadata, NdArrayHandle};
 
 #[inline(always)]
-fn minimum<T: Copy + PartialOrd>(a: &T, b: &T) -> T {
-    if a <= b {
-        *a
-    } else {
-        *b
-    }
+fn minimum<T: ElementwiseMinimum>(a: &T, b: &T) -> T {
+    T::elementwise_min(*a, *b)
 }
 
 /// Element-wise minimum with broadcasting.

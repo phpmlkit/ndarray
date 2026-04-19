@@ -179,25 +179,28 @@ final class BitwiseTest extends TestCase
         $a = NDArray::array([1], DType::Int32);
         $result = $a->leftShift(31);
 
-        $this->assertSame([-2147483648], $result->toArray());
+        // Int32 array + Int64 scalar promotes to Int64, so 1 << 31 = 2147483648 (positive)
+        $this->assertSame(DType::Int64, $result->dtype());
+        $this->assertSame([2147483648], $result->toArray());
     }
 
     public function testLeftShiftFloatShouldError(): void
     {
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Bitwise operations not supported for float types');
+        $this->expectExceptionMessage('Bitwise operations not supported for float or complex types');
 
         $a = NDArray::array([1.0, 2.0], DType::Float64);
         $result = $a->leftShift(1);
     }
 
-    public function testLeftShiftBoolShouldError(): void
+    public function testLeftShiftBoolPromotesToInt64(): void
     {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('only supported for integer');
-
         $a = NDArray::array([true, false], DType::Bool);
         $result = $a->leftShift(1);
+
+        // Bool + Int64 promotes to Int64
+        $this->assertSame(DType::Int64, $result->dtype());
+        $this->assertSame([2, 0], $result->toArray());
     }
 
     // ========================================================================
@@ -241,19 +244,20 @@ final class BitwiseTest extends TestCase
     public function testRightShiftFloatShouldError(): void
     {
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Bitwise operations not supported for float types');
+        $this->expectExceptionMessage('Bitwise operations not supported for float or complex types');
 
         $a = NDArray::array([8.0, 16.0], DType::Float32);
         $result = $a->rightShift(1);
     }
 
-    public function testRightShiftBoolShouldError(): void
+    public function testRightShiftBoolPromotesToInt64(): void
     {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('only supported for integer');
-
         $a = NDArray::array([true, false], DType::Bool);
         $result = $a->rightShift(1);
+
+        // Bool + Int64 promotes to Int64
+        $this->assertSame(DType::Int64, $result->dtype());
+        $this->assertSame([0, 0], $result->toArray());
     }
 
     // ========================================================================

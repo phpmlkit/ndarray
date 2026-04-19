@@ -1,6 +1,6 @@
 //! Cosine operation.
 
-use crate::helpers::error::{ERR_GENERIC, SUCCESS};
+use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{extract_view_f32, extract_view_f64};
 use crate::types::dtype::DType;
@@ -36,7 +36,7 @@ pub unsafe extern "C" fn ndarray_cos(
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(a_wrapper, meta) else {
-                    crate::helpers::error::set_last_error("Failed to extract f64 view".to_string());
+                    set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.cos();
@@ -47,7 +47,7 @@ pub unsafe extern "C" fn ndarray_cos(
             }
             DType::Float32 => {
                 let Some(view) = extract_view_f32(a_wrapper, meta) else {
-                    crate::helpers::error::set_last_error("Failed to extract f32 view".to_string());
+                    set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.cos();
@@ -56,10 +56,30 @@ pub unsafe extern "C" fn ndarray_cos(
                     dtype: DType::Float32,
                 }
             }
+            DType::Complex64 => {
+                let Some(view) = crate::helpers::extract_view_c64(a_wrapper, meta) else {
+                    set_last_error("Failed to extract Complex64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.mapv(|x| x.cos());
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let Some(view) = crate::helpers::extract_view_c128(a_wrapper, meta) else {
+                    set_last_error("Failed to extract Complex128 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let result = view.mapv(|x| x.cos());
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex128,
+                }
+            }
             _ => {
-                crate::helpers::error::set_last_error(
-                    "cos() requires float type (Float64 or Float32)".to_string(),
-                );
+                set_last_error("cos() requires float type (Float64 or Float32)".to_string());
                 return ERR_GENERIC;
             }
         };
@@ -67,7 +87,7 @@ pub unsafe extern "C" fn ndarray_cos(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::helpers::error::set_last_error(e);
+            set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

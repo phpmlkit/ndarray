@@ -15,8 +15,8 @@ namespace PhpMlKit\NDArray;
  * Note: This is a snapshot - changes to the original array after creating
  * the iterator will not be reflected.
  *
- * @implements \Iterator<int, bool|float|int>
- * @implements \ArrayAccess<int, bool|float|int>
+ * @implements \Iterator<int, bool|Complex|float|int>
+ * @implements \ArrayAccess<int, bool|Complex|float|int>
  */
 class FlatIterator implements \Iterator, \ArrayAccess, \Countable
 {
@@ -34,10 +34,10 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
     private int $totalSize;
     private int $position = 0;
 
-    /** @var null|array<int, bool|float|int> */
+    /** @var null|array<int, bool|Complex|float|int> */
     private ?array $batchElements = null;
 
-    /** @var array<int, bool|float|int> */
+    /** @var array<int, bool|Complex|float|int> */
     private array $currentChunk = [];
     private int $chunkStart = 0;
 
@@ -50,7 +50,7 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
         }
     }
 
-    public function current(): bool|float|int
+    public function current(): bool|Complex|float|int
     {
         if (null !== $this->batchElements) {
             return $this->batchElements[$this->position];
@@ -104,7 +104,7 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
         return $offset >= 0 && $offset < $this->totalSize;
     }
 
-    public function offsetGet(mixed $offset): bool|float|int
+    public function offsetGet(mixed $offset): bool|Complex|float|int
     {
         if (!\is_int($offset)) {
             throw new \OutOfBoundsException('Offset must be an integer');
@@ -159,7 +159,7 @@ class FlatIterator implements \Iterator, \ArrayAccess, \Countable
     /**
      * Convert to PHP array.
      *
-     * @return array<int, bool|float|int>
+     * @return array<int, bool|Complex|float|int>
      */
     public function toArray(): array
     {

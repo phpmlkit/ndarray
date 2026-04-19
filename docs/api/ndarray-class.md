@@ -367,6 +367,110 @@ NDArray::resetPrintOptions();
 
 ---
 
+## Complex Value Object
+
+The `Complex` class represents a complex number with real and imaginary parts. It is used to create complex arrays and to receive complex scalar results from operations.
+
+### Constructor
+
+```php
+public function __construct(
+    public readonly float $real,
+    public readonly float $imag = 0.0
+)
+```
+
+Create a complex number from real and imaginary parts.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$real` | `float` | The real part. |
+| `$imag` | `float` | The imaginary part. Optional. Default: `0.0`. |
+
+**Examples:**
+
+```php
+use PhpMlKit\NDArray\Complex;
+
+// Create complex numbers
+$z1 = new Complex(3, 4);     // 3 + 4i
+$z2 = new Complex(1.5);      // 1.5 + 0i (pure real)
+$z3 = new Complex(0, 2);     // 0 + 2i (pure imaginary)
+
+// Use in arrays
+$arr = NDArray::array([
+    new Complex(1, 2),
+    new Complex(3, 4),
+], DType::Complex128);
+```
+
+### Properties
+
+- `$real` — The real part (read-only)
+- `$imag` — The imaginary part (read-only)
+
+### Methods
+
+#### `magnitude()`
+
+```php
+public function magnitude(): float
+```
+
+Returns the magnitude (absolute value): √(real² + imag²).
+
+```php
+$z = new Complex(3, 4);
+echo $z->magnitude();  // 5.0
+```
+
+#### `angle()`
+
+```php
+public function angle(): float
+```
+
+Returns the phase angle in radians: atan2(imag, real).
+
+```php
+$z = new Complex(1, 1);
+echo $z->angle();  // 0.785... (π/4)
+```
+
+#### `equals()`
+
+```php
+public function equals(Complex $other, float $tol = 1e-10): bool
+```
+
+Check if this complex number equals another within a tolerance.
+
+```php
+$a = new Complex(1.0, 2.0);
+$b = new Complex(1.0000001, 2.0000001);
+
+$a->equals($b);        // true (within default tolerance)
+$a->equals($b, 1e-12); // false (stricter tolerance)
+```
+
+#### `toArray()`
+
+```php
+public function toArray(): array
+```
+
+Returns `[real, imag]` as a flat array for FFI transmission.
+
+```php
+$z = new Complex(3, 4);
+print_r($z->toArray());
+// Output: [3.0, 4.0]
+```
+
+---
+
 ## Summary
 
 | Property | Returns | Description |

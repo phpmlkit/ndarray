@@ -7,7 +7,7 @@ use rand::SeedableRng;
 use rand_distr::{Distribution, Normal};
 use std::sync::Arc;
 
-use crate::helpers::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::helpers::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, SUCCESS};
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, NDArrayWrapper, NdArrayHandle};
 use std::slice;
@@ -45,7 +45,7 @@ pub unsafe extern "C" fn ndarray_normal(
         return ERR_GENERIC;
     }
     if !(std > 0.0) {
-        crate::helpers::error::set_last_error(format!("normal requires std > 0, got {}", std));
+        set_last_error(format!("normal requires std > 0, got {}", std));
         return ERR_GENERIC;
     }
 
@@ -54,7 +54,7 @@ pub unsafe extern "C" fn ndarray_normal(
         let len = match shape_len(shape_slice) {
             Ok(v) => v,
             Err(e) => {
-                crate::helpers::error::set_last_error(e);
+                set_last_error(e);
                 return ERR_GENERIC;
             }
         };
@@ -71,10 +71,7 @@ pub unsafe extern "C" fn ndarray_normal(
                 let dist = match Normal::<f32>::new(mean as f32, std as f32) {
                     Ok(d) => d,
                     Err(e) => {
-                        crate::helpers::error::set_last_error(format!(
-                            "Invalid normal params: {}",
-                            e
-                        ));
+                        set_last_error(format!("Invalid normal params: {}", e));
                         return ERR_GENERIC;
                     }
                 };
@@ -90,10 +87,7 @@ pub unsafe extern "C" fn ndarray_normal(
                 let dist = match Normal::<f64>::new(mean, std) {
                     Ok(d) => d,
                     Err(e) => {
-                        crate::helpers::error::set_last_error(format!(
-                            "Invalid normal params: {}",
-                            e
-                        ));
+                        set_last_error(format!("Invalid normal params: {}", e));
                         return ERR_GENERIC;
                     }
                 };
@@ -105,7 +99,14 @@ pub unsafe extern "C" fn ndarray_normal(
                     dtype: DType::Float64,
                 }
             }
-            _ => return ERR_DTYPE,
+            DType::Complex64 | DType::Complex128 => {
+                set_last_error("normal() not supported for complex dtype".to_string());
+                return ERR_GENERIC;
+            }
+            _ => {
+                set_last_error("normal() requires float type (Float64 or Float32)".to_string());
+                return ERR_DTYPE;
+            }
         };
 
         *out_handle = NdArrayHandle::from_wrapper(Box::new(wrapper));

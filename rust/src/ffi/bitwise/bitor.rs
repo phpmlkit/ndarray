@@ -3,10 +3,11 @@
 //! Works with all integer types (signed and unsigned) and Bool.
 
 use crate::binary_op_bitwise;
-use crate::helpers::error::{ERR_GENERIC, SUCCESS};
+use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::scalar_op_bitwise;
-use crate::types::{ArrayMetadata, NdArrayHandle};
+use crate::types::{ArrayMetadata, DType, NdArrayHandle};
+use std::ffi::c_void;
 use std::ops::BitOr;
 
 #[inline(always)]
@@ -54,7 +55,7 @@ pub unsafe extern "C" fn ndarray_bitor(
             out_shape,
             max_ndim,
         ) {
-            crate::helpers::error::set_last_error(e);
+            set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));
@@ -68,7 +69,8 @@ pub unsafe extern "C" fn ndarray_bitor(
 pub unsafe extern "C" fn ndarray_bitor_scalar(
     a: *const NdArrayHandle,
     a_meta: *const ArrayMetadata,
-    scalar: i64,
+    scalar: *const c_void,
+    scalar_dtype: u8,
     out: *mut *mut NdArrayHandle,
     out_dtype: *mut u8,
     out_ndim: *mut usize,
@@ -76,25 +78,35 @@ pub unsafe extern "C" fn ndarray_bitor_scalar(
     max_ndim: usize,
 ) -> i32 {
     if a.is_null()
+        || scalar.is_null()
         || out.is_null()
         || a_meta.is_null()
         || out_dtype.is_null()
         || out_ndim.is_null()
         || out_shape.is_null()
     {
+        set_last_error("Invalid input parameters".to_string());
         return ERR_GENERIC;
     }
+
+    let scalar_dtype = match DType::from_u8(scalar_dtype) {
+        Some(d) => d,
+        None => {
+            set_last_error("Invalid scalar dtype".to_string());
+            return ERR_GENERIC;
+        }
+    };
 
     crate::ffi_guard!({
         let a_meta = &*a_meta;
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
 
-        let result_wrapper = scalar_op_bitwise!(a_wrapper, a_meta, scalar, |);
+        let result_wrapper = scalar_op_bitwise!(a_wrapper, a_meta, scalar, scalar_dtype, |);
 
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::helpers::error::set_last_error(e);
+            set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

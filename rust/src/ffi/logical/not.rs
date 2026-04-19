@@ -43,6 +43,11 @@ pub unsafe extern "C" fn ndarray_logical_not(
         let a_meta = &*a_meta;
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
 
+        if a_wrapper.dtype == DType::Complex64 || a_wrapper.dtype == DType::Complex128 {
+            set_last_error("Logical NOT not supported for complex dtype".to_string());
+            return ERR_GENERIC;
+        }
+
         let Some(view) = extract_view_as_bool(a_wrapper, a_meta) else {
             set_last_error("Failed to extract view as bool".to_string());
             return ERR_GENERIC;
