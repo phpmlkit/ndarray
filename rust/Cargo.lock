@@ -987,6 +987,7 @@ dependencies = [
  "cbindgen",
  "ndarray",
  "ndarray-linalg",
+ "num-complex",
  "num-traits",
  "parking_lot",
  "rand 0.10.0",

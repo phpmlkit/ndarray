@@ -7,6 +7,7 @@ use std::ffi::c_void;
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
 use crate::types::dtype::DType;
 use crate::types::NdArrayHandle;
+use num_complex::Complex;
 
 /// Set an element at the given flat index.
 ///
@@ -69,6 +70,14 @@ pub unsafe extern "C" fn ndarray_set_element(
             DType::Float64 => {
                 let v = *(value as *const f64);
                 wrapper.set_element_f64(flat_index, v)
+            }
+            DType::Complex64 => {
+                let v = *(value as *const Complex<f32>);
+                wrapper.set_element_complex64(flat_index, v)
+            }
+            DType::Complex128 => {
+                let v = *(value as *const Complex<f64>);
+                wrapper.set_element_complex128(flat_index, v)
             }
             DType::Bool => {
                 let v = *(value as *const u8);

@@ -4,7 +4,7 @@
 //! Always returns a Bool array.
 
 use crate::binary_op_logical;
-use crate::helpers::error::{ERR_GENERIC, SUCCESS};
+use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::types::{ArrayMetadata, NdArrayHandle};
 
@@ -55,7 +55,7 @@ pub unsafe extern "C" fn ndarray_logical_or(
             out_shape,
             max_ndim,
         ) {
-            crate::helpers::error::set_last_error(e);
+            set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

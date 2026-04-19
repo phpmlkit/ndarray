@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Traits;
 
 use PhpMlKit\NDArray\ArrayMetadata;
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
@@ -24,9 +25,9 @@ trait HasReductions
      * @param null|int $axis     Axis along which to sum. If null, sum over all elements.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return float|NDArray scalar if axis is null, otherwise an NDArray
+     * @return Complex|float|int|NDArray scalar if axis is null, otherwise an NDArray
      */
-    public function sum(?int $axis = null, bool $keepdims = false): float|int|NDArray
+    public function sum(?int $axis = null, bool $keepdims = false): Complex|float|int|NDArray
     {
         if (null === $axis) {
             return $this->scalarReductionOp('ndarray_sum');
@@ -41,9 +42,9 @@ trait HasReductions
      * @param null|int $axis     Axis along which to compute mean. If null, compute mean of all elements.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return float|NDArray scalar if axis is null, otherwise an NDArray
+     * @return Complex|float|NDArray scalar if axis is null, otherwise an NDArray
      */
-    public function mean(?int $axis = null, bool $keepdims = false): float|NDArray
+    public function mean(?int $axis = null, bool $keepdims = false): Complex|float|NDArray
     {
         if (null === $axis) {
             return $this->scalarReductionOp('ndarray_mean');
@@ -58,9 +59,9 @@ trait HasReductions
      * @param null|int $axis     Axis along which to find minimum. If null, find minimum of all elements.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return float|NDArray scalar if axis is null, otherwise an NDArray
+     * @return Complex|float|int|NDArray scalar if axis is null, otherwise an NDArray
      */
-    public function min(?int $axis = null, bool $keepdims = false): float|int|NDArray
+    public function min(?int $axis = null, bool $keepdims = false): Complex|float|int|NDArray
     {
         if (null === $axis) {
             return $this->scalarReductionOp('ndarray_min');
@@ -75,9 +76,9 @@ trait HasReductions
      * @param null|int $axis     Axis along which to find maximum. If null, find maximum of all elements.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return float|NDArray scalar if axis is null, otherwise an NDArray
+     * @return Complex|float|int|NDArray scalar if axis is null, otherwise an NDArray
      */
-    public function max(?int $axis = null, bool $keepdims = false): float|int|NDArray
+    public function max(?int $axis = null, bool $keepdims = false): Complex|float|int|NDArray
     {
         if (null === $axis) {
             return $this->scalarReductionOp('ndarray_max');
@@ -187,9 +188,9 @@ trait HasReductions
      * @param null|int $axis     Axis along which to compute product. If null, compute product of all elements.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return float|NDArray scalar if axis is null, otherwise an NDArray
+     * @return Complex|float|int|NDArray scalar if axis is null, otherwise an NDArray
      */
-    public function product(?int $axis = null, bool $keepdims = false): float|int|NDArray
+    public function product(?int $axis = null, bool $keepdims = false): Complex|float|int|NDArray
     {
         if (null === $axis) {
             return $this->scalarReductionOp('ndarray_product');

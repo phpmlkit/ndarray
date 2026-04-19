@@ -1,6 +1,6 @@
 //! Clamp operation - limit values to [min, max] range.
 
-use crate::helpers::error::{self, ERR_GENERIC, SUCCESS};
+use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
     extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
@@ -38,7 +38,7 @@ pub unsafe extern "C" fn ndarray_clamp(
     }
 
     if min_val > max_val {
-        error::set_last_error("Clamp failed: min > max".to_string());
+        set_last_error("Clamp failed: min > max".to_string());
         return ERR_GENERIC;
     }
 
@@ -50,7 +50,7 @@ pub unsafe extern "C" fn ndarray_clamp(
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(wrapper, meta) else {
-                    error::set_last_error("Failed to extract f64 view".to_string());
+                    set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.clamp(min_val, max_val);
@@ -61,7 +61,7 @@ pub unsafe extern "C" fn ndarray_clamp(
             }
             DType::Float32 => {
                 let Some(view) = extract_view_f32(wrapper, meta) else {
-                    error::set_last_error("Failed to extract f32 view".to_string());
+                    set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.clamp(min_val as f32, max_val as f32);
@@ -72,7 +72,7 @@ pub unsafe extern "C" fn ndarray_clamp(
             }
             DType::Int64 => {
                 let Some(view) = extract_view_i64(wrapper, meta) else {
-                    error::set_last_error("Failed to extract i64 view".to_string());
+                    set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.clamp(min_val as i64, max_val as i64);
@@ -83,7 +83,7 @@ pub unsafe extern "C" fn ndarray_clamp(
             }
             DType::Int32 => {
                 let Some(view) = extract_view_i32(wrapper, meta) else {
-                    error::set_last_error("Failed to extract i32 view".to_string());
+                    set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.clamp(min_val as i32, max_val as i32);
@@ -94,7 +94,7 @@ pub unsafe extern "C" fn ndarray_clamp(
             }
             DType::Int16 => {
                 let Some(view) = extract_view_i16(wrapper, meta) else {
-                    error::set_last_error("Failed to extract i16 view".to_string());
+                    set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.clamp(min_val as i16, max_val as i16);
@@ -105,7 +105,7 @@ pub unsafe extern "C" fn ndarray_clamp(
             }
             DType::Int8 => {
                 let Some(view) = extract_view_i8(wrapper, meta) else {
-                    error::set_last_error("Failed to extract i8 view".to_string());
+                    set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.clamp(min_val as i8, max_val as i8);
@@ -116,7 +116,7 @@ pub unsafe extern "C" fn ndarray_clamp(
             }
             DType::Uint64 => {
                 let Some(view) = extract_view_u64(wrapper, meta) else {
-                    error::set_last_error("Failed to extract u64 view".to_string());
+                    set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let min_u64 = min_val.max(0.0) as u64;
@@ -129,7 +129,7 @@ pub unsafe extern "C" fn ndarray_clamp(
             }
             DType::Uint32 => {
                 let Some(view) = extract_view_u32(wrapper, meta) else {
-                    error::set_last_error("Failed to extract u32 view".to_string());
+                    set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let min_u32 = min_val.max(0.0) as u32;
@@ -142,7 +142,7 @@ pub unsafe extern "C" fn ndarray_clamp(
             }
             DType::Uint16 => {
                 let Some(view) = extract_view_u16(wrapper, meta) else {
-                    error::set_last_error("Failed to extract u16 view".to_string());
+                    set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let min_u16 = min_val.max(0.0) as u16;
@@ -155,7 +155,7 @@ pub unsafe extern "C" fn ndarray_clamp(
             }
             DType::Uint8 => {
                 let Some(view) = extract_view_u8(wrapper, meta) else {
-                    error::set_last_error("Failed to extract u8 view".to_string());
+                    set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let min_u8 = min_val.max(0.0) as u8;
@@ -167,7 +167,14 @@ pub unsafe extern "C" fn ndarray_clamp(
                 }
             }
             DType::Bool => {
-                error::set_last_error("clamp() not supported for Bool type".to_string());
+                set_last_error("clamp() not supported for Bool type".to_string());
+                return ERR_GENERIC;
+            }
+            DType::Complex64 | DType::Complex128 => {
+                set_last_error(
+                    "clamp() not supported for complex dtypes (use real/imag or magnitude)"
+                        .to_string(),
+                );
                 return ERR_GENERIC;
             }
         };
@@ -175,7 +182,7 @@ pub unsafe extern "C" fn ndarray_clamp(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::helpers::error::set_last_error(e);
+            set_last_error(e);
             return ERR_GENERIC;
         }
         *out_handle = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

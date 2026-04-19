@@ -6,7 +6,7 @@ use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};
 use std::sync::Arc;
 
-use crate::helpers::error::{ERR_DTYPE, ERR_GENERIC, SUCCESS};
+use crate::helpers::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, SUCCESS};
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, NDArrayWrapper, NdArrayHandle};
 use std::slice;
@@ -44,7 +44,7 @@ pub unsafe extern "C" fn ndarray_uniform(
         return ERR_GENERIC;
     }
     if high <= low {
-        crate::helpers::error::set_last_error(format!(
+        set_last_error(format!(
             "uniform requires high > low, got [{}, {})",
             low, high
         ));
@@ -56,7 +56,7 @@ pub unsafe extern "C" fn ndarray_uniform(
         let len = match shape_len(shape_slice) {
             Ok(v) => v,
             Err(e) => {
-                crate::helpers::error::set_last_error(e);
+                set_last_error(e);
                 return ERR_GENERIC;
             }
         };
@@ -89,7 +89,14 @@ pub unsafe extern "C" fn ndarray_uniform(
                     dtype: DType::Float64,
                 }
             }
-            _ => return ERR_DTYPE,
+            DType::Complex64 | DType::Complex128 => {
+                set_last_error("uniform() not supported for complex dtype".to_string());
+                return ERR_GENERIC;
+            }
+            _ => {
+                set_last_error("uniform() requires float type (Float64 or Float32)".to_string());
+                return ERR_DTYPE;
+            }
         };
 
         *out_handle = NdArrayHandle::from_wrapper(Box::new(wrapper));

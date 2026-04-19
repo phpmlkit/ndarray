@@ -46,19 +46,30 @@ pub mod sigmoid;
 pub mod signum;
 pub mod softmax;
 
+// Complex number operations
+pub mod angle;
+pub mod conjugate;
+pub mod imag;
+pub mod iscomplex;
+pub mod real;
+
 // Re-export all FFI functions
 pub use abs::*;
 pub use acos::*;
+pub use angle::*;
 pub use asin::*;
 pub use atan::*;
 pub use cbrt::*;
 pub use ceil::*;
+pub use conjugate::*;
 pub use cos::*;
 pub use cosh::*;
 pub use exp::*;
 pub use exp2::*;
 pub use floor::*;
 pub use hypot::*;
+pub use imag::*;
+pub use iscomplex::*;
 pub use ln::*;
 pub use ln_1p::*;
 pub use log::*;
@@ -68,6 +79,7 @@ pub use neg::*;
 pub use pow2::*;
 pub use powf::*;
 pub use powi::*;
+pub use real::*;
 pub use recip::*;
 pub use round::*;
 pub use sigmoid::*;

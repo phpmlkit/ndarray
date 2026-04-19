@@ -6,6 +6,7 @@ namespace PhpMlKit\NDArray\Traits;
 
 use FFI\CData;
 use PhpMlKit\NDArray\ArrayMetadata;
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\IndexException;
 use PhpMlKit\NDArray\Exceptions\NDArrayException;
@@ -32,7 +33,7 @@ trait HasIndexing
      *
      * @return bool|float|int|self Scalar for full indexing, view for partial
      */
-    public function get(int ...$indices): bool|float|int|self
+    public function get(int ...$indices): bool|Complex|float|int|self
     {
         $count = \count($indices);
 
@@ -74,7 +75,7 @@ trait HasIndexing
      * @param array<int>     $indices Indices for each dimension
      * @param bool|float|int $value   Value to set
      */
-    public function set(array $indices, bool|float|int $value): void
+    public function set(array $indices, bool|Complex|float|int $value): void
     {
         $count = \count($indices);
 
@@ -103,7 +104,7 @@ trait HasIndexing
      * @param int            $flatIndex Logical flat index into this array/view
      * @param bool|float|int $value     Value to set
      */
-    public function setAt(int $flatIndex, bool|float|int $value): void
+    public function setAt(int $flatIndex, bool|Complex|float|int $value): void
     {
         $normalized = $this->normalizeIndex($flatIndex, $this->size());
         $storageFlatIndex = $this->logicalFlatToStorageIndex($normalized);
@@ -119,7 +120,7 @@ trait HasIndexing
      *
      * @return bool|float|int The value at the specified flat index
      */
-    public function getAt(int $flatIndex): bool|float|int
+    public function getAt(int $flatIndex): bool|Complex|float|int
     {
         $normalized = $this->normalizeIndex($flatIndex, $this->size());
         $storageFlatIndex = $this->logicalFlatToStorageIndex($normalized);
@@ -517,7 +518,7 @@ trait HasIndexing
     /**
      * Read an element at a storage flat index.
      */
-    private function getElement(int $flatIndex): bool|float|int
+    private function getElement(int $flatIndex): bool|Complex|float|int
     {
         $ffi = Lib::get();
 
@@ -525,13 +526,17 @@ trait HasIndexing
         $status = $ffi->ndarray_get_element($this->handle, $flatIndex, Lib::addr($outValue));
         Lib::checkStatus($status);
 
+        if ($this->dtype->isComplex()) {
+            return $this->dtype->castFromCValue($outValue);
+        }
+
         return $this->dtype->castFromCValue($outValue->cdata);
     }
 
     /**
      * Write an element at a storage flat index.
      */
-    private function setElement(int $flatIndex, bool|float|int $value): void
+    private function setElement(int $flatIndex, bool|Complex|float|int $value): void
     {
         $ffi = Lib::get();
 

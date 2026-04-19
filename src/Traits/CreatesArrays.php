@@ -6,6 +6,7 @@ namespace PhpMlKit\NDArray\Traits;
 
 use FFI\CData;
 use PhpMlKit\NDArray\ArrayMetadata;
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\DTypeException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
@@ -114,14 +115,16 @@ trait CreatesArrays
     /**
      * Create an array filled with a specific value.
      *
-     * @param bool|float|int $value Value to fill array with
-     * @param array<int>     $shape Array shape
-     * @param null|DType     $dtype Data type (default: inferred from value)
+     * @param bool|Complex|float|int $value Value to fill array with
+     * @param array<int>             $shape Array shape
+     * @param null|DType             $dtype Data type (default: inferred from value)
      */
-    public static function full(bool|float|int $value, array $shape, ?DType $dtype = null): self
+    public static function full(bool|Complex|float|int $value, array $shape, ?DType $dtype = null): self
     {
         if (null === $dtype) {
-            if (\is_int($value)) {
+            if ($value instanceof Complex) {
+                $dtype = DType::Complex128;
+            } elseif (\is_int($value)) {
                 $dtype = DType::Int64;
             } elseif (\is_float($value)) {
                 $dtype = DType::Float64;
@@ -282,11 +285,11 @@ trait CreatesArrays
     /**
      * Create an array filled with a specific value, with the same shape as the input array.
      *
-     * @param self           $array Input array defining the output shape
-     * @param bool|float|int $value Value to fill array with
-     * @param null|DType     $dtype Data type (default: inferred from value or same as input)
+     * @param self                   $array Input array defining the output shape
+     * @param bool|Complex|float|int $value Value to fill array with
+     * @param null|DType             $dtype Data type (default: inferred from value or same as input)
      */
-    public static function fullLike(self $array, bool|float|int $value, ?DType $dtype = null): self
+    public static function fullLike(self $array, bool|Complex|float|int $value, ?DType $dtype = null): self
     {
         $dtype ??= $array->dtype();
 
@@ -815,14 +818,14 @@ trait CreatesArrays
     {
         $data = $dtype->prepareArrayValues($data);
 
-        $cData = $dtype->createCArray($len, $data);
+        $cData = $dtype->createCArray(\count($data), $data);
         $cShape = Lib::createShapeArray($shape);
 
         $outHandle = $ffi->new('struct NdArrayHandle*');
 
         $status = $ffi->ndarray_create(
             $cData,
-            $len,
+            \count($data),
             $cShape,
             \count($shape),
             $dtype->value,

@@ -1,6 +1,7 @@
 //! Create an array filled with ones.
 
 use ndarray::{ArrayD, IxDyn};
+use num_complex::Complex;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -105,6 +106,20 @@ pub unsafe extern "C" fn ndarray_ones(
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(arr))),
                     dtype: DType::Bool,
+                }
+            }
+            DType::Complex64 => {
+                let arr = ArrayD::<Complex<f32>>::ones(IxDyn(shape_slice));
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let arr = ArrayD::<Complex<f64>>::ones(IxDyn(shape_slice));
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Complex128,
                 }
             }
         };

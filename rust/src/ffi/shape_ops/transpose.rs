@@ -3,8 +3,9 @@
 use crate::helpers::error::{self, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
-    extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64, extract_view_i16,
+    extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32,
+    extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -183,6 +184,36 @@ pub unsafe extern "C" fn ndarray_transpose(
             DType::Bool => {
                 error::set_last_error("transpose() not supported for Bool type".to_string());
                 return ERR_GENERIC;
+            }
+            DType::Complex64 => {
+                let Some(view) = extract_view_c64(wrapper, meta) else {
+                    error::set_last_error("Failed to extract complex64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let transposed_view = view.t();
+                let data: Vec<num_complex::Complex<f32>> =
+                    transposed_view.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
+                    .expect("Failed to create transposed array");
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let Some(view) = extract_view_c128(wrapper, meta) else {
+                    error::set_last_error("Failed to extract complex128 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let transposed_view = view.t();
+                let data: Vec<num_complex::Complex<f64>> =
+                    transposed_view.iter().cloned().collect();
+                let result = ndarray::ArrayD::from_shape_vec(transposed_view.raw_dim(), data)
+                    .expect("Failed to create transposed array");
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex128,
+                }
             }
         };
 

@@ -28,8 +28,8 @@ use PhpMlKit\NDArray\Traits\HasStacking;
  * $base is null) call ndarray_free() on destruction. Views keep their root
  * alive through PHP's reference counting via the $base chain.
  *
- * @implements \ArrayAccess<int|string, bool|float|int|self>
- * @implements \IteratorAggregate<int, bool|float|int|self>
+ * @implements \ArrayAccess<int|string, bool|Complex|float|int|self>
+ * @implements \IteratorAggregate<int, bool|Complex|float|int|self>
  */
 class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
 {

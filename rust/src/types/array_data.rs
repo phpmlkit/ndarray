@@ -4,6 +4,7 @@
 //! with shared ownership and interior mutability.
 
 use ndarray::ArrayD;
+use num_complex::{Complex32, Complex64};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -25,4 +26,6 @@ pub enum ArrayData {
     Float32(Arc<RwLock<ArrayD<f32>>>),
     Float64(Arc<RwLock<ArrayD<f64>>>),
     Bool(Arc<RwLock<ArrayD<u8>>>), // Store bool as u8 for FFI compatibility
+    Complex64(Arc<RwLock<ArrayD<Complex32>>>),
+    Complex128(Arc<RwLock<ArrayD<Complex64>>>),
 }

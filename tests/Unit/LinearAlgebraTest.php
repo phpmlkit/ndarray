@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Tests\Unit;
 
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\MathException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
@@ -26,7 +27,7 @@ class LinearAlgebraTest extends TestCase
         $result = $a->dot($b);
 
         // 1*4 + 2*5 + 3*6 = 4 + 10 + 18 = 32
-        $this->assertEqualsWithDelta(32, $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta(32, $result, 0.0001);
     }
 
     public function testDot2D(): void
@@ -118,7 +119,7 @@ class LinearAlgebraTest extends TestCase
         $result = $a->trace();
 
         // 1 + 5 + 9 = 15
-        $this->assertEqualsWithDelta(15, $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta(15, $result, 0.0001);
     }
 
     public function testTraceNonSquare(): void
@@ -127,7 +128,7 @@ class LinearAlgebraTest extends TestCase
         $result = $a->trace();
 
         // 1 + 5 = 6
-        $this->assertEqualsWithDelta(6, $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta(6, $result, 0.0001);
     }
 
     public function testTraceRequires2D(): void
@@ -290,7 +291,7 @@ class LinearAlgebraTest extends TestCase
         $result = $aView->trace();
 
         // Trace of [[1, 2], [4, 5]] is 1 + 5 = 6
-        $this->assertEqualsWithDelta(6, $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta(6, $result, 0.0001);
     }
 
     public function testTraceOnFullMatrixView(): void
@@ -306,7 +307,7 @@ class LinearAlgebraTest extends TestCase
         $result = $aView->trace();
 
         // Trace of full 3x3 is 1 + 5 + 9 = 15
-        $this->assertEqualsWithDelta(15, $result->toArray(), 0.0001);
+        $this->assertEqualsWithDelta(15, $result, 0.0001);
     }
 
     public function testDotBothViews(): void
@@ -1003,5 +1004,235 @@ class LinearAlgebraTest extends TestCase
 
         $this->expectException(ShapeException::class);
         $a->rank();
+    }
+
+    // =========================================================================
+    // Complex Linear Algebra Tests
+    // =========================================================================
+
+    public function testComplexDot1D(): void
+    {
+        $a = NDArray::array([new Complex(1, 1), new Complex(2, 2)], DType::Complex128);
+        $b = NDArray::array([new Complex(3, 3), new Complex(4, 4)], DType::Complex128);
+        $result = $a->dot($b);
+
+        // dot() returns scalar for 1D·1D
+        $this->assertInstanceOf(Complex::class, $result);
+        $this->assertEqualsWithDelta(0.0, $result->real, 0.0001);
+        $this->assertEqualsWithDelta(22.0, $result->imag, 0.0001);
+    }
+
+    public function testComplexMatmul2D(): void
+    {
+        $a = NDArray::array([
+            [new Complex(1, 0), new Complex(0, 1)],
+            [new Complex(0, 1), new Complex(1, 0)],
+        ], DType::Complex128);
+        $b = NDArray::array([
+            [new Complex(1, 0), new Complex(0, 1)],
+            [new Complex(0, 1), new Complex(1, 0)],
+        ], DType::Complex128);
+
+        $result = $a->matmul($b);
+
+        // [[1, i], [i, 1]] @ [[1, i], [i, 1]] = [[0, 2i], [2i, 0]]
+        $values = $result->toArray();
+        $this->assertEqualsWithDelta(0.0, $values[0][0]->real, 0.0001);
+        $this->assertEqualsWithDelta(0.0, $values[0][0]->imag, 0.0001);
+        $this->assertEqualsWithDelta(0.0, $values[0][1]->real, 0.0001);
+        $this->assertEqualsWithDelta(2.0, $values[0][1]->imag, 0.0001);
+    }
+
+    public function testComplexSvd(): void
+    {
+        $a = NDArray::array([
+            [new Complex(3, 0), new Complex(0, 0)],
+            [new Complex(0, 0), new Complex(2, 0)],
+        ], DType::Complex128);
+
+        [$u, $s, $vt] = $a->svd();
+
+        // Verify U matrix values ([[1+0i, 0+0i], [0+0i, 1+0i]])
+        $this->assertTrue((new Complex(1, 0))->equals($u[0][0]));
+        $this->assertTrue((new Complex(0, 0))->equals($u[0][1]));
+        $this->assertTrue((new Complex(0, 0))->equals($u[1][0]));
+        $this->assertTrue((new Complex(1, 0))->equals($u[1][1]));
+
+        // Verify singular values ([3.0, 2.0])
+        $this->assertSame(DType::Float64, $s->dtype());
+        $this->assertEqualsWithDelta(3.0, $s[0], 1e-10);
+        $this->assertEqualsWithDelta(2.0, $s[1], 1e-10);
+
+        // Verify VT matrix values ([[1+0i, 0+0i], [0+0i, 1+0i]])
+        $this->assertTrue((new Complex(1, 0))->equals($vt[0][0]));
+        $this->assertTrue((new Complex(0, 0))->equals($vt[0][1]));
+        $this->assertTrue((new Complex(0, 0))->equals($vt[1][0]));
+        $this->assertTrue((new Complex(1, 0))->equals($vt[1][1]));
+
+        // Verify reconstruction: U * diag(S) * VT = A
+        $sDiag = NDArray::array([
+            [new Complex(3, 0), new Complex(0, 0)],
+            [new Complex(0, 0), new Complex(2, 0)],
+        ], DType::Complex128);
+
+        $reconstructed = $u->matmul($sDiag)->matmul($vt);
+        $this->assertTrue((new Complex(3, 0))->equals($reconstructed[0][0]));
+        $this->assertTrue((new Complex(0, 0))->equals($reconstructed[0][1]));
+        $this->assertTrue((new Complex(0, 0))->equals($reconstructed[1][0]));
+        $this->assertTrue((new Complex(2, 0))->equals($reconstructed[1][1]));
+    }
+
+    public function testComplexInv(): void
+    {
+        // Use a non-singular complex matrix
+        $a = NDArray::array([
+            [new Complex(1, 0), new Complex(0, 1)],
+            [new Complex(0, 1), new Complex(2, 0)],
+        ], DType::Complex128);
+
+        $inv = $a->inv();
+        $this->assertSame(DType::Complex128, $inv->dtype());
+
+        // A * A^-1 = I
+        $identity = $a->matmul($inv);
+        $this->assertEqualsWithDelta(1.0, $identity[0][0]->real, 1e-9);
+        $this->assertEqualsWithDelta(0.0, $identity[0][0]->imag, 1e-9);
+        $this->assertEqualsWithDelta(1.0, $identity[1][1]->real, 1e-9);
+        $this->assertEqualsWithDelta(0.0, $identity[1][1]->imag, 1e-9);
+    }
+
+    public function testComplexDet(): void
+    {
+        $a = NDArray::array([
+            [new Complex(1, 0), new Complex(0, 1)],
+            [new Complex(0, -1), new Complex(1, 0)],
+        ], DType::Complex128);
+
+        $det = $a->det();
+        $this->assertInstanceOf(Complex::class, $det);
+        // det([[1, i], [-i, 1]]) = 1*1 - i*(-i) = 1 - 1 = 0
+        $this->assertEqualsWithDelta(0.0, $det->real, 1e-10);
+        $this->assertEqualsWithDelta(0.0, $det->imag, 1e-10);
+    }
+
+    public function testComplexSolve(): void
+    {
+        $a = NDArray::array([
+            [new Complex(1, 0), new Complex(0, 1)],
+            [new Complex(0, -1), new Complex(2, 0)],
+        ], DType::Complex128);
+        $b = NDArray::array([new Complex(1, 1), new Complex(2, 0)], DType::Complex128);
+
+        $x = $a->solve($b);
+        $this->assertSame(DType::Complex128, $x->dtype());
+
+        // Verify A * x = b
+        $reconstructed = $a->matmul($x->reshape([2, 1]));
+        $values = $reconstructed->toArray();
+        $this->assertEqualsWithDelta(1.0, $values[0][0]->real, 1e-8);
+        $this->assertEqualsWithDelta(1.0, $values[0][0]->imag, 1e-8);
+        $this->assertEqualsWithDelta(2.0, $values[1][0]->real, 1e-8);
+        $this->assertEqualsWithDelta(0.0, $values[1][0]->imag, 1e-8);
+    }
+
+    public function testComplexQr(): void
+    {
+        $a = NDArray::array([
+            [new Complex(1, 0), new Complex(1, 0)],
+            [new Complex(0, 1), new Complex(0, 2)],
+        ], DType::Complex128);
+
+        [$q, $r] = $a->qr();
+
+        $this->assertSame(DType::Complex128, $q->dtype());
+        $this->assertSame(DType::Complex128, $r->dtype());
+
+        // Q * R should reconstruct A
+        $reconstructed = $q->matmul($r);
+        $original = $a->toArray();
+        $result = $reconstructed->toArray();
+        $this->assertEqualsWithDelta($original[0][0]->real, $result[0][0]->real, 1e-8);
+        $this->assertEqualsWithDelta($original[0][0]->imag, $result[0][0]->imag, 1e-8);
+    }
+
+    public function testComplexPinv(): void
+    {
+        $a = NDArray::array([
+            [new Complex(1, 0), new Complex(0, 1)],
+            [new Complex(0, 1), new Complex(1, 0)],
+        ], DType::Complex128);
+
+        $pinv = $a->pinv();
+        $this->assertSame(DType::Complex128, $pinv->dtype());
+
+        // A * A^+ * A ≈ A
+        $reconstructed = $a->matmul($pinv)->matmul($a);
+        $orig = $a->toArray();
+        $result = $reconstructed->toArray();
+        $this->assertEqualsWithDelta($orig[0][0]->real, $result[0][0]->real, 1e-8);
+        $this->assertEqualsWithDelta($orig[0][0]->imag, $result[0][0]->imag, 1e-8);
+    }
+
+    public function testComplexNorm(): void
+    {
+        $a = NDArray::array([
+            [new Complex(3, 4), new Complex(0, 0)],
+            [new Complex(0, 0), new Complex(0, 0)],
+        ], DType::Complex128);
+
+        $norm = $a->norm(2, axis: 0);
+        $this->assertSame(DType::Float64, $norm->dtype());
+        $this->assertEqualsWithDelta([5.0, 0.0], $norm->toArray(), 1e-10);
+    }
+
+    public function testComplexDiagonal(): void
+    {
+        $a = NDArray::array([
+            [new Complex(1, 1), new Complex(2, 2)],
+            [new Complex(3, 3), new Complex(4, 4)],
+        ], DType::Complex128);
+
+        $diag = $a->diagonal();
+        $this->assertSame(DType::Complex128, $diag->dtype());
+        $values = $diag->toArray();
+        $this->assertEqualsWithDelta(1.0, $values[0]->real, 0.0001);
+        $this->assertEqualsWithDelta(1.0, $values[0]->imag, 0.0001);
+        $this->assertEqualsWithDelta(4.0, $values[1]->real, 0.0001);
+        $this->assertEqualsWithDelta(4.0, $values[1]->imag, 0.0001);
+    }
+
+    public function testComplexTrace(): void
+    {
+        $a = NDArray::array([
+            [new Complex(1, 1), new Complex(2, 2)],
+            [new Complex(3, 3), new Complex(4, 4)],
+        ], DType::Complex128);
+
+        $trace = $a->trace();
+
+        $this->assertInstanceOf(Complex::class, $trace);
+        $this->assertEqualsWithDelta(5.0, $trace->real, 0.0001);
+        $this->assertEqualsWithDelta(5.0, $trace->imag, 0.0001);
+    }
+
+    public function testComplexCond(): void
+    {
+        $a = NDArray::array([
+            [new Complex(1, 0), new Complex(0, 0)],
+            [new Complex(0, 0), new Complex(2, 0)],
+        ], DType::Complex128);
+
+        $cond = $a->cond();
+        $this->assertEqualsWithDelta(2.0, $cond, 1e-10);
+    }
+
+    public function testComplexRank(): void
+    {
+        $a = NDArray::array([
+            [new Complex(1, 0), new Complex(2, 0)],
+            [new Complex(2, 0), new Complex(4, 0)],
+        ], DType::Complex128);
+
+        $this->assertSame(1, $a->rank());
     }
 }

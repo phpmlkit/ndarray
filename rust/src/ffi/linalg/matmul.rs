@@ -10,7 +10,7 @@ use parking_lot::RwLock;
 
 use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
 use crate::types::{ArrayData, ArrayMetadata, DType, NDArrayWrapper, NdArrayHandle};
 
 /// Matrix multiplication.
@@ -124,9 +124,73 @@ pub unsafe extern "C" fn ndarray_matmul(
                     dtype: DType::Float32,
                 }
             }
+            DType::Complex64 => {
+                let Some(a_view) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c64 view for array a".to_string());
+                    return ERR_GENERIC;
+                };
+                let Some(b_view) = extract_view_c64(b_wrapper, b_meta_ref) else {
+                    error::set_last_error("Failed to extract c64 view for array b".to_string());
+                    return ERR_GENERIC;
+                };
+
+                let a_view_2d = match a_view.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(format!("Failed to convert to 2D: {}", e));
+                        return ERR_SHAPE;
+                    }
+                };
+                let b_view_2d = match b_view.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(format!("Failed to convert to 2D: {}", e));
+                        return ERR_SHAPE;
+                    }
+                };
+
+                let result = a_view_2d.dot(&b_view_2d);
+
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(result.into_dyn()))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let Some(a_view) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c128 view for array a".to_string());
+                    return ERR_GENERIC;
+                };
+                let Some(b_view) = extract_view_c128(b_wrapper, b_meta_ref) else {
+                    error::set_last_error("Failed to extract c128 view for array b".to_string());
+                    return ERR_GENERIC;
+                };
+
+                let a_view_2d = match a_view.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(format!("Failed to convert to 2D: {}", e));
+                        return ERR_SHAPE;
+                    }
+                };
+                let b_view_2d = match b_view.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(format!("Failed to convert to 2D: {}", e));
+                        return ERR_SHAPE;
+                    }
+                };
+
+                let result = a_view_2d.dot(&b_view_2d);
+
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(result.into_dyn()))),
+                    dtype: DType::Complex128,
+                }
+            }
             _ => {
                 error::set_last_error(
-                    "Matrix multiplication only supports Float64 and Float32 types".to_string(),
+                    "Matrix multiplication only supports Float64, Float32, Complex64, and Complex128 types".to_string(),
                 );
                 return ERR_GENERIC;
             }

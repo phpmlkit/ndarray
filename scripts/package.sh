@@ -47,7 +47,6 @@ dirs_to_include=(
 
 files_to_include=(
     "composer.json"
-    "composer.lock"
     "phpunit.xml"
     "LICENSE"
     "README.md"

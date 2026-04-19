@@ -262,6 +262,34 @@ $squeezed = $expanded->squeeze();
 print_r($squeezed->shape());  // [2, 3]
 ```
 
+## Complex Numbers
+
+NDArray supports complex numbers through the `Complex` value object:
+
+```php
+use PhpMlKit\NDArray\Complex;
+use PhpMlKit\NDArray\DType;
+
+// Create complex array
+$z = NDArray::array([
+    new Complex(1, 2),   // 1 + 2i
+    new Complex(3, 4),   // 3 + 4i
+], DType::Complex128);
+
+// Extract components
+$real = $z->real();         // [1.0, 3.0]
+$imag = $z->imag();         // [2.0, 4.0]
+
+// Complex conjugate
+$conj = $z->conjugate();    // [1-2i, 3-4i]
+
+// Phase angle
+$angles = $z->angle();      // [1.107, 0.927] (radians)
+
+// Operations with real scalars promote automatically
+$result = $z->add(10);      // [11+2i, 13+4i] (Complex128)
+```
+
 ## Type Conversion
 
 ```php
@@ -271,11 +299,14 @@ $arr = NDArray::array([1, 2, 3]);  // Defaults to Float64
 $int_arr = $arr->astype(DType::Int32);
 $float_arr = $arr->astype(DType::Float32);
 
+// Convert complex to real (drops imaginary part)
+$real_only = $z->astype(DType::Float64);
+
 // Convert to PHP array
 $php_array = $arr->toArray();  // [1, 2, 3]
 
 // Get scalar from 0-d array
-$scalar = $arr->sum()->toScalar();  // 6 (as PHP float)
+$scalar = $arr->sum();  // 6 (as PHP float, not NDArray)
 ```
 
 ## Complete Example

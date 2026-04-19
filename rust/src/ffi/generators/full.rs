@@ -1,6 +1,7 @@
 //! Create an array filled with a specific value.
 
 use ndarray::{ArrayD, IxDyn};
+use num_complex::Complex;
 use parking_lot::RwLock;
 use std::os::raw::c_void;
 use std::sync::Arc;
@@ -117,6 +118,22 @@ pub unsafe extern "C" fn ndarray_full(
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(arr))),
                     dtype: DType::Bool,
+                }
+            }
+            DType::Complex64 => {
+                let val = *(value as *const Complex<f32>);
+                let arr = ArrayD::<Complex<f32>>::from_elem(IxDyn(shape_slice), val);
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let val = *(value as *const Complex<f64>);
+                let arr = ArrayD::<Complex<f64>>::from_elem(IxDyn(shape_slice), val);
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(arr))),
+                    dtype: DType::Complex128,
                 }
             }
         };

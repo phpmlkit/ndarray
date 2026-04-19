@@ -3,9 +3,9 @@
 use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
-    extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
-    extract_view_u8,
+    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
+    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
+    extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::PadMode;
@@ -406,6 +406,45 @@ pub unsafe extern "C" fn ndarray_pad(
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),
                     dtype: DType::Bool,
+                }
+            }
+            DType::Complex64 => {
+                let Some(view) = extract_view_c64(wrapper, meta) else {
+                    error::set_last_error("Failed to extract complex64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let consts = parse_constants(constant_slice, ndim, |x| {
+                    num_complex::Complex::new(x as f32, 0.0)
+                });
+                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let Some(view) = extract_view_c128(wrapper, meta) else {
+                    error::set_last_error("Failed to extract complex128 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let consts =
+                    parse_constants(constant_slice, ndim, |x| num_complex::Complex::new(x, 0.0));
+                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(result))),
+                    dtype: DType::Complex128,
                 }
             }
         };

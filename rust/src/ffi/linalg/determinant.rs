@@ -8,7 +8,7 @@ use ndarray::Ix2;
 use ndarray_linalg::Determinant;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_MATH, ERR_SHAPE, SUCCESS};
-use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
 use crate::types::{ArrayMetadata, DType, NdArrayHandle};
 
 /// Compute the determinant of a square matrix.
@@ -91,8 +91,65 @@ pub unsafe extern "C" fn ndarray_det(
                     *out_dtype = DType::Float32 as u8;
                 }
             }
+            DType::Complex64 => {
+                let Some(a_view_dyn) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c64 view for determinant".to_string());
+                    return ERR_GENERIC;
+                };
+                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                let det = match a_view_2d.det() {
+                    Ok(d) => d,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+                if !out_value.is_null() {
+                    *(out_value as *mut num_complex::Complex<f32>) = det;
+                }
+                if !out_dtype.is_null() {
+                    *out_dtype = DType::Complex64 as u8;
+                }
+            }
+            DType::Complex128 => {
+                let Some(a_view_dyn) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                    error::set_last_error(
+                        "Failed to extract c128 view for determinant".to_string(),
+                    );
+                    return ERR_GENERIC;
+                };
+                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                let det = match a_view_2d.det() {
+                    Ok(d) => d,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+                if !out_value.is_null() {
+                    *(out_value as *mut num_complex::Complex<f64>) = det;
+                }
+                if !out_dtype.is_null() {
+                    *out_dtype = DType::Complex128 as u8;
+                }
+            }
             _ => {
-                error::set_last_error("Determinant only supports Float32 and Float64".to_string());
+                error::set_last_error(
+                    "Determinant only supports Float32, Float64, Complex64, and Complex128"
+                        .to_string(),
+                );
                 return ERR_DTYPE;
             }
         }

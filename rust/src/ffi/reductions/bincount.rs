@@ -188,7 +188,7 @@ pub unsafe extern "C" fn ndarray_bincount(
                     }
                 }
             }
-            DType::Float32 | DType::Float64 => {
+            DType::Float32 | DType::Float64 | DType::Complex64 | DType::Complex128 => {
                 error::set_last_error("bincount requires integer or bool dtype".to_string());
                 return ERR_DTYPE;
             }

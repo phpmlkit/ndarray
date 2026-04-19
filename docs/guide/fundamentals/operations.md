@@ -147,7 +147,41 @@ $matrix->sum(axis: 1, keepdims: true);  // [[6], [15]]
 
 See [Statistics API](/api/statistics) for complete reference.
 
-### 6. Linear Algebra
+### 6. Complex Number Operations
+
+Work with complex numbers using the `Complex` value object:
+
+```php
+use PhpMlKit\NDArray\Complex;
+
+// Create complex array
+$z = NDArray::array([
+    new Complex(1, 2),
+    new Complex(3, 4),
+], DType::Complex128);
+
+// Extract components
+$real = $z->real();        // [1.0, 3.0]
+$imag = $z->imag();        // [2.0, 4.0]
+
+// Complex conjugate
+$conj = $z->conjugate();   // [1-2i, 3-4i]
+
+// Phase angle (radians)
+$angles = $z->angle();     // [1.107, 0.927]
+
+// Check which elements are complex
+$isComplex = $z->iscomplex();  // [true, true]
+
+// Operations with real scalars promote automatically
+$result = $z->add(10);     // Complex128: [11+2i, 13+4i]
+```
+
+**Key Concept:** Complex arrays work with all arithmetic, linear algebra, and reduction operations. Scalar operations follow type promotion rules.
+
+See [Type Promotion](/guide/fundamentals/type-promotion) for details on how types combine.
+
+### 7. Linear Algebra
 
 Matrix and vector operations:
 

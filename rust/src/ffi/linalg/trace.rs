@@ -3,9 +3,9 @@
 use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
-    extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
-    extract_view_u8,
+    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
+    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
+    extract_view_u32, extract_view_u64, extract_view_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -57,6 +57,22 @@ pub unsafe extern "C" fn ndarray_trace(
                 };
                 let trace_sum: f32 = view.diag().iter().sum();
                 NDArrayWrapper::from_slice_f32(&[trace_sum], &[]).unwrap()
+            }
+            DType::Complex64 => {
+                let Some(view) = extract_view_c64(wrapper, meta) else {
+                    error::set_last_error("Failed to extract c64 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: num_complex::Complex<f32> = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_complex64(&[trace_sum.re, trace_sum.im], &[]).unwrap()
+            }
+            DType::Complex128 => {
+                let Some(view) = extract_view_c128(wrapper, meta) else {
+                    error::set_last_error("Failed to extract c128 view".to_string());
+                    return ERR_GENERIC;
+                };
+                let trace_sum: num_complex::Complex<f64> = view.diag().iter().sum();
+                NDArrayWrapper::from_slice_complex128(&[trace_sum.re, trace_sum.im], &[]).unwrap()
             }
             DType::Int64 => {
                 let Some(view) = extract_view_i64(wrapper, meta) else {

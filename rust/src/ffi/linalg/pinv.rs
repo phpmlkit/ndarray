@@ -6,12 +6,13 @@ use std::sync::Arc;
 
 use ndarray::{Array2, Ix2};
 use ndarray_linalg::SVD;
+use num_complex::Complex;
 use parking_lot::RwLock;
 use std::ffi::c_void;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_MATH, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
 use crate::types::{ArrayData, ArrayMetadata, DType, NDArrayWrapper, NdArrayHandle};
 
 fn pinv_f64(a: ndarray::ArrayView2<f64>, rcond: Option<f64>) -> Result<Array2<f64>, String> {
@@ -69,6 +70,68 @@ fn pinv_f32(a: ndarray::ArrayView2<f32>, rcond: Option<f32>) -> Result<Array2<f3
     let v = vt_thin.t();
     let ut = u_thin.t();
     Ok(v.dot(&s_inv).dot(&ut))
+}
+
+fn pinv_c64(
+    a: ndarray::ArrayView2<Complex<f32>>,
+    rcond: Option<f32>,
+) -> Result<Array2<Complex<f32>>, String> {
+    let (u, s, vt) = a
+        .svd(true, true)
+        .map_err(|e| format!("SVD failed for pinv: {:?}", e))?;
+    let u = u.ok_or("SVD did not return U")?;
+    let vt = vt.ok_or("SVD did not return VT")?;
+
+    let m = a.nrows();
+    let n = a.ncols();
+    let max_mn = m.max(n) as f32;
+    let tol =
+        rcond.unwrap_or_else(|| max_mn * f32::EPSILON) * s.iter().cloned().fold(0.0, f32::max);
+
+    let k = s.len();
+    let mut s_inv = Array2::<num_complex::Complex<f32>>::zeros((k, k));
+    for (i, &si) in s.iter().enumerate() {
+        if si > tol {
+            s_inv[(i, i)] = num_complex::Complex::new(1.0 / si, 0.0);
+        }
+    }
+
+    let u_thin = u.slice(ndarray::s![.., 0..k]);
+    let vt_thin = vt.slice(ndarray::s![0..k, ..]);
+    let v = vt_thin.t().mapv(|x| x.conj());
+    let uh = u_thin.t().mapv(|x| x.conj());
+    Ok(v.dot(&s_inv).dot(&uh))
+}
+
+fn pinv_c128(
+    a: ndarray::ArrayView2<num_complex::Complex<f64>>,
+    rcond: Option<f64>,
+) -> Result<Array2<num_complex::Complex<f64>>, String> {
+    let (u, s, vt) = a
+        .svd(true, true)
+        .map_err(|e| format!("SVD failed for pinv: {:?}", e))?;
+    let u = u.ok_or("SVD did not return U")?;
+    let vt = vt.ok_or("SVD did not return VT")?;
+
+    let m = a.nrows();
+    let n = a.ncols();
+    let max_mn = m.max(n) as f64;
+    let tol =
+        rcond.unwrap_or_else(|| max_mn * f64::EPSILON) * s.iter().cloned().fold(0.0, f64::max);
+
+    let k = s.len();
+    let mut s_inv = Array2::<num_complex::Complex<f64>>::zeros((k, k));
+    for (i, &si) in s.iter().enumerate() {
+        if si > tol {
+            s_inv[(i, i)] = num_complex::Complex::new(1.0 / si, 0.0);
+        }
+    }
+
+    let u_thin = u.slice(ndarray::s![.., 0..k]);
+    let vt_thin = vt.slice(ndarray::s![0..k, ..]);
+    let v = vt_thin.t().mapv(|x| x.conj());
+    let uh = u_thin.t().mapv(|x| x.conj());
+    Ok(v.dot(&s_inv).dot(&uh))
 }
 
 /// Compute the Moore-Penrose pseudo-inverse of a matrix.
@@ -157,8 +220,68 @@ pub unsafe extern "C" fn ndarray_pinv(
                     dtype: DType::Float32,
                 }
             }
+            DType::Complex64 => {
+                let Some(view) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c64 view for pinv".to_string());
+                    return ERR_GENERIC;
+                };
+                let a_arr = match view.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(format!("Pinv: failed to convert to 2D: {}", e));
+                        return ERR_SHAPE;
+                    }
+                };
+                let rcond_val = if rcond.is_null() {
+                    None
+                } else {
+                    Some(*(rcond as *const f32))
+                };
+                let result = match pinv_c64(a_arr, rcond_val) {
+                    Ok(r) => r,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+                NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(result.into_dyn()))),
+                    dtype: DType::Complex64,
+                }
+            }
+            DType::Complex128 => {
+                let Some(view) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c128 view for pinv".to_string());
+                    return ERR_GENERIC;
+                };
+                let a_arr = match view.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(format!("Pinv: failed to convert to 2D: {}", e));
+                        return ERR_SHAPE;
+                    }
+                };
+                let rcond_val = if rcond.is_null() {
+                    None
+                } else {
+                    Some(*(rcond as *const f64))
+                };
+                let result = match pinv_c128(a_arr, rcond_val) {
+                    Ok(r) => r,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+                NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(result.into_dyn()))),
+                    dtype: DType::Complex128,
+                }
+            }
             _ => {
-                error::set_last_error("Pinv only supports Float32 and Float64".to_string());
+                error::set_last_error(
+                    "Pinv only supports Float32, Float64, Complex64, and Complex128".to_string(),
+                );
                 return ERR_DTYPE;
             }
         };

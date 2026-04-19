@@ -101,23 +101,15 @@ interface Bindings
 
     public function ndarray_add(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_add_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_add_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_sub(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_sub_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_sub_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_mul_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_mul(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_div_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_mul_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_div(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_div_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_rem(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_rem_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_rem_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_hypot(CData $a, CData $a_meta, float $b, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
@@ -131,27 +123,17 @@ interface Bindings
 
     public function ndarray_eq(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_eq_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_eq_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_ne(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_ne_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_ne_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_gt_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_gt(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_gte_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_gt_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_lt_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_gte(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_gte_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_lt(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_lt_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_lte(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_lte_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_lte_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     // =========================================================================
     // Bitwise Operations
@@ -159,23 +141,15 @@ interface Bindings
 
     public function ndarray_bitand(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_bitand_scalar(CData $a, CData $a_meta, int $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_bitand_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_bitor(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_bitor_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_bitor_scalar(CData $a, CData $a_meta, int $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_bitxor_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_bitxor(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_left_shift_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
-    public function ndarray_bitxor_scalar(CData $a, CData $a_meta, int $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_left_shift(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_left_shift_scalar(CData $a, CData $a_meta, int $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_right_shift(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
-
-    public function ndarray_right_shift_scalar(CData $a, CData $a_meta, int $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+    public function ndarray_right_shift_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     // =========================================================================
     // Logical Operations
@@ -249,6 +223,19 @@ interface Bindings
     public function ndarray_to_degrees(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_to_radians(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    // Complex number operations
+    public function ndarray_real(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_imag(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_conjugate(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_angle(CData $a, CData $a_meta, int $deg, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_iscomplex(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_isreal(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_powi(CData $a, CData $a_meta, int $exp, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 

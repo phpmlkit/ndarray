@@ -49,6 +49,7 @@ export default defineConfig({
           items: [
             { text: 'Understanding Arrays', link: '/guide/fundamentals/understanding-arrays' },
             { text: 'Data Types', link: '/guide/fundamentals/data-types' },
+            { text: 'Type Promotion', link: '/guide/fundamentals/type-promotion' },
             { text: 'Indexing and Slicing', link: '/guide/fundamentals/indexing-and-slicing' },
             { text: 'Iterating Over Arrays', link: '/guide/fundamentals/iteration' },
             { text: 'Broadcasting', link: '/guide/fundamentals/broadcasting' },

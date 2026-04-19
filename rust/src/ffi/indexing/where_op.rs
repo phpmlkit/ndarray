@@ -6,6 +6,7 @@ use crate::helpers::{
     broadcast_shape, extract_view_as_f32, extract_view_as_f64, extract_view_as_i16,
     extract_view_as_i32, extract_view_as_i64, extract_view_as_i8, extract_view_as_u16,
     extract_view_as_u32, extract_view_as_u64, extract_view_as_u8, extract_view_bool,
+    extract_view_c128, extract_view_c64,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -340,6 +341,54 @@ pub unsafe extern "C" fn ndarray_where(
                     NDArrayWrapper {
                         data: ArrayData::Uint8(Arc::new(RwLock::new(out))),
                         dtype: DType::Uint8,
+                    },
+                    shape_vec,
+                )
+            }
+            DType::Complex64 => {
+                let Some(xv) = extract_view_c64(x_wrapper, x_meta_ref) else {
+                    error::set_last_error("Failed to extract x as c64".to_string());
+                    return ERR_GENERIC;
+                };
+                let Some(yv) = extract_view_c64(y_wrapper, y_meta_ref) else {
+                    error::set_last_error("Failed to extract y as c64".to_string());
+                    return ERR_GENERIC;
+                };
+                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                (
+                    NDArrayWrapper {
+                        data: ArrayData::Complex64(Arc::new(RwLock::new(out))),
+                        dtype: DType::Complex64,
+                    },
+                    shape_vec,
+                )
+            }
+            DType::Complex128 => {
+                let Some(xv) = extract_view_c128(x_wrapper, x_meta_ref) else {
+                    error::set_last_error("Failed to extract x as c128".to_string());
+                    return ERR_GENERIC;
+                };
+                let Some(yv) = extract_view_c128(y_wrapper, y_meta_ref) else {
+                    error::set_last_error("Failed to extract y as c128".to_string());
+                    return ERR_GENERIC;
+                };
+                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                (
+                    NDArrayWrapper {
+                        data: ArrayData::Complex128(Arc::new(RwLock::new(out))),
+                        dtype: DType::Complex128,
                     },
                     shape_vec,
                 )

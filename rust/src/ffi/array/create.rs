@@ -74,6 +74,14 @@ pub unsafe extern "C" fn ndarray_create(
                 let data_slice = slice::from_raw_parts(data as *const u8, len);
                 NDArrayWrapper::from_slice_bool(data_slice, shape_slice)
             }
+            DType::Complex64 => {
+                let data_slice = slice::from_raw_parts(data as *const f32, len);
+                NDArrayWrapper::from_slice_complex64(data_slice, shape_slice)
+            }
+            DType::Complex128 => {
+                let data_slice = slice::from_raw_parts(data as *const f64, len);
+                NDArrayWrapper::from_slice_complex128(data_slice, shape_slice)
+            }
         };
 
         match result {

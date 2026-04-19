@@ -10,7 +10,7 @@ use parking_lot::RwLock;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_MATH, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
 use crate::types::{ArrayData, ArrayMetadata, DType, NDArrayWrapper, NdArrayHandle};
 
 enum LstsqErr {
@@ -181,8 +181,78 @@ pub unsafe extern "C" fn ndarray_lstsq(
                 };
                 (sol_wrapper, res_wrapper, rank, s_wrapper)
             }
+            DType::Complex64 => {
+                let Some(a_view) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c64 view for A".to_string());
+                    return ERR_GENERIC;
+                };
+                let Some(b_view) = extract_view_c64(b_wrapper, b_meta_ref) else {
+                    error::set_last_error("Failed to extract c64 view for b".to_string());
+                    return ERR_GENERIC;
+                };
+                let (sol, res, rank, s) = match lstsq_dispatch(a_view, b_view, b_meta_ref.ndim) {
+                    Ok(r) => r,
+                    Err(LstsqErr::Shape(e)) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                    Err(LstsqErr::Math(e)) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+                let sol_wrapper = NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(sol))),
+                    dtype: DType::Complex64,
+                };
+                let res_wrapper = res.map(|r| NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(r))),
+                    dtype: DType::Float32,
+                });
+                let s_wrapper = NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(s.into_dyn()))),
+                    dtype: DType::Float32,
+                };
+                (sol_wrapper, res_wrapper, rank, s_wrapper)
+            }
+            DType::Complex128 => {
+                let Some(a_view) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c128 view for A".to_string());
+                    return ERR_GENERIC;
+                };
+                let Some(b_view) = extract_view_c128(b_wrapper, b_meta_ref) else {
+                    error::set_last_error("Failed to extract c128 view for b".to_string());
+                    return ERR_GENERIC;
+                };
+                let (sol, res, rank, s) = match lstsq_dispatch(a_view, b_view, b_meta_ref.ndim) {
+                    Ok(r) => r,
+                    Err(LstsqErr::Shape(e)) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                    Err(LstsqErr::Math(e)) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+                let sol_wrapper = NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(sol))),
+                    dtype: DType::Complex128,
+                };
+                let res_wrapper = res.map(|r| NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(r))),
+                    dtype: DType::Float64,
+                });
+                let s_wrapper = NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(s.into_dyn()))),
+                    dtype: DType::Float64,
+                };
+                (sol_wrapper, res_wrapper, rank, s_wrapper)
+            }
             _ => {
-                error::set_last_error("Lstsq only supports Float32 and Float64".to_string());
+                error::set_last_error(
+                    "Lstsq only supports Float32, Float64, Complex64, and Complex128".to_string(),
+                );
                 return ERR_DTYPE;
             }
         };

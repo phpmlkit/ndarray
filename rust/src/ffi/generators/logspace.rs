@@ -47,6 +47,10 @@ pub unsafe extern "C" fn ndarray_logspace(
                     dtype: DType::Float64,
                 }
             }
+            DType::Complex64 | DType::Complex128 => {
+                set_last_error("logspace() not supported for complex dtype".to_string());
+                return ERR_GENERIC;
+            }
             _ => {
                 set_last_error("logspace() requires float type (Float64 or Float32)".to_string());
                 return ERR_DTYPE;

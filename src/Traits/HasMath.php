@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Traits;
 
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\NDArray;
 
 /**
@@ -17,81 +18,81 @@ trait HasMath
     /**
      * Add another array or scalar to this array.
      *
-     * @param float|int|NDArray $other Array or scalar to add
+     * @param Complex|float|int|NDArray $other Array or scalar to add
      *
      * @return NDArray New array with result
      */
-    public function add(float|int|NDArray $other): NDArray
+    public function add(Complex|float|int|NDArray $other): NDArray
     {
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_add', $other);
         }
 
-        return $this->unaryOp('ndarray_add_scalar', $other);
+        return $this->unaryOp('ndarray_add_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**
      * Subtract another array or scalar from this array.
      *
-     * @param float|int|NDArray $other Array or scalar to subtract
+     * @param Complex|float|int|NDArray $other Array or scalar to subtract
      *
      * @return NDArray New array with result
      */
-    public function subtract(float|int|NDArray $other): NDArray
+    public function subtract(Complex|float|int|NDArray $other): NDArray
     {
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_sub', $other);
         }
 
-        return $this->unaryOp('ndarray_sub_scalar', $other);
+        return $this->unaryOp('ndarray_sub_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**
      * Multiply this array by another array or scalar.
      *
-     * @param float|int|NDArray $other Array or scalar to multiply by
+     * @param Complex|float|int|NDArray $other Array or scalar to multiply by
      *
      * @return NDArray New array with result
      */
-    public function multiply(float|int|NDArray $other): NDArray
+    public function multiply(Complex|float|int|NDArray $other): NDArray
     {
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_mul', $other);
         }
 
-        return $this->unaryOp('ndarray_mul_scalar', $other);
+        return $this->unaryOp('ndarray_mul_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**
      * Divide this array by another array or scalar.
      *
-     * @param float|int|NDArray $other Array or scalar to divide by
+     * @param Complex|float|int|NDArray $other Array or scalar to divide by
      *
      * @return NDArray New array with result
      */
-    public function divide(float|int|NDArray $other): NDArray
+    public function divide(Complex|float|int|NDArray $other): NDArray
     {
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_div', $other);
         }
 
-        return $this->unaryOp('ndarray_div_scalar', $other);
+        return $this->unaryOp('ndarray_div_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**
      * Compute remainder (modulo) with another array or scalar.
      *
-     * @param float|int|NDArray $other Array or scalar
+     * @param Complex|float|int|NDArray $other Array or scalar
      *
      * @return NDArray New array with result
      */
-    public function rem(float|int|NDArray $other): NDArray
+    public function rem(Complex|float|int|NDArray $other): NDArray
     {
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_rem', $other);
         }
 
-        return $this->unaryOp('ndarray_rem_scalar', $other);
+        return $this->unaryOp('ndarray_rem_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**
@@ -99,17 +100,17 @@ trait HasMath
      *
      * Alias for rem().
      *
-     * @param float|int|NDArray $other Array or scalar
+     * @param Complex|float|int|NDArray $other Array or scalar
      *
      * @return NDArray New array with result
      */
-    public function mod(float|int|NDArray $other): NDArray
+    public function mod(Complex|float|int|NDArray $other): NDArray
     {
         if ($other instanceof NDArray) {
             return $this->binaryOp('ndarray_rem', $other);
         }
 
-        return $this->unaryOp('ndarray_rem_scalar', $other);
+        return $this->unaryOp('ndarray_rem_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**
@@ -127,6 +128,82 @@ trait HasMath
     public function negative(): NDArray
     {
         return $this->unaryOp('ndarray_neg');
+    }
+
+    /**
+     * Extract real part element-wise.
+     *
+     * For complex arrays, returns the real component as float.
+     * For real arrays, returns a copy with the same dtype.
+     */
+    public function real(): NDArray
+    {
+        return $this->unaryOp('ndarray_real');
+    }
+
+    /**
+     * Extract imaginary part element-wise.
+     *
+     * For complex arrays, returns the imaginary component as float.
+     * For real arrays, returns zeros with the same dtype.
+     */
+    public function imag(): NDArray
+    {
+        return $this->unaryOp('ndarray_imag');
+    }
+
+    /**
+     * Compute complex conjugate element-wise.
+     *
+     * For complex arrays, negates the imaginary part.
+     * For real arrays, returns a copy with the same dtype.
+     */
+    public function conjugate(): NDArray
+    {
+        return $this->unaryOp('ndarray_conjugate');
+    }
+
+    /**
+     * Alias for conjugate().
+     */
+    public function conj(): NDArray
+    {
+        return $this->conjugate();
+    }
+
+    /**
+     * Returns bool array: true where element has non-zero imaginary part.
+     *
+     * For complex arrays, checks if imag ≠ 0.
+     * For real arrays, always returns false.
+     */
+    public function iscomplex(): NDArray
+    {
+        return $this->unaryOp('ndarray_iscomplex');
+    }
+
+    /**
+     * Returns bool array: true where element has zero imaginary part.
+     *
+     * For complex arrays, checks if imag = 0.
+     * For real arrays, always returns true.
+     */
+    public function isreal(): NDArray
+    {
+        return $this->unaryOp('ndarray_isreal');
+    }
+
+    /**
+     * Compute phase angle element-wise.
+     *
+     * Returns the counterclockwise angle from the positive real axis.
+     * Always returns Float64 regardless of input dtype.
+     *
+     * @param bool $deg if true, returns angle in degrees; otherwise radians
+     */
+    public function angle(bool $deg = false): NDArray
+    {
+        return $this->unaryOp('ndarray_angle', $deg ? 1 : 0);
     }
 
     /**
@@ -386,7 +463,7 @@ trait HasMath
             return $this->binaryOp('ndarray_bitand', $other);
         }
 
-        return $this->unaryOp('ndarray_bitand_scalar', $other);
+        return $this->unaryOp('ndarray_bitand_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**
@@ -402,7 +479,7 @@ trait HasMath
             return $this->binaryOp('ndarray_bitor', $other);
         }
 
-        return $this->unaryOp('ndarray_bitor_scalar', $other);
+        return $this->unaryOp('ndarray_bitor_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**
@@ -418,7 +495,7 @@ trait HasMath
             return $this->binaryOp('ndarray_bitxor', $other);
         }
 
-        return $this->unaryOp('ndarray_bitxor_scalar', $other);
+        return $this->unaryOp('ndarray_bitxor_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**
@@ -434,7 +511,7 @@ trait HasMath
             return $this->binaryOp('ndarray_left_shift', $other);
         }
 
-        return $this->unaryOp('ndarray_left_shift_scalar', $other);
+        return $this->unaryOp('ndarray_left_shift_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**
@@ -450,7 +527,7 @@ trait HasMath
             return $this->binaryOp('ndarray_right_shift', $other);
         }
 
-        return $this->unaryOp('ndarray_right_shift_scalar', $other);
+        return $this->unaryOp('ndarray_right_shift_scalar', ...$this->scalarToBuffer($other));
     }
 
     /**

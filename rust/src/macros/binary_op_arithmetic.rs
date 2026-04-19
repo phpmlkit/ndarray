@@ -19,10 +19,10 @@ macro_rules! binary_op_arithmetic {
         use crate::helpers::{
             extract_view_as_f32, extract_view_as_f64, extract_view_as_i16, extract_view_as_i32,
             extract_view_as_i64, extract_view_as_i8, extract_view_as_u16, extract_view_as_u32,
-            extract_view_as_u64, extract_view_as_u8, extract_view_f32, extract_view_f64,
-            extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8,
-            extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8, set_last_error,
-            ERR_GENERIC,
+            extract_view_as_u64, extract_view_as_u8, extract_view_c128, extract_view_c64,
+            extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
+            extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32,
+            extract_view_u64, extract_view_u8, set_last_error, ERR_GENERIC,
         };
         use crate::types::dtype::DType;
         use crate::types::{ArrayData, NDArrayWrapper};
@@ -63,6 +63,40 @@ macro_rules! binary_op_arithmetic {
                             ::parking_lot::RwLock::new(result),
                         )),
                         dtype: DType::Float32,
+                    }
+                }
+                DType::Complex64 => {
+                    let Some(a_view) = extract_view_c64($a_wrapper, $a_meta) else {
+                        set_last_error("Failed to extract Complex64 operand a".to_string());
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_view) = extract_view_c64($b_wrapper, $b_meta) else {
+                        set_last_error("Failed to extract Complex64 operand b".to_string());
+                        return ERR_GENERIC;
+                    };
+                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    NDArrayWrapper {
+                        data: ArrayData::Complex64(::std::sync::Arc::new(
+                            ::parking_lot::RwLock::new(result),
+                        )),
+                        dtype: DType::Complex64,
+                    }
+                }
+                DType::Complex128 => {
+                    let Some(a_view) = extract_view_c128($a_wrapper, $a_meta) else {
+                        set_last_error("Failed to extract Complex128 operand a".to_string());
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_view) = extract_view_c128($b_wrapper, $b_meta) else {
+                        set_last_error("Failed to extract Complex128 operand b".to_string());
+                        return ERR_GENERIC;
+                    };
+                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    NDArrayWrapper {
+                        data: ArrayData::Complex128(::std::sync::Arc::new(
+                            ::parking_lot::RwLock::new(result),
+                        )),
+                        dtype: DType::Complex128,
                     }
                 }
                 DType::Int64 => {
@@ -241,6 +275,10 @@ macro_rules! binary_op_arithmetic {
                         )),
                         dtype: DType::Float32,
                     }
+                }
+                DType::Complex64 | DType::Complex128 => {
+                    set_last_error("Mixed-type complex arithmetic not yet supported".to_string());
+                    return ERR_GENERIC;
                 }
                 DType::Int64 => {
                     let Some(a_arr) = extract_view_as_i64($a_wrapper, $a_meta) else {

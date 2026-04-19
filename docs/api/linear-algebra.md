@@ -70,13 +70,14 @@ echo $matrix->norm();
 ## dot()
 
 ```php
-public function dot(NDArray $other): NDArray
+public function dot(NDArray $other): float|int|Complex|NDArray
 ```
 
 Compute dot product of two arrays.
 
-For 1D arrays: returns scalar
-For 2D arrays: returns matrix multiplication
+- **1D × 1D**: Returns a scalar (the inner product)
+- **2D × 2D**: Returns a matrix (matrix multiplication)
+- **1D × 2D** or **2D × 1D**: Returns a vector
 
 ### Parameters
 
@@ -86,12 +87,12 @@ For 2D arrays: returns matrix multiplication
 
 ### Returns
 
-- `NDArray` - Dot product result.
+- `float|int|Complex|NDArray` - Scalar for 1D·1D, NDArray otherwise.
 
 ### Examples
 
 ```php
-// Matrix multiplication
+// Matrix multiplication (2D × 2D)
 $a = NDArray::array([
     [1, 2],
     [3, 4]
@@ -106,12 +107,20 @@ $c = $a->dot($b);
 print_r($c->toArray());
 // Output: [[19, 22], [43, 50]]
 
-// Vector dot product
+// Vector dot product (1D × 1D) — returns scalar
 $v1 = NDArray::array([1, 2, 3]);
 $v2 = NDArray::array([4, 5, 6]);
 $result = $v1->dot($v2);
-print_r($result->toArray());
+echo $result;
 // Output: 32
+
+// Complex vector dot product
+use PhpMlKit\NDArray\Complex;
+
+$v1 = NDArray::array([new Complex(1, 1), new Complex(2, 2)]);
+$v2 = NDArray::array([new Complex(3, 3), new Complex(4, 4)]);
+$result = $v1->dot($v2);
+// $result is a Complex instance
 ```
 
 ## matmul()
@@ -193,16 +202,16 @@ print_r($super->toArray());
 ## trace()
 
 ```php
-public function trace(): NDArray
+public function trace(): float|int|Complex
 ```
 
 Compute trace (sum of diagonal elements).
 
-Returns a scalar array.
+Returns a scalar value (not an array). For real arrays, returns `float|int`. For complex arrays, returns a `Complex` instance.
 
 ### Returns
 
-- `NDArray` - Scalar array containing the trace.
+- `float|int|Complex` - The trace value.
 
 ### Examples
 
@@ -214,8 +223,20 @@ $matrix = NDArray::array([
 ]);
 
 $tr = $matrix->trace();
-print_r($tr->toArray());
+echo $tr;
 // Output: 15 (1 + 5 + 9)
+
+// Complex trace
+use PhpMlKit\NDArray\Complex;
+
+$complex = NDArray::array([
+    [new Complex(1, 1), new Complex(2, 2)],
+    [new Complex(3, 3), new Complex(4, 4)],
+], DType::Complex128);
+
+$tr = $complex->trace();
+echo $tr->real;  // 5.0
+echo $tr->imag;  // 5.0
 ```
 
 ## svd()

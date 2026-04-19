@@ -2,31 +2,76 @@
 
 use std::ffi::c_void;
 
+use num_complex::{Complex32, Complex64};
+
 use crate::types::dtype::DType;
 
-/// Write a scalar result to FFI output buffers
+/// A scalar value produced by a full-array reduction, written to FFI `out_value` / `out_dtype`.
 ///
-/// out_value: 8-byte buffer, interpreted per dtype (f64, i64, or u64)
-/// out_dtype: 1-byte dtype value
-pub unsafe fn write_scalar(out_value: *mut c_void, out_dtype: *mut u8, value: f64, dtype: DType) {
-    if !out_value.is_null() {
-        match dtype {
-            DType::Float64 | DType::Float32 => {
-                *(out_value as *mut f64) = value;
-            }
-            DType::Int64 | DType::Int32 | DType::Int16 | DType::Int8 => {
-                *(out_value as *mut i64) = value as i64;
-            }
-            DType::Uint64 | DType::Uint32 | DType::Uint16 | DType::Uint8 => {
-                *(out_value as *mut u64) = value as u64;
-            }
-            DType::Bool => {
-                *(out_value as *mut u64) = value as u64;
-            }
+/// Callers must ensure `out_value` points to a buffer at least as large as the element type
+/// (e.g. 4 bytes for `Float32`, 8 for `Float64`, 16 for `Complex64`, 32 for `Complex128`).
+#[derive(Clone, Copy, Debug)]
+pub enum ReductionScalar {
+    F32(f32),
+    F64(f64),
+    I64(i64),
+    I32(i32),
+    I16(i16),
+    I8(i8),
+    U64(u64),
+    U32(u32),
+    U16(u16),
+    U8(u8),
+    C64(Complex32),
+    C128(Complex64),
+}
+
+impl ReductionScalar {
+    #[inline]
+    pub const fn dtype(self) -> DType {
+        match self {
+            Self::F32(_) => DType::Float32,
+            Self::F64(_) => DType::Float64,
+            Self::I64(_) => DType::Int64,
+            Self::I32(_) => DType::Int32,
+            Self::I16(_) => DType::Int16,
+            Self::I8(_) => DType::Int8,
+            Self::U64(_) => DType::Uint64,
+            Self::U32(_) => DType::Uint32,
+            Self::U16(_) => DType::Uint16,
+            Self::U8(_) => DType::Uint8,
+            Self::C64(_) => DType::Complex64,
+            Self::C128(_) => DType::Complex128,
         }
     }
+}
+
+/// Write a reduction scalar to FFI output buffers (`out_value`, `out_dtype`).
+#[inline]
+pub unsafe fn write_reduction_scalar(
+    out_value: *mut c_void,
+    out_dtype: *mut u8,
+    scalar: ReductionScalar,
+) {
     if !out_dtype.is_null() {
-        *out_dtype = dtype as u8;
+        *out_dtype = scalar.dtype() as u8;
+    }
+    if out_value.is_null() {
+        return;
+    }
+    match scalar {
+        ReductionScalar::F64(v) => *(out_value as *mut f64) = v,
+        ReductionScalar::F32(v) => *(out_value as *mut f32) = v,
+        ReductionScalar::I64(v) => *(out_value as *mut i64) = v,
+        ReductionScalar::I32(v) => *(out_value as *mut i32) = v,
+        ReductionScalar::I16(v) => *(out_value as *mut i16) = v,
+        ReductionScalar::I8(v) => *(out_value as *mut i8) = v,
+        ReductionScalar::U64(v) => *(out_value as *mut u64) = v,
+        ReductionScalar::U32(v) => *(out_value as *mut u32) = v,
+        ReductionScalar::U16(v) => *(out_value as *mut u16) = v,
+        ReductionScalar::U8(v) => *(out_value as *mut u8) = v,
+        ReductionScalar::C64(v) => *(out_value as *mut Complex32) = v,
+        ReductionScalar::C128(v) => *(out_value as *mut Complex64) = v,
     }
 }
 

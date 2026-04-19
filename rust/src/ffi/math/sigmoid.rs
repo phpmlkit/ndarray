@@ -1,6 +1,6 @@
 //! Sigmoid operation: 1 / (1 + exp(-x)).
 
-use crate::helpers::error::{ERR_GENERIC, SUCCESS};
+use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{extract_view_f32, extract_view_f64};
 use crate::types::dtype::DType;
@@ -36,7 +36,7 @@ pub unsafe extern "C" fn ndarray_sigmoid(
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
                 let Some(view) = extract_view_f64(a_wrapper, meta) else {
-                    crate::helpers::error::set_last_error("Failed to extract f64 view".to_string());
+                    set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.mapv(|x: f64| 1.0 / (1.0 + (-x).exp()));
@@ -47,7 +47,7 @@ pub unsafe extern "C" fn ndarray_sigmoid(
             }
             DType::Float32 => {
                 let Some(view) = extract_view_f32(a_wrapper, meta) else {
-                    crate::helpers::error::set_last_error("Failed to extract f32 view".to_string());
+                    set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result = view.mapv(|x: f32| 1.0_f32 / (1.0_f32 + (-x).exp()));
@@ -56,10 +56,12 @@ pub unsafe extern "C" fn ndarray_sigmoid(
                     dtype: DType::Float32,
                 }
             }
+            DType::Complex64 | DType::Complex128 => {
+                set_last_error("Operation sigmoid not supported for complex dtype".to_string());
+                return ERR_GENERIC;
+            }
             _ => {
-                crate::helpers::error::set_last_error(
-                    "sigmoid() requires float type (Float64 or Float32)".to_string(),
-                );
+                set_last_error("sigmoid() requires float type (Float64 or Float32)".to_string());
                 return ERR_GENERIC;
             }
         };
@@ -67,7 +69,7 @@ pub unsafe extern "C" fn ndarray_sigmoid(
         if let Err(e) =
             write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
         {
-            crate::helpers::error::set_last_error(e);
+            set_last_error(e);
             return ERR_GENERIC;
         }
         *out = NdArrayHandle::from_wrapper(Box::new(result_wrapper));

@@ -7,6 +7,7 @@ use std::ffi::c_void;
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
 use crate::types::dtype::DType;
 use crate::types::NdArrayHandle;
+use num_complex::Complex;
 
 /// Get an element at the given flat index.
 ///
@@ -96,6 +97,20 @@ pub unsafe extern "C" fn ndarray_get_element(
             DType::Float64 => match wrapper.get_element_f64(flat_index) {
                 Ok(v) => {
                     *(out_value as *mut f64) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Complex64 => match wrapper.get_element_complex64(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut Complex<f32>) = v;
+                    SUCCESS
+                }
+                Err(e) => return handle_get_error(e),
+            },
+            DType::Complex128 => match wrapper.get_element_complex128(flat_index) {
+                Ok(v) => {
+                    *(out_value as *mut Complex<f64>) = v;
                     SUCCESS
                 }
                 Err(e) => return handle_get_error(e),

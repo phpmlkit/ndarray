@@ -31,8 +31,10 @@ macro_rules! binary_op_bitwise {
         let out_dtype = DType::promote($a_wrapper.dtype, $b_wrapper.dtype);
 
         match out_dtype {
-            DType::Float64 | DType::Float32 => {
-                set_last_error("Bitwise operations not supported for float types".to_string());
+            DType::Float64 | DType::Float32 | DType::Complex64 | DType::Complex128 => {
+                set_last_error(
+                    "Bitwise operations not supported for float or complex types".to_string(),
+                );
                 return ERR_GENERIC;
             }
             _ => {}
@@ -193,6 +195,12 @@ macro_rules! binary_op_bitwise {
                         dtype: DType::Bool,
                     }
                 }
+                DType::Complex64 | DType::Complex128 => {
+                    set_last_error(
+                        "Bitwise operations not supported for complex dtype".to_string(),
+                    );
+                    return ERR_GENERIC;
+                }
                 DType::Float64 | DType::Float32 => {
                     unreachable!("Float types already rejected");
                 }
@@ -339,6 +347,12 @@ macro_rules! binary_op_bitwise {
                     set_last_error(
                         "Bitwise operations on Bool arrays should be handled separately"
                             .to_string(),
+                    );
+                    return ERR_GENERIC;
+                }
+                DType::Complex64 | DType::Complex128 => {
+                    set_last_error(
+                        "Bitwise operations not supported for complex dtype".to_string(),
                     );
                     return ERR_GENERIC;
                 }

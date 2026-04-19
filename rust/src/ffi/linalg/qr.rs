@@ -10,7 +10,7 @@ use parking_lot::RwLock;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_MATH, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
 use crate::types::{ArrayData, ArrayMetadata, DType, NDArrayWrapper, NdArrayHandle};
 
 /// Compute QR decomposition: A = Q * R.
@@ -100,8 +100,68 @@ pub unsafe extern "C" fn ndarray_qr(
                 };
                 (q_wrapper, r_wrapper)
             }
+            DType::Complex64 => {
+                let Some(a_view_dyn) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c64 view for QR".to_string());
+                    return ERR_GENERIC;
+                };
+                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                let (q, r) = match a_view_2d.qr() {
+                    Ok(pair) => pair,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+                let q_wrapper = NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(q.into_dyn()))),
+                    dtype: DType::Complex64,
+                };
+                let r_wrapper = NDArrayWrapper {
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(r.into_dyn()))),
+                    dtype: DType::Complex64,
+                };
+                (q_wrapper, r_wrapper)
+            }
+            DType::Complex128 => {
+                let Some(a_view_dyn) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                    error::set_last_error("Failed to extract c128 view for QR".to_string());
+                    return ERR_GENERIC;
+                };
+                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_SHAPE;
+                    }
+                };
+                let (q, r) = match a_view_2d.qr() {
+                    Ok(pair) => pair,
+                    Err(e) => {
+                        error::set_last_error(e);
+                        return ERR_MATH;
+                    }
+                };
+                let q_wrapper = NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(q.into_dyn()))),
+                    dtype: DType::Complex128,
+                };
+                let r_wrapper = NDArrayWrapper {
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(r.into_dyn()))),
+                    dtype: DType::Complex128,
+                };
+                (q_wrapper, r_wrapper)
+            }
             _ => {
-                error::set_last_error("QR only supports Float32 and Float64".to_string());
+                error::set_last_error(
+                    "QR only supports Float32, Float64, Complex64, and Complex128".to_string(),
+                );
                 return ERR_DTYPE;
             }
         };
