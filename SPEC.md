@@ -615,11 +615,11 @@ Sort kind selection is enum-based via `SortKind`:
 
 | Feature | NumPy Equivalent | Priority | Status |
 |---------|------------------|----------|--------|
-| Array creation | `np.array()` | CRITICAL | Planned |
-| Slicing | `arr[0:5]` | CRITICAL | Planned |
+| Array creation | `np.array()` | CRITICAL | Done |
+| Slicing | `arr[0:5]` | CRITICAL | Done |
 | Broadcasting | Automatic | CRITICAL | Done |
-| Matrix mult | `@` operator | HIGH | Planned |
-| Reductions | `sum()`, `mean()` | HIGH | Planned |
+| Matrix mult | `@` operator | HIGH | Done |
+| Reductions | `sum()`, `mean()` | HIGH | Done |
 | SVD | `np.linalg.svd()` | MEDIUM | Done |
 | FFT | `np.fft.fft()` | LOW | Future |
 

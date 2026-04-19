@@ -73,11 +73,11 @@ echo $matrix->norm();
 public function dot(NDArray $other): float|int|Complex|NDArray
 ```
 
-Compute dot product of two arrays.
+Generalized dot product for 1D and 2D operands. Operand dtypes are promoted to a common type before the operation.
 
-- **1D × 1D**: Returns a scalar (the inner product)
-- **2D × 2D**: Returns a matrix (matrix multiplication)
-- **1D × 2D** or **2D × 1D**: Returns a vector
+- **1D × 1D**: inner product → scalar
+- **2D × 2D**: matrix product → 2D array
+- **1D × 2D** or **2D × 1D**: vector–matrix product → 1D array
 
 ### Parameters
 
@@ -87,7 +87,7 @@ Compute dot product of two arrays.
 
 ### Returns
 
-- `float|int|Complex|NDArray` - Scalar for 1D·1D, NDArray otherwise.
+- `float|int|Complex|NDArray` - Scalar when the result is 0-D (1D·1D), otherwise an NDArray.
 
 ### Examples
 
@@ -126,12 +126,14 @@ $result = $v1->dot($v2);
 ## matmul()
 
 ```php
-public function matmul(NDArray $other): NDArray
+public function matmul(NDArray $other): float|int|Complex|NDArray
 ```
 
-Compute matrix multiplication.
+Matrix multiplication for 1D and 2D operands. Operand dtypes are promoted to a common type. Operands with more than two dimensions are not supported.
 
-Requires both arrays to be at least 2D.
+- **2D × 2D**: matrix × matrix → 2D array
+- **2D × 1D** or **1D × 2D**: matrix × vector → 1D array
+- **1D × 1D**: inner product → scalar
 
 ### Parameters
 
@@ -141,7 +143,7 @@ Requires both arrays to be at least 2D.
 
 ### Returns
 
-- `NDArray` - Matrix multiplication result.
+- `float|int|Complex|NDArray` - Scalar when the result is 0-D (1D·1D), otherwise an NDArray.
 
 ### Examples
 

@@ -80,14 +80,16 @@ trait HasLinearAlgebra
     }
 
     /**
-     * Compute dot product of two arrays.
+     * Generalized dot product for 1D and 2D operands.
      *
-     * - If both arrays are 1D, returns a scalar.
-     * - If either array is 2D, returns an NDArray.
+     * Operand dtypes are promoted to a common type before the operation. Shape rules:
+     * - **1D × 1D**: inner product → scalar
+     * - **2D × 2D**: matrix product → 2D array
+     * - **1D × 2D** or **2D × 1D**: vector–matrix product → 1D array
      *
      * @param NDArray $other The other array
      *
-     * @return Complex|float|int|NDArray scalar for 1D·1D, NDArray otherwise
+     * @return Complex|float|int|NDArray scalar when the result is 0-D, otherwise an NDArray
      */
     public function dot(NDArray $other): Complex|float|int|NDArray
     {
@@ -97,15 +99,24 @@ trait HasLinearAlgebra
     }
 
     /**
-     * Compute matrix multiplication.
+     * Matrix multiplication (`@`) for 1D and 2D operands.
      *
-     * Requires both arrays to be at least 2D.
+     * Operand dtypes are promoted to a common type before the operation. Supported shapes:
+     * - **2D × 2D**: matrix × matrix → 2D array
+     * - **2D × 1D** or **1D × 2D**: matrix × vector → 1D array
+     * - **1D × 1D**: inner product → scalar (0-D result unpacked to a PHP scalar or `Complex`)
+     *
+     * Operands with more than two dimensions are not supported.
      *
      * @param NDArray $other The other array
+     *
+     * @return Complex|float|int|NDArray scalar when the result is 0-D, otherwise an NDArray
      */
-    public function matmul(NDArray $other): NDArray
+    public function matmul(NDArray $other): Complex|float|int|NDArray
     {
-        return $this->binaryOp('ndarray_matmul', $other);
+        $result = $this->binaryOp('ndarray_matmul', $other);
+
+        return 0 === $result->ndim() ? $result->toScalar() : $result;
     }
 
     /**

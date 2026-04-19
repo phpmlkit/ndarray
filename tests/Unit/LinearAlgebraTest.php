@@ -79,10 +79,10 @@ class LinearAlgebraTest extends TestCase
         $this->assertEqualsWithDelta([[19, 22], [43, 50]], $result->toArray(), 0.0001);
     }
 
-    public function testMatmulRequires2D(): void
+    public function testMatmulRejectsMoreThanTwoDimensions(): void
     {
-        $a = NDArray::array([1, 2, 3], DType::Float64);
-        $b = NDArray::array([[1, 2], [3, 4]], DType::Float64);
+        $a = NDArray::array([[[1.0, 2.0]]], DType::Float64);
+        $b = NDArray::array([[1.0, 2.0]], DType::Float64);
 
         $this->expectException(ShapeException::class);
         $a->matmul($b);
@@ -438,9 +438,8 @@ class LinearAlgebraTest extends TestCase
         );
 
         // Known singular values for [[1,2],[3,4],[5,6]] from LAPACK
-        $singularValues = $s->toArray();
-        $this->assertEqualsWithDelta(9.525518, $singularValues[0], 1e-6);
-        $this->assertEqualsWithDelta(0.514301, $singularValues[1], 1e-6);
+        $this->assertEqualsWithDelta(9.525518, $s[0], 1e-6);
+        $this->assertEqualsWithDelta(0.514301, $s[1], 1e-6);
     }
 
     public function testSvdOrthogonality(): void
@@ -1036,11 +1035,10 @@ class LinearAlgebraTest extends TestCase
         $result = $a->matmul($b);
 
         // [[1, i], [i, 1]] @ [[1, i], [i, 1]] = [[0, 2i], [2i, 0]]
-        $values = $result->toArray();
-        $this->assertEqualsWithDelta(0.0, $values[0][0]->real, 0.0001);
-        $this->assertEqualsWithDelta(0.0, $values[0][0]->imag, 0.0001);
-        $this->assertEqualsWithDelta(0.0, $values[0][1]->real, 0.0001);
-        $this->assertEqualsWithDelta(2.0, $values[0][1]->imag, 0.0001);
+        $this->assertEqualsWithDelta(0.0, $result[0][0]->real, 0.0001);
+        $this->assertEqualsWithDelta(0.0, $result[0][0]->imag, 0.0001);
+        $this->assertEqualsWithDelta(0.0, $result[0][1]->real, 0.0001);
+        $this->assertEqualsWithDelta(2.0, $result[0][1]->imag, 0.0001);
     }
 
     public function testComplexSvd(): void
@@ -1127,12 +1125,11 @@ class LinearAlgebraTest extends TestCase
         $this->assertSame(DType::Complex128, $x->dtype());
 
         // Verify A * x = b
-        $reconstructed = $a->matmul($x->reshape([2, 1]));
-        $values = $reconstructed->toArray();
-        $this->assertEqualsWithDelta(1.0, $values[0][0]->real, 1e-8);
-        $this->assertEqualsWithDelta(1.0, $values[0][0]->imag, 1e-8);
-        $this->assertEqualsWithDelta(2.0, $values[1][0]->real, 1e-8);
-        $this->assertEqualsWithDelta(0.0, $values[1][0]->imag, 1e-8);
+        $reconstructed = $a->matmul($x);
+        $this->assertEqualsWithDelta(1.0, $reconstructed[0]->real, 1e-8);
+        $this->assertEqualsWithDelta(1.0, $reconstructed[0]->imag, 1e-8);
+        $this->assertEqualsWithDelta(2.0, $reconstructed[1]->real, 1e-8);
+        $this->assertEqualsWithDelta(0.0, $reconstructed[1]->imag, 1e-8);
     }
 
     public function testComplexQr(): void
@@ -1149,10 +1146,8 @@ class LinearAlgebraTest extends TestCase
 
         // Q * R should reconstruct A
         $reconstructed = $q->matmul($r);
-        $original = $a->toArray();
-        $result = $reconstructed->toArray();
-        $this->assertEqualsWithDelta($original[0][0]->real, $result[0][0]->real, 1e-8);
-        $this->assertEqualsWithDelta($original[0][0]->imag, $result[0][0]->imag, 1e-8);
+        $this->assertEqualsWithDelta($a[0][0]->real, $reconstructed[0][0]->real, 1e-8);
+        $this->assertEqualsWithDelta($a[0][0]->imag, $reconstructed[0][0]->imag, 1e-8);
     }
 
     public function testComplexPinv(): void
@@ -1167,10 +1162,8 @@ class LinearAlgebraTest extends TestCase
 
         // A * A^+ * A ≈ A
         $reconstructed = $a->matmul($pinv)->matmul($a);
-        $orig = $a->toArray();
-        $result = $reconstructed->toArray();
-        $this->assertEqualsWithDelta($orig[0][0]->real, $result[0][0]->real, 1e-8);
-        $this->assertEqualsWithDelta($orig[0][0]->imag, $result[0][0]->imag, 1e-8);
+        $this->assertEqualsWithDelta($a[0][0]->real, $reconstructed[0][0]->real, 1e-8);
+        $this->assertEqualsWithDelta($a[0][0]->imag, $reconstructed[0][0]->imag, 1e-8);
     }
 
     public function testComplexNorm(): void
@@ -1194,11 +1187,10 @@ class LinearAlgebraTest extends TestCase
 
         $diag = $a->diagonal();
         $this->assertSame(DType::Complex128, $diag->dtype());
-        $values = $diag->toArray();
-        $this->assertEqualsWithDelta(1.0, $values[0]->real, 0.0001);
-        $this->assertEqualsWithDelta(1.0, $values[0]->imag, 0.0001);
-        $this->assertEqualsWithDelta(4.0, $values[1]->real, 0.0001);
-        $this->assertEqualsWithDelta(4.0, $values[1]->imag, 0.0001);
+        $this->assertEqualsWithDelta(1.0, $diag[0]->real, 0.0001);
+        $this->assertEqualsWithDelta(1.0, $diag[0]->imag, 0.0001);
+        $this->assertEqualsWithDelta(4.0, $diag[1]->real, 0.0001);
+        $this->assertEqualsWithDelta(4.0, $diag[1]->imag, 0.0001);
     }
 
     public function testComplexTrace(): void
@@ -1300,10 +1292,10 @@ class LinearAlgebraTest extends TestCase
             $v = $eigvecs->slice([':', $i]);
 
             // Compute A * v
-            $av = $a->astype(DType::Complex128)->matmul($v->reshape([2, 1]));
+            $av = $a->matmul($v);
 
             // Compute λ * v
-            $lv = $v->multiply($lambda)->reshape([2, 1]);
+            $lv = $v->multiply($lambda);
 
             // Verify A*v ≈ λ*v by checking norm of difference is near zero
             $diff = $av->subtract($lv);
@@ -1334,8 +1326,8 @@ class LinearAlgebraTest extends TestCase
             $lambda = $eigvals[$i];
             $v = $eigvecs->slice([':', (string) $i]);
 
-            $av = $a->matmul($v->reshape([2, 1]));
-            $lv = $v->multiply($lambda)->reshape([2, 1]);
+            $av = $a->matmul($v);
+            $lv = $v->multiply($lambda);
 
             // Verify A*v ≈ λ*v by checking norm of difference is near zero
             $diff = $av->subtract($lv);
@@ -1510,8 +1502,8 @@ class LinearAlgebraTest extends TestCase
             $lambda = $eigvals[$i];
             $v = $eigvecs->slice([':', (string) $i]);
 
-            $av = $a->matmul($v->reshape([2, 1]));
-            $lv = $v->multiply($lambda)->reshape([2, 1]);
+            $av = $a->matmul($v);
+            $lv = $v->multiply($lambda);
 
             $diff = $av->subtract($lv);
             $norm = $diff->norm(2);
@@ -1552,10 +1544,9 @@ class LinearAlgebraTest extends TestCase
         $this->assertSame(DType::Float64, $eigvals->dtype());
         $this->assertSame(DType::Complex128, $eigvecs->dtype());
 
-        $values = $eigvals->toArray();
         // Eigenvalues should be positive and ordered
-        $this->assertGreaterThan(0, $values[0]);
-        $this->assertGreaterThan(0, $values[1]);
+        $this->assertGreaterThan(0, $eigvals[0]);
+        $this->assertGreaterThan(0, $eigvals[1]);
     }
 
     public function testEighRequires2D(): void

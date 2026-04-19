@@ -1042,10 +1042,8 @@ int32_t ndarray_lstsq(const struct NdArrayHandle *a,
                       uintptr_t max_ndim);
 
 /**
- * Matrix multiplication.
- *
- * Only supports Float32 and Float64 types (2D arrays).
- * When BLAS is enabled, automatically uses BLAS gemm for f32/f64.
+ * Matrix multiplication with NumPy-style 1D/2D handling and dtype promotion.
+ * When BLAS is enabled, automatically uses BLAS gemm.
  */
 int32_t ndarray_matmul(const struct NdArrayHandle *a,
                        const struct ArrayMetadata *a_meta,
