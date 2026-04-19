@@ -5,6 +5,7 @@
 pub mod elementwise_minmax;
 pub mod error;
 pub mod indexing;
+pub mod linalg_dtype;
 pub mod output;
 pub mod scalar;
 pub mod validation;
@@ -16,6 +17,7 @@ pub use error::{
     set_last_error, ERR_ALLOC, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_MATH, ERR_PANIC, ERR_SHAPE,
     SUCCESS,
 };
+pub use linalg_dtype::linalg_computation_dtype;
 pub use output::write_output_metadata;
 pub use scalar::*;
 pub use validation::*;

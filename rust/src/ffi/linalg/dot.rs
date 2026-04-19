@@ -1,17 +1,20 @@
-//! Dot product operation.
-//!
-//! Only supports Float32 and Float64 types.
+//! Dot product with dtype promotion between operands.
 
 use std::sync::Arc;
 
 use ndarray::linalg::Dot;
-use ndarray::{ArrayD, ArrayViewD, Ix1, Ix2, IxDyn, LinalgScalar};
+use ndarray::{ArrayBase, ArrayD, Data, Ix0, Ix1, Ix2, IxDyn, LinalgScalar};
 use parking_lot::RwLock;
 
-use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
+use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
-use crate::types::{ArrayData, ArrayMetadata, DType, NDArrayWrapper, NdArrayHandle};
+use crate::helpers::{
+    extract_view_as_c128, extract_view_as_c64, extract_view_as_f32, extract_view_as_f64,
+    extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
+    linalg_computation_dtype,
+};
+use crate::types::dtype::DType;
+use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 
 /// Compute dot product of two arrays.
 #[no_mangle]
@@ -44,112 +47,208 @@ pub unsafe extern "C" fn ndarray_dot(
         let a_wrapper = NdArrayHandle::as_wrapper(a as *mut _);
         let b_wrapper = NdArrayHandle::as_wrapper(b as *mut _);
 
-        if a_wrapper.dtype != b_wrapper.dtype {
+        let promoted = DType::promote(a_wrapper.dtype, b_wrapper.dtype);
+        let Some(comp_dtype) = linalg_computation_dtype(promoted) else {
             error::set_last_error(
-                "Dot product requires both arrays to have the same dtype".to_string(),
+                "Dot product supports floating-point and complex dtypes".to_string(),
             );
-            return ERR_GENERIC;
-        }
+            return ERR_DTYPE;
+        };
 
-        let result_wrapper = match a_wrapper.dtype {
+        let same_native = a_wrapper.dtype == b_wrapper.dtype && a_wrapper.dtype == comp_dtype;
+
+        let result_wrapper = match comp_dtype {
             DType::Float64 => {
-                let Some(a_view) = extract_view_f64(a_wrapper, a_meta_ref) else {
-                    error::set_last_error("Failed to extract f64 view for array a".to_string());
-                    return ERR_GENERIC;
-                };
-                let Some(b_view) = extract_view_f64(b_wrapper, b_meta_ref) else {
-                    error::set_last_error("Failed to extract f64 view for array b".to_string());
-                    return ERR_GENERIC;
-                };
-
-                let result = match dot_dispatch(a_view, b_view) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        error::set_last_error(e);
-                        return ERR_SHAPE;
+                let result = if same_native {
+                    let Some(a_v) = extract_view_f64(a_wrapper, a_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Float64 operand a for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_v) = extract_view_f64(b_wrapper, b_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Float64 operand b for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    match dot_dispatch(&a_v, &b_v) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            error::set_last_error(e);
+                            return ERR_SHAPE;
+                        }
+                    }
+                } else {
+                    let Some(a_arr) = extract_view_as_f64(a_wrapper, a_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Float64 operand a for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_arr) = extract_view_as_f64(b_wrapper, b_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Float64 operand b for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    match dot_dispatch(&a_arr, &b_arr) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            error::set_last_error(e);
+                            return ERR_SHAPE;
+                        }
                     }
                 };
-
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
                     dtype: DType::Float64,
                 }
             }
             DType::Float32 => {
-                let Some(a_view) = extract_view_f32(a_wrapper, a_meta_ref) else {
-                    error::set_last_error("Failed to extract f32 view for array a".to_string());
-                    return ERR_GENERIC;
-                };
-                let Some(b_view) = extract_view_f32(b_wrapper, b_meta_ref) else {
-                    error::set_last_error("Failed to extract f32 view for array b".to_string());
-                    return ERR_GENERIC;
-                };
-
-                let result = match dot_dispatch(a_view, b_view) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        error::set_last_error(e);
-                        return ERR_SHAPE;
+                let result = if same_native {
+                    let Some(a_v) = extract_view_f32(a_wrapper, a_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Float32 operand a for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_v) = extract_view_f32(b_wrapper, b_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Float32 operand b for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    match dot_dispatch(&a_v, &b_v) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            error::set_last_error(e);
+                            return ERR_SHAPE;
+                        }
+                    }
+                } else {
+                    let Some(a_arr) = extract_view_as_f32(a_wrapper, a_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Float32 operand a for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_arr) = extract_view_as_f32(b_wrapper, b_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Float32 operand b for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    match dot_dispatch(&a_arr, &b_arr) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            error::set_last_error(e);
+                            return ERR_SHAPE;
+                        }
                     }
                 };
-
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
                     dtype: DType::Float32,
                 }
             }
             DType::Complex64 => {
-                let Some(a_view) = extract_view_c64(a_wrapper, a_meta_ref) else {
-                    error::set_last_error("Failed to extract c64 view for array a".to_string());
-                    return ERR_GENERIC;
-                };
-                let Some(b_view) = extract_view_c64(b_wrapper, b_meta_ref) else {
-                    error::set_last_error("Failed to extract c64 view for array b".to_string());
-                    return ERR_GENERIC;
-                };
-
-                let result = match dot_dispatch(a_view, b_view) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        error::set_last_error(e);
-                        return ERR_SHAPE;
+                let result = if same_native {
+                    let Some(a_v) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Complex64 operand a for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_v) = extract_view_c64(b_wrapper, b_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Complex64 operand b for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    match dot_dispatch(&a_v, &b_v) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            error::set_last_error(e);
+                            return ERR_SHAPE;
+                        }
+                    }
+                } else {
+                    let Some(a_arr) = extract_view_as_c64(a_wrapper, a_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Complex64 operand a for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_arr) = extract_view_as_c64(b_wrapper, b_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Complex64 operand b for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    match dot_dispatch(&a_arr, &b_arr) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            error::set_last_error(e);
+                            return ERR_SHAPE;
+                        }
                     }
                 };
-
                 NDArrayWrapper {
                     data: ArrayData::Complex64(Arc::new(RwLock::new(result))),
                     dtype: DType::Complex64,
                 }
             }
             DType::Complex128 => {
-                let Some(a_view) = extract_view_c128(a_wrapper, a_meta_ref) else {
-                    error::set_last_error("Failed to extract c128 view for array a".to_string());
-                    return ERR_GENERIC;
-                };
-                let Some(b_view) = extract_view_c128(b_wrapper, b_meta_ref) else {
-                    error::set_last_error("Failed to extract c128 view for array b".to_string());
-                    return ERR_GENERIC;
-                };
-
-                let result = match dot_dispatch(a_view, b_view) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        error::set_last_error(e);
-                        return ERR_SHAPE;
+                let result = if same_native {
+                    let Some(a_v) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Complex128 operand a for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_v) = extract_view_c128(b_wrapper, b_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Complex128 operand b for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    match dot_dispatch(&a_v, &b_v) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            error::set_last_error(e);
+                            return ERR_SHAPE;
+                        }
+                    }
+                } else {
+                    let Some(a_arr) = extract_view_as_c128(a_wrapper, a_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Complex128 operand a for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    let Some(b_arr) = extract_view_as_c128(b_wrapper, b_meta_ref) else {
+                        error::set_last_error(
+                            "Failed to prepare Complex128 operand b for dot".to_string(),
+                        );
+                        return ERR_GENERIC;
+                    };
+                    match dot_dispatch(&a_arr, &b_arr) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            error::set_last_error(e);
+                            return ERR_SHAPE;
+                        }
                     }
                 };
-
                 NDArrayWrapper {
                     data: ArrayData::Complex128(Arc::new(RwLock::new(result))),
                     dtype: DType::Complex128,
                 }
             }
             _ => {
-                error::set_last_error(
-                    "Dot product only supports Float64, Float32, Complex64, and Complex128 types"
-                        .to_string(),
-                );
-                return ERR_GENERIC;
+                error::set_last_error("Dot product internal dtype error".to_string());
+                return ERR_DTYPE;
             }
         };
 
@@ -168,41 +267,69 @@ pub unsafe extern "C" fn ndarray_dot(
     })
 }
 
-/// Dispatch dot product for dynamic views.
-///
-/// Returns `ArrayD<A>` where the result is 0D (scalar), 1D, or 2D depending on inputs.
-fn dot_dispatch<A>(a: ArrayViewD<A>, b: ArrayViewD<A>) -> Result<ArrayD<A>, String>
+/// Dispatch dot product (shape rules unchanged from legacy `dot`).
+fn dot_dispatch<A, Sa, Sb>(
+    a: &ArrayBase<Sa, IxDyn>,
+    b: &ArrayBase<Sb, IxDyn>,
+) -> Result<ArrayD<A>, String>
 where
     A: LinalgScalar,
+    Sa: Data<Elem = A>,
+    Sb: Data<Elem = A>,
 {
-    match (a.ndim(), b.ndim()) {
+    let na = a.ndim();
+    let nb = b.ndim();
+    match (na, nb) {
         (1, 1) => {
-            let a1 = a.into_dimensionality::<Ix1>().map_err(|e| e.to_string())?;
-            let b1 = b.into_dimensionality::<Ix1>().map_err(|e| e.to_string())?;
+            let a1 = a
+                .view()
+                .into_dimensionality::<Ix1>()
+                .map_err(|e| e.to_string())?;
+            let b1 = b
+                .view()
+                .into_dimensionality::<Ix1>()
+                .map_err(|e| e.to_string())?;
             if a1.len() != b1.len() {
                 return Err(format!("Shape mismatch: {} and {}", a1.len(), b1.len()));
             }
-            Ok(ArrayD::from_elem(vec![], a1.dot(&b1)))
+            Ok(ndarray::Array::<A, _>::from_elem(Ix0(), a1.dot(&b1)).into_dyn())
         }
         (1, 2) => {
-            let a1 = a.into_dimensionality::<Ix1>().map_err(|e| e.to_string())?;
-            let b2 = b.into_dimensionality::<Ix2>().map_err(|e| e.to_string())?;
+            let a1 = a
+                .view()
+                .into_dimensionality::<Ix1>()
+                .map_err(|e| e.to_string())?;
+            let b2 = b
+                .view()
+                .into_dimensionality::<Ix2>()
+                .map_err(|e| e.to_string())?;
             Ok(a1.dot(&b2).into_dimensionality::<IxDyn>().unwrap())
         }
         (2, 1) => {
-            let a2 = a.into_dimensionality::<Ix2>().map_err(|e| e.to_string())?;
-            let b1 = b.into_dimensionality::<Ix1>().map_err(|e| e.to_string())?;
+            let a2 = a
+                .view()
+                .into_dimensionality::<Ix2>()
+                .map_err(|e| e.to_string())?;
+            let b1 = b
+                .view()
+                .into_dimensionality::<Ix1>()
+                .map_err(|e| e.to_string())?;
             Ok(a2.dot(&b1).into_dimensionality::<IxDyn>().unwrap())
         }
         (2, 2) => {
-            let a2 = a.into_dimensionality::<Ix2>().map_err(|e| e.to_string())?;
-            let b2 = b.into_dimensionality::<Ix2>().map_err(|e| e.to_string())?;
+            let a2 = a
+                .view()
+                .into_dimensionality::<Ix2>()
+                .map_err(|e| e.to_string())?;
+            let b2 = b
+                .view()
+                .into_dimensionality::<Ix2>()
+                .map_err(|e| e.to_string())?;
             Ok(a2.dot(&b2).into_dimensionality::<IxDyn>().unwrap())
         }
         _ => Err(format!(
             "Dot product not supported for dimensions {}D @ {}D",
-            a.ndim(),
-            b.ndim()
+            na, nb
         )),
     }
 }
