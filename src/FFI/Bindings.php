@@ -351,10 +351,6 @@ interface Bindings
 
     public function ndarray_norm_axis(CData $handle, CData $meta, int $axis, bool $keepdims, int $ord, CData $out_handle): int;
 
-    // =========================================================================
-    // BLAS Linear Algebra Operations
-    // =========================================================================
-
     public function ndarray_solve(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
 
     public function ndarray_inv(CData $a, CData $a_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
@@ -491,6 +487,50 @@ interface Bindings
     public function ndarray_cond(CData $a, CData $a_meta, CData $out_value, CData $out_dtype_ptr): int;
 
     public function ndarray_rank(CData $a, CData $a_meta, CData $tol, CData $out_rank): int;
+
+    // =========================================================================
+    // Fourier Transforms
+    // =========================================================================
+    public function ndarray_fft(CData $handle, CData $meta, int $axis, int $n, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_ifft(CData $handle, CData $meta, int $axis, int $n, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_fftn(CData $handle, CData $meta, ?CData $axes, int $n_axes, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_ifftn(CData $handle, CData $meta, ?CData $axes, int $n_axes, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_rfft(CData $handle, CData $meta, int $axis, int $n, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_irfft(CData $handle, CData $meta, int $axis, int $n, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_dct(CData $handle, CData $meta, int $axis, int $n, int $dct_type, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_idct(CData $handle, CData $meta, int $axis, int $n, int $dct_type, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_dctn(CData $handle, CData $meta, ?CData $axes, int $n_axes, int $dct_type, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    public function ndarray_idctn(CData $handle, CData $meta, ?CData $axes, int $n_axes, int $dct_type, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim): int;
+
+    // =========================================================================
+    // Window Functions
+    // =========================================================================
+    public function ndarray_bartlett(int $m, bool $periodic, CData $out_handle): int;
+
+    public function ndarray_blackman(int $m, bool $periodic, CData $out_handle): int;
+
+    public function ndarray_bohman(int $m, bool $periodic, CData $out_handle): int;
+
+    public function ndarray_boxcar(int $m, bool $periodic, CData $out_handle): int;
+
+    public function ndarray_hamming(int $m, bool $periodic, CData $out_handle): int;
+
+    public function ndarray_hanning(int $m, bool $periodic, CData $out_handle): int;
+
+    public function ndarray_kaiser(int $m, float $beta, bool $periodic, CData $out_handle): int;
+
+    public function ndarray_lanczos(int $m, bool $periodic, CData $out_handle): int;
+
+    public function ndarray_triang(int $m, bool $periodic, CData $out_handle): int;
 
     // =========================================================================
     // Stacking (Joining and Splitting)

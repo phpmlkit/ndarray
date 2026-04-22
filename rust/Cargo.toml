@@ -17,6 +17,7 @@ ffi = []
 
 [dependencies]
 ndarray = { version = "0.17.2", features = ["std", "blas"] }
+ndrustfft = "0.6"
 num-complex = "0.4"
 num-traits = "0.2"
 parking_lot = "0.12"

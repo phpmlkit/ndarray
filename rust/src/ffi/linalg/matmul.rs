@@ -117,10 +117,7 @@ where
             }
             Ok(a1.dot(&b2).into_dyn())
         }
-        _ => Err(format!(
-            "matmul: unsupported dimensions {}D @ {}D",
-            na, nb
-        )),
+        _ => Err(format!("matmul: unsupported dimensions {}D @ {}D", na, nb)),
     }
 }
 
@@ -158,9 +155,7 @@ pub unsafe extern "C" fn ndarray_matmul(
 
         let promoted = DType::promote(a_wrapper.dtype, b_wrapper.dtype);
         let Some(comp_dtype) = linalg_computation_dtype(promoted) else {
-            error::set_last_error(
-                "Matmul supports floating-point and complex dtypes".to_string(),
-            );
+            error::set_last_error("Matmul supports floating-point and complex dtypes".to_string());
             return ERR_DTYPE;
         };
 

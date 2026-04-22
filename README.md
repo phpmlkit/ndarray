@@ -51,6 +51,12 @@ $sub_matrix = $a->slice(['0:1', '0:1']);
 // Linear algebra
 $dot = $a->dot($b);
 $trace = $a->trace();
+
+// Singular Value Decomposition
+[$u, $s, $vt] = $a->svd();
+
+// Frequency-domain representation
+$X = $x->fft();
 ```
 
 ## Why NDArray?

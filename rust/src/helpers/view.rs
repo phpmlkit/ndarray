@@ -272,10 +272,18 @@ define_extract_view_as!(
         (extract_view_f32, |x: f32| if x != 0.0 { 1 } else { 0 }),
         (extract_view_f64, |x: f64| if x != 0.0 { 1 } else { 0 }),
         (extract_view_c128, |x: num_complex::Complex64| {
-            if x.re != 0.0 { 1 } else { 0 }
+            if x.re != 0.0 {
+                1
+            } else {
+                0
+            }
         }),
         (extract_view_c64, |x: num_complex::Complex32| {
-            if x.re != 0.0 { 1 } else { 0 }
+            if x.re != 0.0 {
+                1
+            } else {
+                0
+            }
         }),
     ]
 );

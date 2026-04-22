@@ -95,6 +95,8 @@ export default defineConfig({
             { text: 'Statistics', link: '/api/statistics' },
             { text: 'Sorting & Searching', link: '/api/sorting-searching' },
             { text: 'Linear Algebra', link: '/api/linear-algebra' },
+            { text: 'Signal Processing', link: '/api/signal-processing' },
+            { text: 'Window Functions', link: '/api/window-functions' },
           ]
         },
         {
