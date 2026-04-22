@@ -11,6 +11,7 @@ use PhpMlKit\NDArray\Traits\CreatesArrays;
 use PhpMlKit\NDArray\Traits\HasArrayAccess;
 use PhpMlKit\NDArray\Traits\HasComparison;
 use PhpMlKit\NDArray\Traits\HasConversion;
+use PhpMlKit\NDArray\Traits\HasFourier;
 use PhpMlKit\NDArray\Traits\HasIndexing;
 use PhpMlKit\NDArray\Traits\HasLinearAlgebra;
 use PhpMlKit\NDArray\Traits\HasLogical;
@@ -20,6 +21,7 @@ use PhpMlKit\NDArray\Traits\HasReductions;
 use PhpMlKit\NDArray\Traits\HasShapeOps;
 use PhpMlKit\NDArray\Traits\HasSlicing;
 use PhpMlKit\NDArray\Traits\HasStacking;
+use PhpMlKit\NDArray\Traits\HasWindowFunctions;
 
 /**
  * N-dimensional array class with PHP-managed view metadata and Rust-managed data.
@@ -38,6 +40,7 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
     use HasArrayAccess;
     use HasComparison;
     use HasConversion;
+    use HasFourier;
     use HasIndexing;
     use HasLinearAlgebra;
     use HasLogical;
@@ -47,6 +50,7 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
     use HasShapeOps;
     use HasSlicing;
     use HasStacking;
+    use HasWindowFunctions;
 
     /**
      * Private constructor — use factory methods.

@@ -224,7 +224,35 @@ $a = NDArray::array([[4.0, 2.0], [1.0, 3.0]]);
 
 See [Linear Algebra API](/api/linear-algebra) for complete reference.
 
-### 7. Shape Manipulation
+### 8. Signal Processing
+
+Discrete transforms for frequency-domain analysis and filtering:
+
+```php
+use PhpMlKit\NDArray\NDArray;
+use PhpMlKit\NDArray\Normalization;
+
+$x = NDArray::array([0.0, 1.0, 0.0, -1.0]);
+
+// Complex FFT
+$X = $x->fft(norm: Normalization::Backward);
+
+// Inverse FFT (same normalization reconstructs the signal)
+$x2 = $X->ifft(norm: Normalization::Backward);
+```
+
+**Available Operations:**
+- `fft()`, `ifft()` - 1D complex FFT along one axis
+- `fftn()`, `ifftn()` - N-dimensional complex FFT
+- `rfft()`, `irfft()` - Real FFT and inverse
+- `dct()`, `idct()` - Discrete cosine transform (types I–IV) and inverse
+- `dctn()`, `idctn()` - N-dimensional DCT and inverse
+
+See [Signal Processing API](/api/signal-processing) for complete reference.
+
+Window functions (Hann, Hamming, Blackman, Kaiser, etc.) are documented separately. See [Window Functions API](/api/window-functions).
+
+### 9. Shape Manipulation
 
 Change array shape and layout:
 

@@ -544,6 +544,151 @@ int32_t ndarray_ne_scalar(const struct NdArrayHandle *a,
                           uintptr_t max_ndim);
 
 /**
+ * One-dimensional complex FFT along `axis`. Real inputs are promoted to complex.
+ * `n == 0` keeps the current length along `axis` (optional padding length).
+ */
+int32_t ndarray_fft(const struct NdArrayHandle *handle,
+                    const struct ArrayMetadata *meta,
+                    int32_t axis,
+                    uintptr_t n,
+                    uint8_t norm,
+                    struct NdArrayHandle **out_handle,
+                    uint8_t *out_dtype_ptr,
+                    uintptr_t *out_ndim,
+                    uintptr_t *out_shape,
+                    uintptr_t max_ndim);
+
+/**
+ * Inverse complex FFT along `axis`.
+ */
+int32_t ndarray_ifft(const struct NdArrayHandle *handle,
+                     const struct ArrayMetadata *meta,
+                     int32_t axis,
+                     uintptr_t n,
+                     uint8_t norm,
+                     struct NdArrayHandle **out_handle,
+                     uint8_t *out_dtype_ptr,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
+
+/**
+ * N-dimensional complex FFT over `axes` (empty means all axes).
+ */
+int32_t ndarray_fftn(const struct NdArrayHandle *handle,
+                     const struct ArrayMetadata *meta,
+                     const int32_t *axes,
+                     uintptr_t n_axes,
+                     uint8_t norm,
+                     struct NdArrayHandle **out_handle,
+                     uint8_t *out_dtype_ptr,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
+
+/**
+ * N-dimensional inverse complex FFT over `axes` (empty means all axes).
+ */
+int32_t ndarray_ifftn(const struct NdArrayHandle *handle,
+                      const struct ArrayMetadata *meta,
+                      const int32_t *axes,
+                      uintptr_t n_axes,
+                      uint8_t norm,
+                      struct NdArrayHandle **out_handle,
+                      uint8_t *out_dtype_ptr,
+                      uintptr_t *out_ndim,
+                      uintptr_t *out_shape,
+                      uintptr_t max_ndim);
+
+/**
+ * Real DCT along one axis (`dct_type` 1–4).
+ */
+int32_t ndarray_dct(const struct NdArrayHandle *handle,
+                    const struct ArrayMetadata *meta,
+                    int32_t axis,
+                    uintptr_t n,
+                    uint8_t dct_type,
+                    uint8_t norm,
+                    struct NdArrayHandle **out_handle,
+                    uint8_t *out_dtype_ptr,
+                    uintptr_t *out_ndim,
+                    uintptr_t *out_shape,
+                    uintptr_t max_ndim);
+
+/**
+ * Inverse DCT along one axis (`dct_type` 1–4, same convention as SciPy `idct`).
+ */
+int32_t ndarray_idct(const struct NdArrayHandle *handle,
+                     const struct ArrayMetadata *meta,
+                     int32_t axis,
+                     uintptr_t n,
+                     uint8_t dct_type,
+                     uint8_t norm,
+                     struct NdArrayHandle **out_handle,
+                     uint8_t *out_dtype_ptr,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
+
+/**
+ * N-dimensional DCT over `axes` (empty = all axes).
+ */
+int32_t ndarray_dctn(const struct NdArrayHandle *handle,
+                     const struct ArrayMetadata *meta,
+                     const int32_t *axes,
+                     uintptr_t n_axes,
+                     uint8_t dct_type,
+                     uint8_t norm,
+                     struct NdArrayHandle **out_handle,
+                     uint8_t *out_dtype_ptr,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
+
+/**
+ * N-dimensional inverse DCT over `axes` (empty = all axes).
+ */
+int32_t ndarray_idctn(const struct NdArrayHandle *handle,
+                      const struct ArrayMetadata *meta,
+                      const int32_t *axes,
+                      uintptr_t n_axes,
+                      uint8_t dct_type,
+                      uint8_t norm,
+                      struct NdArrayHandle **out_handle,
+                      uint8_t *out_dtype_ptr,
+                      uintptr_t *out_ndim,
+                      uintptr_t *out_shape,
+                      uintptr_t max_ndim);
+
+/**
+ * Real-input FFT along `axis`. Output is complex with length `n//2+1` on that axis.
+ */
+int32_t ndarray_rfft(const struct NdArrayHandle *handle,
+                     const struct ArrayMetadata *meta,
+                     int32_t axis,
+                     uintptr_t n,
+                     uint8_t norm,
+                     struct NdArrayHandle **out_handle,
+                     uint8_t *out_dtype_ptr,
+                     uintptr_t *out_ndim,
+                     uintptr_t *out_shape,
+                     uintptr_t max_ndim);
+
+/**
+ * Inverse real FFT: complex Hermitian spectrum → real array. `n == 0` infers real length.
+ */
+int32_t ndarray_irfft(const struct NdArrayHandle *handle,
+                      const struct ArrayMetadata *meta,
+                      int32_t axis,
+                      uintptr_t n,
+                      uint8_t norm,
+                      struct NdArrayHandle **out_handle,
+                      uint8_t *out_dtype_ptr,
+                      uintptr_t *out_ndim,
+                      uintptr_t *out_shape,
+                      uintptr_t max_ndim);
+
+/**
  * Create evenly spaced values within a given interval.
  *
  * For integer types, uses native arithmetic. For float types, manual calculation.
@@ -2219,5 +2364,50 @@ int32_t ndarray_stack(const struct NdArrayHandle *const *handles,
                       uintptr_t *out_ndim,
                       uintptr_t *out_shape,
                       uintptr_t max_ndim);
+
+/**
+ * Generate a Bartlett window (Float64).
+ */
+int32_t ndarray_bartlett(uintptr_t m, bool periodic, struct NdArrayHandle **out_handle);
+
+/**
+ * Generate a Blackman window (Float64).
+ */
+int32_t ndarray_blackman(uintptr_t m, bool periodic, struct NdArrayHandle **out_handle);
+
+/**
+ * Generate a Bohman window (Float64).
+ */
+int32_t ndarray_bohman(uintptr_t m, bool periodic, struct NdArrayHandle **out_handle);
+
+/**
+ * Generate a boxcar (rectangular) window (Float64).
+ */
+int32_t ndarray_boxcar(uintptr_t m, bool periodic, struct NdArrayHandle **out_handle);
+
+/**
+ * Generate a Hamming window (Float64).
+ */
+int32_t ndarray_hamming(uintptr_t m, bool periodic, struct NdArrayHandle **out_handle);
+
+/**
+ * Generate a Hanning window (Float64).
+ */
+int32_t ndarray_hanning(uintptr_t m, bool periodic, struct NdArrayHandle **out_handle);
+
+/**
+ * Generate a Kaiser window (Float64).
+ */
+int32_t ndarray_kaiser(uintptr_t m, double beta, bool periodic, struct NdArrayHandle **out_handle);
+
+/**
+ * Generate a Lanczos window (Float64).
+ */
+int32_t ndarray_lanczos(uintptr_t m, bool periodic, struct NdArrayHandle **out_handle);
+
+/**
+ * Generate a triangular window (Float64).
+ */
+int32_t ndarray_triang(uintptr_t m, bool periodic, struct NdArrayHandle **out_handle);
 
 #endif /* NDARRAY_PHP_H */

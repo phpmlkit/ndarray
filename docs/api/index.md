@@ -21,6 +21,8 @@ Complete reference for all NDArray classes and methods.
 - [Statistics](/api/statistics) - Sum, mean, variance, min, max
 - [Sorting, Searching, and Counting](/api/sorting-searching) - Sort, argsort, argmin, argmax
 - [Linear Algebra](/api/linear-algebra) - Matrix operations
+- [Signal Processing](/api/signal-processing) - FFT, real FFT, and DCT
+- [Window Functions](/api/window-functions) - Hann, Hamming, Blackman, Kaiser, and more
 
 ## Other
 
