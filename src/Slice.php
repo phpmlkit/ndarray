@@ -72,13 +72,9 @@ final class Slice
     {
         $step = $this->step;
 
-        // Default start
         $start = $this->start ?? 0;
-
-        // Default stop
         $stop = $this->stop ?? $dimSize;
 
-        // Handle negative indices
         if ($start < 0) {
             $start += $dimSize;
         }
@@ -86,20 +82,15 @@ final class Slice
             $stop += $dimSize;
         }
 
-        // Clamp indices to bounds [0, dimSize]
-        // NumPy behavior: slices clamp, they don't throw out-of-bounds
         $start = max(0, min($dimSize, $start));
         $stop = max(0, min($dimSize, $stop));
 
-        // If start >= stop (with positive step), result is empty
         if ($start >= $stop) {
             return ['start' => $start, 'stop' => $start, 'step' => $step, 'shape' => 0];
         }
 
-        // Calculate number of steps
-        // shape = ceil((stop - start) / step)
         $diff = $stop - $start;
-        $shape = (int) ceil($diff / $step);
+        $shape = (int) \ceil($diff / $step);
 
         return [
             'start' => $start,

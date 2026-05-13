@@ -74,6 +74,7 @@ export default defineConfig({
           text: 'API Reference',
           items: [
             { text: 'Overview', link: '/api/' },
+            { text: 'Global functions', link: '/api/global-functions' },
           ]
         },
         {

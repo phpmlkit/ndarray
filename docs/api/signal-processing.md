@@ -4,6 +4,10 @@ Discrete transforms for frequency-domain analysis (FFT, real FFT, and DCT).
 
 All methods on this page are instance methods on `NDArray`.
 
+::: tip Global functions
+FFT and DCT entry points are also exposed as functions under `PhpMlKit\NDArray\Fft` (for example, `fft($a, …)` calls `$a->fft(…)`). See [Global functions — FFT and DCT](/api/global-functions#fft).
+:::
+
 ::: tip Normalization
 Transforms accept a `Normalization` enum (`backward`, `ortho`, `forward`, `none`). Default: `Normalization::Backward`.
 :::
