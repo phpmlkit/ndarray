@@ -57,7 +57,7 @@ final class Complex
      */
     public function magnitude(): float
     {
-        return hypot($this->real, $this->imag);
+        return \hypot($this->real, $this->imag);
     }
 
     /**
@@ -73,7 +73,7 @@ final class Complex
      */
     public function equals(self $other, float $tol = 1e-10): bool
     {
-        return abs($this->real - $other->real) <= $tol
-            && abs($this->imag - $other->imag) <= $tol;
+        return \abs($this->real - $other->real) <= $tol
+            && \abs($this->imag - $other->imag) <= $tol;
     }
 }

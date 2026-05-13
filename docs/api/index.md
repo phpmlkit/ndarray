@@ -24,6 +24,11 @@ Complete reference for all NDArray classes and methods.
 - [Signal Processing](/api/signal-processing) - FFT, real FFT, and DCT
 - [Window Functions](/api/window-functions) - Hann, Hamming, Blackman, Kaiser, and more
 
+
+## Global functions
+
+- **[Global functions](/api/global-functions)** — Full list, import examples, and links back to each topic page.
+
 ## Other
 
 - [Exceptions](/api/exceptions) - Error handling
@@ -50,6 +55,11 @@ Complete reference for all NDArray classes and methods.
 **Shape:**
 - `reshape()`, `transpose()`, `flatten()`
 - `slice()` - Extract subarrays
+
+
+### Global functions
+
+Most operations from the method reference are also available as functions under `PhpMlKit\NDArray` (and in the `Linalg`, `Fft`, and `Windows` sub-namespaces). See the [exhaustive global functions page](/api/global-functions).
 
 ## Next Steps
 

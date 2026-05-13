@@ -364,9 +364,9 @@ trait CreatesArrays
         // Calculate the shape
         $num = 0;
         if ($step > 0 && $start < $stop) {
-            $num = (int) ceil(($stop - $start) / $step);
+            $num = (int) \ceil(($stop - $start) / $step);
         } elseif ($step < 0 && $start > $stop) {
-            $num = (int) ceil(($start - $stop) / -$step);
+            $num = (int) \ceil(($start - $stop) / -$step);
         }
 
         return new self($outHandle, new ArrayMetadata([$num]), $dtype);

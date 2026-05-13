@@ -4,6 +4,10 @@ Reference for common window functions used in signal processing (tapering) befor
 
 All functions on this page are **static methods** on `NDArray` and return a `Float64` array of shape `[m]`.
 
+::: tip Global functions
+These windows are also available as functions under `PhpMlKit\NDArray\Windows` (for example, `hanning($m)` calls `NDArray::hanning($m)`). See [Global functions — Window functions](/api/global-functions#windows).
+:::
+
 ::: tip Symmetric vs periodic
 All window functions accept a `$periodic` flag:
 

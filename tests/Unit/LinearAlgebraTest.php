@@ -1271,9 +1271,9 @@ class LinearAlgebraTest extends TestCase
 
         // Eigenvalues are ±i (in some order)
         $this->assertEqualsWithDelta(0.0, $eigvals[0]->real, 1e-10);
-        $this->assertEqualsWithDelta(1.0, abs($eigvals[0]->imag), 1e-10);
+        $this->assertEqualsWithDelta(1.0, \abs($eigvals[0]->imag), 1e-10);
         $this->assertEqualsWithDelta(0.0, $eigvals[1]->real, 1e-10);
-        $this->assertEqualsWithDelta(1.0, abs($eigvals[1]->imag), 1e-10);
+        $this->assertEqualsWithDelta(1.0, \abs($eigvals[1]->imag), 1e-10);
     }
 
     public function testEigVerifyAvEqualsLambdaV(): void
@@ -1422,9 +1422,9 @@ class LinearAlgebraTest extends TestCase
         $this->assertSame(DType::Complex128, $eigvals->dtype());
 
         $this->assertEqualsWithDelta(0.0, $eigvals[0]->real, 1e-10);
-        $this->assertEqualsWithDelta(1.0, abs($eigvals[0]->imag), 1e-10);
+        $this->assertEqualsWithDelta(1.0, \abs($eigvals[0]->imag), 1e-10);
         $this->assertEqualsWithDelta(0.0, $eigvals[1]->real, 1e-10);
-        $this->assertEqualsWithDelta(1.0, abs($eigvals[1]->imag), 1e-10);
+        $this->assertEqualsWithDelta(1.0, \abs($eigvals[1]->imag), 1e-10);
     }
 
     public function testEigvalsComplexMatrix(): void

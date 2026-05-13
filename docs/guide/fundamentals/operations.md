@@ -4,6 +4,8 @@ Overview of the operations available on NDArrays.
 
 NDArray provides a comprehensive set of operations for numerical computing. This page provides a conceptual overview—see the [API Reference](/api/) for complete method details.
 
+The same operations are also published as **namespaced functions** under `PhpMlKit\NDArray` (with linear algebra, FFT/DCT, and window helpers in dedicated sub-namespaces). See [Global functions](/api/global-functions) for the full list of available global functions.
+
 ## Operation Categories
 
 ### 1. Arithmetic Operations

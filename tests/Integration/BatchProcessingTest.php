@@ -59,7 +59,7 @@ final class BatchProcessingTest extends TestCase
 
         $batchSize = 3;
         $numSamples = $dataset->shape()[0];
-        $numBatches = (int) ceil($numSamples / $batchSize);
+        $numBatches = (int) \ceil($numSamples / $batchSize);
 
         $batches = [];
         for ($i = 0; $i < $numBatches; ++$i) {

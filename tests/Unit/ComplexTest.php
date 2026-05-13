@@ -916,8 +916,8 @@ final class ComplexTest extends TestCase
 
         $abs = $a->abs();
         $absValues = $abs->toArray();
-        $this->assertEqualsWithDelta(hypot(-1, -2), $absValues[0][0], 0.0001);
-        $this->assertEqualsWithDelta(hypot(-3, 4), $absValues[0][1], 0.0001);
+        $this->assertEqualsWithDelta(\hypot(-1, -2), $absValues[0][0], 0.0001);
+        $this->assertEqualsWithDelta(\hypot(-3, 4), $absValues[0][1], 0.0001);
     }
 
     public function testPureRealComplexArray(): void

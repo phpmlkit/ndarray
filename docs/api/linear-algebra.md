@@ -2,6 +2,10 @@
 
 Reference for linear algebra operations.
 
+::: tip Global functions
+Each routine on this page is also available as a function under `PhpMlKit\NDArray\Linalg` (for example, `norm($a, …)` calls `$a->norm(…)`). See [Global functions — Linear algebra](/api/global-functions#linalg).
+:::
+
 ## norm()
 
 ```php
