@@ -1639,11 +1639,11 @@ namespace PhpMlKit\NDArray {
     /**
      * Assign values to the current array/view.
      *
-     * Supports scalar assignment (fill) or array assignment (from PHP array or NDArray).
+     * Supports scalar assignment (fill) or NDArray assignment (rhs is broadcast to this view’s shape when compatible).
      *
-     * @param mixed $value Scalar value or array/NDArray
+     * @param bool|Complex|float|int|NDArray $value Scalar value or NDArray
      */
-    function assign(NDArray $a, mixed $value): void
+    function assign(NDArray $a, bool|Complex|float|int|NDArray $value): void
     {
         $a->assign($value);
     }

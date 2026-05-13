@@ -389,9 +389,32 @@ final class SlicingTest extends TestCase
         $arr = NDArray::zeros([5]);
 
         $this->expectException(ShapeException::class);
-        $this->expectExceptionMessage('Cannot assign array of size 2 to view of size 3');
+        $this->expectExceptionMessage('Cannot assign: source shape');
 
-        $arr->slice(['0:3'])->assign(NDArray::array([1, 2]));
+        $arr->slice(['0:3'])->assign(NDArray::array([1.0, 2.0]));
+    }
+
+    public function testAssignBroadcastsSmallerSourceToSlice(): void
+    {
+        $arr = NDArray::zeros([3, 4]);
+        $arr->slice([':'])->assign(NDArray::ones([1, 4]));
+
+        $this->assertSame([[1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]], $arr->toArray());
+    }
+
+    public function testAssignBroadcastsToColumnSlice(): void
+    {
+        $arr = NDArray::zeros([3, 4]);
+        $arr->slice([':', '1:2'])->assign(NDArray::ones([1, 1]));
+
+        $this->assertSame(
+            [
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+            ],
+            $arr->toArray()
+        );
     }
 
     public function testSliceStepZeroThrows(): void
@@ -412,16 +435,6 @@ final class SlicingTest extends TestCase
         $this->expectExceptionMessage('Invalid slice component');
 
         $slice = $arr['invalid:selector'];
-    }
-
-    public function testAssignPHPArrayThrows(): void
-    {
-        $arr = NDArray::zeros([5]);
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Assignment value must be scalar or NDArray');
-
-        $arr->slice(['0:3'])->assign([1, 2, 3]);
     }
 
     public function testSlice3DBasic(): void

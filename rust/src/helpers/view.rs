@@ -404,3 +404,43 @@ pub fn broadcast_shape(shape_a: &[usize], shape_b: &[usize]) -> Option<Vec<usize
     }
     Some(out)
 }
+
+/// Whether `src` can be broadcast to `dst` for in-place assignment (`rhs` broadcast to `lhs` shape).
+///
+/// Matches ndarray `ArrayBase::assign`: the right-hand side is broadcast to the destination shape;
+/// this returns `false` when that broadcast is not defined.
+pub fn rhs_broadcasts_to_lhs(dst: &[usize], src: &[usize]) -> bool {
+    match broadcast_shape(dst, src) {
+        Some(bc) => bc == dst,
+        None => false,
+    }
+}
+
+#[cfg(test)]
+mod broadcast_tests {
+    use super::{rhs_broadcasts_to_lhs, broadcast_shape};
+
+    #[test]
+    fn rhs_broadcasts_to_lhs_matches_elementwise_broadcast() {
+        assert!(rhs_broadcasts_to_lhs(&[3, 4], &[3, 1]));
+        assert!(rhs_broadcasts_to_lhs(&[3, 4], &[1, 4]));
+        assert!(rhs_broadcasts_to_lhs(&[3], &[1]));
+        assert!(rhs_broadcasts_to_lhs(&[1, 3], &[3]));
+        assert!(rhs_broadcasts_to_lhs(&[3, 4], &[]));
+        assert!(rhs_broadcasts_to_lhs(&[], &[]));
+    }
+
+    #[test]
+    fn rhs_broadcasts_to_lhs_rejects_incompatible() {
+        assert!(!rhs_broadcasts_to_lhs(&[3], &[2]));
+        assert!(!rhs_broadcasts_to_lhs(&[3], &[1, 3]));
+        assert!(!rhs_broadcasts_to_lhs(&[3, 4], &[2, 4]));
+        assert!(!rhs_broadcasts_to_lhs(&[2, 1, 3], &[2, 3]));
+    }
+
+    #[test]
+    fn broadcast_shape_symmetric_examples() {
+        assert_eq!(broadcast_shape(&[3, 4], &[3, 1]), Some(vec![3, 4]));
+        assert_eq!(broadcast_shape(&[3], &[2]), None);
+    }
+}

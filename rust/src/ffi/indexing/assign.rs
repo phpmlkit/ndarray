@@ -2,7 +2,7 @@
 //!
 //! Provides assign operations between strided array views.
 
-use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
+use crate::helpers::error::{set_last_error, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::view::{
     extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
     extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_mut_bool,
@@ -10,6 +10,7 @@ use crate::helpers::view::{
     extract_view_mut_i16, extract_view_mut_i32, extract_view_mut_i64, extract_view_mut_i8,
     extract_view_mut_u16, extract_view_mut_u32, extract_view_mut_u64, extract_view_mut_u8,
     extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+    rhs_broadcasts_to_lhs,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayMetadata, NdArrayHandle};
@@ -46,6 +47,16 @@ pub unsafe extern "C" fn ndarray_assign(
                 dst_wrapper.dtype, src_wrapper.dtype
             ));
             return ERR_GENERIC;
+        }
+
+        let dst_shape = unsafe { dst_meta.shape_slice() };
+        let src_shape = unsafe { src_meta.shape_slice() };
+        if !rhs_broadcasts_to_lhs(dst_shape, src_shape) {
+            set_last_error(format!(
+                "Cannot assign: source shape {:?} cannot broadcast to destination shape {:?}",
+                src_shape, dst_shape
+            ));
+            return ERR_SHAPE;
         }
 
         let is_same = dst_wrapper.is_same_array(src_wrapper);
