@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Traits;
 
 use PhpMlKit\NDArray\ArrayMetadata;
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\Exceptions\IndexException;
-use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
 use PhpMlKit\NDArray\Slice;
@@ -121,76 +121,26 @@ trait HasSlicing
     /**
      * Assign values to the current array/view.
      *
-     * Supports scalar assignment (fill) or array assignment (from PHP array or NDArray).
+     * Supports scalar assignment (fill) or NDArray assignment (rhs is broadcast to this view’s shape when compatible).
      *
-     * @param mixed $value Scalar value or array/NDArray
+     * @param bool|Complex|float|int|NDArray $value Scalar value or NDArray
      */
-    public function assign(mixed $value): void
+    public function assign(bool|Complex|float|int|NDArray $value): void
     {
-        if (\is_scalar($value)) {
-            $this->fill($value);
-
-            return;
-        }
+        $ffi = Lib::get();
+        $src = $value;
 
         if ($value instanceof NDArray) {
-            $this->assignFromNDArray($value);
+            $srcMeta = $src->meta()->toCData();
+            $dstMeta = $this->meta()->toCData();
 
-            return;
+            $status = $ffi->ndarray_assign($this->handle, Lib::addr($dstMeta), $src->handle(), Lib::addr($srcMeta));
+        } else {
+            $cValue = $this->dtype->createCValue($src);
+
+            $meta = $this->meta()->toCData();
+            $status = $ffi->ndarray_fill($this->handle, Lib::addr($meta), Lib::addr($cValue));
         }
-
-        throw new \InvalidArgumentException(
-            'Assignment value must be scalar or NDArray, got '.get_debug_type($value)
-        );
-    }
-
-    /**
-     * Fill the array with a scalar value.
-     *
-     * @param mixed $value Scalar value
-     */
-    private function fill(mixed $value): void
-    {
-        $ffi = Lib::get();
-        $cValue = $this->dtype->createCValue($value);
-
-        $meta = $this->meta()->toCData();
-        $status = $ffi->ndarray_fill($this->handle, Lib::addr($meta), Lib::addr($cValue));
-
-        Lib::checkStatus($status);
-    }
-
-    /**
-     * Assign values from an NDArray to the current array/view.
-     *
-     * @param NDArray $value Source NDArray
-     */
-    private function assignFromNDArray(NDArray $value): void
-    {
-        if ($value->size() !== $this->size()) {
-            throw new ShapeException(
-                "Cannot assign array of size {$value->size()} to view of size {$this->size()}"
-            );
-        }
-
-        $ffi = Lib::get();
-        $dstMeta = $this->meta()->toCData();
-        $src = $value;
-        if ($src->shape() !== $this->shape()) {
-            if ($src->isContiguous()) {
-                $src = $src->reshape($this->shape());
-            } else {
-                $src = $src->copy()->reshape($this->shape());
-            }
-        }
-        $srcMeta = $src->meta()->toCData();
-
-        $status = $ffi->ndarray_assign(
-            $this->handle,
-            Lib::addr($dstMeta),
-            $src->handle(),
-            Lib::addr($srcMeta)
-        );
 
         Lib::checkStatus($status);
     }
