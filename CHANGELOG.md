@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.0 - 2026-05-14
+
+### What's Changed
+
+* Feat: Rework buffer API and array creation methods by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/11
+* CI: Simplify release workflow with parallel platform uploads by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/12
+* feat: add comprehensive linear algebra operations with BLAS backend by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/13
+* feat: add complex number support with type promotion fixes by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/14
+* feat(linalg): eigen decomposition (eig, eigvals, eigh, eigvalsh) by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/15
+* feat(linalg): dtype promotion and vector/matrix rules for matmul and dot by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/16
+* feat: Add FFT, DCT, and window functions by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/17
+* Feat: add global NDArray function proxies and docs by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/18
+* Fix: broadcast during slice assign and align assign API by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/19
+* Optional axis argument for NDArray::shape() with negative indexing by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/20
+
+**Full Changelog**: https://github.com/phpmlkit/ndarray/compare/1.2.1...2.0.0
+
 ## v1.2.1 - 2026-04-01
 
 ### What's Changed
