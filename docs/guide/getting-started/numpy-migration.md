@@ -31,6 +31,7 @@ NDArray PHP is designed to feel familiar to NumPy users while respecting PHP idi
 | NumPy | NDArray PHP | Notes |
 |-------|-------------|-------|
 | `arr.shape` | `$arr->shape()` | Method call in PHP |
+| `arr.shape[i]`, `arr.shape[-1]` | `$arr->shape($i)`, `$arr->shape(-1)` | One axis length; negative counts from last |
 | `arr.dtype` | `$arr->dtype()` | Returns DType enum |
 | `arr.ndim` | `$arr->ndim()` | |
 | `arr.size` | `$arr->size()` | |
@@ -242,6 +243,7 @@ mean = arr.mean()
 $shape = $arr->shape();
 $dtype = $arr->dtype();
 $mean = $arr->mean();
+$lastDim = $arr->shape(-1);  // like arr.shape[-1] in NumPy
 ```
 
 ### 3. No Operator Overloading in PHP

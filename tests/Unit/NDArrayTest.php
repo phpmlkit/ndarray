@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray\Tests\Unit;
 
 use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\IndexException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -369,5 +370,61 @@ final class NDArrayTest extends TestCase
         $result = $arr->toArray();
 
         $this->assertSame($data, $result);
+    }
+
+    // =========================================================================
+    // shape() optional axis
+    // =========================================================================
+
+    public function testShapeNullEqualsOmitted(): void
+    {
+        $arr = NDArray::zeros([3, 4, 5]);
+
+        $this->assertSame([3, 4, 5], $arr->shape());
+        $this->assertSame([3, 4, 5], $arr->shape(null));
+    }
+
+    public function testShapeAxisPositiveAndNegative(): void
+    {
+        $arr = NDArray::zeros([3, 4, 5]);
+
+        $this->assertSame(3, $arr->shape(0));
+        $this->assertSame(4, $arr->shape(1));
+        $this->assertSame(5, $arr->shape(2));
+        $this->assertSame(5, $arr->shape(-1));
+        $this->assertSame(4, $arr->shape(-2));
+        $this->assertSame(3, $arr->shape(-3));
+    }
+
+    public function testShapeAxisOutOfBoundsThrows(): void
+    {
+        $arr = NDArray::zeros([2, 3]);
+
+        $this->expectException(IndexException::class);
+        $this->expectExceptionMessage('Shape axis 2 is out of bounds');
+
+        $arr->shape(2);
+    }
+
+    public function testShapeAxisNegativeOutOfBoundsThrows(): void
+    {
+        $arr = NDArray::zeros([2, 3]);
+
+        $this->expectException(IndexException::class);
+        $this->expectExceptionMessage('Shape axis -3 is out of bounds');
+
+        $arr->shape(-3);
+    }
+
+    public function testShapeAxisOnZeroDimensionalThrows(): void
+    {
+        $arr = NDArray::array([3.14], DType::Float64)->reshape([]);
+
+        $this->assertSame([], $arr->shape());
+
+        $this->expectException(IndexException::class);
+        $this->expectExceptionMessage('zero-dimensional');
+
+        $arr->shape(0);
     }
 }

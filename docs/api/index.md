@@ -44,7 +44,7 @@ Complete reference for all NDArray classes and methods.
 - `NDArray::random()` - Random values
 
 **Properties:**
-- `shape()` - Get dimensions
+- `shape()`, `shape(?int $axis)` - Full shape list, or length of one axis (`-1` = last)
 - `dtype()` - Get data type
 - `size()` - Total elements
 

@@ -92,6 +92,7 @@ Coming from NumPy? You'll feel right at home (with PHP syntax):
 |-------|-------------|
 | `np.array([1, 2, 3])` | `NDArray::array([1, 2, 3])` |
 | `arr.shape` | `$arr->shape()` |
+| `arr.shape[-1]` | `$arr->shape(-1)` |
 | `arr.sum()` | `$arr->sum()` |
 | `a + b` | `$a->add($b)` |
 | `a[0, 0]` | `$a['0,0']` |

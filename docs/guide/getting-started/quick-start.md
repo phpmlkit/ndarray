@@ -101,6 +101,8 @@ print_r($arr->itemsize()); // 8 - bytes per element
 print_r($arr->nbytes());   // 48 - total bytes
 ```
 
+For a single axis length (for example the last dimension), pass an index: `$arr->shape(-1)` is `3` here. Negative indices count from the last dimension, consistent with `get()` and reduction `axis` arguments.
+
 ## Basic Operations
 
 ### Arithmetic

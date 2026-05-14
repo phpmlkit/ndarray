@@ -23,9 +23,9 @@ trait HasWindowFunctions
      * ends for `m > 1`. Tapers a segment with mild boundary rolloff.
      *
      * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
-     * @param bool $periodic If `true`, use the periodic variant; if `false`, symmetric (default).
+     * @param bool $periodic if `true`, use the periodic variant; if `false`, symmetric (default)
      *
-     * @return NDArray Float64, shape `[m]`.
+     * @return NDArray float64, shape `[m]`
      */
     public static function bartlett(int $m, bool $periodic = false): NDArray
     {
@@ -44,9 +44,9 @@ trait HasWindowFunctions
      * For `m > 1` and `0 ≤ n ≤ m-1`: {@code w(n) = 0.42 - 0.5*cos(2πn/(m-1)) + 0.08*cos(4πn/(m-1))}.
      *
      * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
-     * @param bool $periodic If `true`, use the periodic variant; if `false`, symmetric (default).
+     * @param bool $periodic if `true`, use the periodic variant; if `false`, symmetric (default)
      *
-     * @return NDArray Float64, shape `[m]`.
+     * @return NDArray float64, shape `[m]`
      */
     public static function blackman(int $m, bool $periodic = false): NDArray
     {
@@ -65,9 +65,9 @@ trait HasWindowFunctions
      * Let {@code x = |2n/(m-1) - 1|}. For `m > 1`: {@code w(n) = (1-x)*cos(πx) + sin(πx)/π}.
      *
      * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
-     * @param bool $periodic If `true`, use the periodic variant; if `false`, symmetric (default).
+     * @param bool $periodic if `true`, use the periodic variant; if `false`, symmetric (default)
      *
-     * @return NDArray Float64, shape `[m]`.
+     * @return NDArray float64, shape `[m]`
      */
     public static function bohman(int $m, bool $periodic = false): NDArray
     {
@@ -83,9 +83,9 @@ trait HasWindowFunctions
      * Boxcar (rectangular) window: all ones — equivalent to no tapering.
      *
      * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
-     * @param bool $periodic If `true`, use the periodic variant; if `false`, symmetric (default).
+     * @param bool $periodic if `true`, use the periodic variant; if `false`, symmetric (default)
      *
-     * @return NDArray Float64, shape `[m]`.
+     * @return NDArray float64, shape `[m]`
      */
     public static function boxcar(int $m, bool $periodic = false): NDArray
     {
@@ -104,9 +104,9 @@ trait HasWindowFunctions
      * For `m > 1` and `0 ≤ n ≤ m-1`: {@code w(n) = 0.54 - 0.46*cos(2πn/(m-1))}.
      *
      * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
-     * @param bool $periodic If `true`, use the periodic variant; if `false`, symmetric (default).
+     * @param bool $periodic if `true`, use the periodic variant; if `false`, symmetric (default)
      *
-     * @return NDArray Float64, shape `[m]`.
+     * @return NDArray float64, shape `[m]`
      */
     public static function hamming(int $m, bool $periodic = false): NDArray
     {
@@ -125,9 +125,9 @@ trait HasWindowFunctions
      * For `m > 1` and `0 ≤ n ≤ m-1`: {@code w(n) = 0.5 - 0.5*cos(2πn/(m-1))}.
      *
      * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
-     * @param bool $periodic If `true`, use the periodic variant; if `false`, symmetric (default).
+     * @param bool $periodic if `true`, use the periodic variant; if `false`, symmetric (default)
      *
-     * @return NDArray Float64, shape `[m]`.
+     * @return NDArray float64, shape `[m]`
      *
      * @see self::hann()
      */
@@ -145,9 +145,9 @@ trait HasWindowFunctions
      * Alias of {@see self::hanning()}: identical Hann window.
      *
      * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
-     * @param bool $periodic If `true`, use the periodic variant; if `false`, symmetric (default).
+     * @param bool $periodic if `true`, use the periodic variant; if `false`, symmetric (default)
      *
-     * @return NDArray Float64, shape `[m]`.
+     * @return NDArray float64, shape `[m]`
      */
     public static function hann(int $m, bool $periodic = false): NDArray
     {
@@ -159,10 +159,10 @@ trait HasWindowFunctions
      * (less spectral leakage) at the cost of a wider main lobe.
      *
      * @param int   $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
-     * @param float $beta     Shape parameter controlling main-lobe width vs sidelobe level.
-     * @param bool  $periodic If `true`, use the periodic variant; if `false`, symmetric (default).
+     * @param float $beta     shape parameter controlling main-lobe width vs sidelobe level
+     * @param bool  $periodic if `true`, use the periodic variant; if `false`, symmetric (default)
      *
-     * @return NDArray Float64, shape `[m]`.
+     * @return NDArray float64, shape `[m]`
      */
     public static function kaiser(int $m, float $beta, bool $periodic = false): NDArray
     {
@@ -181,9 +181,9 @@ trait HasWindowFunctions
      * {@code sinc(x) = sin(πx)/(πx)} for {@code x ≠ 0}.
      *
      * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
-     * @param bool $periodic If `true`, use the periodic variant; if `false`, symmetric (default).
+     * @param bool $periodic if `true`, use the periodic variant; if `false`, symmetric (default)
      *
-     * @return NDArray Float64, shape `[m]`.
+     * @return NDArray float64, shape `[m]`
      */
     public static function lanczos(int $m, bool $periodic = false): NDArray
     {
@@ -200,9 +200,9 @@ trait HasWindowFunctions
      * zero in the same way (see Bartlett for the triangle with explicit zero endpoints).
      *
      * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
-     * @param bool $periodic If `true`, use the periodic variant; if `false`, symmetric (default).
+     * @param bool $periodic if `true`, use the periodic variant; if `false`, symmetric (default)
      *
-     * @return NDArray Float64, shape `[m]`.
+     * @return NDArray float64, shape `[m]`
      */
     public static function triang(int $m, bool $periodic = false): NDArray
     {
