@@ -31,22 +31,33 @@ Methods to inspect array metadata.
 
 ### shape()
 
-Returns the dimensions of the array.
+Returns the dimensions of the array, or the length of a single axis when you pass an index.
 
 ```php
-public function shape(): array
+public function shape(?int $axis = null): array|int
 ```
 
-**Returns:** Array of integers representing size of each dimension
+With no argument (or `null`), you get the full shape as a list of positive integers. With an integer `$axis`, you get only that axis length. Negative indices count from the last dimension (`-1` is the last axis), matching how axis arguments work on reductions and similar methods. Requesting an axis index on a zero-dimensional array throws `IndexException`.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$axis` | `int\|null` | Optional. If omitted or `null`, return the full shape. If set, return the size of that axis only. |
+
+**Returns:** `list<int>` for the full shape, or `int` for one axis length.
 
 **Examples:**
 
 ```php
 $arr = NDArray::zeros([3, 4, 5]);
-echo $arr->shape();  // [3, 4, 5]
+$arr->shape();    // [3, 4, 5]
+$arr->shape(0);   // 3
+$arr->shape(-1);  // 5 (last dimension)
 
 $vector = NDArray::array([1, 2, 3]);
-echo $vector->shape();  // [3]
+$vector->shape();   // [3]
+$vector->shape(-1); // 3
 ```
 
 ---

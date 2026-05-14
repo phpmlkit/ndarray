@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpMlKit\NDArray;
 
 use FFI\CData;
+use PhpMlKit\NDArray\Exceptions\IndexException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\Traits\CanBePrinted;
 use PhpMlKit\NDArray\Traits\CreatesArrays;
@@ -78,13 +79,38 @@ class NDArray implements \ArrayAccess, \Stringable, \IteratorAggregate
     }
 
     /**
-     * Get shape.
+     * Shape tuple, or the length of one axis when `$axis` is given.
      *
-     * @return array<int>
+     * With no argument (or `null`), returns the full shape as a list. With an integer, returns
+     * the size of that axis only. Negative `$axis` counts from the last dimension (`-1` is the
+     * last axis), consistent with axis arguments elsewhere on this class.
+     *
+     * @param null|int $axis axis index into the shape vector (`0` … `ndim - 1`, or negative)
+     *
+     * @return ($axis is null ? list<int> : int)
+     *
+     * @throws IndexException If `$axis` is out of bounds, or if a scalar length is requested on
+     *                        a zero-dimensional array
      */
-    public function shape(): array
+    public function shape(?int $axis = null): array|int
     {
-        return $this->meta->shape;
+        if (null === $axis) {
+            return $this->meta->shape;
+        }
+
+        $ndim = $this->meta->ndim;
+        if (0 === $ndim) {
+            throw new IndexException('Cannot index shape of a zero-dimensional array');
+        }
+
+        $resolved = $axis < 0 ? $ndim + $axis : $axis;
+        if ($resolved < 0 || $resolved >= $ndim) {
+            throw new IndexException(
+                "Shape axis {$axis} is out of bounds for array with {$ndim} dimensions"
+            );
+        }
+
+        return $this->meta->shape[$resolved];
     }
 
     /**

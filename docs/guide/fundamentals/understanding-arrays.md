@@ -156,6 +156,11 @@ $arr = NDArray::array([
 
 $arr->shape();  // [2, 3]
                  // 2 rows, 3 columns
+
+// Single axis length (optional index; negative counts from the end)
+$arr->shape(0);   // 2
+$arr->shape(1);   // 3
+$arr->shape(-1);  // 3 — same as the last entry of shape()
 ```
 
 **Visualizing Dimensions:**
