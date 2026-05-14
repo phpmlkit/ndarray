@@ -87,7 +87,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -113,7 +113,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -139,7 +139,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -165,7 +165,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -191,7 +191,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -217,7 +217,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -243,7 +243,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -269,7 +269,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -295,7 +295,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -321,7 +321,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -347,7 +347,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -373,7 +373,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;
@@ -399,7 +399,7 @@ pub unsafe extern "C" fn ndarray_stack(
                     views.push(v);
                 }
                 let arr = match stack(Axis(axis_usize), &views) {
-                    Ok(a) => a.into_dyn(),
+                    Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
                         return ERR_SHAPE;

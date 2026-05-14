@@ -621,7 +621,7 @@ Sort kind selection is enum-based via `SortKind`:
 | Matrix mult | `@` operator | HIGH | Done |
 | Reductions | `sum()`, `mean()` | HIGH | Done |
 | SVD | `np.linalg.svd()` | MEDIUM | Done |
-| FFT | `np.fft.fft()` | LOW | Future |
+| FFT | `np.fft.fft()` | LOW | Done |
 
 ## Appendix B: Glossary
 
