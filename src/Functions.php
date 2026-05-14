@@ -2057,51 +2057,154 @@ namespace PhpMlKit\NDArray\Fft {
 namespace PhpMlKit\NDArray\Windows {
     use PhpMlKit\NDArray\NDArray;
 
+    /**
+     * Bartlett (triangular) window — delegates to {@see NDArray::bartlett()}.
+     *
+     * Piecewise linear, peaks at 1.0 at the center, 0.0 at both ends for `m > 1`.
+     *
+     * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
+     * @param bool $periodic If `true`, periodic variant; if `false`, symmetric (default).
+     *
+     * @return NDArray Float64, shape `[m]`.
+     */
     function bartlett(int $m, bool $periodic = false): NDArray
     {
         return NDArray::bartlett($m, $periodic);
     }
 
+    /**
+     * Blackman window — delegates to {@see NDArray::blackman()}.
+     *
+     * Cosine-sum window; stronger sidelobes suppression than Hann/Hamming, wider main lobe.
+     * For `m > 1` and `0 ≤ n ≤ m-1`: {@code w(n) = 0.42 - 0.5*cos(2πn/(m-1)) + 0.08*cos(4πn/(m-1))}.
+     *
+     * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
+     * @param bool $periodic If `true`, periodic variant; if `false`, symmetric (default).
+     *
+     * @return NDArray Float64, shape `[m]`.
+     */
     function blackman(int $m, bool $periodic = false): NDArray
     {
         return NDArray::blackman($m, $periodic);
     }
 
+    /**
+     * Bohman window — delegates to {@see NDArray::bohman()}.
+     *
+     * Let {@code x = |2n/(m-1) - 1|}. For `m > 1`: {@code w(n) = (1-x)*cos(πx) + sin(πx)/π}.
+     *
+     * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
+     * @param bool $periodic If `true`, periodic variant; if `false`, symmetric (default).
+     *
+     * @return NDArray Float64, shape `[m]`.
+     */
     function bohman(int $m, bool $periodic = false): NDArray
     {
         return NDArray::bohman($m, $periodic);
     }
 
+    /**
+     * Boxcar (rectangular) window — delegates to {@see NDArray::boxcar()}.
+     *
+     * All ones; no tapering.
+     *
+     * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
+     * @param bool $periodic If `true`, periodic variant; if `false`, symmetric (default).
+     *
+     * @return NDArray Float64, shape `[m]`.
+     */
     function boxcar(int $m, bool $periodic = false): NDArray
     {
         return NDArray::boxcar($m, $periodic);
     }
 
+    /**
+     * Hamming window — delegates to {@see NDArray::hamming()}.
+     *
+     * For `m > 1` and `0 ≤ n ≤ m-1`: {@code w(n) = 0.54 - 0.46*cos(2πn/(m-1))}.
+     *
+     * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
+     * @param bool $periodic If `true`, periodic variant; if `false`, symmetric (default).
+     *
+     * @return NDArray Float64, shape `[m]`.
+     */
     function hamming(int $m, bool $periodic = false): NDArray
     {
         return NDArray::hamming($m, $periodic);
     }
 
+    /**
+     * Hanning (Hann) window — delegates to {@see NDArray::hanning()}.
+     *
+     * For `m > 1` and `0 ≤ n ≤ m-1`: {@code w(n) = 0.5 - 0.5*cos(2πn/(m-1))}.
+     *
+     * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
+     * @param bool $periodic If `true`, periodic variant; if `false`, symmetric (default).
+     *
+     * @return NDArray Float64, shape `[m]`.
+     *
+     * @see hann()
+     */
     function hanning(int $m, bool $periodic = false): NDArray
     {
         return NDArray::hanning($m, $periodic);
     }
 
+    /**
+     * Alias of {@see hanning()} — delegates to {@see NDArray::hann()}.
+     *
+     * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
+     * @param bool $periodic If `true`, periodic variant; if `false`, symmetric (default).
+     *
+     * @return NDArray Float64, shape `[m]`.
+     */
     function hann(int $m, bool $periodic = false): NDArray
     {
         return NDArray::hann($m, $periodic);
     }
 
+    /**
+     * Kaiser window — delegates to {@see NDArray::kaiser()}.
+     *
+     * Larger `beta` improves sidelobe attenuation at the cost of a wider main lobe.
+     *
+     * @param int   $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
+     * @param float $beta     Shape parameter (main lobe vs sidelobe trade-off).
+     * @param bool  $periodic If `true`, periodic variant; if `false`, symmetric (default).
+     *
+     * @return NDArray Float64, shape `[m]`.
+     */
     function kaiser(int $m, float $beta, bool $periodic = false): NDArray
     {
         return NDArray::kaiser($m, $beta, $periodic);
     }
 
+    /**
+     * Lanczos window — delegates to {@see NDArray::lanczos()}.
+     *
+     * Let {@code x = 2n/(m-1) - 1}. For `m > 1`: {@code w(n) = sinc(x)} with {@code sinc(0)=1},
+     * {@code sinc(x) = sin(πx)/(πx)} for {@code x ≠ 0}.
+     *
+     * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
+     * @param bool $periodic If `true`, periodic variant; if `false`, symmetric (default).
+     *
+     * @return NDArray Float64, shape `[m]`.
+     */
     function lanczos(int $m, bool $periodic = false): NDArray
     {
         return NDArray::lanczos($m, $periodic);
     }
 
+    /**
+     * Triangular window — delegates to {@see NDArray::triang()}.
+     *
+     * Similar to Bartlett; endpoints are not forced to zero the same way.
+     *
+     * @param int  $m        Number of samples. `m = 0` → empty array; `m = 1` → `[1.0]`.
+     * @param bool $periodic If `true`, periodic variant; if `false`, symmetric (default).
+     *
+     * @return NDArray Float64, shape `[m]`.
+     */
     function triang(int $m, bool $periodic = false): NDArray
     {
         return NDArray::triang($m, $periodic);
