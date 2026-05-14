@@ -7,18 +7,16 @@ Correctness, memory safety, and API parity matter more than speed of implementat
 
 Agents must treat this as a systems project, not a typical PHP library.
 
-## Canonical Project Documents
+## Project Specification
 
-Agents must consult these files before making architectural or behavioral decisions:
-- SPEC.md
-  → Defines what the library must do, feature priorities, API guarantees, and success criteria.
-  → Always check this when:
-	- adding or modifying public APIs
-	- implementing new operations
-	- deciding between view vs copy behavior
-	- handling edge cases (broadcasting, slicing, dtype rules)
+Agents must consult `SPEC.md` before making any architectural or behavioral decisions. That document is the single source of truth for:
+- Library features, priorities, and API guarantees
+- When to add or modify public APIs
+- How to implement new operations
+- Deciding between view vs copy behavior
+- Handling edge cases (broadcasting, slicing, dtype rules)
 
-If there is a conflict between intuition and these documents, the documents win.
+If there is ever a conflict between your intuition and `SPEC.md`, `SPEC.md` wins.
 
 ## External References
 
@@ -89,7 +87,7 @@ Agents must follow these rules exactly:
 When implementing or modifying APIs:
 
 - Public PHP APIs must:
-    - Match SPEC.md naming and behavior, unless explicitly requested
+    - Match `SPEC.md` naming and behavior, unless explicitly requested
     - Be discoverable and predictable
     - Avoid surprising PHP-isms that break NumPy mental models
 - Internal helper methods may exist, but:
@@ -185,7 +183,7 @@ Agents must follow these rules for code comments and docblocks:
 When implementing operations that work with strided array views in Rust:
 
 ### Type-Specific Extraction
-Use `extract_view_f64`, `extract_view_i64`, etc. from `view_helpers.rs` instead of generic conversion. This avoids unnecessary data copying for native types.
+Use `extract_view_f64`, `extract_view_i64`, etc. from `view.rs` instead of generic conversion. This avoids unnecessary data copying for native types.
 
 ```rust
 // Good: Try native type first

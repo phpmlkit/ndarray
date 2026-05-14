@@ -171,6 +171,48 @@ final class StackingTest extends TestCase
         );
     }
 
+    /**
+     * Regression: stack(..., -1) on three same-shape 2D arrays must match row-major layout
+     * assumed by PHP (strides from shape, partial indexing, getAt). The Rust stack path
+     * normalizes non-standard ndarray memory order so element access stays consistent.
+     */
+    public function testStackNegativeOneThreeTwoDPlanesRowMajorElementOrder(): void
+    {
+        $d0 = 8;
+        $d1 = 8;
+
+        $along1 = NDArray::linspace(0, 255, $d1);
+        $along0 = NDArray::linspace(0, 255, $d0);
+
+        $p0 = NDArray::zeros([$d0, $d1])->add($along1->reshape([1, $d1]));
+        $p1 = NDArray::zeros([$d0, $d1])->add($along0->reshape([$d0, 1]));
+        $p2 = $p0->add($p1)->divide(2);
+
+        $out = NDArray::stack([$p0, $p1, $p2], -1);
+
+        $this->assertSame([$d0, $d1, 3], $out->shape());
+        $this->assertTrue($out->isContiguous());
+        $this->assertSame([$d1 * 3, 3, 1], $out->strides());
+
+        for ($i = 0; $i < $d0; ++$i) {
+            for ($j = 0; $j < $d1; ++$j) {
+                $v0 = (float) $p0[$i][$j];
+                $v1 = (float) $p1[$i][$j];
+                $v2 = (float) $p2[$i][$j];
+                $vec = $out[$i][$j]->toArray();
+                $this->assertCount(3, $vec);
+                $this->assertEqualsWithDelta($v0, $vec[0], 1e-9, "stacked[{$i},{$j},0]");
+                $this->assertEqualsWithDelta($v1, $vec[1], 1e-9, "stacked[{$i},{$j},1]");
+                $this->assertEqualsWithDelta($v2, $vec[2], 1e-9, "stacked[{$i},{$j},2]");
+            }
+        }
+
+        $flatBase = 0 * $d1 * 3 + 1 * 3;
+        $this->assertEqualsWithDelta((float) $p0[0][1], (float) $out->getAt($flatBase + 0), 1e-9, 'getAt slot 0');
+        $this->assertEqualsWithDelta((float) $p1[0][1], (float) $out->getAt($flatBase + 1), 1e-9, 'getAt slot 1');
+        $this->assertEqualsWithDelta((float) $p2[0][1], (float) $out->getAt($flatBase + 2), 1e-9, 'getAt slot 2');
+    }
+
     public function testStackThreeArrays(): void
     {
         $a = NDArray::array([1, 2], DType::Float64);
