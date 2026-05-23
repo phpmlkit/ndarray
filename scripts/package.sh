@@ -8,7 +8,7 @@
 # Examples:
 #   ./scripts/package.sh darwin-arm64
 #   ./scripts/package.sh linux-x86_64
-#   ./scripts/package.sh windows-x64
+#   ./scripts/package.sh windows-64
 #
 # Format is inferred from the platform name: windows-* uses zip; all others use tar.gz.
 
@@ -16,7 +16,7 @@ set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
     echo "Usage: $0 <platform>" >&2
-    echo "  platform   e.g. linux-x86_64, darwin-arm64, windows-x64" >&2
+    echo "  platform   e.g. linux-x86_64, darwin-arm64, windows-64" >&2
     exit 1
 fi
 
