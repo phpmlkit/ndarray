@@ -28,7 +28,7 @@ jobs:
           - platform: darwin-arm64
             runner: macos-latest
             archive_ext: tar.gz
-          - platform: windows-x64
+          - platform: windows-64
             runner: windows-latest
             archive_ext: zip
 
