@@ -14,16 +14,26 @@ public function reshape(array $newShape, string $order = 'C'): NDArray
 
 Returns a new array with the specified shape. Supports both C-order (row-major, order='C') and F-order (column-major, order='F').
 
+One dimension in `$newShape` may be `-1`. When present, that dimension is inferred from the array size and the remaining dimensions. The total number of elements must stay the same.
+
 ### Parameters
 
 | Name | Type | Description |
 |------|------|-------------|
-| `$newShape` | `array<int>` | New shape |
+| `$newShape` | `array<int>` | New shape. At most one dimension may be `-1` to infer that dimension automatically. |
 | `$order` | `string` | Memory layout: 'C' for row-major, 'F' for column-major. Default: `'C'` |
 
 ### Returns
 
 - `NDArray` - Reshaped array. This will be a new view object if the array is contiguous; otherwise, it will be a copy. Note there is no guarantee of the memory layout (C- or Fortran- contiguous) of the returned array.
+
+### Throws
+
+- `ShapeException` - If the requested shape does not contain the same number of elements as the original array.
+- `ShapeException` - If more than one dimension is `-1`.
+- `ShapeException` - If a dimension is less than `-1`.
+- `ShapeException` - If the inferred `-1` dimension would not be an integer.
+- `ShapeException` - If the inferred dimension is ambiguous because the product of the known dimensions is zero.
 
 ### Examples
 
@@ -35,10 +45,27 @@ $matrix = $arr->reshape([3, 4]);
 print_r($matrix->shape());
 // Output: [3, 4]
 
+// Infer one dimension from the array size
+$matrix = $arr->reshape([3, -1]);
+print_r($matrix->shape());
+// Output: [3, 4]
+
+$rows = $arr->reshape([-1, 6]);
+print_r($rows->shape());
+// Output: [2, 6]
+
 // Reshape to 3D
 $tensor = $arr->reshape([2, 2, 3]);
 print_r($tensor->shape());
 // Output: [2, 2, 3]
+```
+
+Only one dimension can be inferred:
+
+```php
+$arr->reshape([-1, -1]);  // ShapeException
+$arr->reshape([5, -1]);   // ShapeException: 12 cannot be divided into rows of 5
+$arr->reshape([2, -2]);   // ShapeException: -2 is not a valid dimension
 ```
 
 ---

@@ -113,6 +113,59 @@ final class ShapeOpsTest extends TestCase
         $this->assertSame([2, 2, 2], $result->shape());
     }
 
+    public function testReshapeInfersNegativeDimensionForArray(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5, 6], DType::Float64);
+        $result = $a->reshape([2, -1]);
+
+        $this->assertSame([2, 3], $result->shape());
+        $this->assertEqualsWithDelta([[1, 2, 3], [4, 5, 6]], $result->toArray(), 0.0001);
+    }
+
+    public function testReshapeInfersNegativeDimensionForView(): void
+    {
+        $a = NDArray::arange(0, 12)->reshape([4, 3]);
+        $view = $a->slice(['1:3', ':']);
+        $result = $view->reshape([-1]);
+
+        $this->assertSame([6], $result->shape());
+        $this->assertEqualsWithDelta([3, 4, 5, 6, 7, 8], $result->toArray(), 0.0001);
+        $this->assertTrue($result->isView());
+
+        $result->setAt(0, 999);
+        $this->assertEqualsWithDelta(999, $a->getAt(3), 0.0001);
+    }
+
+    public function testReshapeRejectsMultipleNegativeDimensions(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('one unknown dimension');
+
+        $a->reshape([-1, -1]);
+    }
+
+    public function testReshapeRejectsNonIntegerInferredDimension(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4, 5], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('inferred dimension would not be an integer');
+
+        $a->reshape([2, -1]);
+    }
+
+    public function testReshapeRejectsInvalidNegativeDimension(): void
+    {
+        $a = NDArray::array([1, 2, 3, 4], DType::Float64);
+
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('dimensions must be non-negative or -1');
+
+        $a->reshape([2, -2]);
+    }
+
     public function testReshapePreservesDtype(): void
     {
         $a = NDArray::array([1, 2, 3, 4], DType::Int32);

@@ -267,6 +267,9 @@ $matrix = $arr->reshape([3, 4]);
 //  [4, 5, 6, 7],
 //  [8, 9, 10, 11]]
 
+// Infer one dimension with -1
+$arr->reshape([2, -1]);  // Shape [2, 6]
+
 // Transpose
 $matrix->transpose();
 // [[0, 4, 8],

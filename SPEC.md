@@ -176,7 +176,7 @@ The primary array type representing N-dimensional arrays.
 
 **Requirements**:
 - [x] 6.1.1: `$array->reshape($new_shape)` - Change shape (view if possible)
-- [ ] 6.1.2: Support for `-1` in shape (infer dimension)
+- [x] 6.1.2: Support for `-1` in shape (infer dimension)
 - [x] 6.1.3: `$array->flatten()` - 1D view/copy
 - [x] 6.1.4: `$array->ravel()` - 1D view if possible
 - [x] 6.1.5: Maintain element count constraint

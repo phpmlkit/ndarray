@@ -252,6 +252,10 @@ $reshaped = $arr->reshape([3, 2]);
 //  [3 4]
 //  [5 6]]
 
+// Use -1 to infer one dimension from the array size
+$auto = $arr->reshape([-1, 2]);
+print_r($auto->shape());  // [3, 2]
+
 // Flatten to 1D
 $flat = $arr->flatten();  // [1 2 3 4 5 6]
 

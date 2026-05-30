@@ -186,6 +186,7 @@ $mask = $a->gt($b);
 | NumPy | NDArray PHP | Notes |
 |-------|-------------|-------|
 | `a.reshape(3, 4)` | `$a->reshape([3, 4])` | Shape as array |
+| `a.reshape(-1, 4)` | `$a->reshape([-1, 4])` | One `-1` dimension is inferred |
 | `a.flatten()` | `$a->flatten()` | |
 | `a.ravel()` | `$a->ravel()` | |
 | `a.squeeze()` | `$a->squeeze()` | |
@@ -286,6 +287,7 @@ reshaped = arr.reshape(2, 6)  # Multiple args
 ```php
 $arr = NDArray::zeros([3, 4]);  // Array
 $reshaped = $arr->reshape([2, 6]);  // Single array argument
+$auto = $arr->reshape([-1, 6]);     // -1 inference is supported
 ```
 
 ### 6. DType Enum vs Constants
