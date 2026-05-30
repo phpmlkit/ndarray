@@ -49,7 +49,8 @@ try {
 
 **Common causes:**
 - Incompatible shapes for arithmetic operations
-- Invalid reshape dimensions
+- Invalid reshape dimensions, including reshape sizes that do not preserve the element count
+- Invalid reshape inference, such as multiple `-1` dimensions or a `-1` dimension that cannot be inferred evenly
 - Broadcasting failures
 
 ---

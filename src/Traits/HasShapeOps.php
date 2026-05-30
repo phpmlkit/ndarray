@@ -56,12 +56,13 @@ trait HasShapeOps
      * For contiguous arrays, this returns a zero-copy view with updated metadata.
      * For non-contiguous arrays, data is copied to make it contiguous first.
      *
-     * @param array<int> $newShape New shape
+     * @param array<int> $newShape New shape. One dimension may be -1 to infer it from the array size.
      * @param string     $order    Memory layout: 'C' for row-major, 'F' for column-major
      */
     public function reshape(array $newShape, string $order = 'C'): NDArray
     {
         $oldSize = $this->size();
+        $newShape = $this->resolveReshapeShape($newShape, $oldSize);
         $newSize = (int) array_product($newShape);
 
         if ($oldSize !== $newSize) {
@@ -548,6 +549,57 @@ trait HasShapeOps
         $axisValue = $axis ?? -1;
 
         return $this->unaryOp('ndarray_repeat', Lib::createShapeArray($repeatsArray), \count($repeatsArray), $axisValue);
+    }
+
+    /**
+     * Resolve reshape dimensions, including a single inferred -1 dimension.
+     *
+     * @param array<int> $newShape Requested shape
+     * @param int        $oldSize  Current array size
+     *
+     * @return array<int> Shape with any inferred dimension resolved
+     */
+    private function resolveReshapeShape(array $newShape, int $oldSize): array
+    {
+        $unknownAxis = null;
+        $knownSize = 1;
+
+        foreach ($newShape as $axis => $dimension) {
+            if (-1 === $dimension) {
+                if (null !== $unknownAxis) {
+                    throw new ShapeException('Can only specify one unknown dimension in reshape');
+                }
+
+                $unknownAxis = $axis;
+
+                continue;
+            }
+
+            if ($dimension < -1) {
+                throw new ShapeException("Invalid reshape dimension {$dimension}; dimensions must be non-negative or -1");
+            }
+
+            $knownSize *= $dimension;
+        }
+
+        if (null === $unknownAxis) {
+            return $newShape;
+        }
+
+        if (0 === $knownSize) {
+            throw new ShapeException('Cannot infer reshape dimension when the product of known dimensions is zero');
+        }
+
+        if (0 !== $oldSize % $knownSize) {
+            throw new ShapeException(
+                "Cannot reshape array of size {$oldSize} into shape ".json_encode($newShape)
+                .'; inferred dimension would not be an integer'
+            );
+        }
+
+        $newShape[$unknownAxis] = intdiv($oldSize, $knownSize);
+
+        return $newShape;
     }
 
     /**
