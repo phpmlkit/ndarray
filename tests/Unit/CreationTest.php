@@ -10,6 +10,8 @@ use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
+use function PhpMlKit\NDArray\meshgrid;
+
 /**
  * @internal
  *
@@ -67,6 +69,114 @@ final class CreationTest extends TestCase
         $arrBool = NDArray::full(true, [2]);
         $this->assertSame(DType::Bool, $arrBool->dtype());
         $this->assertSame([true, true], $arrBool->toArray());
+    }
+
+    public function testMeshgridDenseXyIndexing(): void
+    {
+        $x = NDArray::array([1, 2, 3], DType::Int64);
+        $y = NDArray::array([10, 20], DType::Int64);
+
+        [$xx, $yy] = NDArray::meshgrid([$x, $y]);
+
+        $this->assertSame([2, 3], $xx->shape());
+        $this->assertSame([2, 3], $yy->shape());
+        $this->assertSame([[1, 2, 3], [1, 2, 3]], $xx->toArray());
+        $this->assertSame([[10, 10, 10], [20, 20, 20]], $yy->toArray());
+    }
+
+    public function testMeshgridDenseIjIndexing(): void
+    {
+        $x = NDArray::array([1, 2, 3], DType::Int64);
+        $y = NDArray::array([10, 20], DType::Int64);
+
+        [$xx, $yy] = NDArray::meshgrid([$x, $y], indexing: 'ij');
+
+        $this->assertSame([3, 2], $xx->shape());
+        $this->assertSame([3, 2], $yy->shape());
+        $this->assertSame([[1, 1], [2, 2], [3, 3]], $xx->toArray());
+        $this->assertSame([[10, 20], [10, 20], [10, 20]], $yy->toArray());
+    }
+
+    public function testMeshgridSparseXyIndexing(): void
+    {
+        $x = NDArray::array([1, 2, 3], DType::Int64);
+        $y = NDArray::array([10, 20], DType::Int64);
+
+        [$xx, $yy] = NDArray::meshgrid([$x, $y], sparse: true);
+
+        $this->assertSame([1, 3], $xx->shape());
+        $this->assertSame([2, 1], $yy->shape());
+        $this->assertSame([[1, 2, 3]], $xx->toArray());
+        $this->assertSame([[10], [20]], $yy->toArray());
+        $this->assertTrue($xx->isView());
+        $this->assertTrue($yy->isView());
+    }
+
+    public function testMeshgridThreeInputsXyIndexing(): void
+    {
+        [$xx, $yy, $zz] = NDArray::meshgrid([
+            NDArray::array([1, 2], DType::Int64),
+            NDArray::array([10, 20, 30], DType::Int64),
+            NDArray::array([100, 200], DType::Int64),
+        ]);
+
+        $this->assertSame([3, 2, 2], $xx->shape());
+        $this->assertSame([3, 2, 2], $yy->shape());
+        $this->assertSame([3, 2, 2], $zz->shape());
+        $this->assertSame(1, $xx->get(0, 0, 0));
+        $this->assertSame(2, $xx->get(0, 1, 0));
+        $this->assertSame(20, $yy->get(1, 0, 0));
+        $this->assertSame(200, $zz->get(0, 0, 1));
+    }
+
+    public function testMeshgridAcceptsPhpArraysAndPreservesDtypes(): void
+    {
+        $x = NDArray::array([1, 2], DType::Int32);
+        $y = NDArray::array([1.5, 2.5], DType::Float64);
+
+        [$xx, $yy] = NDArray::meshgrid([$x, $y]);
+        [$fromPhpX, $fromPhpY] = NDArray::meshgrid([[1, 2], [3, 4]], indexing: 'ij');
+
+        $this->assertSame(DType::Int32, $xx->dtype());
+        $this->assertSame(DType::Float64, $yy->dtype());
+        $this->assertSame([[1, 1], [2, 2]], $fromPhpX->toArray());
+        $this->assertSame([[3, 4], [3, 4]], $fromPhpY->toArray());
+    }
+
+    public function testMeshgridGlobalFunction(): void
+    {
+        [$xx, $yy] = meshgrid([
+            NDArray::array([1, 2], DType::Int64),
+            NDArray::array([3, 4], DType::Int64),
+        ], indexing: 'ij');
+
+        $this->assertSame([[1, 1], [2, 2]], $xx->toArray());
+        $this->assertSame([[3, 4], [3, 4]], $yy->toArray());
+    }
+
+    public function testMeshgridRejectsEmptyInputs(): void
+    {
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('at least one input array');
+
+        NDArray::meshgrid([]);
+    }
+
+    public function testMeshgridRejectsInvalidIndexing(): void
+    {
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage("indexing must be 'xy' or 'ij'");
+
+        // @phpstan-ignore argument.type (Intentionally passing an invalid indexing value)
+        NDArray::meshgrid([NDArray::array([1, 2])], indexing: 'bad');
+    }
+
+    public function testMeshgridRejectsNonVectorInputs(): void
+    {
+        $this->expectException(ShapeException::class);
+        $this->expectExceptionMessage('one-dimensional');
+
+        NDArray::meshgrid([NDArray::array([[1, 2], [3, 4]])]);
     }
 
     public function testEye(): void

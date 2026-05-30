@@ -56,6 +56,7 @@ You can combine imports from the base namespace and sub-namespaces in one `use f
 | `linspace` | `NDArray::linspace()` | [Array Creation — linspace](/api/array-creation#ndarray-linspace) |
 | `logspace` | `NDArray::logspace()` | [Array Creation - logspace](/api/array-creation#ndarray-logspace) |
 | `geomspace` | `NDArray::geomspace()` | [Array Creation - geomspace](/api/array-creation#ndarray-geomspace) |
+| `meshgrid` | `NDArray::meshgrid()` | [Array Creation - meshgrid](/api/array-creation#ndarray-meshgrid) |
 | `random` | `NDArray::random()` | [Array Creation - random](/api/array-creation#ndarray-random) |
 | `random_int` | `NDArray::randomInt()` | [Array Creation](/api/array-creation) |
 | `randn` | `NDArray::randn()` | [Array Creation](/api/array-creation) |

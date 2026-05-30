@@ -297,6 +297,92 @@ trait CreatesArrays
     }
 
     /**
+     * Create coordinate matrices from one-dimensional coordinate vectors.
+     *
+     * Dense grids are materialized with tile(). Sparse grids keep singleton dimensions
+     * and avoid expanding repeated coordinate values.
+     *
+     * @param array<array<mixed>|self> $arrays   One-dimensional coordinate vectors
+     * @param 'ij'|'xy'                $indexing Cartesian ('xy') or matrix ('ij') indexing
+     * @param bool                     $sparse   Whether to return sparse coordinate grids
+     *
+     * @return array<self> Coordinate grids, one for each input vector
+     *
+     * @throws ShapeException If no arrays are provided, an input is not one-dimensional, or indexing is invalid
+     */
+    public static function meshgrid(array $arrays, string $indexing = 'xy', bool $sparse = false): array
+    {
+        if ([] === $arrays) {
+            throw new ShapeException('meshgrid() requires at least one input array');
+        }
+
+        if (!\in_array($indexing, ['xy', 'ij'], true)) {
+            throw new ShapeException("meshgrid() indexing must be 'xy' or 'ij', got '{$indexing}'");
+        }
+
+        $vectors = [];
+        foreach ($arrays as $i => $array) {
+            if ($array instanceof self) {
+                $vector = $array;
+            } elseif (\is_array($array)) {
+                $vector = self::array($array);
+            } else {
+                throw new ShapeException(
+                    'meshgrid() inputs must be NDArrays or PHP arrays, got '.get_debug_type($array).' at index '.$i
+                );
+            }
+
+            if (1 !== $vector->ndim()) {
+                throw new ShapeException(
+                    "meshgrid() inputs must be one-dimensional, input {$i} has {$vector->ndim()} dimensions"
+                );
+            }
+
+            $vectors[] = $vector;
+        }
+
+        $count = \count($vectors);
+        $lengths = array_map(static fn (self $vector): int => $vector->size(), $vectors);
+        $outputShape = $lengths;
+
+        if ('xy' === $indexing && $count >= 2) {
+            $outputShape = $lengths;
+            $outputShape[0] = $lengths[1];
+            $outputShape[1] = $lengths[0];
+        }
+
+        $grids = [];
+        foreach ($vectors as $i => $vector) {
+            $axis = $i;
+            if ('xy' === $indexing && $count >= 2) {
+                $axis = match ($i) {
+                    0 => 1,
+                    1 => 0,
+                    default => $i,
+                };
+            }
+
+            $baseShape = array_fill(0, $count, 1);
+            $baseShape[$axis] = $lengths[$i];
+
+            $grid = $vector->reshape($baseShape);
+
+            if (!$sparse) {
+                $reps = [];
+                foreach ($outputShape as $dim => $dimSize) {
+                    $reps[] = $dim === $axis ? 1 : $dimSize;
+                }
+
+                $grid = $grid->tile($reps);
+            }
+
+            $grids[] = $grid;
+        }
+
+        return $grids;
+    }
+
+    /**
      * Create a 2D identity matrix.
      *
      * @param int      $N     Number of rows

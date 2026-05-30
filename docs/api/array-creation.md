@@ -453,6 +453,81 @@ echo $floats;  // [0. 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9]
 
 ---
 
+## NDArray::meshgrid()
+
+Create coordinate matrices from one-dimensional coordinate vectors.
+
+```php
+public static function meshgrid(array $arrays, string $indexing = 'xy', bool $sparse = false): array
+```
+
+Given one or more coordinate vectors, `meshgrid()` returns one grid for each input. Dense grids are expanded to the full coordinate shape. Sparse grids keep singleton dimensions and avoid repeating coordinate values.
+
+**Parameters:**
+- `array $arrays` - One-dimensional coordinate vectors. Each entry may be an `NDArray` or a PHP array.
+- `string $indexing` - Coordinate indexing mode: `'xy'` for Cartesian indexing or `'ij'` for matrix indexing. Default: `'xy'`.
+- `bool $sparse` - Whether to return sparse grids. Default: `false`.
+
+**Returns:** Array of NDArrays, one coordinate grid for each input vector. Each output keeps the dtype of its corresponding input vector.
+
+**Throws:**
+- `ShapeException` - If no input arrays are provided.
+- `ShapeException` - If `indexing` is not `'xy'` or `'ij'`.
+- `ShapeException` - If any input is not one-dimensional.
+
+**Examples:**
+
+```php
+$x = NDArray::array([1, 2, 3]);
+$y = NDArray::array([10, 20]);
+
+[$xx, $yy] = NDArray::meshgrid([$x, $y]);
+
+print_r($xx->shape());
+// Output: [2, 3]
+
+print_r($xx->toArray());
+// Output: [[1, 2, 3], [1, 2, 3]]
+
+print_r($yy->toArray());
+// Output: [[10, 10, 10], [20, 20, 20]]
+```
+
+Use matrix indexing when the first output axis should correspond to the first input vector:
+
+```php
+[$xx, $yy] = NDArray::meshgrid([$x, $y], indexing: 'ij');
+
+print_r($xx->shape());
+// Output: [3, 2]
+
+print_r($xx->toArray());
+// Output: [[1, 1], [2, 2], [3, 3]]
+
+print_r($yy->toArray());
+// Output: [[10, 20], [10, 20], [10, 20]]
+```
+
+Sparse grids keep only the dimensions needed for each coordinate vector:
+
+```php
+[$xx, $yy] = NDArray::meshgrid([$x, $y], sparse: true);
+
+print_r($xx->shape());
+// Output: [1, 3]
+
+print_r($yy->shape());
+// Output: [2, 1]
+```
+
+**See Also:**
+- [arange()](#ndarray-arange)
+- [linspace()](#ndarray-linspace)
+- [reshape()](/api/array-manipulation#reshape)
+- [tile()](/api/array-manipulation#tile)
+
+---
+
 ## NDArray::linspace()
 
 Create linearly spaced values.

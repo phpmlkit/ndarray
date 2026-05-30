@@ -129,6 +129,20 @@ namespace PhpMlKit\NDArray {
     }
 
     /**
+     * Create coordinate matrices from one-dimensional coordinate vectors.
+     *
+     * @param array<array<mixed>|NDArray> $arrays   One-dimensional coordinate vectors
+     * @param string                      $indexing Cartesian ('xy') or matrix ('ij') indexing
+     * @param bool                        $sparse   Whether to return sparse coordinate grids
+     *
+     * @return array<NDArray> Coordinate grids, one for each input vector
+     */
+    function meshgrid(array $arrays, string $indexing = 'xy', bool $sparse = false): array
+    {
+        return NDArray::meshgrid($arrays, $indexing, $sparse);
+    }
+
+    /**
      * Create a 2D identity matrix.
      *
      * @param int      $N     Number of rows

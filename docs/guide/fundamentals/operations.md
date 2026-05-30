@@ -285,6 +285,11 @@ $matrix->ravel();    // View if possible
 $arr = NDArray::array([1, 2, 3]);
 $arr->expandDims(0);   // Shape [1, 3]
 $arr->squeeze();        // Remove size-1 dimensions
+
+// Coordinate grids
+$x = NDArray::array([1, 2, 3]);
+$y = NDArray::array([10, 20]);
+[$xx, $yy] = NDArray::meshgrid([$x, $y]);  // Shape [2, 3] for both grids
 ```
 
 **Views vs Copies:**
