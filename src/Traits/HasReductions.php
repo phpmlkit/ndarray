@@ -25,7 +25,7 @@ trait HasReductions
      * @param null|int $axis     Axis along which to sum. If null, sum over all elements.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return Complex|float|int|NDArray scalar if axis is null, otherwise an NDArray
+     * @return ($axis is null ? Complex|float|int : NDArray)
      */
     public function sum(?int $axis = null, bool $keepdims = false): Complex|float|int|NDArray
     {
@@ -42,7 +42,7 @@ trait HasReductions
      * @param null|int $axis     Axis along which to compute mean. If null, compute mean of all elements.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return Complex|float|NDArray scalar if axis is null, otherwise an NDArray
+     * @return ($axis is null ? Complex|float : NDArray)
      */
     public function mean(?int $axis = null, bool $keepdims = false): Complex|float|NDArray
     {
@@ -59,7 +59,7 @@ trait HasReductions
      * @param null|int $axis     Axis along which to find minimum. If null, find minimum of all elements.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return Complex|float|int|NDArray scalar if axis is null, otherwise an NDArray
+     * @return ($axis is null ? Complex|float|int : NDArray)
      */
     public function min(?int $axis = null, bool $keepdims = false): Complex|float|int|NDArray
     {
@@ -76,7 +76,7 @@ trait HasReductions
      * @param null|int $axis     Axis along which to find maximum. If null, find maximum of all elements.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return Complex|float|int|NDArray scalar if axis is null, otherwise an NDArray
+     * @return ($axis is null ? Complex|float|int : NDArray)
      */
     public function max(?int $axis = null, bool $keepdims = false): Complex|float|int|NDArray
     {
@@ -93,7 +93,7 @@ trait HasReductions
      * @param null|int $axis     Axis along which to find argmin. If null, find argmin of flattened array.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return int|NDArray scalar index if axis is null, otherwise an NDArray of indices
+     * @return ($axis is null ? int : NDArray)
      */
     public function argmin(?int $axis = null, bool $keepdims = false): int|NDArray
     {
@@ -110,7 +110,7 @@ trait HasReductions
      * @param null|int $axis     Axis along which to find argmax. If null, find argmax of flattened array.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return int|NDArray scalar index if axis is null, otherwise an NDArray of indices
+     * @return ($axis is null ? int : NDArray)
      */
     public function argmax(?int $axis = null, bool $keepdims = false): int|NDArray
     {
@@ -188,7 +188,7 @@ trait HasReductions
      * @param null|int $axis     Axis along which to compute product. If null, compute product of all elements.
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return Complex|float|int|NDArray scalar if axis is null, otherwise an NDArray
+     * @return ($axis is null ? Complex|float|int : NDArray)
      */
     public function product(?int $axis = null, bool $keepdims = false): Complex|float|int|NDArray
     {
@@ -234,7 +234,7 @@ trait HasReductions
      * @param int      $ddof     delta degrees of freedom (0 for population, 1 for sample)
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return float|NDArray scalar if axis is null, otherwise an NDArray
+     * @return ($axis is null ? float : NDArray)
      */
     public function var(?int $axis = null, int $ddof = 0, bool $keepdims = false): float|NDArray
     {
@@ -252,7 +252,7 @@ trait HasReductions
      * @param int      $ddof     delta degrees of freedom (0 for population, 1 for sample)
      * @param bool     $keepdims if true, the reduced axis is retained with size 1
      *
-     * @return float|NDArray scalar if axis is null, otherwise an NDArray
+     * @return ($axis is null ? float : NDArray)
      */
     public function std(?int $axis = null, int $ddof = 0, bool $keepdims = false): float|NDArray
     {

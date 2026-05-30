@@ -31,6 +31,8 @@ trait HasLinearAlgebra
      * @param null|float|int|string $ord      Norm order
      * @param null|int              $axis     Reduction axis. If null, reduces all elements
      * @param bool                  $keepdims Keep reduced axis with size 1 (axis mode only)
+     *
+     * @return ($axis is null ? float : NDArray)
      */
     public function norm(float|int|string|null $ord = null, ?int $axis = null, bool $keepdims = false): float|NDArray
     {
