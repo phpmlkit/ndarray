@@ -73,6 +73,7 @@ The primary array type representing N-dimensional arrays.
 - [x] 3.2.2: `NDArray::linspace($start, $stop, $num = 50, $endpoint = true, $dtype = null)` - Linear spacing
 - [x] 3.2.3: `NDArray::logspace($start, $stop, $num = 50, $base = 10.0, $dtype = null)` - Logarithmic spacing
 - [x] 3.2.4: `NDArray::geomspace($start, $stop, $num = 50, $dtype = null)` - Geometric spacing
+- [x] 3.2.5: `NDArray::meshgrid($arrays, $indexing = 'xy', $sparse = false)` - Coordinate matrices from coordinate vectors
 
 ### 3.3 Random Array Creation (REQ-3.3)
 **Priority**: HIGH

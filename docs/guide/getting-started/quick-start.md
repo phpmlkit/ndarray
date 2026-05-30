@@ -79,6 +79,11 @@ $step = NDArray::arange(0, 10, 2); // [0 2 4 6 8]
 // linspace: linear spacing
 $linear = NDArray::linspace(0, 1, 5);  // [0. 0.25 0.5 0.75 1.]
 
+// Coordinate grids
+$x = NDArray::array([1, 2, 3]);
+$y = NDArray::array([10, 20]);
+[$xx, $yy] = NDArray::meshgrid([$x, $y]);  // Both grids have shape [2, 3]
+
 // Random arrays
 $random = NDArray::random([3, 3]);         // Uniform [0, 1)
 $normal = NDArray::randn([3, 3]);          // Standard normal distribution
