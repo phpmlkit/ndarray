@@ -140,15 +140,17 @@ trait HasIndexing
     {
         $indices = $indices instanceof self ? $indices : NDArray::array($indices, DType::Int64);
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $outDtypeBuf = $lib->new('uint8_t');
+        $outNdimBuf = $lib->new('size_t');
+        $outShapeBuf = $lib->new(\sprintf('size_t[%d]', Lib::MAX_NDIM));
 
         $meta = $this->meta()->toCData();
         $indicesMeta = $indices->meta()->toCData();
 
         if (null !== $axis) {
-            $status = $ffi->ndarray_take_axis(
+            $status = $lib->ndarray_take_axis(
                 $this->handle,
                 Lib::addr($meta),
                 $indices->handle(),
@@ -161,7 +163,7 @@ trait HasIndexing
                 Lib::MAX_NDIM
             );
         } else {
-            $status = $ffi->ndarray_take(
+            $status = $lib->ndarray_take(
                 $this->handle,
                 Lib::addr($meta),
                 $indices->handle(),
@@ -174,7 +176,7 @@ trait HasIndexing
             );
         }
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
         if (null === $dtype) {
@@ -182,7 +184,7 @@ trait HasIndexing
         }
 
         $ndim = (int) $outNdimBuf->cdata;
-        $outShape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+        $outShape = $lib->readSizeTArray($outShapeBuf, $ndim);
 
         return new self($outHandle, new ArrayMetadata($outShape), $dtype);
     }
@@ -196,13 +198,15 @@ trait HasIndexing
     {
         $indices = $indices instanceof self ? $indices : NDArray::array($indices, DType::Int64);
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $outDtypeBuf = $lib->new('uint8_t');
+        $outNdimBuf = $lib->new('size_t');
+        $outShapeBuf = $lib->new(\sprintf('size_t[%d]', Lib::MAX_NDIM));
 
         $meta = $this->meta()->toCData();
         $indicesMeta = $indices->meta()->toCData();
-        $status = $ffi->ndarray_take_along_axis(
+        $status = $lib->ndarray_take_along_axis(
             $this->handle,
             Lib::addr($meta),
             $indices->handle(),
@@ -215,7 +219,7 @@ trait HasIndexing
             Lib::MAX_NDIM
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
         if (null === $dtype) {
@@ -223,7 +227,7 @@ trait HasIndexing
         }
 
         $ndim = (int) $outNdimBuf->cdata;
-        $outShape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+        $outShape = $lib->readSizeTArray($outShapeBuf, $ndim);
 
         return new self($outHandle, new ArrayMetadata($outShape), $dtype);
     }
@@ -244,12 +248,12 @@ trait HasIndexing
 
         [$valuesBuffer, $valuesLen, $scalarValue, $hasScalar] = $this->prepareValuesBuffer($values);
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
         $meta = $this->meta()->toCData();
         $indicesMeta = $indices->meta()->toCData();
-        $status = $ffi->ndarray_put(
+        $status = $lib->ndarray_put(
             $this->handle,
             Lib::addr($meta),
             $indices->handle(),
@@ -261,7 +265,7 @@ trait HasIndexing
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($this->shape()), $this->dtype);
     }
@@ -276,12 +280,12 @@ trait HasIndexing
         $indices = $indices instanceof self ? $indices : NDArray::array($indices, DType::Int64);
 
         [$valuesBuffer, $valuesLen, $scalarValue, $hasScalar] = $this->prepareValuesBuffer($values);
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
         $meta = $this->meta()->toCData();
         $indicesMeta = $indices->meta()->toCData();
-        $status = $ffi->ndarray_put_along_axis(
+        $status = $lib->ndarray_put_along_axis(
             $this->handle,
             Lib::addr($meta),
             $indices->handle(),
@@ -294,7 +298,7 @@ trait HasIndexing
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($this->shape()), $this->dtype);
     }
@@ -310,12 +314,12 @@ trait HasIndexing
 
         [$updatesBuffer, $updatesLen, $scalarUpdate, $hasScalar] = $this->prepareValuesBuffer($updates);
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
         $meta = $this->meta()->toCData();
         $indicesMeta = $indices->meta()->toCData();
-        $status = $ffi->ndarray_scatter_add_flat(
+        $status = $lib->ndarray_scatter_add_flat(
             $this->handle,
             Lib::addr($meta),
             $indices->handle(),
@@ -327,7 +331,7 @@ trait HasIndexing
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($this->shape()), $this->dtype);
     }
@@ -345,14 +349,16 @@ trait HasIndexing
         $xArray = self::coerceWhereOperand($x, null);
         $yArray = self::coerceWhereOperand($y, null);
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $outDtypeBuf = $lib->new('uint8_t');
+        $outNdimBuf = $lib->new('size_t');
+        $outShapeBuf = $lib->new(\sprintf('size_t[%d]', Lib::MAX_NDIM));
 
         $condMeta = $condArray->meta()->toCData();
         $xMeta = $xArray->meta()->toCData();
         $yMeta = $yArray->meta()->toCData();
-        $status = $ffi->ndarray_where(
+        $status = $lib->ndarray_where(
             $condArray->handle,
             Lib::addr($condMeta),
             $xArray->handle,
@@ -366,11 +372,11 @@ trait HasIndexing
             Lib::MAX_NDIM
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
         $ndim = (int) $outNdimBuf->cdata;
-        $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+        $shape = $lib->readSizeTArray($outShapeBuf, $ndim);
         if (null === $dtype) {
             throw new NDArrayException('Invalid dtype returned from Rust for where()');
         }
@@ -520,11 +526,11 @@ trait HasIndexing
      */
     private function getElement(int $flatIndex): bool|Complex|float|int
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
 
         $outValue = $this->dtype->createCValue();
-        $status = $ffi->ndarray_get_element($this->handle, $flatIndex, Lib::addr($outValue));
-        Lib::checkStatus($status);
+        $status = $lib->ndarray_get_element($this->handle, $flatIndex, Lib::addr($outValue));
+        $lib->checkStatus($status);
 
         if ($this->dtype->isComplex()) {
             return $this->dtype->castFromCValue($outValue);
@@ -538,11 +544,11 @@ trait HasIndexing
      */
     private function setElement(int $flatIndex, bool|Complex|float|int $value): void
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
 
         $cValue = $this->dtype->createCValue($value);
 
-        $status = $ffi->ndarray_set_element($this->handle, $flatIndex, Lib::addr($cValue));
-        Lib::checkStatus($status);
+        $status = $lib->ndarray_set_element($this->handle, $flatIndex, Lib::addr($cValue));
+        $lib->checkStatus($status);
     }
 }

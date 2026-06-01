@@ -287,14 +287,14 @@ trait HasReductions
      */
     private function topkAxisOp(int $k, int $axis, bool $largest, bool $sorted, SortKind $kind): array
     {
-        $ffi = Lib::get();
-        $outValuesHandle = $ffi->new('struct NdArrayHandle*');
-        $outIndicesHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outValuesHandle = $lib->new('struct NdArrayHandle*');
+        $outIndicesHandle = $lib->new('struct NdArrayHandle*');
 
         $meta = $this->meta()->toCData();
-        $outShapeBuf = Lib::createCArray('size_t', array_fill(0, Lib::MAX_NDIM, 0));
+        $outShapeBuf = $lib->createCArray('size_t', array_fill(0, Lib::MAX_NDIM, 0));
 
-        $status = $ffi->ndarray_topk_axis(
+        $status = $lib->ndarray_topk_axis(
             $this->handle,
             Lib::addr($meta),
             $axis,
@@ -308,10 +308,10 @@ trait HasReductions
             Lib::MAX_NDIM
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         $ndim = $this->ndim();
-        $outShape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+        $outShape = $lib->readSizeTArray($outShapeBuf, $ndim);
 
         return [
             'values' => new NDArray($outValuesHandle, new ArrayMetadata($outShape), $this->dtype),
@@ -326,14 +326,14 @@ trait HasReductions
      */
     private function topkFlatOp(int $k, bool $largest, bool $sorted, SortKind $kind): array
     {
-        $ffi = Lib::get();
-        $outValuesHandle = $ffi->new('struct NdArrayHandle*');
-        $outIndicesHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outValuesHandle = $lib->new('struct NdArrayHandle*');
+        $outIndicesHandle = $lib->new('struct NdArrayHandle*');
 
         $meta = $this->meta()->toCData();
-        $outShapeBuf = Lib::createCArray('size_t', [0]);
+        $outShapeBuf = $lib->createCArray('size_t', [0]);
 
-        $status = $ffi->ndarray_topk_flat(
+        $status = $lib->ndarray_topk_flat(
             $this->handle,
             Lib::addr($meta),
             $k,
@@ -345,7 +345,7 @@ trait HasReductions
             $outShapeBuf
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         $outShape = [(int) $outShapeBuf[0]];
 

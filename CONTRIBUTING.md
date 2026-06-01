@@ -185,7 +185,7 @@ When modifying Rust code:
 - Document all public FFI functions
 - Add tests for new FFI functions in `rust/tests/`
 - Ensure memory safety - use safe Rust where possible
-- Update FFI bindings in `src/FFI/Bindings.php` when adding new functions
+- Add `@method` annotations to `src/FFI/Lib.php` when adding new FFI functions
 
 Example FFI function:
 ```rust

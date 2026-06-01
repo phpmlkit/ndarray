@@ -64,8 +64,8 @@ final class ConversionTest extends TestCase
     public function testIntoBufferTypedInt32(): void
     {
         $a = NDArray::array([10, 20, 30, 40], DType::Int32);
-        $ffi = Lib::get();
-        $dst = $ffi->new('int32_t[4]');
+        $lib = Lib::get();
+        $dst = $lib->new('int32_t[4]');
 
         $copied = $a->intoBuffer($dst, 0, 4);
 
@@ -80,8 +80,8 @@ final class ConversionTest extends TestCase
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Int32);
         $view = $a->slice([':', '1:3']); // [[2,3],[5,6]]
-        $ffi = Lib::get();
-        $dst = $ffi->new('int32_t[4]');
+        $lib = Lib::get();
+        $dst = $lib->new('int32_t[4]');
 
         $copied = $view->intoBuffer($dst, 0, 4);
 

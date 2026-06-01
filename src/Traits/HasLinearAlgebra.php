@@ -36,7 +36,7 @@ trait HasLinearAlgebra
      */
     public function norm(float|int|string|null $ord = null, ?int $axis = null, bool $keepdims = false): float|NDArray
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $ordCode = $this->normalizeNormOrder($ord, $axis);
         $ndim = $this->ndim();
 
@@ -49,9 +49,9 @@ trait HasLinearAlgebra
 
         $meta = $this->meta()->toCData();
         if (null === $axis) {
-            $outValue = $ffi->new('double');
-            $outDtype = $ffi->new('uint8_t');
-            $status = $ffi->ndarray_norm(
+            $outValue = $lib->new('double');
+            $outDtype = $lib->new('uint8_t');
+            $status = $lib->ndarray_norm(
                 $this->handle,
                 Lib::addr($meta),
                 $ordCode,
@@ -59,14 +59,14 @@ trait HasLinearAlgebra
                 Lib::addr($outDtype)
             );
 
-            Lib::checkStatus($status);
+            $lib->checkStatus($status);
 
             return (float) $outValue->cdata;
         }
 
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_norm_axis(
+        $status = $lib->ndarray_norm_axis(
             $this->handle,
             Lib::addr($meta),
             $axis,
@@ -75,7 +75,7 @@ trait HasLinearAlgebra
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
         $outShape = $this->computeNormOutputShape($axis, $keepdims);
 
         return new NDArray($outHandle, new ArrayMetadata($outShape), DType::Float64);
@@ -204,27 +204,27 @@ trait HasLinearAlgebra
      */
     public function svd(bool $computeUv = true): array|NDArray
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
         $calcUv = $computeUv ? 1 : 0;
         $maxNdim = 8;
 
-        $outHandleS = $ffi->new('struct NdArrayHandle*');
-        $outDtypeS = $ffi->new('uint8_t');
-        $outNdimS = $ffi->new('size_t');
-        $outShapeS = $ffi->new("size_t[{$maxNdim}]");
+        $outHandleS = $lib->new('struct NdArrayHandle*');
+        $outDtypeS = $lib->new('uint8_t');
+        $outNdimS = $lib->new('size_t');
+        $outShapeS = $lib->new("size_t[{$maxNdim}]");
 
-        $outHandleU = $computeUv ? $ffi->new('struct NdArrayHandle*') : null;
-        $outDtypeU = $computeUv ? $ffi->new('uint8_t') : null;
-        $outNdimU = $computeUv ? $ffi->new('size_t') : null;
-        $outShapeU = $computeUv ? $ffi->new("size_t[{$maxNdim}]") : null;
+        $outHandleU = $computeUv ? $lib->new('struct NdArrayHandle*') : null;
+        $outDtypeU = $computeUv ? $lib->new('uint8_t') : null;
+        $outNdimU = $computeUv ? $lib->new('size_t') : null;
+        $outShapeU = $computeUv ? $lib->new("size_t[{$maxNdim}]") : null;
 
-        $outHandleVt = $computeUv ? $ffi->new('struct NdArrayHandle*') : null;
-        $outDtypeVt = $computeUv ? $ffi->new('uint8_t') : null;
-        $outNdimVt = $computeUv ? $ffi->new('size_t') : null;
-        $outShapeVt = $computeUv ? $ffi->new("size_t[{$maxNdim}]") : null;
+        $outHandleVt = $computeUv ? $lib->new('struct NdArrayHandle*') : null;
+        $outDtypeVt = $computeUv ? $lib->new('uint8_t') : null;
+        $outNdimVt = $computeUv ? $lib->new('size_t') : null;
+        $outShapeVt = $computeUv ? $lib->new("size_t[{$maxNdim}]") : null;
 
-        $status = $ffi->ndarray_svd(
+        $status = $lib->ndarray_svd(
             $this->handle,
             Lib::addr($meta),
             $calcUv,
@@ -244,9 +244,9 @@ trait HasLinearAlgebra
             $computeUv ? $outShapeVt : null,
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
-        $sShape = Lib::extractShapeFromPointer($outShapeS, $outNdimS->cdata);
+        $sShape = $lib->readSizeTArray($outShapeS, $outNdimS->cdata);
         $sDtype = DType::from($outDtypeS->cdata);
         $s = new NDArray($outHandleS, new ArrayMetadata($sShape), $sDtype);
 
@@ -254,8 +254,8 @@ trait HasLinearAlgebra
             return $s;
         }
 
-        $uShape = Lib::extractShapeFromPointer($outShapeU, $outNdimU->cdata);
-        $vtShape = Lib::extractShapeFromPointer($outShapeVt, $outNdimVt->cdata);
+        $uShape = $lib->readSizeTArray($outShapeU, $outNdimU->cdata);
+        $vtShape = $lib->readSizeTArray($outShapeVt, $outNdimVt->cdata);
 
         $uDtype = DType::from($outDtypeU->cdata);
         $vtDtype = DType::from($outDtypeVt->cdata);
@@ -275,21 +275,21 @@ trait HasLinearAlgebra
      */
     public function qr(): array
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
         $maxNdim = 8;
 
-        $outHandleQ = $ffi->new('struct NdArrayHandle*');
-        $outDtypeQ = $ffi->new('uint8_t');
-        $outNdimQ = $ffi->new('size_t');
-        $outShapeQ = $ffi->new("size_t[{$maxNdim}]");
+        $outHandleQ = $lib->new('struct NdArrayHandle*');
+        $outDtypeQ = $lib->new('uint8_t');
+        $outNdimQ = $lib->new('size_t');
+        $outShapeQ = $lib->new("size_t[{$maxNdim}]");
 
-        $outHandleR = $ffi->new('struct NdArrayHandle*');
-        $outDtypeR = $ffi->new('uint8_t');
-        $outNdimR = $ffi->new('size_t');
-        $outShapeR = $ffi->new("size_t[{$maxNdim}]");
+        $outHandleR = $lib->new('struct NdArrayHandle*');
+        $outDtypeR = $lib->new('uint8_t');
+        $outNdimR = $lib->new('size_t');
+        $outShapeR = $lib->new("size_t[{$maxNdim}]");
 
-        $status = $ffi->ndarray_qr(
+        $status = $lib->ndarray_qr(
             $this->handle,
             Lib::addr($meta),
             Lib::addr($outHandleQ),
@@ -303,10 +303,10 @@ trait HasLinearAlgebra
             $outShapeR,
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
-        $qShape = Lib::extractShapeFromPointer($outShapeQ, $outNdimQ->cdata);
-        $rShape = Lib::extractShapeFromPointer($outShapeR, $outNdimR->cdata);
+        $qShape = $lib->readSizeTArray($outShapeQ, $outNdimQ->cdata);
+        $rShape = $lib->readSizeTArray($outShapeR, $outNdimR->cdata);
 
         $qDtype = DType::from($outDtypeQ->cdata);
         $rDtype = DType::from($outDtypeR->cdata);
@@ -330,21 +330,21 @@ trait HasLinearAlgebra
      */
     public function eig(): array
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
         $maxNdim = 8;
 
-        $outHandleEigvals = $ffi->new('struct NdArrayHandle*');
-        $outDtypeEigvals = $ffi->new('uint8_t');
-        $outNdimEigvals = $ffi->new('size_t');
-        $outShapeEigvals = $ffi->new("size_t[{$maxNdim}]");
+        $outHandleEigvals = $lib->new('struct NdArrayHandle*');
+        $outDtypeEigvals = $lib->new('uint8_t');
+        $outNdimEigvals = $lib->new('size_t');
+        $outShapeEigvals = $lib->new("size_t[{$maxNdim}]");
 
-        $outHandleEigvecs = $ffi->new('struct NdArrayHandle*');
-        $outDtypeEigvecs = $ffi->new('uint8_t');
-        $outNdimEigvecs = $ffi->new('size_t');
-        $outShapeEigvecs = $ffi->new("size_t[{$maxNdim}]");
+        $outHandleEigvecs = $lib->new('struct NdArrayHandle*');
+        $outDtypeEigvecs = $lib->new('uint8_t');
+        $outNdimEigvecs = $lib->new('size_t');
+        $outShapeEigvecs = $lib->new("size_t[{$maxNdim}]");
 
-        $status = $ffi->ndarray_eig(
+        $status = $lib->ndarray_eig(
             $this->handle,
             Lib::addr($meta),
             Lib::addr($outHandleEigvals),
@@ -358,10 +358,10 @@ trait HasLinearAlgebra
             $outShapeEigvecs,
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
-        $eigvalsShape = Lib::extractShapeFromPointer($outShapeEigvals, $outNdimEigvals->cdata);
-        $eigvecsShape = Lib::extractShapeFromPointer($outShapeEigvecs, $outNdimEigvecs->cdata);
+        $eigvalsShape = $lib->readSizeTArray($outShapeEigvals, $outNdimEigvals->cdata);
+        $eigvecsShape = $lib->readSizeTArray($outShapeEigvecs, $outNdimEigvecs->cdata);
 
         $eigvalsDtype = DType::from($outDtypeEigvals->cdata);
         $eigvecsDtype = DType::from($outDtypeEigvecs->cdata);
@@ -380,16 +380,16 @@ trait HasLinearAlgebra
      */
     public function eigvals(): NDArray
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
         $maxNdim = 8;
 
-        $outHandleEigvals = $ffi->new('struct NdArrayHandle*');
-        $outDtypeEigvals = $ffi->new('uint8_t');
-        $outNdimEigvals = $ffi->new('size_t');
-        $outShapeEigvals = $ffi->new("size_t[{$maxNdim}]");
+        $outHandleEigvals = $lib->new('struct NdArrayHandle*');
+        $outDtypeEigvals = $lib->new('uint8_t');
+        $outNdimEigvals = $lib->new('size_t');
+        $outShapeEigvals = $lib->new("size_t[{$maxNdim}]");
 
-        $status = $ffi->ndarray_eigvals(
+        $status = $lib->ndarray_eigvals(
             $this->handle,
             Lib::addr($meta),
             Lib::addr($outHandleEigvals),
@@ -399,9 +399,9 @@ trait HasLinearAlgebra
             $maxNdim,
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
-        $eigvalsShape = Lib::extractShapeFromPointer($outShapeEigvals, $outNdimEigvals->cdata);
+        $eigvalsShape = $lib->readSizeTArray($outShapeEigvals, $outNdimEigvals->cdata);
         $eigvalsDtype = DType::from($outDtypeEigvals->cdata);
 
         return new NDArray($outHandleEigvals, new ArrayMetadata($eigvalsShape), $eigvalsDtype);
@@ -418,22 +418,22 @@ trait HasLinearAlgebra
      */
     public function eigh(bool $upper = false): array
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
         $maxNdim = 8;
         $uplo = $upper ? 1 : 0;
 
-        $outHandleEigvals = $ffi->new('struct NdArrayHandle*');
-        $outDtypeEigvals = $ffi->new('uint8_t');
-        $outNdimEigvals = $ffi->new('size_t');
-        $outShapeEigvals = $ffi->new("size_t[{$maxNdim}]");
+        $outHandleEigvals = $lib->new('struct NdArrayHandle*');
+        $outDtypeEigvals = $lib->new('uint8_t');
+        $outNdimEigvals = $lib->new('size_t');
+        $outShapeEigvals = $lib->new("size_t[{$maxNdim}]");
 
-        $outHandleEigvecs = $ffi->new('struct NdArrayHandle*');
-        $outDtypeEigvecs = $ffi->new('uint8_t');
-        $outNdimEigvecs = $ffi->new('size_t');
-        $outShapeEigvecs = $ffi->new("size_t[{$maxNdim}]");
+        $outHandleEigvecs = $lib->new('struct NdArrayHandle*');
+        $outDtypeEigvecs = $lib->new('uint8_t');
+        $outNdimEigvecs = $lib->new('size_t');
+        $outShapeEigvecs = $lib->new("size_t[{$maxNdim}]");
 
-        $status = $ffi->ndarray_eigh(
+        $status = $lib->ndarray_eigh(
             $this->handle,
             Lib::addr($meta),
             $uplo,
@@ -448,10 +448,10 @@ trait HasLinearAlgebra
             $outShapeEigvecs,
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
-        $eigvalsShape = Lib::extractShapeFromPointer($outShapeEigvals, $outNdimEigvals->cdata);
-        $eigvecsShape = Lib::extractShapeFromPointer($outShapeEigvecs, $outNdimEigvecs->cdata);
+        $eigvalsShape = $lib->readSizeTArray($outShapeEigvals, $outNdimEigvals->cdata);
+        $eigvecsShape = $lib->readSizeTArray($outShapeEigvecs, $outNdimEigvecs->cdata);
 
         $eigvalsDtype = DType::from($outDtypeEigvals->cdata);
         $eigvecsDtype = DType::from($outDtypeEigvecs->cdata);
@@ -471,17 +471,17 @@ trait HasLinearAlgebra
      */
     public function eigvalsh(bool $upper = false): NDArray
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
         $maxNdim = 8;
         $uplo = $upper ? 1 : 0;
 
-        $outHandleEigvals = $ffi->new('struct NdArrayHandle*');
-        $outDtypeEigvals = $ffi->new('uint8_t');
-        $outNdimEigvals = $ffi->new('size_t');
-        $outShapeEigvals = $ffi->new("size_t[{$maxNdim}]");
+        $outHandleEigvals = $lib->new('struct NdArrayHandle*');
+        $outDtypeEigvals = $lib->new('uint8_t');
+        $outNdimEigvals = $lib->new('size_t');
+        $outShapeEigvals = $lib->new("size_t[{$maxNdim}]");
 
-        $status = $ffi->ndarray_eigvalsh(
+        $status = $lib->ndarray_eigvalsh(
             $this->handle,
             Lib::addr($meta),
             $uplo,
@@ -492,9 +492,9 @@ trait HasLinearAlgebra
             $maxNdim,
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
-        $eigvalsShape = Lib::extractShapeFromPointer($outShapeEigvals, $outNdimEigvals->cdata);
+        $eigvalsShape = $lib->readSizeTArray($outShapeEigvals, $outNdimEigvals->cdata);
         $eigvalsDtype = DType::from($outDtypeEigvals->cdata);
 
         return new NDArray($outHandleEigvals, new ArrayMetadata($eigvalsShape), $eigvalsDtype);
@@ -525,29 +525,29 @@ trait HasLinearAlgebra
      */
     public function lstsq(NDArray $b): array
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $aMeta = $this->meta()->toCData();
         $bMeta = $b->meta()->toCData();
         $maxNdim = 8;
 
-        $outSolution = $ffi->new('struct NdArrayHandle*');
-        $outDtypeSol = $ffi->new('uint8_t');
-        $outNdimSol = $ffi->new('size_t');
-        $outShapeSol = $ffi->new("size_t[{$maxNdim}]");
+        $outSolution = $lib->new('struct NdArrayHandle*');
+        $outDtypeSol = $lib->new('uint8_t');
+        $outNdimSol = $lib->new('size_t');
+        $outShapeSol = $lib->new("size_t[{$maxNdim}]");
 
-        $outResiduals = $ffi->new('struct NdArrayHandle*');
-        $outDtypeRes = $ffi->new('uint8_t');
-        $outNdimRes = $ffi->new('size_t');
-        $outShapeRes = $ffi->new("size_t[{$maxNdim}]");
+        $outResiduals = $lib->new('struct NdArrayHandle*');
+        $outDtypeRes = $lib->new('uint8_t');
+        $outNdimRes = $lib->new('size_t');
+        $outShapeRes = $lib->new("size_t[{$maxNdim}]");
 
-        $outRank = $ffi->new('int32_t');
+        $outRank = $lib->new('int32_t');
 
-        $outS = $ffi->new('struct NdArrayHandle*');
-        $outDtypeS = $ffi->new('uint8_t');
-        $outNdimS = $ffi->new('size_t');
-        $outShapeS = $ffi->new("size_t[{$maxNdim}]");
+        $outS = $lib->new('struct NdArrayHandle*');
+        $outDtypeS = $lib->new('uint8_t');
+        $outNdimS = $lib->new('size_t');
+        $outShapeS = $lib->new("size_t[{$maxNdim}]");
 
-        $status = $ffi->ndarray_lstsq(
+        $status = $lib->ndarray_lstsq(
             $this->handle,
             Lib::addr($aMeta),
             $b->handle,
@@ -568,20 +568,20 @@ trait HasLinearAlgebra
             $maxNdim,
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
-        $solShape = Lib::extractShapeFromPointer($outShapeSol, $outNdimSol->cdata);
+        $solShape = $lib->readSizeTArray($outShapeSol, $outNdimSol->cdata);
         $solutionDtype = DType::from($outDtypeSol->cdata);
         $solution = new NDArray($outSolution, new ArrayMetadata($solShape), $solutionDtype);
 
         $residuals = null;
         if (!\FFI::isNull($outResiduals)) {
-            $resShape = Lib::extractShapeFromPointer($outShapeRes, $outNdimRes->cdata);
+            $resShape = $lib->readSizeTArray($outShapeRes, $outNdimRes->cdata);
             $residualsDtype = DType::from($outDtypeRes->cdata);
             $residuals = new NDArray($outResiduals, new ArrayMetadata($resShape), $residualsDtype);
         }
 
-        $sShape = Lib::extractShapeFromPointer($outShapeS, $outNdimS->cdata);
+        $sShape = $lib->readSizeTArray($outShapeS, $outNdimS->cdata);
         $sDtype = DType::from($outDtypeS->cdata);
         $s = new NDArray($outS, new ArrayMetadata($sShape), $sDtype);
 
@@ -605,21 +605,21 @@ trait HasLinearAlgebra
      */
     public function pinv(?float $rcond = null): NDArray
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
         $maxNdim = 8;
 
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $outDtype = $ffi->new('uint8_t');
-        $outNdim = $ffi->new('size_t');
-        $outShape = $ffi->new("size_t[{$maxNdim}]");
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $outDtype = $lib->new('uint8_t');
+        $outNdim = $lib->new('size_t');
+        $outShape = $lib->new("size_t[{$maxNdim}]");
 
-        $rcondPtr = null !== $rcond ? $ffi->new('double') : null;
+        $rcondPtr = null !== $rcond ? $lib->new('double') : null;
         if (null !== $rcondPtr) {
             $rcondPtr->cdata = $rcond;
         }
 
-        $status = $ffi->ndarray_pinv(
+        $status = $lib->ndarray_pinv(
             $this->handle,
             Lib::addr($meta),
             null !== $rcondPtr ? Lib::addr($rcondPtr) : null,
@@ -630,9 +630,9 @@ trait HasLinearAlgebra
             $maxNdim,
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
-        $shape = Lib::extractShapeFromPointer($outShape, $outNdim->cdata);
+        $shape = $lib->readSizeTArray($outShape, $outNdim->cdata);
         $dtype = DType::from($outDtype->cdata);
 
         return new NDArray($outHandle, new ArrayMetadata($shape), $dtype);
@@ -653,23 +653,23 @@ trait HasLinearAlgebra
      */
     public function rank(?float $tol = null): int
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
 
-        $outRank = $ffi->new('int32_t');
-        $tolPtr = null !== $tol ? $ffi->new('double') : null;
+        $outRank = $lib->new('int32_t');
+        $tolPtr = null !== $tol ? $lib->new('double') : null;
         if (null !== $tolPtr) {
             $tolPtr->cdata = $tol;
         }
 
-        $status = $ffi->ndarray_rank(
+        $status = $lib->ndarray_rank(
             $this->handle,
             Lib::addr($meta),
             null !== $tolPtr ? Lib::addr($tolPtr) : null,
             Lib::addr($outRank),
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return (int) $outRank->cdata;
     }

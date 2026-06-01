@@ -26,11 +26,11 @@ trait CanBePrinted
     {
         $options = self::$printOptions;
 
-        $ffi = Lib::get();
-        $buffer = $ffi->new('char[8192]');
+        $lib = Lib::get();
+        $buffer = $lib->new('char[8192]');
 
         $meta = $this->meta()->toCData();
-        $len = $ffi->ndarray_to_string(
+        $len = $lib->ndarray_to_string(
             $this->handle,
             Lib::addr($meta),
             $buffer,
@@ -45,8 +45,8 @@ trait CanBePrinted
         }
 
         if ($len > 8192) {
-            $newBuffer = $ffi->new("char[{$len}]");
-            $len = $ffi->ndarray_to_string(
+            $newBuffer = $lib->new("char[{$len}]");
+            $len = $lib->ndarray_to_string(
                 $this->handle,
                 Lib::addr($meta),
                 $newBuffer,

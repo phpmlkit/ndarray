@@ -60,10 +60,10 @@ final class ArrayMetadata
             return $this->cachedStruct;
         }
 
-        $ffi = Lib::get();
-        $this->cachedShapeC = Lib::createShapeArray($this->shape);
-        $this->cachedStridesC = Lib::createShapeArray($this->strides);
-        $this->cachedStruct = $ffi->new('struct ArrayMetadata', false);
+        $lib = Lib::get();
+        $this->cachedShapeC = $lib->createCArray('size_t', $this->shape);
+        $this->cachedStridesC = $lib->createCArray('size_t', $this->strides);
+        $this->cachedStruct = $lib->new('struct ArrayMetadata', false);
         $this->cachedStruct->offset = $this->offset;
         $this->cachedStruct->shape = \FFI::addr($this->cachedShapeC[0]);
         $this->cachedStruct->strides = \FFI::addr($this->cachedStridesC[0]);

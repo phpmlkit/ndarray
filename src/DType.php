@@ -277,10 +277,10 @@ enum DType: int
      */
     public function createCValue(bool|Complex|float|int|null $value = null): CData
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
 
         if ($this->isComplex()) {
-            $cArray = $ffi->new("{$this->ffiType()}[2]");
+            $cArray = $lib->new("{$this->ffiType()}[2]");
             if (null !== $value) {
                 $complex = $value instanceof Complex ? $value : new Complex((float) $value);
                 $cArray[0] = $complex->real;
@@ -290,7 +290,7 @@ enum DType: int
             return $cArray;
         }
 
-        $cValue = $ffi->new($this->ffiType());
+        $cValue = $lib->new($this->ffiType());
 
         if (null !== $value) {
             $cValue->cdata = $this->isBool() ? ($value ? 1 : 0) : $value;
@@ -313,10 +313,10 @@ enum DType: int
      */
     public function createCArray(int $elementCount, array $values = []): CData
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
 
         if (!empty($values)) {
-            $cArray = $ffi->new("{$this->ffiType()}[".\count($values).']');
+            $cArray = $lib->new("{$this->ffiType()}[".\count($values).']');
             foreach ($values as $i => $value) {
                 $cArray[$i] = $value;
             }
@@ -326,7 +326,7 @@ enum DType: int
 
         $primitiveCount = $this->isComplex() ? $elementCount * 2 : $elementCount;
 
-        return $ffi->new("{$this->ffiType()}[{$primitiveCount}]");
+        return $lib->new("{$this->ffiType()}[{$primitiveCount}]");
     }
 
     /**

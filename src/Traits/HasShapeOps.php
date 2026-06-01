@@ -32,7 +32,10 @@ trait HasShapeOps
      */
     public function pad(array|int $padWidth, PadMode $mode = PadMode::Constant, array|bool|float|int $constantValues = 0): NDArray
     {
+        $lib = Lib::get();
+
         $normalizedPad = $this->normalizePadWidth($padWidth);
+
         $padFlat = [];
         foreach ($normalizedPad as [$before, $after]) {
             $padFlat[] = $before;
@@ -41,8 +44,8 @@ trait HasShapeOps
 
         $constants = $this->normalizePadConstants($constantValues, $mode);
 
-        $constantsC = Lib::createCArray('double', $constants);
-        $padFlatC = Lib::createShapeArray($padFlat);
+        $constantsC = $lib->createCArray('double', $constants);
+        $padFlatC = $lib->createCArray('size_t', $padFlat);
 
         return $this->unaryOp('ndarray_pad', $padFlatC, $mode, $constantsC, \count($constants));
     }
@@ -104,14 +107,14 @@ trait HasShapeOps
             );
         }
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $cShape = Lib::createShapeArray($newShape);
+        $cShape = $lib->createCArray('size_t', $newShape);
         $orderCode = 'F' === $order ? 1 : 0; // 0=C (RowMajor), 1=F (ColumnMajor)
 
         $meta = $this->meta()->toCData();
-        $status = $ffi->ndarray_reshape(
+        $status = $lib->ndarray_reshape(
             $this->handle,
             Lib::addr($meta),
             $cShape,
@@ -120,7 +123,7 @@ trait HasShapeOps
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new NDArray($outHandle, new ArrayMetadata($newShape), $this->dtype);
     }
@@ -223,6 +226,8 @@ trait HasShapeOps
      */
     public function permute(int ...$axes): NDArray
     {
+        $lib = Lib::get();
+
         if (\count($axes) !== $this->ndim()) {
             throw new ShapeException("permute requires {$this->ndim()} axes, got ".\count($axes));
         }
@@ -242,7 +247,7 @@ trait HasShapeOps
             throw new ShapeException('Duplicate axes in permutation');
         }
 
-        $normalizedAxesC = Lib::createShapeArray($normalizedAxes);
+        $normalizedAxesC = $lib->createCArray('size_t', $normalizedAxes);
 
         return $this->unaryOp('ndarray_permute', $normalizedAxesC, \count($normalizedAxes));
     }
@@ -317,6 +322,8 @@ trait HasShapeOps
      */
     public function flip(array|int|null $axes = null): NDArray
     {
+        $lib = Lib::get();
+
         if (null === $axes) {
             $axesArray = [];
             $numAxes = 0;
@@ -344,7 +351,7 @@ trait HasShapeOps
             $numAxes = \count($axesArray);
         }
 
-        return $this->unaryOp('ndarray_flip', Lib::createCArray('int64_t', $axesArray), $numAxes);
+        return $this->unaryOp('ndarray_flip', $lib->createCArray('int64_t', $axesArray), $numAxes);
     }
 
     /**
@@ -511,6 +518,8 @@ trait HasShapeOps
      */
     public function tile(array|int|NDArray $reps): NDArray
     {
+        $lib = Lib::get();
+
         if (\is_int($reps)) {
             $repsArray = [$reps];
         } elseif ($reps instanceof NDArray) {
@@ -522,7 +531,7 @@ trait HasShapeOps
             $repsArray = $reps;
         }
 
-        return $this->unaryOp('ndarray_tile', Lib::createShapeArray($repsArray), \count($repsArray));
+        return $this->unaryOp('ndarray_tile', $lib->createCArray('size_t', $repsArray), \count($repsArray));
     }
 
     /**
@@ -535,6 +544,8 @@ trait HasShapeOps
      */
     public function repeat(array|int|NDArray $repeats, ?int $axis = null): NDArray
     {
+        $lib = Lib::get();
+
         if (\is_int($repeats)) {
             $repeatsArray = [$repeats];
         } elseif ($repeats instanceof NDArray) {
@@ -548,7 +559,7 @@ trait HasShapeOps
 
         $axisValue = $axis ?? -1;
 
-        return $this->unaryOp('ndarray_repeat', Lib::createShapeArray($repeatsArray), \count($repeatsArray), $axisValue);
+        return $this->unaryOp('ndarray_repeat', $lib->createCArray('size_t', $repeatsArray), \count($repeatsArray), $axisValue);
     }
 
     /**

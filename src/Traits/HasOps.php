@@ -32,9 +32,11 @@ trait HasOps
      */
     protected function unaryOp(string $funcName, mixed ...$extraArgs): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $outDtypeBuf = $lib->new('uint8_t');
+        $outNdimBuf = $lib->new('size_t');
+        $outShapeBuf = $lib->new(\sprintf('size_t[%d]', Lib::MAX_NDIM));
         $meta = $this->meta()->toCData();
 
         // Normalize extra args: convert BackedEnum to their values
@@ -54,9 +56,9 @@ trait HasOps
             Lib::MAX_NDIM,
         ];
 
-        $status = $ffi->{$funcName}(...$args);
+        $status = $lib->{$funcName}(...$args);
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
         if (null === $dtype) {
@@ -64,7 +66,7 @@ trait HasOps
         }
 
         $ndim = (int) $outNdimBuf->cdata;
-        $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+        $shape = $lib->readSizeTArray($outShapeBuf, $ndim);
 
         return new NDArray($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -78,13 +80,15 @@ trait HasOps
         string $funcName,
         NDArray $other,
     ): NDArray {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $outDtypeBuf = $lib->new('uint8_t');
+        $outNdimBuf = $lib->new('size_t');
+        $outShapeBuf = $lib->new(\sprintf('size_t[%d]', Lib::MAX_NDIM));
 
         $aMeta = $this->meta()->toCData();
         $bMeta = $other->meta()->toCData();
-        $status = $ffi->{$funcName}(
+        $status = $lib->{$funcName}(
             $this->handle,
             Lib::addr($aMeta),
             $other->handle(),
@@ -96,7 +100,7 @@ trait HasOps
             Lib::MAX_NDIM
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
         if (null === $dtype) {
@@ -104,7 +108,7 @@ trait HasOps
         }
 
         $ndim = (int) $outNdimBuf->cdata;
-        $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+        $shape = $lib->readSizeTArray($outShapeBuf, $ndim);
 
         return new NDArray($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -120,9 +124,9 @@ trait HasOps
      */
     protected function scalarReductionOp(string $funcName, mixed ...$extraArgs): Complex|float|int
     {
-        $ffi = Lib::get();
-        $outValue = $ffi->new('uint8_t[16]');
-        $outDtype = $ffi->new('uint8_t');
+        $lib = Lib::get();
+        $outValue = $lib->new('uint8_t[16]');
+        $outDtype = $lib->new('uint8_t');
 
         $meta = $this->meta()->toCData();
         $args = [
@@ -133,8 +137,8 @@ trait HasOps
             Lib::addr($outDtype),
         ];
 
-        $status = $ffi->{$funcName}(...$args);
-        Lib::checkStatus($status);
+        $status = $lib->{$funcName}(...$args);
+        $lib->checkStatus($status);
 
         $dtype = DType::tryFrom((int) $outDtype->cdata);
         if (null === $dtype) {
@@ -157,18 +161,18 @@ trait HasOps
     protected function scalarToBuffer(Complex|float|int $value): array
     {
         $dtype = DType::fromValue($value);
-        $ffi = Lib::get();
+        $lib = Lib::get();
 
         if ($dtype->isComplex()) {
             \assert($value instanceof Complex);
-            $buffer = $ffi->new("{$dtype->ffiType()}[2]");
+            $buffer = $lib->new("{$dtype->ffiType()}[2]");
             $buffer[0] = $value->real;
             $buffer[1] = $value->imag;
 
             return [$buffer, $dtype];
         }
 
-        $buffer = $ffi->new("{$dtype->ffiType()}[1]");
+        $buffer = $lib->new("{$dtype->ffiType()}[1]");
         $buffer[0] = $dtype->isBool() ? ($value ? 1 : 0) : $value;
 
         return [$buffer, $dtype];
@@ -184,16 +188,16 @@ trait HasOps
      */
     private function bufferToScalar(CData $buffer, DType $dtype): Complex|float|int
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $base = Lib::addr($buffer);
 
         return match ($dtype) {
-            DType::Float64 => $ffi->cast('double*', $base)[0],
-            DType::Float32 => $ffi->cast('float*', $base)[0],
-            DType::Int64, DType::Int32, DType::Int16, DType::Int8 => $ffi->cast('int64_t*', $base)[0],
-            DType::UInt64, DType::UInt32, DType::UInt16, DType::UInt8 => $ffi->cast('uint64_t*', $base)[0],
-            DType::Complex64 => new Complex($ffi->cast('float*', $base)[0], $ffi->cast('float*', $base)[1]),
-            DType::Complex128 => new Complex($ffi->cast('double*', $base)[0], $ffi->cast('double*', $base)[1]),
+            DType::Float64 => $lib->cast('double*', $base)[0],
+            DType::Float32 => $lib->cast('float*', $base)[0],
+            DType::Int64, DType::Int32, DType::Int16, DType::Int8 => $lib->cast('int64_t*', $base)[0],
+            DType::UInt64, DType::UInt32, DType::UInt16, DType::UInt8 => $lib->cast('uint64_t*', $base)[0],
+            DType::Complex64 => new Complex($lib->cast('float*', $base)[0], $lib->cast('float*', $base)[1]),
+            DType::Complex128 => new Complex($lib->cast('double*', $base)[0], $lib->cast('double*', $base)[1]),
             default => 0,
         };
     }
