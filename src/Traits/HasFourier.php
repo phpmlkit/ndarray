@@ -41,11 +41,13 @@ trait HasFourier
      */
     public function fftn(?array $axes = null, Normalization $norm = Normalization::Backward): NDArray
     {
+        $lib = Lib::get();
+
         if (null === $axes || [] === $axes) {
             return $this->fourierOp('ndarray_fftn', [null, 0, $norm->toFfi()]);
         }
 
-        $axesBuf = Lib::createCArray('int32_t', $axes);
+        $axesBuf = $lib->createCArray('int32_t', $axes);
 
         return $this->fourierOp('ndarray_fftn', [$axesBuf, \count($axes), $norm->toFfi()]);
     }
@@ -57,11 +59,13 @@ trait HasFourier
      */
     public function ifftn(?array $axes = null, Normalization $norm = Normalization::Backward): NDArray
     {
+        $lib = Lib::get();
+
         if (null === $axes || [] === $axes) {
             return $this->fourierOp('ndarray_ifftn', [null, 0, $norm->toFfi()]);
         }
 
-        $axesBuf = Lib::createCArray('int32_t', $axes);
+        $axesBuf = $lib->createCArray('int32_t', $axes);
 
         return $this->fourierOp('ndarray_ifftn', [$axesBuf, \count($axes), $norm->toFfi()]);
     }
@@ -136,13 +140,14 @@ trait HasFourier
      */
     public function dctn(?array $axes = null, int $type = 2, Normalization $norm = Normalization::Backward): NDArray
     {
+        $lib = Lib::get();
         $this->assertDctType($type);
 
         if (null === $axes || [] === $axes) {
             return $this->fourierOp('ndarray_dctn', [null, 0, $type, $norm->toFfi()]);
         }
 
-        $axesBuf = Lib::createCArray('int32_t', $axes);
+        $axesBuf = $lib->createCArray('int32_t', $axes);
 
         return $this->fourierOp('ndarray_dctn', [$axesBuf, \count($axes), $type, $norm->toFfi()]);
     }
@@ -154,13 +159,14 @@ trait HasFourier
      */
     public function idctn(?array $axes = null, int $type = 2, Normalization $norm = Normalization::Backward): NDArray
     {
+        $lib = Lib::get();
         $this->assertDctType($type);
 
         if (null === $axes || [] === $axes) {
             return $this->fourierOp('ndarray_idctn', [null, 0, $type, $norm->toFfi()]);
         }
 
-        $axesBuf = Lib::createCArray('int32_t', $axes);
+        $axesBuf = $lib->createCArray('int32_t', $axes);
 
         return $this->fourierOp('ndarray_idctn', [$axesBuf, \count($axes), $type, $norm->toFfi()]);
     }
@@ -201,24 +207,27 @@ trait HasFourier
      */
     private function fourierOp(string $func, array $midArgs): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        [$outDtypeBuf, $outNdimBuf, $outShapeBuf] = Lib::createOutputMetadataBuffers();
-        $meta = $this->meta()->toCData();
-        $args = array_merge(
-            [$this->handle, Lib::addr($meta)],
-            $midArgs,
-            [
-                Lib::addr($outHandle),
-                Lib::addr($outDtypeBuf),
-                Lib::addr($outNdimBuf),
-                $outShapeBuf,
-                Lib::MAX_NDIM,
-            ],
-        );
-        $status = $ffi->{$func}(...$args);
+        $lib = Lib::get();
 
-        Lib::checkStatus($status);
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $outDtypeBuf = $lib->new('uint8_t');
+        $outNdimBuf = $lib->new('size_t');
+        $outShapeBuf = $lib->new(\sprintf('size_t[%d]', Lib::MAX_NDIM));
+        $meta = $this->meta()->toCData();
+        $args = [
+            $this->handle,
+            Lib::addr($meta),
+            ...$midArgs,
+            Lib::addr($outHandle),
+            Lib::addr($outDtypeBuf),
+            Lib::addr($outNdimBuf),
+            $outShapeBuf,
+            Lib::MAX_NDIM,
+        ];
+
+        $status = $lib->{$func}(...$args);
+
+        $lib->checkStatus($status);
 
         $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
         if (null === $dtype) {
@@ -226,7 +235,7 @@ trait HasFourier
         }
 
         $ndim = (int) $outNdimBuf->cdata;
-        $shape = Lib::extractShapeFromPointer($outShapeBuf, $ndim);
+        $shape = $lib->readSizeTArray($outShapeBuf, $ndim);
 
         return new NDArray($outHandle, new ArrayMetadata($shape), $dtype);
     }

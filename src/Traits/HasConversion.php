@@ -30,17 +30,17 @@ trait HasConversion
             );
         }
 
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
         $out = $this->dtype->createCValue();
 
-        $status = $ffi->ndarray_as_scalar(
+        $status = $lib->ndarray_as_scalar(
             $this->handle,
             Lib::addr($meta),
             \FFI::addr($out),
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         if ($this->dtype->isComplex()) {
             return $this->dtype->castFromCValue($out);
@@ -89,7 +89,7 @@ trait HasConversion
             $len = $this->size() - $start;
         }
 
-        $ffi = Lib::get();
+        $lib = Lib::get();
 
         if (0 === $len || $len < 0) {
             return $buffer ?? $this->dtype->createCArray(1);
@@ -97,9 +97,9 @@ trait HasConversion
 
         $buffer ??= $this->dtype->createCArray($len);
         $meta = $this->meta()->toCData();
-        $outLen = $ffi->new('size_t');
+        $outLen = $lib->new('size_t');
 
-        $status = $ffi->ndarray_get_data(
+        $status = $lib->ndarray_get_data(
             $this->handle,
             Lib::addr($meta),
             $start,
@@ -108,7 +108,7 @@ trait HasConversion
             Lib::addr($outLen),
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return $buffer;
     }
@@ -134,11 +134,11 @@ trait HasConversion
             return 0;
         }
 
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
-        $outLen = $ffi->new('size_t');
+        $outLen = $lib->new('size_t');
 
-        $status = $ffi->ndarray_get_data(
+        $status = $lib->ndarray_get_data(
             $this->handle,
             Lib::addr($meta),
             $start,
@@ -147,7 +147,7 @@ trait HasConversion
             Lib::addr($outLen),
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return (int) $outLen->cdata;
     }

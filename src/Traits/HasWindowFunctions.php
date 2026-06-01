@@ -29,10 +29,10 @@ trait HasWindowFunctions
      */
     public static function bartlett(int $m, bool $periodic = false): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_bartlett($m, $periodic, Lib::addr($outHandle));
-        Lib::checkStatus($status);
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_bartlett($m, $periodic, Lib::addr($outHandle));
+        $lib->checkStatus($status);
 
         return new NDArray($outHandle, new ArrayMetadata([$m]), DType::Float64);
     }
@@ -50,10 +50,10 @@ trait HasWindowFunctions
      */
     public static function blackman(int $m, bool $periodic = false): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_blackman($m, $periodic, Lib::addr($outHandle));
-        Lib::checkStatus($status);
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_blackman($m, $periodic, Lib::addr($outHandle));
+        $lib->checkStatus($status);
 
         return new NDArray($outHandle, new ArrayMetadata([$m]), DType::Float64);
     }
@@ -71,10 +71,10 @@ trait HasWindowFunctions
      */
     public static function bohman(int $m, bool $periodic = false): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_bohman($m, $periodic, Lib::addr($outHandle));
-        Lib::checkStatus($status);
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_bohman($m, $periodic, Lib::addr($outHandle));
+        $lib->checkStatus($status);
 
         return new NDArray($outHandle, new ArrayMetadata([$m]), DType::Float64);
     }
@@ -89,10 +89,10 @@ trait HasWindowFunctions
      */
     public static function boxcar(int $m, bool $periodic = false): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_boxcar($m, $periodic, Lib::addr($outHandle));
-        Lib::checkStatus($status);
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_boxcar($m, $periodic, Lib::addr($outHandle));
+        $lib->checkStatus($status);
 
         return new NDArray($outHandle, new ArrayMetadata([$m]), DType::Float64);
     }
@@ -110,10 +110,10 @@ trait HasWindowFunctions
      */
     public static function hamming(int $m, bool $periodic = false): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_hamming($m, $periodic, Lib::addr($outHandle));
-        Lib::checkStatus($status);
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_hamming($m, $periodic, Lib::addr($outHandle));
+        $lib->checkStatus($status);
 
         return new NDArray($outHandle, new ArrayMetadata([$m]), DType::Float64);
     }
@@ -133,10 +133,10 @@ trait HasWindowFunctions
      */
     public static function hanning(int $m, bool $periodic = false): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_hanning($m, $periodic, Lib::addr($outHandle));
-        Lib::checkStatus($status);
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_hanning($m, $periodic, Lib::addr($outHandle));
+        $lib->checkStatus($status);
 
         return new NDArray($outHandle, new ArrayMetadata([$m]), DType::Float64);
     }
@@ -166,10 +166,10 @@ trait HasWindowFunctions
      */
     public static function kaiser(int $m, float $beta, bool $periodic = false): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_kaiser($m, $beta, $periodic, Lib::addr($outHandle));
-        Lib::checkStatus($status);
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_kaiser($m, $beta, $periodic, Lib::addr($outHandle));
+        $lib->checkStatus($status);
 
         return new NDArray($outHandle, new ArrayMetadata([$m]), DType::Float64);
     }
@@ -187,10 +187,10 @@ trait HasWindowFunctions
      */
     public static function lanczos(int $m, bool $periodic = false): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_lanczos($m, $periodic, Lib::addr($outHandle));
-        Lib::checkStatus($status);
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_lanczos($m, $periodic, Lib::addr($outHandle));
+        $lib->checkStatus($status);
 
         return new NDArray($outHandle, new ArrayMetadata([$m]), DType::Float64);
     }
@@ -206,10 +206,10 @@ trait HasWindowFunctions
      */
     public static function triang(int $m, bool $periodic = false): NDArray
     {
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_triang($m, $periodic, Lib::addr($outHandle));
-        Lib::checkStatus($status);
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_triang($m, $periodic, Lib::addr($outHandle));
+        $lib->checkStatus($status);
 
         return new NDArray($outHandle, new ArrayMetadata([$m]), DType::Float64);
     }

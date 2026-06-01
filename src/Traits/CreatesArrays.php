@@ -10,7 +10,6 @@ use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\DTypeException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
-use PhpMlKit\NDArray\FFI\Bindings;
 use PhpMlKit\NDArray\FFI\Lib;
 
 /**
@@ -37,10 +36,10 @@ trait CreatesArrays
 
         $dtype ??= DType::fromArray($data);
 
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $len = \count($flatData);
 
-        $handle = self::createTyped($ffi, $dtype, $flatData, $shape, $len);
+        $handle = self::createTyped($lib, $dtype, $flatData, $shape, $len);
 
         return new self($handle, new ArrayMetadata($shape), $dtype);
     }
@@ -53,18 +52,18 @@ trait CreatesArrays
      */
     public static function zeros(array $shape, DType $dtype = DType::Float64): self
     {
-        $ffi = Lib::get();
-        $cShape = Lib::createShapeArray($shape);
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $cShape = $lib->createCArray('size_t', $shape);
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_zeros(
+        $status = $lib->ndarray_zeros(
             $cShape,
             \count($shape),
             $dtype->value,
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -77,18 +76,18 @@ trait CreatesArrays
      */
     public static function ones(array $shape, DType $dtype = DType::Float64): self
     {
-        $ffi = Lib::get();
-        $cShape = Lib::createShapeArray($shape);
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $cShape = $lib->createCArray('size_t', $shape);
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_ones(
+        $status = $lib->ndarray_ones(
             $cShape,
             \count($shape),
             $dtype->value,
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -135,14 +134,14 @@ trait CreatesArrays
             }
         }
 
-        $ffi = Lib::get();
+        $lib = Lib::get();
 
-        $cShape = Lib::createShapeArray($shape);
+        $cShape = $lib->createCArray('size_t', $shape);
         $cValue = $dtype->createCValue($value);
 
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_full(
+        $status = $lib->ndarray_full(
             $cShape,
             \count($shape),
             Lib::addr($cValue),
@@ -150,7 +149,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -192,11 +191,11 @@ trait CreatesArrays
             throw new ShapeException('Shape must have positive size');
         }
 
-        $ffi = Lib::get();
-        $cShape = Lib::createShapeArray($shape);
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $cShape = $lib->createCArray('size_t', $shape);
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_create(
+        $status = $lib->ndarray_create(
             $buffer,
             $expectedSize,
             $cShape,
@@ -205,7 +204,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -239,14 +238,14 @@ trait CreatesArrays
             );
         }
 
-        $ffi = Lib::get();
-        $buffer = $ffi->new("uint8_t[{$expectedBytes}]");
+        $lib = Lib::get();
+        $buffer = $lib->new("uint8_t[{$expectedBytes}]");
         \FFI::memcpy($buffer, $bytes, $expectedBytes);
 
-        $cShape = Lib::createShapeArray($shape);
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $cShape = $lib->createCArray('size_t', $shape);
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_create(
+        $status = $lib->ndarray_create(
             $buffer,
             $expectedSize,
             $cShape,
@@ -255,7 +254,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -393,10 +392,10 @@ trait CreatesArrays
     public static function eye(int $N, ?int $M = null, int $k = 0, DType $dtype = DType::Float64): self
     {
         $M ??= $N;
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_eye(
+        $status = $lib->ndarray_eye(
             $N,
             $M,
             $k,
@@ -404,7 +403,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata([$N, $M]), $dtype);
     }
@@ -434,10 +433,10 @@ trait CreatesArrays
             throw new \InvalidArgumentException('Bool dtype not supported for arange');
         }
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_arange(
+        $status = $lib->ndarray_arange(
             (float) $start,
             (float) $stop,
             (float) $step,
@@ -445,7 +444,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         // Calculate the shape
         $num = 0;
@@ -482,10 +481,10 @@ trait CreatesArrays
             throw new \InvalidArgumentException('linspace only supports Float32 and Float64 dtypes');
         }
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_linspace(
+        $status = $lib->ndarray_linspace(
             $start,
             $stop,
             $num,
@@ -494,7 +493,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata([$num]), $dtype);
     }
@@ -523,10 +522,10 @@ trait CreatesArrays
             throw new \InvalidArgumentException('logspace only supports Float32 and Float64 dtypes');
         }
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_logspace(
+        $status = $lib->ndarray_logspace(
             $start,
             $stop,
             $num,
@@ -535,7 +534,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata([$num]), $dtype);
     }
@@ -570,10 +569,10 @@ trait CreatesArrays
             throw new \InvalidArgumentException('geomspace requires start and stop to have the same sign');
         }
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_geomspace(
+        $status = $lib->ndarray_geomspace(
             $start,
             $stop,
             $num,
@@ -581,7 +580,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata([$num]), $dtype);
     }
@@ -598,10 +597,10 @@ trait CreatesArrays
         $dtype ??= DType::Float64;
         self::assertFloatDtype($dtype, 'random');
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_random(
-            Lib::createShapeArray($shape),
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_random(
+            $lib->createCArray('size_t', $shape),
             \count($shape),
             $dtype->value,
             null !== $seed,
@@ -609,7 +608,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -633,12 +632,12 @@ trait CreatesArrays
             throw new ShapeException("randomInt requires high > low, got [{$low}, {$high})");
         }
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_random_int(
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_random_int(
             $low,
             $high,
-            Lib::createShapeArray($shape),
+            $lib->createCArray('size_t', $shape),
             \count($shape),
             $dtype->value,
             null !== $seed,
@@ -646,7 +645,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -663,10 +662,10 @@ trait CreatesArrays
         $dtype ??= DType::Float64;
         self::assertFloatDtype($dtype, 'randn');
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_randn(
-            Lib::createShapeArray($shape),
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_randn(
+            $lib->createCArray('size_t', $shape),
             \count($shape),
             $dtype->value,
             null !== $seed,
@@ -674,7 +673,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -696,12 +695,12 @@ trait CreatesArrays
             throw new \InvalidArgumentException("normal requires std > 0, got {$std}");
         }
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_normal(
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_normal(
             $mean,
             $std,
-            Lib::createShapeArray($shape),
+            $lib->createCArray('size_t', $shape),
             \count($shape),
             $dtype->value,
             null !== $seed,
@@ -709,7 +708,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -731,12 +730,12 @@ trait CreatesArrays
             throw new \InvalidArgumentException("uniform requires high > low, got [{$low}, {$high})");
         }
 
-        $ffi = Lib::get();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $status = $ffi->ndarray_uniform(
+        $lib = Lib::get();
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $status = $lib->ndarray_uniform(
             $low,
             $high,
-            Lib::createShapeArray($shape),
+            $lib->createCArray('size_t', $shape),
             \count($shape),
             $dtype->value,
             null !== $seed,
@@ -744,7 +743,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($shape), $dtype);
     }
@@ -795,18 +794,18 @@ trait CreatesArrays
      */
     public function copy(): self
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
 
         $meta = $this->meta()->toCData();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_copy(
+        $status = $lib->ndarray_copy(
             $this->handle,
             Lib::addr($meta),
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($this->shape()), $this->dtype);
     }
@@ -827,18 +826,18 @@ trait CreatesArrays
             return $this->copy();
         }
 
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $meta = $this->meta()->toCData();
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_astype(
+        $status = $lib->ndarray_astype(
             $this->handle,
             Lib::addr($meta),
             $dtype->value,
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return new self($outHandle, new ArrayMetadata($this->shape()), $dtype);
     }
@@ -892,24 +891,24 @@ trait CreatesArrays
     /**
      * Create an NDArray handle using the appropriate FFI function for the dtype.
      *
-     * @param Bindings&\FFI $ffi   FFI instance
-     * @param DType         $dtype Data type
-     * @param array<mixed>  $data  Flat array of values
-     * @param array<int>    $shape Array shape
-     * @param int           $len   Number of elements
+     * @param Lib          $lib   Lib instance
+     * @param DType        $dtype Data type
+     * @param array<mixed> $data  Flat array of values
+     * @param array<int>   $shape Array shape
+     * @param int          $len   Number of elements
      *
      * @return CData Opaque handle
      */
-    private static function createTyped(\FFI $ffi, DType $dtype, array $data, array $shape, int $len): CData
+    private static function createTyped(Lib $lib, DType $dtype, array $data, array $shape, int $len): CData
     {
         $data = $dtype->prepareArrayValues($data);
 
         $cData = $dtype->createCArray(\count($data), $data);
-        $cShape = Lib::createShapeArray($shape);
+        $cShape = $lib->createCArray('size_t', $shape);
 
-        $outHandle = $ffi->new('struct NdArrayHandle*');
+        $outHandle = $lib->new('struct NdArrayHandle*');
 
-        $status = $ffi->ndarray_create(
+        $status = $lib->ndarray_create(
             $cData,
             \count($data),
             $cShape,
@@ -918,7 +917,7 @@ trait CreatesArrays
             Lib::addr($outHandle)
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         return $outHandle;
     }

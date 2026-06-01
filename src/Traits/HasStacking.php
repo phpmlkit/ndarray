@@ -46,20 +46,20 @@ trait HasStacking
             }
         }
 
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $metaWrappers = array_map(static fn (NDArray $a) => $a->meta()->toCData(), $arrays);
-        $cHandles = $ffi->new("struct NdArrayHandle*[{$numArrays}]");
-        $cMetas = $ffi->new("struct ArrayMetadata*[{$numArrays}]");
+        $cHandles = $lib->new("struct NdArrayHandle*[{$numArrays}]");
+        $cMetas = $lib->new("struct ArrayMetadata*[{$numArrays}]");
         for ($i = 0; $i < $numArrays; ++$i) {
             $cHandles[$i] = $arrays[$i]->handle;
             $cMetas[$i] = Lib::addr($metaWrappers[$i]);
         }
 
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $outNdimBuf = $ffi->new('size_t');
-        $outShapeBuf = Lib::createCArray('size_t', array_fill(0, Lib::MAX_NDIM, 0));
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $outNdimBuf = $lib->new('size_t');
+        $outShapeBuf = $lib->createCArray('size_t', array_fill(0, Lib::MAX_NDIM, 0));
 
-        $status = $ffi->ndarray_concatenate(
+        $status = $lib->ndarray_concatenate(
             $cHandles,
             $cMetas,
             $numArrays,
@@ -70,10 +70,10 @@ trait HasStacking
             Lib::MAX_NDIM
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         $outNdim = (int) $outNdimBuf->cdata;
-        $outShape = Lib::extractShapeFromPointer($outShapeBuf, $outNdim);
+        $outShape = $lib->readSizeTArray($outShapeBuf, $outNdim);
 
         return new self($outHandle, new ArrayMetadata($outShape), $arrays[0]->dtype);
     }
@@ -108,20 +108,20 @@ trait HasStacking
             }
         }
 
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $metaWrappers = array_map(static fn (NDArray $a) => $a->meta()->toCData(), $arrays);
-        $cHandles = $ffi->new("struct NdArrayHandle*[{$numArrays}]");
-        $cMetas = $ffi->new("struct ArrayMetadata*[{$numArrays}]");
+        $cHandles = $lib->new("struct NdArrayHandle*[{$numArrays}]");
+        $cMetas = $lib->new("struct ArrayMetadata*[{$numArrays}]");
         for ($i = 0; $i < $numArrays; ++$i) {
             $cHandles[$i] = $arrays[$i]->handle;
             $cMetas[$i] = Lib::addr($metaWrappers[$i]);
         }
 
-        $outHandle = $ffi->new('struct NdArrayHandle*');
-        $outNdimBuf = $ffi->new('size_t');
-        $outShapeBuf = Lib::createCArray('size_t', array_fill(0, Lib::MAX_NDIM, 0));
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $outNdimBuf = $lib->new('size_t');
+        $outShapeBuf = $lib->createCArray('size_t', array_fill(0, Lib::MAX_NDIM, 0));
 
-        $status = $ffi->ndarray_stack(
+        $status = $lib->ndarray_stack(
             $cHandles,
             $cMetas,
             $numArrays,
@@ -132,10 +132,10 @@ trait HasStacking
             Lib::MAX_NDIM
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         $outNdim = (int) $outNdimBuf->cdata;
-        $outShape = Lib::extractShapeFromPointer($outShapeBuf, $outNdim);
+        $outShape = $lib->readSizeTArray($outShapeBuf, $outNdim);
 
         return new self($outHandle, new ArrayMetadata($outShape), $arrays[0]->dtype);
     }
@@ -177,7 +177,7 @@ trait HasStacking
      */
     public function split(array|int $indicesOrSections, int $axis = 0): array
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $ndim = $this->ndim();
 
         $axisResolved = $axis < 0 ? $ndim + $axis : $axis;
@@ -196,13 +196,13 @@ trait HasStacking
         }
 
         $numParts = \count($indices) + 1;
-        $cIndices = Lib::createCArray('size_t', $indices);
-        $cOutOffsets = $ffi->new("size_t[{$numParts}]");
-        $cOutShapes = $ffi->new('size_t['.($numParts * $ndim).']');
-        $cOutStrides = $ffi->new('size_t['.($numParts * $ndim).']');
+        $cIndices = $lib->createCArray('size_t', $indices);
+        $cOutOffsets = $lib->new("size_t[{$numParts}]");
+        $cOutShapes = $lib->new('size_t['.($numParts * $ndim).']');
+        $cOutStrides = $lib->new('size_t['.($numParts * $ndim).']');
 
         $meta = $this->meta()->toCData();
-        $status = $ffi->ndarray_split(
+        $status = $lib->ndarray_split(
             $this->handle,
             Lib::addr($meta),
             $axisResolved,
@@ -213,7 +213,7 @@ trait HasStacking
             $cOutStrides
         );
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
 
         $base = $this->base ?? $this;
         $result = [];

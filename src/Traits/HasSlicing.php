@@ -127,21 +127,21 @@ trait HasSlicing
      */
     public function assign(bool|Complex|float|int|NDArray $value): void
     {
-        $ffi = Lib::get();
+        $lib = Lib::get();
         $src = $value;
 
         if ($value instanceof NDArray) {
             $srcMeta = $src->meta()->toCData();
             $dstMeta = $this->meta()->toCData();
 
-            $status = $ffi->ndarray_assign($this->handle, Lib::addr($dstMeta), $src->handle(), Lib::addr($srcMeta));
+            $status = $lib->ndarray_assign($this->handle, Lib::addr($dstMeta), $src->handle(), Lib::addr($srcMeta));
         } else {
             $cValue = $this->dtype->createCValue($src);
 
             $meta = $this->meta()->toCData();
-            $status = $ffi->ndarray_fill($this->handle, Lib::addr($meta), Lib::addr($cValue));
+            $status = $lib->ndarray_fill($this->handle, Lib::addr($meta), Lib::addr($cValue));
         }
 
-        Lib::checkStatus($status);
+        $lib->checkStatus($status);
     }
 }
