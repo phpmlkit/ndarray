@@ -61,6 +61,16 @@ namespace PhpMlKit\NDArray {
     }
 
     /**
+     * Create a 0-dimensional (scalar) array from a single PHP value.
+     *
+     * @see NDArray::fromScalar()
+     */
+    function from_scalar(bool|Complex|float|int $value, ?DType $dtype = null): NDArray
+    {
+        return NDArray::fromScalar($value, $dtype);
+    }
+
+    /**
      * Create an array from an external C buffer pointer.
      *
      * This method copies data from an external FFI buffer into a new NDArray. The source buffer
