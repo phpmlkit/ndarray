@@ -49,6 +49,7 @@ $cube = NDArray::array([
 $zeros = NDArray::zeros([3, 3]);        // 3x3 matrix of zeros
 $ones = NDArray::ones([2, 4]);         // 2x4 matrix of ones
 $full = NDArray::full(5, [2, 2]);      // 2x2 matrix filled with 5
+$scalar = NDArray::fromScalar(42);     // 0-dimensional scalar array (shape [])
 
 $identity = NDArray::eye(3);  // 3x3 identity matrix
 // [[1. 0. 0.]

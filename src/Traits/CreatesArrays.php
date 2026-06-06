@@ -155,6 +155,23 @@ trait CreatesArrays
     }
 
     /**
+     * Create a 0-dimensional (scalar) array from a single PHP value.
+     *
+     * The resulting array has shape [] and contains a single element.
+     * Use {@see toScalar()} to retrieve the value back, or let it broadcast
+     * naturally in element-wise operations.
+     *
+     * @param bool|Complex|float|int $value The scalar value
+     * @param null|DType             $dtype Data type (inferred from value if null)
+     *
+     * @return self A 0-dimensional array
+     */
+    public static function fromScalar(bool|Complex|float|int $value, ?DType $dtype = null): self
+    {
+        return self::full($value, [], $dtype);
+    }
+
+    /**
      * Create array from PHP array (alias for array()).
      *
      * This is an idiomatic alias for array() that follows the naming convention

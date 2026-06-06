@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace PhpMlKit\NDArray\Tests\Unit;
 
+use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\DType;
 use PhpMlKit\NDArray\Exceptions\DTypeException;
 use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
+use function PhpMlKit\NDArray\from_scalar;
 use function PhpMlKit\NDArray\meshgrid;
 
 /**
@@ -69,6 +71,66 @@ final class CreationTest extends TestCase
         $arrBool = NDArray::full(true, [2]);
         $this->assertSame(DType::Bool, $arrBool->dtype());
         $this->assertSame([true, true], $arrBool->toArray());
+    }
+
+    public function testFromScalarInt(): void
+    {
+        $arr = NDArray::fromScalar(42);
+        $this->assertSame([], $arr->shape());
+        $this->assertSame(0, $arr->ndim());
+        $this->assertSame(42, $arr->toScalar());
+        $this->assertSame(DType::Int64, $arr->dtype());
+    }
+
+    public function testFromScalarFloat(): void
+    {
+        $arr = NDArray::fromScalar(3.14);
+        $this->assertSame(0, $arr->ndim());
+        $this->assertSame(3.14, $arr->toScalar());
+        $this->assertSame(DType::Float64, $arr->dtype());
+    }
+
+    public function testFromScalarBool(): void
+    {
+        $arr = NDArray::fromScalar(true);
+        $this->assertSame(0, $arr->ndim());
+        $this->assertTrue($arr->toScalar());
+        $this->assertSame(DType::Bool, $arr->dtype());
+    }
+
+    public function testFromScalarComplex(): void
+    {
+        $arr = NDArray::fromScalar(new Complex(1.0, 2.0));
+        $this->assertSame(0, $arr->ndim());
+        $result = $arr->toScalar();
+        $this->assertInstanceOf(Complex::class, $result);
+        $this->assertSame(1.0, $result->real);
+        $this->assertSame(2.0, $result->imag);
+        $this->assertSame(DType::Complex128, $arr->dtype());
+    }
+
+    public function testFromScalarExplicitDtype(): void
+    {
+        $arr = NDArray::fromScalar(42, DType::Float64);
+        $this->assertSame(0, $arr->ndim());
+        $this->assertSame(42.0, $arr->toScalar());
+        $this->assertSame(DType::Float64, $arr->dtype());
+    }
+
+    public function testFromScalarBroadcasts(): void
+    {
+        $scalar = NDArray::fromScalar(5);
+        $arr = NDArray::ones([3, 4]);
+        $result = $arr->multiply($scalar);
+        $this->assertSame([3, 4], $result->shape());
+        $this->assertEquals(array_fill(0, 3, array_fill(0, 4, 5)), $result->toArray());
+    }
+
+    public function testFromScalarGlobalFunction(): void
+    {
+        $arr = from_scalar(7.5);
+        $this->assertSame(0, $arr->ndim());
+        $this->assertSame(7.5, $arr->toScalar());
     }
 
     public function testMeshgridDenseXyIndexing(): void

@@ -167,6 +167,45 @@ $full = NDArray::full(100, [10], DType::Int32);
 
 ---
 
+## NDArray::fromScalar()
+
+Create a 0-dimensional (scalar) array from a single PHP value.
+
+```php
+public static function fromScalar(
+    float|int|bool|Complex $value,
+    ?DType $dtype = null
+): self
+```
+
+The resulting array has shape `[]` (empty shape) and contains the single value as its element. Use [`toScalar()`](/api/array-import-export#toscalar) to retrieve the value back, or let it broadcast naturally in element-wise operations.
+
+**Parameters:**
+- `float|int|bool|Complex $value` - The scalar value
+- `?DType $dtype` - Data type (inferred from value if null)
+
+**Examples:**
+
+```php
+$scalar = NDArray::fromScalar(42);
+echo $scalar->shape();  // []
+echo $scalar->toScalar();  // 42
+echo $scalar->ndim();  // 0
+
+// With explicit type
+$floatScalar = NDArray::fromScalar(3.14, DType::Float32);
+
+// Broadcasting works naturally
+$ones = NDArray::ones([3, 4]);
+$result = $ones->multiply(NDArray::fromScalar(5));
+// All elements are now 5
+```
+
+**See Also:**
+- [toScalar()](/api/array-import-export#toscalar) — Extract value back to PHP scalar
+
+---
+
 ## NDArray::fromArray()
 
 Create an NDArray from a PHP array with optional explicit shape.
@@ -822,6 +861,37 @@ print_r($ints->toArray());  // [1, 2, 3]
 
 ---
 
+## cast()
+
+Cast array to a different dtype, without copy when already the target type.
+
+```php
+public function cast(DType $dtype): self
+```
+
+Unlike [`astype()`](#astype) which always creates a new copy, this method returns the same array instance (zero-cost) when the current dtype already matches the requested one. Only when an actual type conversion is needed does it delegate to `astype()` and allocate new memory.
+
+### Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `$dtype` | `DType` | Target data type |
+
+### Returns
+
+- `NDArray` - Array in the target dtype (may be the same instance).
+
+### Examples
+
+```php
+$arr = NDArray::array([1, 2, 3], DType::Int64);
+
+$same = $arr->cast(DType::Int64);  // No copy, same instance
+$converted = $arr->cast(DType::Float64);  // Copy, dtype differs
+```
+
+---
+
 ## Summary Table
 
 | Method | Purpose | Use Case |
@@ -835,6 +905,7 @@ print_r($ints->toArray());  // [1, 2, 3]
 | `onesLike()` | Ones like input | Same shape as array |
 | `fullLike()` | Filled like input | Same shape as array |
 | `fromArray()` | From PHP array (with shape) | Import with explicit shape |
+| `fromScalar()` | 0-dimensional from value | Broadcasting, scalar-in-array context |
 | `fromBuffer()` | From C pointer | FFI interoperability |
 | `fromBytes()` | From binary string | File I/O, network data |
 | `eye()` | Identity matrix | Linear algebra |
@@ -849,6 +920,7 @@ print_r($ints->toArray());  // [1, 2, 3]
 | `randomInt()` | Random integers | Discrete random |
 | `copy()` | Deep copy | Independent array from existing |
 | `astype()` | Type conversion | New array with different dtype |
+| `cast()` | Conditional type conversion | Same instance if dtype matches, copy otherwise |
 
 ## Next Steps
 
