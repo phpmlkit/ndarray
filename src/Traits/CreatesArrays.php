@@ -167,8 +167,20 @@ trait CreatesArrays
     public static function fromArray(array $data, ?array $shape = null, ?DType $dtype = null): self
     {
         $shape ??= self::inferShape($data);
+        $flatData = self::flattenArray($data);
 
-        return self::array($data, $dtype);
+        if (empty($flatData)) {
+            throw new ShapeException('Cannot create array from empty data');
+        }
+
+        $dtype ??= DType::fromArray($data);
+
+        $lib = Lib::get();
+        $len = \count($flatData);
+
+        $handle = self::createTyped($lib, $dtype, $flatData, $shape, $len);
+
+        return new self($handle, new ArrayMetadata($shape), $dtype);
     }
 
     /**
