@@ -842,6 +842,23 @@ trait CreatesArrays
         return new self($outHandle, new ArrayMetadata($this->shape()), $dtype);
     }
 
+    /**
+     * Cast the array to a different dtype, without copy when already the target type.
+     *
+     * Unlike {@see astype()} which always creates a new copy, this method
+     * returns the same array instance (zero-cost) when the current dtype
+     * already matches the requested one. Only when an actual type conversion
+     * is needed does it delegate to astype() and allocate new memory.
+     *
+     * @param DType $dtype Target data type
+     *
+     * @return self The array in the target dtype (may be the same instance)
+     */
+    public function cast(DType $dtype): self
+    {
+        return $this->dtype === $dtype ? $this : $this->astype($dtype);
+    }
+
     // =========================================================================
     // Private Helpers
     // =========================================================================

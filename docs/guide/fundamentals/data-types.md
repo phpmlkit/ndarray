@@ -117,6 +117,10 @@ $f32 = $float_arr->astype(DType::Float32);
 // Convert to bool (non-zero = true)
 $bool_arr = $float_arr->astype(DType::Bool);
 print_r($bool_arr->toArray());  // [true, true, true]
+
+// Or use cast() when you only want to copy if needed:
+$same = $float_arr->cast(DType::Float64);  // No copy, same instance
+$converted = $float_arr->cast(DType::Int32);  // Copy required, delegates to astype()
 ```
 
 ## Type Properties
