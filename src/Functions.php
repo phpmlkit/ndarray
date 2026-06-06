@@ -345,6 +345,19 @@ namespace PhpMlKit\NDArray {
         return $a->astype($dtype);
     }
 
+    /**
+     * Cast an array to a different dtype, returning the same instance when possible.
+     *
+     * Unlike {@see astype()} which always copies, this function returns the
+     * input array unchanged (zero-cost) when the dtype already matches.
+     *
+     * @see NDArray::cast()
+     */
+    function cast(NDArray $a, DType $dtype): NDArray
+    {
+        return $a->cast($dtype);
+    }
+
     // =============================================================================
     // HasMath — element-wise arithmetic, ufuncs, bitwise, clamp, min/max, softmax
     // =============================================================================

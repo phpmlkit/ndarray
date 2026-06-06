@@ -104,6 +104,7 @@ Copies are created by operations that **transform** or **compute** new data:
 |-----------------|---------------------|-------------------|
 | Math ops        | `$arr->multiply(2)` | New allocation    |
 | Type cast       | `$arr->astype()`     | New allocation    |
+| Conditional cast| `$arr->cast()`       | Same instance if dtype matches, copy otherwise |
 | Explicit copy   | `$arr->copy()`       | New allocation    |
 | Flatten         | `$arr->flatten()`    | New allocation    |
 
@@ -125,6 +126,8 @@ $result = $arr->matmul($b);       // COPY
 $arr = NDArray::array([1, 2, 3]);
 
 $converted = $arr->astype(DType::Int32);  // COPY
+$casted = $arr->cast(DType::Int32);        // COPY (dtype differs)
+$same = $arr->cast(DType::Int64);          // NO COPY (already Int64)
 ```
 
 ### Explicit Copy
@@ -512,6 +515,7 @@ function safeModify(NDArray $arr): NDArray {
 | `$arr->reshape([...])` | View* | Yes (if modified) |
 | `$arr->mergeaxes(0, 1)` | View | Yes (if modified) |
 | `$arr->astype(...)` | Copy | No |
+| `$arr->cast(...)` | Same instance or Copy | Yes if same dtype, No otherwise |
 | `$arr->add($b)` | Copy | No |
 | `$arr->set([0,0], 5)` | N/A | Yes |
 | `$view = $view->multiply(2)` | Copy | No (reassignment) |
