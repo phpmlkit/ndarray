@@ -257,6 +257,88 @@ print_r($row_prods->toArray());
 
 ---
 
+## any()
+
+Test whether any element is true over a given axis.
+
+```php
+public function any(?int $axis = null, bool $keepdims = false): bool|NDArray
+```
+
+For non-bool arrays, zero is treated as false and non-zero as true. For complex numbers, the value is false if both real and imag parts are zero.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$axis` | `int\|null` | Axis along which to check. If null, checks the entire array. Optional. Default: `null`. |
+| `$keepdims` | `bool` | If true, the reduced axis is retained with size 1. Optional. Default: `false`. |
+
+### Returns
+
+- `bool|NDArray` - Scalar boolean if axis is null, otherwise an NDArray of bool.
+
+### Examples
+
+```php
+$arr = NDArray::array([[0, 0], [0, 5]]);
+
+// Check all elements
+$result = $arr->any();
+echo $result ? 'true' : 'false';  // true
+
+// Check along axis 0 (columns)
+$col_result = $arr->any(axis: 0);
+print_r($col_result->toArray());  // [false, true]
+
+// Check along axis 1 (rows)
+$row_result = $arr->any(axis: 1);
+print_r($row_result->toArray());  // [false, true]
+```
+
+---
+
+## all()
+
+Test whether all elements are true over a given axis.
+
+```php
+public function all(?int $axis = null, bool $keepdims = false): bool|NDArray
+```
+
+For non-bool arrays, zero is treated as false and non-zero as true. For complex numbers, the value is false if both real and imag parts are zero.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$axis` | `int\|null` | Axis along which to check. If null, checks the entire array. Optional. Default: `null`. |
+| `$keepdims` | `bool` | If true, the reduced axis is retained with size 1. Optional. Default: `false`. |
+
+### Returns
+
+- `bool|NDArray` - Scalar boolean if axis is null, otherwise an NDArray of bool.
+
+### Examples
+
+```php
+$arr = NDArray::array([[1, 1], [1, 0]]);
+
+// Check all elements
+$result = $arr->all();
+echo $result ? 'true' : 'false';  // false
+
+// Check along axis 0 (columns)
+$col_result = $arr->all(axis: 0);
+print_r($col_result->toArray());  // [true, false]
+
+// Check along axis 1 (rows)
+$row_result = $arr->all(axis: 1);
+print_r($row_result->toArray());  // [true, false]
+```
+
+---
+
 ## Summary Table
 
 | Method | Description | Returns |
@@ -268,6 +350,8 @@ print_r($row_prods->toArray());
 | `min()` | Minimum value | Scalar or array |
 | `max()` | Maximum value | Scalar or array |
 | `product()` | Product of elements | Scalar or array |
+| `any()` | Any element true | Scalar or array |
+| `all()` | All elements true | Scalar or array |
 
 ---
 

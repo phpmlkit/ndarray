@@ -122,7 +122,7 @@ trait HasOps
      * @param string $funcName     FFI symbol (e.g. `ndarray_sum`)
      * @param mixed  ...$extraArgs Placed before `out_value` (e.g. `ddof` for var/std)
      */
-    protected function scalarReductionOp(string $funcName, mixed ...$extraArgs): Complex|float|int
+    protected function scalarReductionOp(string $funcName, mixed ...$extraArgs): bool|Complex|float|int
     {
         $lib = Lib::get();
         $outValue = $lib->new('uint8_t[16]');
@@ -186,7 +186,7 @@ trait HasOps
      *
      * @param CData $buffer memory Rust filled; typically `uint8_t[16]` from a scalar reduction
      */
-    private function bufferToScalar(CData $buffer, DType $dtype): Complex|float|int
+    private function bufferToScalar(CData $buffer, DType $dtype): bool|Complex|float|int
     {
         $lib = Lib::get();
         $base = Lib::addr($buffer);
@@ -196,9 +196,9 @@ trait HasOps
             DType::Float32 => $lib->cast('float*', $base)[0],
             DType::Int64, DType::Int32, DType::Int16, DType::Int8 => $lib->cast('int64_t*', $base)[0],
             DType::UInt64, DType::UInt32, DType::UInt16, DType::UInt8 => $lib->cast('uint64_t*', $base)[0],
+            DType::Bool => (bool) $lib->cast('uint8_t*', $base)[0],
             DType::Complex64 => new Complex($lib->cast('float*', $base)[0], $lib->cast('float*', $base)[1]),
             DType::Complex128 => new Complex($lib->cast('double*', $base)[0], $lib->cast('double*', $base)[1]),
-            default => 0,
         };
     }
 }

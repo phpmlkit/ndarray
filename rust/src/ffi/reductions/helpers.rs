@@ -22,6 +22,7 @@ pub enum ReductionScalar {
     U32(u32),
     U16(u16),
     U8(u8),
+    Bool(u8),
     C64(Complex32),
     C128(Complex64),
 }
@@ -40,6 +41,7 @@ impl ReductionScalar {
             Self::U32(_) => DType::Uint32,
             Self::U16(_) => DType::Uint16,
             Self::U8(_) => DType::Uint8,
+            Self::Bool(_) => DType::Bool,
             Self::C64(_) => DType::Complex64,
             Self::C128(_) => DType::Complex128,
         }
@@ -70,6 +72,7 @@ pub unsafe fn write_reduction_scalar(
         ReductionScalar::U32(v) => *(out_value as *mut u32) = v,
         ReductionScalar::U16(v) => *(out_value as *mut u16) = v,
         ReductionScalar::U8(v) => *(out_value as *mut u8) = v,
+        ReductionScalar::Bool(v) => *(out_value as *mut u8) = v,
         ReductionScalar::C64(v) => *(out_value as *mut Complex32) = v,
         ReductionScalar::C128(v) => *(out_value as *mut Complex64) = v,
     }
