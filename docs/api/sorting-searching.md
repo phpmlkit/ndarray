@@ -184,7 +184,7 @@ Return top-k values and indices like PyTorch topk.
 
 ### Returns
 
-- `array` - Array with keys 'values' (NDArray) and 'indices' (NDArray).
+- `array{0: NDArray, 1: NDArray}` - A numerically-indexed array where element 0 is the values NDArray and element 1 is the indices NDArray.
 
 ### Raises
 
@@ -194,17 +194,17 @@ Return top-k values and indices like PyTorch topk.
 
 ```php
 $arr = NDArray::array([3, 1, 4, 1, 5]);
-$result = $arr->topk(3);
+[$values, $indices] = $arr->topk(3);
 
-print_r($result['values']->toArray());
+print_r($values->toArray());
 // Output: [5, 4, 3]
 
-print_r($result['indices']->toArray());
+print_r($indices->toArray());
 // Output: [4, 2, 0]
 
 // Smallest values
-$result = $arr->topk(3, largest: false);
-print_r($result['values']->toArray());
+[$values, $indices] = $arr->topk(3, largest: false);
+print_r($values->toArray());
 // Output: [1, 1, 3]
 ```
 

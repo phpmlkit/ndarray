@@ -146,10 +146,10 @@ final class SortingTest extends TestCase
         $a = NDArray::array([[1, 7, 3, 5], [9, 2, 8, 4]], DType::Int32);
         $topk = $a->topk(2);
 
-        $this->assertSame([2, 2], $topk['values']->shape());
-        $this->assertSame([[7, 5], [9, 8]], $topk['values']->toArray());
-        $this->assertSame([[1, 3], [0, 2]], $topk['indices']->toArray());
-        $this->assertSame(DType::Int64, $topk['indices']->dtype());
+        $this->assertSame([2, 2], $topk[0]->shape());
+        $this->assertSame([[7, 5], [9, 8]], $topk[0]->toArray());
+        $this->assertSame([[1, 3], [0, 2]], $topk[1]->toArray());
+        $this->assertSame(DType::Int64, $topk[1]->dtype());
     }
 
     public function testTopkSmallestAlongAxis(): void
@@ -157,8 +157,8 @@ final class SortingTest extends TestCase
         $a = NDArray::array([[1, 7, 3, 5], [9, 2, 8, 4]], DType::Int32);
         $topk = $a->topk(2, axis: 1, largest: false, kind: SortKind::MergeSort);
 
-        $this->assertSame([[1, 3], [2, 4]], $topk['values']->toArray());
-        $this->assertSame([[0, 2], [1, 3]], $topk['indices']->toArray());
+        $this->assertSame([[1, 3], [2, 4]], $topk[0]->toArray());
+        $this->assertSame([[0, 2], [1, 3]], $topk[1]->toArray());
     }
 
     public function testTopkFlattened(): void
@@ -166,9 +166,9 @@ final class SortingTest extends TestCase
         $a = NDArray::array([[1, 7, 3], [5, 9, 2]], DType::Int32);
         $topk = $a->topk(3, axis: null, kind: SortKind::HeapSort);
 
-        $this->assertSame([3], $topk['values']->shape());
-        $this->assertSame([9, 7, 5], $topk['values']->toArray());
-        $this->assertSame([4, 1, 3], $topk['indices']->toArray());
+        $this->assertSame([3], $topk[0]->shape());
+        $this->assertSame([9, 7, 5], $topk[0]->toArray());
+        $this->assertSame([4, 1, 3], $topk[1]->toArray());
     }
 
     public function testTopkAllKindsConsistentValues(): void
@@ -179,7 +179,7 @@ final class SortingTest extends TestCase
 
         foreach ($kinds as $kind) {
             $topk = $a->topk(3, axis: null, kind: $kind);
-            $this->assertSame($expected, $topk['values']->toArray(), "kind={$kind->name} failed");
+            $this->assertSame($expected, $topk[0]->toArray(), "kind={$kind->name} failed");
         }
     }
 
@@ -189,8 +189,8 @@ final class SortingTest extends TestCase
         $topk = $a->topk(3, axis: null, largest: true, sorted: false);
 
         // top-3 set is {7, 6, 4}; sorted=false returns them in source index order
-        $this->assertSame([4, 7, 6], $topk['values']->toArray());
-        $this->assertSame([0, 2, 4], $topk['indices']->toArray());
+        $this->assertSame([4, 7, 6], $topk[0]->toArray());
+        $this->assertSame([0, 2, 4], $topk[1]->toArray());
     }
 
     public function testTopkOutOfBoundsThrows(): void
@@ -284,8 +284,8 @@ final class SortingTest extends TestCase
 
         $topk = $view->topk(2, axis: null);
 
-        $this->assertSame([2], $topk['values']->shape());
-        $this->assertSame([3, 2], $topk['values']->toArray());
-        $this->assertSame([0, 2], $topk['indices']->toArray());
+        $this->assertSame([2], $topk[0]->shape());
+        $this->assertSame([3, 2], $topk[0]->toArray());
+        $this->assertSame([0, 2], $topk[1]->toArray());
     }
 }
