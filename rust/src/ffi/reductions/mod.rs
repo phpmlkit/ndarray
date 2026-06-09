@@ -5,6 +5,8 @@
 
 pub(crate) mod helpers;
 
+pub mod all;
+pub mod any;
 pub mod argmax;
 pub mod argmin;
 pub mod bincount;
@@ -19,6 +21,8 @@ pub mod sum;
 pub mod var;
 
 // Re-export all FFI functions
+pub use all::*;
+pub use any::*;
 pub use argmax::*;
 pub use argmin::*;
 pub use bincount::*;

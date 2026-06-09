@@ -1865,6 +1865,48 @@ uintptr_t ndarray_to_string(const struct NdArrayHandle *handle,
                             uintptr_t precision);
 
 /**
+ * Compute whether all elements are truthy (scalar).
+ */
+int32_t ndarray_all(const struct NdArrayHandle *handle,
+                    const struct ArrayMetadata *meta,
+                    void *out_value,
+                    uint8_t *out_dtype);
+
+/**
+ * Compute whether all elements are truthy along an axis.
+ */
+int32_t ndarray_all_axis(const struct NdArrayHandle *handle,
+                         const struct ArrayMetadata *meta,
+                         int32_t axis,
+                         bool keepdims,
+                         struct NdArrayHandle **out_handle,
+                         uint8_t *out_dtype,
+                         uintptr_t *out_ndim,
+                         uintptr_t *out_shape,
+                         uintptr_t max_ndim);
+
+/**
+ * Compute whether any element is truthy (scalar).
+ */
+int32_t ndarray_any(const struct NdArrayHandle *handle,
+                    const struct ArrayMetadata *meta,
+                    void *out_value,
+                    uint8_t *out_dtype);
+
+/**
+ * Compute whether any element is truthy along an axis.
+ */
+int32_t ndarray_any_axis(const struct NdArrayHandle *handle,
+                         const struct ArrayMetadata *meta,
+                         int32_t axis,
+                         bool keepdims,
+                         struct NdArrayHandle **out_handle,
+                         uint8_t *out_dtype,
+                         uintptr_t *out_ndim,
+                         uintptr_t *out_shape,
+                         uintptr_t max_ndim);
+
+/**
  * Argmax along axis.
  */
 int32_t ndarray_argmax_axis(const struct NdArrayHandle *handle,

@@ -153,6 +153,10 @@ $mask = $a->gt($b);
 | `a.max()` | `$a->max()` | |
 | `a.argmin()` | `$a->argmin()` | |
 | `a.argmax()` | `$a->argmax()` | |
+| `a.any()` | `$a->any()` | |
+| `a.any(axis=0)` | `$a->any(axis: 0)` | Named arguments |
+| `a.all()` | `$a->all()` | |
+| `a.all(axis=0)` | `$a->all(axis: 0)` | Named arguments |
 
 ### Linear Algebra
 

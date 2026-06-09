@@ -292,8 +292,8 @@ The primary array type representing N-dimensional arrays.
 **Priority**: MEDIUM
 
 **Requirements**:
-- [ ] 8.2.1: `$array->all($axis = null, $keepdims = false)` - All true
-- [ ] 8.2.2: `$array->any($axis = null, $keepdims = false)` - Any true
+- [x] 8.2.1: `$array->all($axis = null, $keepdims = false)` - All true
+- [x] 8.2.2: `$array->any($axis = null, $keepdims = false)` - Any true
 
 ### 8.3 Index-based Operations (REQ-8.3)
 **Priority**: MEDIUM

@@ -746,4 +746,139 @@ final class ReductionsTest extends TestCase
         $this->assertSame([1, 2, 2], $result->shape());
         $this->assertEqualsWithDelta([[[6, 8], [10, 12]]], $result->toArray(), 0.0001);
     }
+
+    public function testAnyScalarFalse(): void
+    {
+        $this->assertFalse(NDArray::zeros([3, 4])->any());
+    }
+
+    public function testAnyScalarTrue(): void
+    {
+        $this->assertTrue(NDArray::ones([3, 4])->any());
+    }
+
+    public function testAnyAxisFalse(): void
+    {
+        $arr = NDArray::zeros([2, 3], DType::Int64);
+        $result = $arr->any(axis: 0);
+        $this->assertSame([false, false, false], $result->toArray());
+    }
+
+    public function testAnyAxisTrue(): void
+    {
+        $arr = NDArray::array([[0, 0], [0, 1]]);
+        $result = $arr->any(axis: 1);
+        $this->assertSame([false, true], $result->toArray());
+    }
+
+    public function testAnyKeepdims(): void
+    {
+        $arr = NDArray::array([[0, 0], [0, 5]]);
+        $result = $arr->any(axis: 0, keepdims: true);
+        $this->assertSame([1, 2], $result->shape());
+        $this->assertSame([[false, true]], $result->toArray());
+    }
+
+    public function testAnyNonZeroFloat(): void
+    {
+        $arr = NDArray::array([0.0, 0.0, 1.5]);
+        $this->assertTrue($arr->any());
+    }
+
+    public function testAnyAllZeroFloat(): void
+    {
+        $arr = NDArray::array([0.0, 0.0, 0.0]);
+        $this->assertFalse($arr->any());
+    }
+
+    public function testAnyBoolInput(): void
+    {
+        $arr = NDArray::array([true, false, true], DType::Bool);
+        $this->assertTrue($arr->any());
+    }
+
+    public function testAnyBoolAllFalse(): void
+    {
+        $arr = NDArray::array([false, false], DType::Bool);
+        $this->assertFalse($arr->any());
+    }
+
+    public function testAnyBoolAxis(): void
+    {
+        $arr = NDArray::array([[true, false], [false, false]], DType::Bool);
+        $result = $arr->any(axis: 0);
+        $this->assertSame([true, false], $result->toArray());
+    }
+
+    public function testAnyIntArray(): void
+    {
+        $arr = NDArray::array([0, 0, -1], DType::Int64);
+        $this->assertTrue($arr->any());
+    }
+
+    public function testAnyOn3DArrayAxis(): void
+    {
+        $arr = NDArray::zeros([2, 3, 4], DType::Int32);
+        $result = $arr->any(axis: 1);
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertSame(array_fill(0, 2, array_fill(0, 4, false)), $result->toArray());
+    }
+
+    public function testAllScalarTrue(): void
+    {
+        $this->assertTrue(NDArray::ones([3, 4])->all());
+    }
+
+    public function testAllScalarFalse(): void
+    {
+        $this->assertFalse(NDArray::array([1, 0, 1])->all());
+    }
+
+    public function testAllAxisTrue(): void
+    {
+        $arr = NDArray::ones([2, 3], DType::Int64);
+        $result = $arr->all(axis: 0);
+        $this->assertSame([true, true, true], $result->toArray());
+    }
+
+    public function testAllAxisFalse(): void
+    {
+        $arr = NDArray::array([[1, 1], [1, 0]]);
+        $result = $arr->all(axis: 1);
+        $this->assertSame([true, false], $result->toArray());
+    }
+
+    public function testAllKeepdims(): void
+    {
+        $arr = NDArray::array([[1, 1], [1, 0]]);
+        $result = $arr->all(axis: 1, keepdims: true);
+        $this->assertSame([2, 1], $result->shape());
+        $this->assertSame([[true], [false]], $result->toArray());
+    }
+
+    public function testAllNonZeroFloat(): void
+    {
+        $arr = NDArray::array([1.5, 2.5, 3.0]);
+        $this->assertTrue($arr->all());
+    }
+
+    public function testAllBoolInput(): void
+    {
+        $arr = NDArray::array([true, true, true], DType::Bool);
+        $this->assertTrue($arr->all());
+    }
+
+    public function testAllBoolOneFalse(): void
+    {
+        $arr = NDArray::array([true, false, true], DType::Bool);
+        $this->assertFalse($arr->all());
+    }
+
+    public function testAllOn3DArrayAxis(): void
+    {
+        $arr = NDArray::ones([2, 3, 4], DType::Int32);
+        $result = $arr->all(axis: 1);
+        $this->assertSame([2, 4], $result->shape());
+        $this->assertSame(array_fill(0, 2, array_fill(0, 4, true)), $result->toArray());
+    }
 }

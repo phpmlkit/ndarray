@@ -264,6 +264,46 @@ trait HasReductions
     }
 
     /**
+     * Test whether any element in the array evaluates to true.
+     *
+     * For non-bool arrays, zero is treated as false and non-zero as true.
+     * Complex numbers are false if both real and imaginary parts are zero.
+     *
+     * @param null|int $axis     Axis along which to check. If null, checks the entire array.
+     * @param bool     $keepdims if true, the reduced axis is retained with size 1
+     *
+     * @return ($axis is null ? bool : NDArray)
+     */
+    public function any(?int $axis = null, bool $keepdims = false): bool|NDArray
+    {
+        if (null === $axis) {
+            return (bool) $this->scalarReductionOp('ndarray_any');
+        }
+
+        return $this->unaryOp('ndarray_any_axis', $axis, $keepdims);
+    }
+
+    /**
+     * Test whether all elements in the array evaluate to true.
+     *
+     * For non-bool arrays, zero is treated as false and non-zero as true.
+     * Complex numbers are false if both real and imaginary parts are zero.
+     *
+     * @param null|int $axis     Axis along which to check. If null, checks the entire array.
+     * @param bool     $keepdims if true, the reduced axis is retained with size 1
+     *
+     * @return ($axis is null ? bool : NDArray)
+     */
+    public function all(?int $axis = null, bool $keepdims = false): bool|NDArray
+    {
+        if (null === $axis) {
+            return (bool) $this->scalarReductionOp('ndarray_all');
+        }
+
+        return $this->unaryOp('ndarray_all_axis', $axis, $keepdims);
+    }
+
+    /**
      * Count occurrences of non-negative integer values in flattened input.
      *
      * @param null|int $minlength Minimum output length
