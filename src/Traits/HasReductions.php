@@ -162,7 +162,7 @@ trait HasReductions
      * @param bool     $sorted  If true, keep selected values sorted by rank
      * @param SortKind $kind    Sorting algorithm
      *
-     * @return array{values: NDArray, indices: NDArray}
+     * @return array{0: NDArray, 1: NDArray} [values, indices]
      */
     public function topk(
         int $k,
@@ -323,7 +323,7 @@ trait HasReductions
     /**
      * Perform topk along axis.
      *
-     * @return array{values: NDArray, indices: NDArray}
+     * @return array{0: NDArray, 1: NDArray} [values, indices]
      */
     private function topkAxisOp(int $k, int $axis, bool $largest, bool $sorted, SortKind $kind): array
     {
@@ -354,15 +354,15 @@ trait HasReductions
         $outShape = $lib->readSizeTArray($outShapeBuf, $ndim);
 
         return [
-            'values' => new NDArray($outValuesHandle, new ArrayMetadata($outShape), $this->dtype),
-            'indices' => new NDArray($outIndicesHandle, new ArrayMetadata($outShape), DType::Int64),
+            new NDArray($outValuesHandle, new ArrayMetadata($outShape), $this->dtype),
+            new NDArray($outIndicesHandle, new ArrayMetadata($outShape), DType::Int64),
         ];
     }
 
     /**
      * Perform topk over flattened array.
      *
-     * @return array{values: NDArray, indices: NDArray}
+     * @return array{0: NDArray, 1: NDArray} [values, indices]
      */
     private function topkFlatOp(int $k, bool $largest, bool $sorted, SortKind $kind): array
     {
@@ -390,8 +390,8 @@ trait HasReductions
         $outShape = [(int) $outShapeBuf[0]];
 
         return [
-            'values' => new NDArray($outValuesHandle, new ArrayMetadata($outShape), $this->dtype),
-            'indices' => new NDArray($outIndicesHandle, new ArrayMetadata($outShape), DType::Int64),
+            new NDArray($outValuesHandle, new ArrayMetadata($outShape), $this->dtype),
+            new NDArray($outIndicesHandle, new ArrayMetadata($outShape), DType::Int64),
         ];
     }
 }

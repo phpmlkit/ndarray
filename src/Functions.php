@@ -1151,7 +1151,7 @@ namespace PhpMlKit\NDArray {
      * @param bool     $sorted  If true, keep selected values sorted by rank
      * @param SortKind $kind    Sorting algorithm
      *
-     * @return array{values: NDArray, indices: NDArray}
+     * @return array{0: NDArray, 1: NDArray} [values, indices]
      */
     function topk(
         NDArray $a,
