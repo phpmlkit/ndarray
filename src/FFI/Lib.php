@@ -180,6 +180,7 @@ use PhpMlKit\NDArray\Exceptions\ShapeException;
  * @method int   ndarray_pinv(CData $a, CData $a_meta, CData $rcond, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
  * @method int   ndarray_cond(CData $a, CData $a_meta, CData $out_value, CData $out_dtype_ptr)
  * @method int   ndarray_rank(CData $a, CData $a_meta, CData $tol, CData $out_rank)
+ * @method int   ndarray_einsum(CData $a, CData $a_meta, ?CData $b, ?CData $b_meta, CData $subscripts, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
  * @method int   ndarray_fft(CData $handle, CData $meta, int $axis, int $n, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
  * @method int   ndarray_ifft(CData $handle, CData $meta, int $axis, int $n, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
  * @method int   ndarray_fftn(CData $handle, CData $meta, ?CData $axes, int $n_axes, int $norm, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)

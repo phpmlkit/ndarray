@@ -362,6 +362,49 @@ Sort kind selection is enum-based via `SortKind`:
 - [x] 9.4.1: `$a->solve($b)` - Solve linear equations
 - [x] 9.4.2: `$a->lstsq($b)` - Least squares solution
 
+### 9.5 Einstein Summation (REQ-9.5)
+**Priority**: LOW
+
+Einstein summation notation for two-operand tensor operations with deterministic accumulation order (no BLAS tiling).
+
+**Subscript syntax:** `"labels_left->labels_right"` where each side is comma-separated lowercase letters. When `->` is omitted, output labels are inferred from labels appearing exactly once across inputs.
+
+**Shape semantics:** Shared labels across inputs must match dimensions. Labels appearing only on output are broadcast axes (size 1). Labels appearing twice without appearing in output are summed over (contracted).
+
+**`optimize` parameter:** Not applicable. All contractions use fixed canonical loop order (output axes outermost left-to-right, contracted axes innermost).
+
+**Supported patterns:**
+
+| Pattern | Subscripts | Description |
+|---|---|---|
+| Dot product | `i,i->` | Two 1D vectors → scalar |
+| Element-wise | `i,i->i`, `ij,ij->ij` | Same-shape element-wise |
+| Outer product | `i,j->ij` | 1D × 1D → 2D |
+| Matrix-vector | `ij,j->i` | 2D × 1D → 1D |
+| Vector-matrix | `i,ij->j` | 1D × 2D → 1D |
+| Matrix multiply | `ij,jk->ik` | 2D × 2D → 2D (deterministic triple-loop) |
+| Matrix × transposed | `ij,kj->ik` | 2D × 2D → 2D |
+| Hadamard product | `ij,ij->ij` | Element-wise multiply |
+| Trace | `ii->` | Sum diagonal → scalar |
+| Diagonal | `ii->i` | Extract diagonal → 1D |
+| Transpose | `ij->ji` | Single-operand axis swap |
+| Sum over axis | `ij->i`, `ij->j`, `i->` | Reduction |
+
+A generic contraction engine handles any pattern not covered by optimized kernels.
+
+**Requirements:**
+- [x] 9.5.1: `$a->einsum($subscripts, $b)` — Two-operand einsum
+- [x] 9.5.2: Implicit output mode when `->` is omitted
+- [x] 9.5.3: Shape validation — shared labels must match dimensions
+- [x] 9.5.4: Label validation — no label may appear 3+ times across inputs
+- [x] 9.5.5: DType promotion using existing `promote()` rules
+- [x] 9.5.6: Deterministic accumulation — fixed loop order, no BLAS
+- [x] 9.5.7: Optimized kernel for `ij,jk->ik` (gemm_ordered)
+- [x] 9.5.8: Optimized kernel for `i,i->` (dot_ordered)
+- [x] 9.5.9: Optimized kernel for `i,j->ij` (outer_ordered)
+- [x] 9.5.10: Generic contraction engine for unoptimized patterns
+- [x] 9.5.11: Global function alias `einsum()` in Functions.php
+
 ## 10. Iteration and Application
 
 ### 10.1 Iterator Support (REQ-10.1)

@@ -167,6 +167,72 @@ print_r($c->toArray());
 // Output: [[19, 22], [43, 50]]
 ```
 
+## einsum()
+
+```php
+public function einsum(string $subscripts, ?NDArray $other = null): NDArray
+```
+
+Einstein summation with deterministic accumulation order. Evaluates the subscript expression using fixed nested loops — no BLAS tiling, identical results on every call.
+
+::: info Deterministic accumulation
+einsum does not use BLAS for any pattern, including matrix multiplication. Every loop iterates in a fixed canonical order, guaranteeing bit-identical output on every run. For the same operation with BLAS-speed (but non-deterministic accumulation), use the equivalent dedicated method instead — e.g. `matmul()` for `ij,jk->ik`, `dot()` for `i,i->`, or `multiply()` for element-wise `ij,ij->ij`.
+:::
+
+**Supported subscript patterns:**
+
+| Pattern | Subscripts | Description |
+|---|---|---|
+| Matrix multiply | `ij,jk->ik` | 2D × 2D → 2D |
+| Matrix × transposed | `ij,kj->ik` | 2D × 2D → 2D |
+| Matrix-vector | `ij,j->i` | 2D × 1D → 1D |
+| Vector-matrix | `i,ij->j` | 1D × 2D → 1D |
+| Dot product | `i,i->` | Two 1D vectors → scalar |
+| Outer product | `i,j->ij` | 1D × 1D → 2D |
+| Element-wise | `ij,ij->ij`, `i,i->i` | Same-shape element-wise |
+| Trace | `ii->` | Sum diagonal → scalar |
+| Diagonal | `ii->i` | Extract diagonal → 1D |
+| Transpose | `ij->ji` | Single-operand axis swap |
+| Sum over axis | `ij->i`, `ij->j` | Reduction over one axis |
+| Sum all | `i->` | Sum all elements → scalar |
+
+When `->` is omitted, output labels are inferred from labels appearing exactly once across all operands (e.g. `"ij,jk"` → `"ik"`). Single-operand patterns like `"ii->"` omit the second argument.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$subscripts` | `string` | Einstein summation subscript (e.g. `"ij,jk->ik"`). |
+| `$other` | `NDArray` | The second operand. |
+
+### Returns
+
+- `NDArray` - Result of the contraction.
+
+### Examples
+
+```php
+$a = NDArray::array([[1, 2, 3], [4, 5, 6]]);  // 2×3
+$b = NDArray::array([[1, 2], [3, 4], [5, 6]]);  // 3×2
+
+// Matrix multiplication
+$c = $a->einsum('ij,jk->ik', $b);
+print_r($c->toArray());
+// Output: [[22, 28], [49, 64]]
+
+// Dot product
+$x = NDArray::array([1, 2, 3]);
+$y = NDArray::array([4, 5, 6]);
+$d = $x->einsum('i,i->', $y);
+echo $d->toScalar();
+// Output: 32
+
+// Outer product
+$o = NDArray::array([1, 2])->einsum('i,j->ij', NDArray::array([3, 4, 5]));
+print_r($o->toArray());
+// Output: [[3, 4, 5], [6, 8, 10]]
+```
+
 ## diagonal()
 
 ```php

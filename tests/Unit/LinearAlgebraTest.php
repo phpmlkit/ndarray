@@ -11,6 +11,8 @@ use PhpMlKit\NDArray\Exceptions\ShapeException;
 use PhpMlKit\NDArray\NDArray;
 use PHPUnit\Framework\TestCase;
 
+use function PhpMlKit\NDArray\Linalg\einsum;
+
 /**
  * Tests for linear algebra operations.
  *
@@ -1624,5 +1626,138 @@ class LinearAlgebraTest extends TestCase
         $this->expectException(ShapeException::class);
         $this->expectExceptionMessage('EigValsH requires a square matrix');
         $a->eigvalsh();
+    }
+
+    public function testEinsumMatrixMultiply(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        $b = NDArray::array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]);
+        $result = $a->einsum('ij,jk->ik', $b);
+
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertEqualsWithDelta([[22, 28], [49, 64]], $result->toArray(), 0.0001);
+    }
+
+    public function testEinsumDotProduct(): void
+    {
+        $a = NDArray::array([1.0, 2.0, 3.0]);
+        $b = NDArray::array([4.0, 5.0, 6.0]);
+        $result = $a->einsum('i,i->', $b);
+
+        $this->assertSame([], $result->shape());
+        $this->assertEqualsWithDelta(32.0, $result->toScalar(), 0.0001);
+    }
+
+    public function testEinsumOuterProduct(): void
+    {
+        $a = NDArray::array([1.0, 2.0, 3.0]);
+        $b = NDArray::array([4.0, 5.0]);
+        $result = $a->einsum('i,j->ij', $b);
+
+        $this->assertSame([3, 2], $result->shape());
+        $this->assertEqualsWithDelta([[4, 5], [8, 10], [12, 15]], $result->toArray(), 0.0001);
+    }
+
+    public function testEinsumElementWise(): void
+    {
+        $a = NDArray::array([[1.0, 2.0], [3.0, 4.0]]);
+        $b = NDArray::array([[5.0, 6.0], [7.0, 8.0]]);
+        $result = $a->einsum('ij,ij->ij', $b);
+
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertEqualsWithDelta([[5, 12], [21, 32]], $result->toArray(), 0.0001);
+    }
+
+    public function testEinsumImplicitOutput(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        $b = NDArray::array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]);
+        $explicit = $a->einsum('ij,jk->ik', $b);
+        $implicit = $a->einsum('ij,jk', $b);
+
+        $this->assertSame($explicit->shape(), $implicit->shape());
+        $this->assertEqualsWithDelta($explicit->toArray(), $implicit->toArray(), 0.0001);
+    }
+
+    public function testEinsumDimensionMismatch(): void
+    {
+        $a = NDArray::array([[1.0, 2.0], [3.0, 4.0]]);
+        $b = NDArray::array([[1.0, 2.0]]); // [1, 2] - doesn't match ij,jk->ik
+
+        $this->expectException(ShapeException::class);
+        $a->einsum('ij,jk->ik', $b);
+    }
+
+    public function testEinsumGlobalFunction(): void
+    {
+        $a = NDArray::array([1.0, 2.0, 3.0]);
+        $b = NDArray::array([4.0, 5.0, 6.0]);
+        $result = einsum('i,i->', $a, $b);
+
+        $this->assertEqualsWithDelta(32.0, $result->toScalar(), 0.0001);
+    }
+
+    public function testEinsumMatrixTimesTransposed(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        $b = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]); // Same shape [2,3]
+        $result = $a->einsum('ij,kj->ik', $b);
+
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertEqualsWithDelta([[14, 32], [32, 77]], $result->toArray(), 0.0001);
+    }
+
+    public function testEinsumTrace(): void
+    {
+        $a = NDArray::array([[1.0, 2.0], [3.0, 4.0]]);
+        $result = $a->einsum('ii->');
+
+        $this->assertSame([], $result->shape());
+        $this->assertEqualsWithDelta(5.0, $result->toScalar(), 0.0001);
+    }
+
+    public function testEinsumDiagonal(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]);
+        $result = $a->einsum('ii->i');
+
+        $this->assertSame([3], $result->shape());
+        $this->assertEqualsWithDelta([1, 5, 9], $result->toArray(), 0.0001);
+    }
+
+    public function testEinsumTranspose(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        $result = $a->einsum('ij->ji');
+
+        $this->assertSame([3, 2], $result->shape());
+        $this->assertEqualsWithDelta([[1, 4], [2, 5], [3, 6]], $result->toArray(), 0.0001);
+    }
+
+    public function testEinsumSumAxis(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        $result = $a->einsum('ij->i');
+
+        $this->assertSame([2], $result->shape());
+        $this->assertEqualsWithDelta([6, 15], $result->toArray(), 0.0001);
+    }
+
+    public function testEinsumSumColumns(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        $result = $a->einsum('ij->j');
+
+        $this->assertSame([3], $result->shape());
+        $this->assertEqualsWithDelta([5, 7, 9], $result->toArray(), 0.0001);
+    }
+
+    public function testEinsumSumAll(): void
+    {
+        $a = NDArray::array([1.0, 2.0, 3.0, 4.0]);
+        $result = $a->einsum('i->');
+
+        $this->assertSame([], $result->shape());
+        $this->assertEqualsWithDelta(10.0, $result->toScalar(), 0.0001);
     }
 }

@@ -7,9 +7,8 @@ use crate::helpers::elementwise_minmax::ElementwiseMinimum;
 use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_array_f32, extract_array_f64, extract_array_i16, extract_array_i32,
-    extract_array_i64, extract_array_i8, extract_array_u16, extract_array_u32,
-    extract_array_u64, extract_array_u8,
+    extract_array_f32, extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64,
+    extract_array_i8, extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -83,8 +82,12 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
     out_shape: *mut usize,
     max_ndim: usize,
 ) -> i32 {
-    if a.is_null() || meta.is_null() || out.is_null() || out_dtype.is_null()
-        || out_ndim.is_null() || out_shape.is_null()
+    if a.is_null()
+        || meta.is_null()
+        || out.is_null()
+        || out_dtype.is_null()
+        || out_ndim.is_null()
+        || out_shape.is_null()
     {
         return ERR_GENERIC;
     }
@@ -100,7 +103,10 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
                     return ERR_GENERIC;
                 };
                 let result = arr.mapv(|x| x.min(scalar));
-                NDArrayWrapper { data: ArrayData::Float64(Arc::new(RwLock::new(result))), dtype: DType::Float64 }
+                NDArrayWrapper {
+                    data: ArrayData::Float64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float64,
+                }
             }
             DType::Float32 => {
                 let Some(arr) = extract_array_f32(a_wrapper, meta) else {
@@ -108,7 +114,10 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
                     return ERR_GENERIC;
                 };
                 let result = arr.mapv(|x| x.min(scalar as f32));
-                NDArrayWrapper { data: ArrayData::Float32(Arc::new(RwLock::new(result))), dtype: DType::Float32 }
+                NDArrayWrapper {
+                    data: ArrayData::Float32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Float32,
+                }
             }
             DType::Int64 => {
                 let Some(arr) = extract_array_i64(a_wrapper, meta) else {
@@ -117,7 +126,10 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
                 };
                 let s = scalar as i64;
                 let result = arr.mapv(|x| x.min(s));
-                NDArrayWrapper { data: ArrayData::Int64(Arc::new(RwLock::new(result))), dtype: DType::Int64 }
+                NDArrayWrapper {
+                    data: ArrayData::Int64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int64,
+                }
             }
             DType::Int32 => {
                 let Some(arr) = extract_array_i32(a_wrapper, meta) else {
@@ -126,7 +138,10 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
                 };
                 let s = scalar as i32;
                 let result = arr.mapv(|x| x.min(s));
-                NDArrayWrapper { data: ArrayData::Int32(Arc::new(RwLock::new(result))), dtype: DType::Int32 }
+                NDArrayWrapper {
+                    data: ArrayData::Int32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int32,
+                }
             }
             DType::Int16 => {
                 let Some(arr) = extract_array_i16(a_wrapper, meta) else {
@@ -135,7 +150,10 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
                 };
                 let s = scalar as i16;
                 let result = arr.mapv(|x| x.min(s));
-                NDArrayWrapper { data: ArrayData::Int16(Arc::new(RwLock::new(result))), dtype: DType::Int16 }
+                NDArrayWrapper {
+                    data: ArrayData::Int16(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int16,
+                }
             }
             DType::Int8 => {
                 let Some(arr) = extract_array_i8(a_wrapper, meta) else {
@@ -144,7 +162,10 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
                 };
                 let s = scalar as i8;
                 let result = arr.mapv(|x| x.min(s));
-                NDArrayWrapper { data: ArrayData::Int8(Arc::new(RwLock::new(result))), dtype: DType::Int8 }
+                NDArrayWrapper {
+                    data: ArrayData::Int8(Arc::new(RwLock::new(result))),
+                    dtype: DType::Int8,
+                }
             }
             DType::Uint64 => {
                 let Some(arr) = extract_array_u64(a_wrapper, meta) else {
@@ -153,7 +174,10 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
                 };
                 let s = (scalar.max(0.0)) as u64;
                 let result = arr.mapv(|x| x.min(s));
-                NDArrayWrapper { data: ArrayData::Uint64(Arc::new(RwLock::new(result))), dtype: DType::Uint64 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint64,
+                }
             }
             DType::Uint32 => {
                 let Some(arr) = extract_array_u32(a_wrapper, meta) else {
@@ -162,7 +186,10 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
                 };
                 let s = (scalar.max(0.0)) as u32;
                 let result = arr.mapv(|x| x.min(s));
-                NDArrayWrapper { data: ArrayData::Uint32(Arc::new(RwLock::new(result))), dtype: DType::Uint32 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint32,
+                }
             }
             DType::Uint16 => {
                 let Some(arr) = extract_array_u16(a_wrapper, meta) else {
@@ -171,7 +198,10 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
                 };
                 let s = (scalar.max(0.0)) as u16;
                 let result = arr.mapv(|x| x.min(s));
-                NDArrayWrapper { data: ArrayData::Uint16(Arc::new(RwLock::new(result))), dtype: DType::Uint16 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint16,
+                }
             }
             DType::Uint8 => {
                 let Some(arr) = extract_array_u8(a_wrapper, meta) else {
@@ -180,7 +210,10 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
                 };
                 let s = (scalar.max(0.0)) as u8;
                 let result = arr.mapv(|x| x.min(s));
-                NDArrayWrapper { data: ArrayData::Uint8(Arc::new(RwLock::new(result))), dtype: DType::Uint8 }
+                NDArrayWrapper {
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
+                    dtype: DType::Uint8,
+                }
             }
             DType::Bool => {
                 set_last_error("minimum_scalar() not supported for Bool type".to_string());
@@ -192,7 +225,9 @@ pub unsafe extern "C" fn ndarray_minimum_scalar(
             }
         };
 
-        if let Err(e) = write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim) {
+        if let Err(e) =
+            write_output_metadata(&result_wrapper, out_dtype, out_ndim, out_shape, max_ndim)
+        {
             set_last_error(e);
             return ERR_GENERIC;
         }

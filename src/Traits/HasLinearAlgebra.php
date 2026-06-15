@@ -7,6 +7,7 @@ namespace PhpMlKit\NDArray\Traits;
 use PhpMlKit\NDArray\ArrayMetadata;
 use PhpMlKit\NDArray\Complex;
 use PhpMlKit\NDArray\DType;
+use PhpMlKit\NDArray\Exceptions\NDArrayException;
 use PhpMlKit\NDArray\FFI\Lib;
 use PhpMlKit\NDArray\NDArray;
 
@@ -119,6 +120,65 @@ trait HasLinearAlgebra
         $result = $this->binaryOp('ndarray_matmul', $other);
 
         return 0 === $result->ndim() ? $result->toScalar() : $result;
+    }
+
+    /**
+     * Einstein summation with deterministic accumulation order.
+     *
+     * Evaluates the subscript expression using a fixed loop order.
+     * Unlike matmul() which delegates to BLAS (tiled, non-deterministic accumulation),
+     * einsum uses plain nested loops producing identical results on every call.
+     *
+     * Supports both two-operand patterns (`ij,jk->ik`, `i,i->`) and
+     * single-operand patterns (`ii->` for trace, `ij->ji` for transpose,
+     * `ij->i` for sum, etc.). When `->` is omitted, output labels are
+     * inferred from labels appearing exactly once across all operands.
+     *
+     * @param string       $subscripts Einstein summation subscript
+     * @param null|NDArray $other      The second operand (null for single-operand patterns)
+     *
+     * @return NDArray Result of the contraction
+     */
+    public function einsum(string $subscripts, ?NDArray $other = null): NDArray
+    {
+        $lib = Lib::get();
+        $aMeta = $this->meta()->toCData();
+
+        $outHandle = $lib->new('struct NdArrayHandle*');
+        $outDtypeBuf = $lib->new('uint8_t');
+        $outNdimBuf = $lib->new('size_t');
+        $outShapeBuf = $lib->new(\sprintf('size_t[%d]', Lib::MAX_NDIM));
+
+        $subscriptsBytes = $subscripts."\0";
+        $subscriptsPtr = $lib->new('char['.\strlen($subscriptsBytes).']');
+        \FFI::memcpy($subscriptsPtr, $subscriptsBytes, \strlen($subscriptsBytes));
+
+        $bMetaCData = null !== $other ? $other->meta()->toCData() : null;
+
+        $status = $lib->ndarray_einsum(
+            $this->handle,
+            Lib::addr($aMeta),
+            null !== $other ? $other->handle : null,
+            null !== $bMetaCData ? Lib::addr($bMetaCData) : null,
+            $subscriptsPtr,
+            Lib::addr($outHandle),
+            Lib::addr($outDtypeBuf),
+            Lib::addr($outNdimBuf),
+            $outShapeBuf,
+            Lib::MAX_NDIM,
+        );
+
+        $lib->checkStatus($status);
+
+        $dtype = DType::tryFrom((int) $outDtypeBuf->cdata);
+        if (null === $dtype) {
+            throw new NDArrayException('Invalid dtype returned from einsum');
+        }
+
+        $ndim = (int) $outNdimBuf->cdata;
+        $outShape = $lib->readSizeTArray($outShapeBuf, $ndim);
+
+        return new NDArray($outHandle, new ArrayMetadata($outShape), $dtype);
     }
 
     /**

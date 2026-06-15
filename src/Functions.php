@@ -1746,6 +1746,21 @@ namespace PhpMlKit\NDArray\Linalg {
     }
 
     /**
+     * Einstein summation with deterministic accumulation order.
+     *
+     * @param string       $subscripts Einstein summation subscript
+     * @param null|NDArray $b          Second operand (null for single-operand)
+     *
+     * @return NDArray Result of the contraction
+     *
+     * @see NDArray::einsum()
+     */
+    function einsum(string $subscripts, NDArray $a, ?NDArray $b = null): NDArray
+    {
+        return $a->einsum($subscripts, $b);
+    }
+
+    /**
      * Extract diagonal elements from a 2D array.
      *
      * Returns a 1D array containing the diagonal.

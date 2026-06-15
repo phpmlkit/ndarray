@@ -6,6 +6,7 @@ pub mod arithmetic;
 pub mod array;
 pub mod bitwise;
 pub mod comparison;
+pub mod einsum;
 pub mod fft;
 pub mod generators;
 pub mod indexing;
