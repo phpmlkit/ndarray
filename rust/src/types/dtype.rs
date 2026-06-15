@@ -164,6 +164,59 @@ impl DType {
             b
         }
     }
+
+    /// Promotion rules for PHP-level scalars.
+    ///
+    /// Unlike `promote()` (two arrays), a plain PHP scalar does not force
+    /// up-widening of the array's dtype:
+    ///
+    /// | Array | Scalar | Result | Rationale |
+    /// |-------|--------|--------|-----------|
+    /// | f32   | f64    | f32    | float array keeps its width |
+    /// | f32   | i64    | f32    | float array keeps its width |
+    /// | i32   | f64    | f64    | int→float conversion needed |
+    /// | u8    | i64    | u8     | both integral, keep array |
+    /// | u64   | i64    | f64    | signed+unsigned may overflow |
+    /// | f64   | f32    | f64    | float array keeps its width |
+    /// | c64   | f64    | c128   | complex promotion unchanged |
+    pub fn promote_scalar(array_dtype: DType, scalar_dtype: DType) -> DType {
+        if array_dtype == scalar_dtype {
+            return array_dtype;
+        }
+
+        // Complex: delegate to standard promotion
+        if array_dtype.is_complex() || scalar_dtype.is_complex() {
+            return Self::promote(array_dtype, scalar_dtype);
+        }
+
+        // Bool array + any scalar → standard promotion (Bool can't hold results).
+        if array_dtype == DType::Bool {
+            return Self::promote(array_dtype, scalar_dtype);
+        }
+
+        let array_is_float =
+            matches!(array_dtype, DType::Float32 | DType::Float64);
+        let scalar_is_float =
+            matches!(scalar_dtype, DType::Float32 | DType::Float64);
+
+        // Float array + any scalar → keep array's float width
+        if array_is_float {
+            return array_dtype;
+        }
+
+        // Int/uint array + float scalar → adopt the scalar's float type
+        if scalar_is_float {
+            return scalar_dtype;
+        }
+
+        // Both integral — keep the array's type.
+        // UInt64 + signed scalar may hold negative values that overflow.
+        if array_dtype == DType::Uint64 && scalar_dtype.is_signed() {
+            return DType::Float64;
+        }
+
+        array_dtype
+    }
 }
 
 impl Default for DType {

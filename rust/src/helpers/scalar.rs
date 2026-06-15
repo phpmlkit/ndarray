@@ -52,7 +52,7 @@ pub unsafe fn get_scalar_as_i64(scalar: *const std::ffi::c_void, scalar_dtype: D
         DType::Uint32 => *(scalar as *const u32) as i64,
         DType::Uint16 => *(scalar as *const u16) as i64,
         DType::Uint8 => *(scalar as *const u8) as i64,
-        DType::Bool => (*(scalar as *const u8) != 0) as i64,
+        DType::Float32 => *(scalar as *const f32) as _, DType::Float64 => *(scalar as *const f64) as _, DType::Bool => (*(scalar as *const u8) != 0) as i64,
         _ => panic!("Invalid scalar dtype for i64 output: {:?}", scalar_dtype),
     }
 }
@@ -68,7 +68,7 @@ pub unsafe fn get_scalar_as_i32(scalar: *const std::ffi::c_void, scalar_dtype: D
         DType::Uint16 => *(scalar as *const u16) as i32,
         DType::Uint8 => *(scalar as *const u8) as i32,
         DType::Uint64 => *(scalar as *const u64) as i32,
-        DType::Bool => (*(scalar as *const u8) != 0) as i32,
+        DType::Float32 => *(scalar as *const f32) as _, DType::Float64 => *(scalar as *const f64) as _, DType::Bool => (*(scalar as *const u8) != 0) as i32,
         _ => panic!("Invalid scalar dtype for i32 output: {:?}", scalar_dtype),
     }
 }
@@ -84,7 +84,7 @@ pub unsafe fn get_scalar_as_i16(scalar: *const std::ffi::c_void, scalar_dtype: D
         DType::Uint8 => *(scalar as *const u8) as i16,
         DType::Uint32 => *(scalar as *const u32) as i16,
         DType::Uint64 => *(scalar as *const u64) as i16,
-        DType::Bool => (*(scalar as *const u8) != 0) as i16,
+        DType::Float32 => *(scalar as *const f32) as _, DType::Float64 => *(scalar as *const f64) as _, DType::Bool => (*(scalar as *const u8) != 0) as i16,
         _ => panic!("Invalid scalar dtype for i16 output: {:?}", scalar_dtype),
     }
 }
@@ -97,7 +97,7 @@ pub unsafe fn get_scalar_as_i8(scalar: *const std::ffi::c_void, scalar_dtype: DT
         DType::Int32 => *(scalar as *const i32) as i8,
         DType::Int64 => *(scalar as *const i64) as i8,
         DType::Uint8 => *(scalar as *const u8) as i8,
-        DType::Bool => (*(scalar as *const u8) != 0) as i8,
+        DType::Float32 => *(scalar as *const f32) as _, DType::Float64 => *(scalar as *const f64) as _, DType::Bool => (*(scalar as *const u8) != 0) as i8,
         _ => panic!("Invalid scalar dtype for i8 output: {:?}", scalar_dtype),
     }
 }
@@ -114,6 +114,8 @@ pub unsafe fn get_scalar_as_u64(scalar: *const std::ffi::c_void, scalar_dtype: D
         DType::Int16 => *(scalar as *const i16) as u64,
         DType::Int8 => *(scalar as *const i8) as u64,
         DType::Bool => (*(scalar as *const u8) != 0) as u64,
+        DType::Float32 => *(scalar as *const f32) as u64,
+        DType::Float64 => *(scalar as *const f64) as u64,
         _ => panic!("Invalid scalar dtype for u64 output: {:?}", scalar_dtype),
     }
 }
@@ -130,6 +132,8 @@ pub unsafe fn get_scalar_as_u32(scalar: *const std::ffi::c_void, scalar_dtype: D
         DType::Uint64 => *(scalar as *const u64) as u32,
         DType::Int64 => *(scalar as *const i64) as u32,
         DType::Bool => (*(scalar as *const u8) != 0) as u32,
+        DType::Float32 => *(scalar as *const f32) as u32,
+        DType::Float64 => *(scalar as *const f64) as u32,
         _ => panic!("Invalid scalar dtype for u32 output: {:?}", scalar_dtype),
     }
 }
@@ -146,6 +150,8 @@ pub unsafe fn get_scalar_as_u16(scalar: *const std::ffi::c_void, scalar_dtype: D
         DType::Uint64 => *(scalar as *const u64) as u16,
         DType::Int64 => *(scalar as *const i64) as u16,
         DType::Bool => (*(scalar as *const u8) != 0) as u16,
+        DType::Float32 => *(scalar as *const f32) as u16,
+        DType::Float64 => *(scalar as *const f64) as u16,
         _ => panic!("Invalid scalar dtype for u16 output: {:?}", scalar_dtype),
     }
 }
@@ -155,6 +161,14 @@ pub unsafe fn get_scalar_as_u8(scalar: *const std::ffi::c_void, scalar_dtype: DT
     match scalar_dtype {
         DType::Uint8 => *(scalar as *const u8),
         DType::Int8 => *(scalar as *const i8) as u8,
+        DType::Uint16 => *(scalar as *const u16) as u8,
+        DType::Int16 => *(scalar as *const i16) as u8,
+        DType::Uint32 => *(scalar as *const u32) as u8,
+        DType::Int32 => *(scalar as *const i32) as u8,
+        DType::Uint64 => *(scalar as *const u64) as u8,
+        DType::Int64 => *(scalar as *const i64) as u8,
+        DType::Float32 => *(scalar as *const f32) as u8,
+        DType::Float64 => *(scalar as *const f64) as u8,
         DType::Bool => *(scalar as *const u8),
         _ => panic!("Invalid scalar dtype for u8 output: {:?}", scalar_dtype),
     }
