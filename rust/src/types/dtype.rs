@@ -194,10 +194,8 @@ impl DType {
             return Self::promote(array_dtype, scalar_dtype);
         }
 
-        let array_is_float =
-            matches!(array_dtype, DType::Float32 | DType::Float64);
-        let scalar_is_float =
-            matches!(scalar_dtype, DType::Float32 | DType::Float64);
+        let array_is_float = matches!(array_dtype, DType::Float32 | DType::Float64);
+        let scalar_is_float = matches!(scalar_dtype, DType::Float32 | DType::Float64);
 
         // Float array + any scalar → keep array's float width
         if array_is_float {

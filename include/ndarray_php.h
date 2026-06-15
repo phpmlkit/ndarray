@@ -568,6 +568,20 @@ int32_t ndarray_ne_scalar(const struct NdArrayHandle *a,
                           uintptr_t max_ndim);
 
 /**
+ * FFI entry point for einsum (1 or 2 operands, null b for single-op).
+ */
+int32_t ndarray_einsum(const struct NdArrayHandle *a,
+                       const struct ArrayMetadata *a_meta,
+                       const struct NdArrayHandle *b,
+                       const struct ArrayMetadata *b_meta,
+                       const char *subscripts,
+                       struct NdArrayHandle **out_handle,
+                       uint8_t *out_dtype,
+                       uintptr_t *out_ndim,
+                       uintptr_t *out_shape_ptr,
+                       uintptr_t max_ndim);
+
+/**
  * One-dimensional complex FFT along `axis`. Real inputs are promoted to complex.
  * `n == 0` keeps the current length along `axis` (optional padding length).
  */

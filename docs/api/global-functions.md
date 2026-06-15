@@ -48,6 +48,7 @@ You can combine imports from the base namespace and sub-namespaces in one `use f
 | `full` | `NDArray::full()` | [Array Creation — full](/api/array-creation#ndarray-full) |
 | `from_buffer` | `NDArray::fromBuffer()` | [Array Creation — fromBuffer](/api/array-creation#ndarray-frombuffer) |
 | `from_bytes` | `NDArray::fromBytes()` | [Array Creation — fromBytes](/api/array-creation#ndarray-frombytes) |
+| `from_scalar` | `NDArray::fromScalar()` | [Array Creation — fromScalar](/api/array-creation#ndarray-fromscalar) |
 | `zeros_like` | `NDArray::zerosLike()` | [Array Creation](/api/array-creation) |
 | `ones_like` | `NDArray::onesLike()` | [Array Creation](/api/array-creation) |
 | `full_like` | `NDArray::fullLike()` | [Array Creation](/api/array-creation) |
@@ -65,7 +66,8 @@ You can combine imports from the base namespace and sub-namespaces in one `use f
 | `tile` | `NDArray::tile()` | [Array Manipulation - tile](/api/array-manipulation#tile) |
 | `repeat` | `NDArray::repeat()` | [Array Manipulation - repeat](/api/array-manipulation#repeat) |
 | `copy` | `$a->copy()` | [Array Manipulation](/api/array-manipulation) |
-| `astype` | `$a->astype()` | [Array Manipulation](/api/array-manipulation) |
+| `astype`    | `$a->astype()` | [Array Manipulation](/api/array-manipulation) |
+| `cast`      | `$a->cast()`   | [Array Manipulation](/api/array-manipulation) |
 
 ### Element-wise math and arithmetic
 
@@ -246,6 +248,7 @@ use function PhpMlKit\NDArray\Linalg\matmul;
 | `norm`           | `$a->norm()`           | [Linear Algebra – norm](/api/linear-algebra#norm)          |
 | `dot`            | `$a->dot()`            | [Linear Algebra – dot](/api/linear-algebra#dot)            |
 | `matmul`         | `$a->matmul()`         | [Linear Algebra – matmul](/api/linear-algebra#matmul)      |
+| `einsum`         | `$a->einsum()`         | [Linear Algebra – einsum](/api/linear-algebra#einsum)      |
 | `diagonal`       | `$a->diagonal()`       | [Linear Algebra – diagonal](/api/linear-algebra#diagonal)  |
 | `diag`           | `$a->diag()`           | [Linear Algebra – diag](/api/linear-algebra#diag)          |
 | `trace`          | `$a->trace()`          | [Linear Algebra – trace](/api/linear-algebra#trace)        |
