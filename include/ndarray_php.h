@@ -128,6 +128,18 @@ int32_t ndarray_maximum(const struct NdArrayHandle *a,
                         uintptr_t max_ndim);
 
 /**
+ * Element-wise maximum with a scalar.
+ */
+int32_t ndarray_maximum_scalar(const struct NdArrayHandle *a,
+                               const struct ArrayMetadata *meta,
+                               double scalar,
+                               struct NdArrayHandle **out,
+                               uint8_t *out_dtype,
+                               uintptr_t *out_ndim,
+                               uintptr_t *out_shape,
+                               uintptr_t max_ndim);
+
+/**
  * Element-wise minimum with broadcasting.
  */
 int32_t ndarray_minimum(const struct NdArrayHandle *a,
@@ -139,6 +151,18 @@ int32_t ndarray_minimum(const struct NdArrayHandle *a,
                         uintptr_t *out_ndim,
                         uintptr_t *out_shape,
                         uintptr_t max_ndim);
+
+/**
+ * Element-wise minimum with a scalar.
+ */
+int32_t ndarray_minimum_scalar(const struct NdArrayHandle *a,
+                               const struct ArrayMetadata *meta,
+                               double scalar,
+                               struct NdArrayHandle **out,
+                               uint8_t *out_dtype,
+                               uintptr_t *out_ndim,
+                               uintptr_t *out_shape,
+                               uintptr_t max_ndim);
 
 /**
  * Multiply two arrays.
