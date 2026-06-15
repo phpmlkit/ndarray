@@ -1184,18 +1184,18 @@ print_r($result->toArray());
 ## minimum()
 
 ```php
-public function minimum(NDArray $other): NDArray
+public function minimum(Complex|float|int|NDArray $other): NDArray
 ```
 
-Element-wise minimum of two arrays.
+Element-wise minimum of two arrays, or of an array and a scalar.
 
-Compares two arrays element-wise and returns a new array containing the smaller value at each position. Supports broadcasting.
+Compares two arrays element-wise and returns a new array containing the smaller value at each position. Supports broadcasting. If a scalar is provided, each array element is compared against that value.
 
 ### Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `$other` | `NDArray` | The array to compare with. |
+| `$other` | `Complex\|float\|int\|NDArray` | The array or scalar to compare with. |
 
 ### Returns
 
@@ -1210,6 +1210,11 @@ $result = $a->minimum($b);
 print_r($result->toArray());
 // Output: [1, 4, 3, 7]
 
+// With a scalar — each element compared to 4
+$result = $a->minimum(4);
+print_r($result->toArray());
+// Output: [1, 4, 3, 4]
+
 // With broadcasting
 $a = NDArray::array([[1, 2, 3], [4, 5, 6]]);
 $b = NDArray::array([2, 2, 2]);
@@ -1223,18 +1228,18 @@ print_r($result->toArray());
 ## maximum()
 
 ```php
-public function maximum(NDArray $other): NDArray
+public function maximum(Complex|float|int|NDArray $other): NDArray
 ```
 
-Element-wise maximum of two arrays.
+Element-wise maximum of two arrays, or of an array and a scalar.
 
-Compares two arrays element-wise and returns a new array containing the larger value at each position. Supports broadcasting.
+Compares two arrays element-wise and returns a new array containing the larger value at each position. Supports broadcasting. If a scalar is provided, each array element is compared against that value.
 
 ### Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `$other` | `NDArray` | The array to compare with. |
+| `$other` | `Complex\|float\|int\|NDArray` | The array or scalar to compare with. |
 
 ### Returns
 
@@ -1248,6 +1253,11 @@ $b = NDArray::array([2, 4, 6, 7]);
 $result = $a->maximum($b);
 print_r($result->toArray());
 // Output: [2, 5, 6, 8]
+
+// With a scalar — each element compared to 4
+$result = $a->maximum(4);
+print_r($result->toArray());
+// Output: [4, 5, 4, 8]
 
 // With broadcasting
 $a = NDArray::array([[1, 2, 3], [4, 5, 6]]);

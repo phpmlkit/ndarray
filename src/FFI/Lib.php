@@ -60,6 +60,8 @@ use PhpMlKit\NDArray\Exceptions\ShapeException;
  * @method int   ndarray_hypot(CData $a, CData $a_meta, float $b, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
  * @method int   ndarray_minimum(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
  * @method int   ndarray_maximum(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
+ * @method int   ndarray_maximum_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
+ * @method int   ndarray_minimum_scalar(CData $a, CData $a_meta, float $scalar, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
  * @method int   ndarray_eq(CData $a, CData $a_meta, CData $b, CData $b_meta, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
  * @method int   ndarray_eq_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)
  * @method int   ndarray_ne_scalar(CData $a, CData $a_meta, CData $scalar, int $scalar_dtype, CData $out_handle, CData $out_dtype_ptr, CData $out_ndim, CData $out_shape, int $max_ndim)

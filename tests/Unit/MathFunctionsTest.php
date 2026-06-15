@@ -361,6 +361,43 @@ final class MathFunctionsTest extends TestCase
         $this->assertEqualsWithDelta([-3, -2, 3, 2], $result->toArray(), 0.0001);
     }
 
+    public function testMinimumScalar(): void
+    {
+        $a = NDArray::array([1.0, 5.0, 3.0, 8.0]);
+        $result = $a->minimum(4.0);
+        $this->assertEqualsWithDelta([1, 4, 3, 4], $result->toArray(), 0.0001);
+    }
+
+    public function testMaximumScalar(): void
+    {
+        $a = NDArray::array([1.0, 5.0, 3.0, 8.0]);
+        $result = $a->maximum(4.0);
+        $this->assertEqualsWithDelta([4, 5, 4, 8], $result->toArray(), 0.0001);
+    }
+
+    public function testMaximumScalarInt(): void
+    {
+        $a = NDArray::array([1, 5, 3, 8], DType::Int64);
+        $result = $a->maximum(4);
+        $this->assertSame(DType::Int64, $result->dtype());
+        $this->assertEquals([4, 5, 4, 8], $result->toArray());
+    }
+
+    public function testMinimumScalarNegative(): void
+    {
+        $a = NDArray::array([-5.0, -2.0, 3.0, 0.0]);
+        $result = $a->minimum(-1.0);
+        $this->assertEqualsWithDelta([-5, -2, -1, -1], $result->toArray(), 0.0001);
+    }
+
+    public function testMaximumScalarOn2D(): void
+    {
+        $a = NDArray::array([[1.0, 2.0], [5.0, 0.0]]);
+        $result = $a->maximum(3.0);
+        $this->assertSame([2, 2], $result->shape());
+        $this->assertEqualsWithDelta([[3, 3], [5, 3]], $result->toArray(), 0.0001);
+    }
+
     public function testClamp(): void
     {
         $a = NDArray::array([0, 5, 10], DType::Float64);

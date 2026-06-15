@@ -571,28 +571,37 @@ trait HasMath
      * Compares two arrays element-wise and returns a new array containing
      * the smaller value at each position. Supports broadcasting.
      *
-     * @param NDArray $other The array to compare with
+     * @param Complex|float|int|NDArray $other Array or scalar to compare with
      *
      * @return NDArray New array with element-wise minimum values
      */
-    public function minimum(NDArray $other): NDArray
+    public function minimum(Complex|float|int|NDArray $other): NDArray
     {
-        return $this->binaryOp('ndarray_minimum', $other);
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_minimum', $other);
+        }
+
+        return $this->unaryOp('ndarray_minimum_scalar', (float) $other);
     }
 
     /**
      * Element-wise maximum of two arrays.
      *
      * Compares two arrays element-wise and returns a new array containing
-     * the larger value at each position. Supports broadcasting.
+     * the larger value at each position. Supports broadcasting. If a scalar
+     * is provided, each element is compared against that value.
      *
-     * @param NDArray $other The array to compare with
+     * @param Complex|float|int|NDArray $other Array or scalar to compare with
      *
      * @return NDArray New array with element-wise maximum values
      */
-    public function maximum(NDArray $other): NDArray
+    public function maximum(Complex|float|int|NDArray $other): NDArray
     {
-        return $this->binaryOp('ndarray_maximum', $other);
+        if ($other instanceof NDArray) {
+            return $this->binaryOp('ndarray_maximum', $other);
+        }
+
+        return $this->unaryOp('ndarray_maximum_scalar', (float) $other);
     }
 
     /**
