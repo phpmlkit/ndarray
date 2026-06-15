@@ -30,7 +30,7 @@ macro_rules! scalar_op_arithmetic {
         use crate::types::{ArrayData, NDArrayWrapper};
 
         let array_dtype = $wrapper.dtype;
-        let out_dtype = DType::promote(array_dtype, $scalar_dtype);
+        let out_dtype = DType::promote_scalar(array_dtype, $scalar_dtype);
 
         match out_dtype {
             DType::Float64 => {

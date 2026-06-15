@@ -29,7 +29,7 @@ macro_rules! scalar_op_comparison {
         use crate::types::dtype::DType;
         use crate::types::{ArrayData, NDArrayWrapper};
 
-        let out_dtype = DType::promote($wrapper.dtype, $scalar_dtype);
+        let out_dtype = DType::promote_scalar($wrapper.dtype, $scalar_dtype);
 
         let result = match out_dtype {
             DType::Float64 => {
@@ -155,7 +155,7 @@ macro_rules! scalar_op_comparison {
         use crate::types::dtype::DType;
         use crate::types::{ArrayData, NDArrayWrapper};
 
-        let out_dtype = DType::promote($wrapper.dtype, $scalar_dtype);
+        let out_dtype = DType::promote_scalar($wrapper.dtype, $scalar_dtype);
 
         let result = match out_dtype {
             DType::Float64 => {

@@ -194,4 +194,52 @@ final class TypePromotionTest extends TestCase
         $this->assertSame(DType::Float64, $result->dtype());
         $this->assertEqualsWithDelta([101.0], $result->toArray(), 0.0001);
     }
+
+    public function testFloat32PlusFloatScalarStaysFloat32(): void
+    {
+        $a = NDArray::array([1.5, 2.5, 3.5], DType::Float32);
+        $result = $a->add(5.0);
+        $this->assertSame(DType::Float32, $result->dtype());
+        $this->assertEqualsWithDelta([6.5, 7.5, 8.5], $result->toArray(), 0.0001);
+    }
+
+    public function testFloat32MultiplyFloatScalarStaysFloat32(): void
+    {
+        $a = NDArray::array([1.5, 2.5, 3.5], DType::Float32);
+        $result = $a->multiply(2.0);
+        $this->assertSame(DType::Float32, $result->dtype());
+        $this->assertEqualsWithDelta([3.0, 5.0, 7.0], $result->toArray(), 0.0001);
+    }
+
+    public function testUint8PlusIntScalarStaysUint8(): void
+    {
+        $a = NDArray::array([10, 20, 30], DType::UInt8);
+        $result = $a->add(5);
+        $this->assertSame(DType::UInt8, $result->dtype());
+        $this->assertEquals([15, 25, 35], $result->toArray());
+    }
+
+    public function testInt32PlusIntScalarStaysInt32(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::Int32);
+        $result = $a->add(10);
+        $this->assertSame(DType::Int32, $result->dtype());
+        $this->assertEquals([11, 12, 13], $result->toArray());
+    }
+
+    public function testImplicitIntPlusFloatScalarPromotesToFloat(): void
+    {
+        $a = NDArray::array([1, 2, 3]);
+        $result = $a->add(2.5);
+        $this->assertSame(DType::Float64, $result->dtype());
+        $this->assertEqualsWithDelta([3.5, 4.5, 5.5], $result->toArray(), 0.0001);
+    }
+
+    public function testUint64PlusSignedScalarPromotesToFloat64(): void
+    {
+        $a = NDArray::array([1, 2, 3], DType::UInt64);
+        $result = $a->add(-1);
+        $this->assertSame(DType::Float64, $result->dtype());
+        $this->assertEqualsWithDelta([0.0, 1.0, 2.0], $result->toArray(), 0.0001);
+    }
 }
