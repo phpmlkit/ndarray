@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.2.0 - 2026-06-15
+
+### What's Changed
+
+* feat: add fromScalar() for creating 0-dimensional scalar arrays by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/28
+* feat: add any() and all() logical reduction methods by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/29
+* fix: make topk() return numerically-keyed tuple for consistency by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/30
+* fix: element-wise operations on transposed/swap-axes views return wrong data by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/31
+* feat: add scalar support to minimum() and maximum() by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/32
+* fix: prevent PHP scalar values from over-promoting array dtype by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/33
+* feat: add einsum() with deterministic accumulation and generic contraction kernels by @CodeWithKyrian in https://github.com/phpmlkit/ndarray/pull/34
+
+**Full Changelog**: https://github.com/phpmlkit/ndarray/compare/2.1.1...2.2.0
+
 ## v2.1.1 - 2026-06-06
 
 ### What's Changed
