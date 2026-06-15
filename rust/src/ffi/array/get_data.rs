@@ -5,13 +5,13 @@ use std::slice;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
 use crate::helpers::{
-    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
-    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
-    extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_array_bool, extract_array_c128, extract_array_c64, extract_array_f32,
+    extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64, extract_array_i8,
+    extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayMetadata, NdArrayHandle};
-use ndarray::ArrayViewD;
+use ndarray::ArrayD;
 
 /// Get flattened data for an array view with optional offset and length.
 ///
@@ -41,89 +41,89 @@ pub unsafe extern "C" fn ndarray_get_data(
 
         let result = match wrapper.dtype {
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     error::set_last_error("Failed to extract i8 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut i8, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut i8, out_len)
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     error::set_last_error("Failed to extract i16 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut i16, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut i16, out_len)
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     error::set_last_error("Failed to extract i32 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut i32, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut i32, out_len)
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     error::set_last_error("Failed to extract i64 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut i64, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut i64, out_len)
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     error::set_last_error("Failed to extract u8 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut u8, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut u8, out_len)
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     error::set_last_error("Failed to extract u16 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut u16, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut u16, out_len)
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     error::set_last_error("Failed to extract u32 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut u32, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut u32, out_len)
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     error::set_last_error("Failed to extract u64 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut u64, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut u64, out_len)
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     error::set_last_error("Failed to extract f32 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut f32, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut f32, out_len)
             }
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     error::set_last_error("Failed to extract f64 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut f64, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut f64, out_len)
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta) else {
+                let Some(arr) = extract_array_bool(wrapper, meta) else {
                     error::set_last_error("Failed to extract bool view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(view, start, len, out_data as *mut u8, out_len)
+                copy_array_to_buffer(&arr, start, len, out_data as *mut u8, out_len)
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(wrapper, meta) else {
+                let Some(arr) = extract_array_c64(wrapper, meta) else {
                     error::set_last_error("Failed to extract Complex64 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(
-                    view,
+                copy_array_to_buffer(
+                    &arr,
                     start,
                     len,
                     out_data as *mut num_complex::Complex32,
@@ -131,12 +131,12 @@ pub unsafe extern "C" fn ndarray_get_data(
                 )
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(wrapper, meta) else {
+                let Some(arr) = extract_array_c128(wrapper, meta) else {
                     error::set_last_error("Failed to extract Complex128 view");
                     return ERR_DTYPE;
                 };
-                copy_view_to_buffer(
-                    view,
+                copy_array_to_buffer(
+                    &arr,
                     start,
                     len,
                     out_data as *mut num_complex::Complex64,
@@ -149,14 +149,14 @@ pub unsafe extern "C" fn ndarray_get_data(
     })
 }
 
-unsafe fn copy_view_to_buffer<T: Copy>(
-    view: ArrayViewD<'_, T>,
+unsafe fn copy_array_to_buffer<T: Copy>(
+    arr: &ArrayD<T>,
     start: usize,
     len: usize,
     out_data: *mut T,
     out_len: *mut usize,
 ) -> i32 {
-    let total_len = view.len();
+    let total_len = arr.len();
 
     // Validate start offset
     if start >= total_len {
@@ -173,7 +173,7 @@ unsafe fn copy_view_to_buffer<T: Copy>(
     // Skip to start position, then take len elements
     for (dst, src) in out_slice
         .iter_mut()
-        .zip(view.iter().skip(start).take(copy_len))
+        .zip(arr.iter().skip(start).take(copy_len))
     {
         *dst = *src;
     }

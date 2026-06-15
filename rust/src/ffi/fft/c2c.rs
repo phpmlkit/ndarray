@@ -8,8 +8,8 @@ use parking_lot::RwLock;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::{
-    extract_view_as_c128, extract_view_as_c64, extract_view_as_f32, extract_view_as_f64,
-    extract_view_c128, extract_view_c64, fft_forward_scale_f32, fft_forward_scale_f64,
+    extract_array_as_c128, extract_array_as_c64, extract_array_as_f32, extract_array_as_f64,
+    extract_array_c128, extract_array_c64, fft_forward_scale_f32, fft_forward_scale_f64,
     fft_inverse_scale_f32, fft_inverse_scale_f64, fft_norm_f32, fft_norm_f64, normalize_axis,
     resize_along_axis_complex128, resize_along_axis_complex64, resize_along_axis_f32,
     resize_along_axis_f64, scale_axis_complex128, scale_axis_complex64, write_output_metadata,
@@ -139,9 +139,9 @@ pub unsafe extern "C" fn ndarray_fft(
 
         let result_wrapper = match wrapper.dtype {
             DType::Complex128 => {
-                let arr = if let Some(v) = extract_view_c128(wrapper, meta_ref) {
-                    v.to_owned()
-                } else if let Some(v) = extract_view_as_c128(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_c128(wrapper, meta_ref) {
+                    v
+                } else if let Some(v) = extract_array_as_c128(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("fft: failed to read Complex128 input".to_string());
@@ -162,9 +162,9 @@ pub unsafe extern "C" fn ndarray_fft(
                 }
             }
             DType::Complex64 => {
-                let arr = if let Some(v) = extract_view_c64(wrapper, meta_ref) {
-                    v.to_owned()
-                } else if let Some(v) = extract_view_as_c64(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_c64(wrapper, meta_ref) {
+                    v
+                } else if let Some(v) = extract_array_as_c64(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("fft: failed to read Complex64 input".to_string());
@@ -195,7 +195,7 @@ pub unsafe extern "C" fn ndarray_fft(
             | DType::Uint32
             | DType::Uint64 => {
                 if matches!(wrapper.dtype, DType::Float32) {
-                    let arr = if let Some(v) = extract_view_as_f32(wrapper, meta_ref) {
+                    let arr = if let Some(v) = extract_array_as_f32(wrapper, meta_ref) {
                         v
                     } else {
                         error::set_last_error("fft: failed to read Float32 input".to_string());
@@ -213,7 +213,7 @@ pub unsafe extern "C" fn ndarray_fft(
                         dtype: DType::Complex64,
                     }
                 } else {
-                    let arr = if let Some(v) = extract_view_as_f64(wrapper, meta_ref) {
+                    let arr = if let Some(v) = extract_array_as_f64(wrapper, meta_ref) {
                         v
                     } else {
                         error::set_last_error(
@@ -301,9 +301,9 @@ pub unsafe extern "C" fn ndarray_ifft(
 
         let result_wrapper = match wrapper.dtype {
             DType::Complex128 => {
-                let arr = if let Some(v) = extract_view_c128(wrapper, meta_ref) {
-                    v.to_owned()
-                } else if let Some(v) = extract_view_as_c128(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_c128(wrapper, meta_ref) {
+                    v
+                } else if let Some(v) = extract_array_as_c128(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("ifft: failed to read Complex128 input".to_string());
@@ -321,9 +321,9 @@ pub unsafe extern "C" fn ndarray_ifft(
                 }
             }
             DType::Complex64 => {
-                let arr = if let Some(v) = extract_view_c64(wrapper, meta_ref) {
-                    v.to_owned()
-                } else if let Some(v) = extract_view_as_c64(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_c64(wrapper, meta_ref) {
+                    v
+                } else if let Some(v) = extract_array_as_c64(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("ifft: failed to read Complex64 input".to_string());
@@ -404,9 +404,9 @@ pub unsafe extern "C" fn ndarray_fftn(
 
         let result_wrapper = match wrapper.dtype {
             DType::Complex128 => {
-                let arr = if let Some(v) = extract_view_c128(wrapper, meta_ref) {
-                    v.to_owned()
-                } else if let Some(v) = extract_view_as_c128(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_c128(wrapper, meta_ref) {
+                    v
+                } else if let Some(v) = extract_array_as_c128(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("fftn: failed to read Complex128 input".to_string());
@@ -419,9 +419,9 @@ pub unsafe extern "C" fn ndarray_fftn(
                 }
             }
             DType::Complex64 => {
-                let arr = if let Some(v) = extract_view_c64(wrapper, meta_ref) {
-                    v.to_owned()
-                } else if let Some(v) = extract_view_as_c64(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_c64(wrapper, meta_ref) {
+                    v
+                } else if let Some(v) = extract_array_as_c64(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("fftn: failed to read Complex64 input".to_string());
@@ -442,7 +442,7 @@ pub unsafe extern "C" fn ndarray_fftn(
             | DType::Uint16
             | DType::Uint32
             | DType::Uint64 => {
-                let arr = if let Some(v) = extract_view_as_f64(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_as_f64(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("fftn: failed to read real input".to_string());
@@ -456,7 +456,7 @@ pub unsafe extern "C" fn ndarray_fftn(
                 }
             }
             DType::Float32 => {
-                let arr = if let Some(v) = extract_view_as_f32(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_as_f32(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("fftn: failed to read Float32 input".to_string());
@@ -533,9 +533,9 @@ pub unsafe extern "C" fn ndarray_ifftn(
 
         let result_wrapper = match wrapper.dtype {
             DType::Complex128 => {
-                let arr = if let Some(v) = extract_view_c128(wrapper, meta_ref) {
-                    v.to_owned()
-                } else if let Some(v) = extract_view_as_c128(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_c128(wrapper, meta_ref) {
+                    v
+                } else if let Some(v) = extract_array_as_c128(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("ifftn: failed to read Complex128 input".to_string());
@@ -548,9 +548,9 @@ pub unsafe extern "C" fn ndarray_ifftn(
                 }
             }
             DType::Complex64 => {
-                let arr = if let Some(v) = extract_view_c64(wrapper, meta_ref) {
-                    v.to_owned()
-                } else if let Some(v) = extract_view_as_c64(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_c64(wrapper, meta_ref) {
+                    v
+                } else if let Some(v) = extract_array_as_c64(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("ifftn: failed to read Complex64 input".to_string());

@@ -8,7 +8,7 @@ use parking_lot::RwLock;
 
 use crate::ffi::reductions::helpers::{write_reduction_scalar, ReductionScalar};
 use crate::helpers::error::{set_last_error, ERR_GENERIC, ERR_SHAPE, SUCCESS};
-use crate::helpers::extract_view_as_bool;
+use crate::helpers::extract_array_as_bool;
 use crate::helpers::normalize_axis;
 use crate::helpers::write_output_metadata;
 use crate::types::dtype::DType;
@@ -31,12 +31,12 @@ pub unsafe extern "C" fn ndarray_any(
     crate::ffi_guard!({
         let wrapper = NdArrayHandle::as_wrapper(handle as *mut _);
 
-        let Some(view) = extract_view_as_bool(wrapper, meta) else {
+        let Some(arr) = extract_array_as_bool(wrapper, meta) else {
             set_last_error("Failed to extract view".to_string());
             return ERR_GENERIC;
         };
 
-        let result: u8 = view.iter().any(|&x| x != 0) as u8;
+        let result: u8 = arr.iter().any(|&x| x != 0) as u8;
         write_reduction_scalar(out_value, out_dtype, ReductionScalar::Bool(result));
         SUCCESS
     })
@@ -79,12 +79,12 @@ pub unsafe extern "C" fn ndarray_any_axis(
             }
         };
 
-        let Some(view) = extract_view_as_bool(wrapper, meta) else {
+        let Some(arr) = extract_array_as_bool(wrapper, meta) else {
             set_last_error("Failed to extract view".to_string());
             return ERR_GENERIC;
         };
 
-        let result = view.fold_axis(Axis(axis_usize), 0u8, |&acc, &x| acc | x);
+        let result = arr.fold_axis(Axis(axis_usize), 0u8, |&acc, &x| acc | x);
         let final_arr: ndarray::ArrayD<u8> = if keepdims {
             result.insert_axis(Axis(axis_usize)).into_dyn()
         } else {

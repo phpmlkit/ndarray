@@ -192,6 +192,21 @@ final class ShapeOpsTest extends TestCase
         $this->assertEqualsWithDelta([[1, 3, 5], [2, 4, 6]], $result->toArray(), 0.0001);
     }
 
+    public function testTransposeThenClamp(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]);
+        $tr = $a->transpose();
+        $result = $tr->clamp(3.0, 7.0);
+
+        $this->assertSame([3, 3], $result->shape());
+        for ($i = 0; $i < 3; ++$i) {
+            for ($j = 0; $j < 3; ++$j) {
+                $expected = max(3.0, min(7.0, $tr->get($i, $j)));
+                $this->assertEqualsWithDelta($expected, $result->get($i, $j), 0.0001);
+            }
+        }
+    }
+
     public function testSwapAxes2D(): void
     {
         $a = NDArray::array([[1, 2, 3], [4, 5, 6]], DType::Float64);
@@ -247,6 +262,37 @@ final class ShapeOpsTest extends TestCase
 
         // Should return the same object when swapping same axis
         $this->assertSame($a, $result);
+    }
+
+    public function testSwapAxesThenClamp(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]);
+        $sw = $a->swapaxes(0, 1);
+        $result = $sw->clamp(3.0, 7.0);
+
+        $this->assertSame([3, 3], $result->shape());
+        for ($i = 0; $i < 3; ++$i) {
+            for ($j = 0; $j < 3; ++$j) {
+                $expected = max(3.0, min(7.0, $sw->get($i, $j)));
+                $this->assertEqualsWithDelta($expected, $result->get($i, $j), 0.0001);
+            }
+        }
+    }
+
+    public function testSliceThenTransposeThenClamp(): void
+    {
+        $a = NDArray::array([[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0], [9.0, 10.0, 11.0, 12.0]]);
+        $view = $a->slice(['0:3', '1:4']); // [[2,3,4],[6,7,8],[10,11,12]]
+        $tr = $view->transpose(); // shape [3,3]
+        $result = $tr->clamp(4.0, 10.0);
+
+        $this->assertSame([3, 3], $result->shape());
+        for ($i = 0; $i < 3; ++$i) {
+            for ($j = 0; $j < 3; ++$j) {
+                $expected = max(4.0, min(10.0, $tr->get($i, $j)));
+                $this->assertEqualsWithDelta($expected, $result->get($i, $j), 0.0001);
+            }
+        }
     }
 
     public function testFlatten2D(): void

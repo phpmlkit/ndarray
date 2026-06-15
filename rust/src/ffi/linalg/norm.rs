@@ -3,7 +3,7 @@
 use std::ffi::c_void;
 use std::sync::Arc;
 
-use ndarray::{ArrayD, ArrayViewD, Axis, IxDyn};
+use ndarray::{ArrayD, Axis, IxDyn};
 use num_complex::{Complex32, Complex64};
 use num_traits::ToPrimitive;
 use parking_lot::RwLock;
@@ -11,9 +11,9 @@ use parking_lot::RwLock;
 use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::normalize_axis;
 use crate::helpers::{
-    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
-    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
-    extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_array_bool, extract_array_c128, extract_array_c64, extract_array_f32,
+    extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64, extract_array_i8,
+    extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -41,14 +41,14 @@ impl NormOrd {
     }
 }
 
-fn norm_scalar_real<T>(view: ArrayViewD<T>, shape: &[usize], ord: NormOrd) -> Result<f64, String>
+fn norm_scalar_real<T>(arr: &ArrayD<T>, shape: &[usize], ord: NormOrd) -> Result<f64, String>
 where
     T: Copy + ToPrimitive,
 {
     let to = |x: T| x.to_f64().unwrap_or(0.0);
     match ord {
-        NormOrd::One => Ok(view.iter().map(|&x| to(x).abs()).sum()),
-        NormOrd::Two => Ok(view
+        NormOrd::One => Ok(arr.iter().map(|&x| to(x).abs()).sum()),
+        NormOrd::Two => Ok(arr
             .iter()
             .map(|&x| {
                 let v = to(x);
@@ -57,12 +57,12 @@ where
             .sum::<f64>()
             .sqrt()),
         NormOrd::Inf => {
-            Ok(view
+            Ok(arr
                 .iter()
                 .map(|&x| to(x).abs())
                 .fold(0.0_f64, |acc, v| if v > acc { v } else { acc }))
         }
-        NormOrd::NegInf => view
+        NormOrd::NegInf => arr
             .iter()
             .map(|&x| to(x).abs())
             .reduce(|a, b| if a < b { a } else { b })
@@ -71,7 +71,7 @@ where
             if shape.len() != 2 {
                 return Err("fro norm requires a 2D matrix input".to_string());
             }
-            Ok(view
+            Ok(arr
                 .iter()
                 .map(|&x| {
                     let v = to(x);
@@ -84,13 +84,13 @@ where
 }
 
 fn norm_scalar_complex32(
-    view: ArrayViewD<Complex32>,
+    arr: &ArrayD<Complex32>,
     shape: &[usize],
     ord: NormOrd,
 ) -> Result<f64, String> {
     match ord {
-        NormOrd::One => Ok(view.iter().map(|x| x.norm() as f64).sum()),
-        NormOrd::Two => Ok(view
+        NormOrd::One => Ok(arr.iter().map(|x| x.norm() as f64).sum()),
+        NormOrd::Two => Ok(arr
             .iter()
             .map(|x| {
                 let n = x.norm() as f64;
@@ -98,11 +98,13 @@ fn norm_scalar_complex32(
             })
             .sum::<f64>()
             .sqrt()),
-        NormOrd::Inf => Ok(view
-            .iter()
-            .map(|x| x.norm() as f64)
-            .fold(0.0_f64, |acc, v| if v > acc { v } else { acc })),
-        NormOrd::NegInf => view
+        NormOrd::Inf => {
+            Ok(arr
+                .iter()
+                .map(|x| x.norm() as f64)
+                .fold(0.0_f64, |acc, v| if v > acc { v } else { acc }))
+        }
+        NormOrd::NegInf => arr
             .iter()
             .map(|x| x.norm() as f64)
             .reduce(|a, b| if a < b { a } else { b })
@@ -111,7 +113,7 @@ fn norm_scalar_complex32(
             if shape.len() != 2 {
                 return Err("fro norm requires a 2D matrix input".to_string());
             }
-            Ok(view
+            Ok(arr
                 .iter()
                 .map(|x| {
                     let n = x.norm() as f64;
@@ -124,20 +126,20 @@ fn norm_scalar_complex32(
 }
 
 fn norm_scalar_complex64(
-    view: ArrayViewD<Complex64>,
+    arr: &ArrayD<Complex64>,
     shape: &[usize],
     ord: NormOrd,
 ) -> Result<f64, String> {
     match ord {
-        NormOrd::One => Ok(view.iter().map(|x| x.norm()).sum()),
-        NormOrd::Two => Ok(view.iter().map(|x| x.norm().powi(2)).sum::<f64>().sqrt()),
+        NormOrd::One => Ok(arr.iter().map(|x| x.norm()).sum()),
+        NormOrd::Two => Ok(arr.iter().map(|x| x.norm().powi(2)).sum::<f64>().sqrt()),
         NormOrd::Inf => {
-            Ok(view
+            Ok(arr
                 .iter()
                 .map(|x| x.norm())
                 .fold(0.0_f64, |acc, v| if v > acc { v } else { acc }))
         }
-        NormOrd::NegInf => view
+        NormOrd::NegInf => arr
             .iter()
             .map(|x| x.norm())
             .reduce(|a, b| if a < b { a } else { b })
@@ -146,7 +148,7 @@ fn norm_scalar_complex64(
             if shape.len() != 2 {
                 return Err("fro norm requires a 2D matrix input".to_string());
             }
-            Ok(view.iter().map(|x| x.norm().powi(2)).sum::<f64>().sqrt())
+            Ok(arr.iter().map(|x| x.norm().powi(2)).sum::<f64>().sqrt())
         }
     }
 }
@@ -173,7 +175,7 @@ fn finalize_axis_output(
 }
 
 fn norm_axis_real<T>(
-    view: ArrayViewD<T>,
+    arr: &ArrayD<T>,
     shape: &[usize],
     axis: usize,
     keepdims: bool,
@@ -191,7 +193,7 @@ where
     }
 
     let mut out: Vec<f64> = Vec::with_capacity(shape.iter().product::<usize>() / lane_len.max(1));
-    for lane in view.lanes(Axis(axis)) {
+    for lane in arr.lanes(Axis(axis)) {
         let v = match ord {
             NormOrd::One => lane.iter().map(|&x| to(x).abs()).sum(),
             NormOrd::Two => lane
@@ -226,7 +228,7 @@ where
 }
 
 fn norm_axis_complex32(
-    view: ArrayViewD<Complex32>,
+    arr: &ArrayD<Complex32>,
     shape: &[usize],
     axis: usize,
     keepdims: bool,
@@ -240,7 +242,7 @@ fn norm_axis_complex32(
     }
 
     let mut out: Vec<f64> = Vec::with_capacity(shape.iter().product::<usize>() / lane_len.max(1));
-    for lane in view.lanes(Axis(axis)) {
+    for lane in arr.lanes(Axis(axis)) {
         let v = match ord {
             NormOrd::One => lane.iter().map(|x| x.norm() as f64).sum(),
             NormOrd::Two => lane
@@ -274,7 +276,7 @@ fn norm_axis_complex32(
 }
 
 fn norm_axis_complex64(
-    view: ArrayViewD<Complex64>,
+    arr: &ArrayD<Complex64>,
     shape: &[usize],
     axis: usize,
     keepdims: bool,
@@ -288,7 +290,7 @@ fn norm_axis_complex64(
     }
 
     let mut out: Vec<f64> = Vec::with_capacity(shape.iter().product::<usize>() / lane_len.max(1));
-    for lane in view.lanes(Axis(axis)) {
+    for lane in arr.lanes(Axis(axis)) {
         let v = match ord {
             NormOrd::One => lane.iter().map(|x| x.norm()).sum(),
             NormOrd::Two => lane.iter().map(|x| x.norm().powi(2)).sum::<f64>().sqrt(),
@@ -344,95 +346,95 @@ pub unsafe extern "C" fn ndarray_norm(
 
         let norm_result = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     error::set_last_error("Failed to extract Float64 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     error::set_last_error("Failed to extract Float32 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     error::set_last_error("Failed to extract Int64 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     error::set_last_error("Failed to extract Int32 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     error::set_last_error("Failed to extract Int16 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     error::set_last_error("Failed to extract Int8 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     error::set_last_error("Failed to extract Uint64 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     error::set_last_error("Failed to extract Uint32 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     error::set_last_error("Failed to extract Uint16 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     error::set_last_error("Failed to extract Uint8 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta) else {
+                let Some(arr) = extract_array_bool(wrapper, meta) else {
                     error::set_last_error("Failed to extract Bool view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_real(view, shape, ord)
+                norm_scalar_real(&arr, shape, ord)
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(wrapper, meta) else {
+                let Some(arr) = extract_array_c64(wrapper, meta) else {
                     error::set_last_error("Failed to extract Complex64 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_complex32(view, shape, ord)
+                norm_scalar_complex32(&arr, shape, ord)
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(wrapper, meta) else {
+                let Some(arr) = extract_array_c128(wrapper, meta) else {
                     error::set_last_error("Failed to extract Complex128 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_scalar_complex64(view, shape, ord)
+                norm_scalar_complex64(&arr, shape, ord)
             }
         };
 
@@ -498,95 +500,95 @@ pub unsafe extern "C" fn ndarray_norm_axis(
 
         let axis_norm_result = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     error::set_last_error("Failed to extract Float64 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     error::set_last_error("Failed to extract Float32 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     error::set_last_error("Failed to extract Int64 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     error::set_last_error("Failed to extract Int32 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     error::set_last_error("Failed to extract Int16 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     error::set_last_error("Failed to extract Int8 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     error::set_last_error("Failed to extract Uint64 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     error::set_last_error("Failed to extract Uint32 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     error::set_last_error("Failed to extract Uint16 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     error::set_last_error("Failed to extract Uint8 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta) else {
+                let Some(arr) = extract_array_bool(wrapper, meta) else {
                     error::set_last_error("Failed to extract Bool view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_real(view, shape, axis, keepdims, ord)
+                norm_axis_real(&arr, shape, axis, keepdims, ord)
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(wrapper, meta) else {
+                let Some(arr) = extract_array_c64(wrapper, meta) else {
                     error::set_last_error("Failed to extract Complex64 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_complex32(view, shape, axis, keepdims, ord)
+                norm_axis_complex32(&arr, shape, axis, keepdims, ord)
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(wrapper, meta) else {
+                let Some(arr) = extract_array_c128(wrapper, meta) else {
                     error::set_last_error("Failed to extract Complex128 view for norm".to_string());
                     return ERR_GENERIC;
                 };
-                norm_axis_complex64(view, shape, axis, keepdims, ord)
+                norm_axis_complex64(&arr, shape, axis, keepdims, ord)
             }
         };
 

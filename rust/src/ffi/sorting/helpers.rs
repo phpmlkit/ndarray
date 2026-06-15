@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 
-use ndarray::{ArrayD, ArrayViewD, Axis, IxDyn};
+use ndarray::{ArrayD, Axis, IxDyn};
 
 use crate::types::SortKind;
 
@@ -87,12 +87,7 @@ where
     }
 }
 
-pub fn sort_axis_generic<T, F>(
-    view: ArrayViewD<'_, T>,
-    axis: usize,
-    kind: SortKind,
-    cmp: F,
-) -> ArrayD<T>
+pub fn sort_axis_generic<T, F>(view: &ArrayD<T>, axis: usize, kind: SortKind, cmp: F) -> ArrayD<T>
 where
     T: Copy,
     F: Fn(&T, &T) -> Ordering + Copy,
@@ -112,7 +107,7 @@ where
     result
 }
 
-pub fn sort_flat_generic<T, F>(view: ArrayViewD<'_, T>, kind: SortKind, cmp: F) -> ArrayD<T>
+pub fn sort_flat_generic<T, F>(view: &ArrayD<T>, kind: SortKind, cmp: F) -> ArrayD<T>
 where
     T: Copy,
     F: Fn(&T, &T) -> Ordering + Copy,
@@ -123,7 +118,7 @@ where
 }
 
 pub fn argsort_axis_generic<T, F>(
-    view: ArrayViewD<'_, T>,
+    view: &ArrayD<T>,
     axis: usize,
     kind: SortKind,
     cmp: F,
@@ -153,7 +148,7 @@ where
     result
 }
 
-pub fn argsort_flat_generic<T, F>(view: ArrayViewD<'_, T>, kind: SortKind, cmp: F) -> ArrayD<i64>
+pub fn argsort_flat_generic<T, F>(view: &ArrayD<T>, kind: SortKind, cmp: F) -> ArrayD<i64>
 where
     T: Copy,
     F: Fn(&T, &T) -> Ordering + Copy,
@@ -166,7 +161,7 @@ where
 }
 
 pub fn topk_axis_generic<T, F>(
-    view: ArrayViewD<'_, T>,
+    view: &ArrayD<T>,
     axis: usize,
     k: usize,
     largest: bool,
@@ -220,7 +215,7 @@ where
 }
 
 pub fn topk_flat_generic<T, F>(
-    view: ArrayViewD<'_, T>,
+    view: &ArrayD<T>,
     k: usize,
     largest: bool,
     sorted: bool,

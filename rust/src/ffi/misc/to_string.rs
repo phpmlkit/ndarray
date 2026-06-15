@@ -4,10 +4,10 @@
 //! formatting, truncation for large arrays, and support for all dimensions.
 
 use crate::helpers::{
-    extract_view_as_bool, extract_view_as_c128, extract_view_as_c64, extract_view_as_f32,
-    extract_view_as_f64, extract_view_as_i16, extract_view_as_i32, extract_view_as_i64,
-    extract_view_as_i8, extract_view_as_u16, extract_view_as_u32, extract_view_as_u64,
-    extract_view_as_u8,
+    extract_array_as_bool, extract_array_as_c128, extract_array_as_c64, extract_array_as_f32,
+    extract_array_as_f64, extract_array_as_i16, extract_array_as_i32, extract_array_as_i64,
+    extract_array_as_i8, extract_array_as_u16, extract_array_as_u32, extract_array_as_u64,
+    extract_array_as_u8,
 };
 use crate::types::{ArrayMetadata, NdArrayHandle};
 use crate::DType;
@@ -117,20 +117,20 @@ fn format_0d(
     }
 
     match wrapper.dtype {
-        DType::Float64 => format_scalar!(extract_view_as_f64),
-        DType::Float32 => format_scalar!(extract_view_as_f32),
-        DType::Int64 => format_scalar!(extract_view_as_i64),
-        DType::Int32 => format_scalar!(extract_view_as_i32),
-        DType::Int16 => format_scalar!(extract_view_as_i16),
-        DType::Int8 => format_scalar!(extract_view_as_i8),
-        DType::Uint64 => format_scalar!(extract_view_as_u64),
-        DType::Uint32 => format_scalar!(extract_view_as_u32),
-        DType::Uint16 => format_scalar!(extract_view_as_u16),
-        DType::Uint8 => format_scalar!(extract_view_as_u8),
-        DType::Complex64 => format_scalar!(extract_view_as_c64),
-        DType::Complex128 => format_scalar!(extract_view_as_c128),
+        DType::Float64 => format_scalar!(extract_array_as_f64),
+        DType::Float32 => format_scalar!(extract_array_as_f32),
+        DType::Int64 => format_scalar!(extract_array_as_i64),
+        DType::Int32 => format_scalar!(extract_array_as_i32),
+        DType::Int16 => format_scalar!(extract_array_as_i16),
+        DType::Int8 => format_scalar!(extract_array_as_i8),
+        DType::Uint64 => format_scalar!(extract_array_as_u64),
+        DType::Uint32 => format_scalar!(extract_array_as_u32),
+        DType::Uint16 => format_scalar!(extract_array_as_u16),
+        DType::Uint8 => format_scalar!(extract_array_as_u8),
+        DType::Complex64 => format_scalar!(extract_array_as_c64),
+        DType::Complex128 => format_scalar!(extract_array_as_c128),
         DType::Bool => {
-            if let Some(arr) = extract_view_as_bool(wrapper, meta) {
+            if let Some(arr) = extract_array_as_bool(wrapper, meta) {
                 if let Some(val) = arr.iter().next() {
                     write!(buf, "{}", if *val != 0 { "true" } else { "false" })?;
                 }
@@ -186,20 +186,20 @@ fn format_1d_elements(
     }
 
     match wrapper.dtype {
-        DType::Float64 => format_elements!(extract_view_as_f64),
-        DType::Float32 => format_elements!(extract_view_as_f32),
-        DType::Int64 => format_elements!(extract_view_as_i64),
-        DType::Int32 => format_elements!(extract_view_as_i32),
-        DType::Int16 => format_elements!(extract_view_as_i16),
-        DType::Int8 => format_elements!(extract_view_as_i8),
-        DType::Uint64 => format_elements!(extract_view_as_u64),
-        DType::Uint32 => format_elements!(extract_view_as_u32),
-        DType::Uint16 => format_elements!(extract_view_as_u16),
-        DType::Uint8 => format_elements!(extract_view_as_u8),
-        DType::Complex64 => format_elements!(extract_view_as_c64),
-        DType::Complex128 => format_elements!(extract_view_as_c128),
+        DType::Float64 => format_elements!(extract_array_as_f64),
+        DType::Float32 => format_elements!(extract_array_as_f32),
+        DType::Int64 => format_elements!(extract_array_as_i64),
+        DType::Int32 => format_elements!(extract_array_as_i32),
+        DType::Int16 => format_elements!(extract_array_as_i16),
+        DType::Int8 => format_elements!(extract_array_as_i8),
+        DType::Uint64 => format_elements!(extract_array_as_u64),
+        DType::Uint32 => format_elements!(extract_array_as_u32),
+        DType::Uint16 => format_elements!(extract_array_as_u16),
+        DType::Uint8 => format_elements!(extract_array_as_u8),
+        DType::Complex64 => format_elements!(extract_array_as_c64),
+        DType::Complex128 => format_elements!(extract_array_as_c128),
         DType::Bool => {
-            if let Some(arr) = extract_view_as_bool(wrapper, meta) {
+            if let Some(arr) = extract_array_as_bool(wrapper, meta) {
                 for (i, val) in arr.iter().enumerate().skip(start).take(end - start) {
                     if i > start {
                         write!(buf, " ")?;
@@ -277,20 +277,20 @@ fn format_2d_row(
     }
 
     match wrapper.dtype {
-        DType::Float64 => format_cols!(extract_view_as_f64),
-        DType::Float32 => format_cols!(extract_view_as_f32),
-        DType::Int64 => format_cols!(extract_view_as_i64),
-        DType::Int32 => format_cols!(extract_view_as_i32),
-        DType::Int16 => format_cols!(extract_view_as_i16),
-        DType::Int8 => format_cols!(extract_view_as_i8),
-        DType::Uint64 => format_cols!(extract_view_as_u64),
-        DType::Uint32 => format_cols!(extract_view_as_u32),
-        DType::Uint16 => format_cols!(extract_view_as_u16),
-        DType::Uint8 => format_cols!(extract_view_as_u8),
-        DType::Complex64 => format_cols!(extract_view_as_c64),
-        DType::Complex128 => format_cols!(extract_view_as_c128),
+        DType::Float64 => format_cols!(extract_array_as_f64),
+        DType::Float32 => format_cols!(extract_array_as_f32),
+        DType::Int64 => format_cols!(extract_array_as_i64),
+        DType::Int32 => format_cols!(extract_array_as_i32),
+        DType::Int16 => format_cols!(extract_array_as_i16),
+        DType::Int8 => format_cols!(extract_array_as_i8),
+        DType::Uint64 => format_cols!(extract_array_as_u64),
+        DType::Uint32 => format_cols!(extract_array_as_u32),
+        DType::Uint16 => format_cols!(extract_array_as_u16),
+        DType::Uint8 => format_cols!(extract_array_as_u8),
+        DType::Complex64 => format_cols!(extract_array_as_c64),
+        DType::Complex128 => format_cols!(extract_array_as_c128),
         DType::Bool => {
-            if let Some(arr) = extract_view_as_bool(wrapper, meta) {
+            if let Some(arr) = extract_array_as_bool(wrapper, meta) {
                 for (i, val) in arr.iter().enumerate().skip(start_idx).take(cols) {
                     if i > start_idx {
                         write!(buf, " ")?;
@@ -388,20 +388,20 @@ fn format_3d_row(
     }
 
     match wrapper.dtype {
-        DType::Float64 => format_cols!(extract_view_as_f64),
-        DType::Float32 => format_cols!(extract_view_as_f32),
-        DType::Int64 => format_cols!(extract_view_as_i64),
-        DType::Int32 => format_cols!(extract_view_as_i32),
-        DType::Int16 => format_cols!(extract_view_as_i16),
-        DType::Int8 => format_cols!(extract_view_as_i8),
-        DType::Uint64 => format_cols!(extract_view_as_u64),
-        DType::Uint32 => format_cols!(extract_view_as_u32),
-        DType::Uint16 => format_cols!(extract_view_as_u16),
-        DType::Uint8 => format_cols!(extract_view_as_u8),
-        DType::Complex64 => format_cols!(extract_view_as_c64),
-        DType::Complex128 => format_cols!(extract_view_as_c128),
+        DType::Float64 => format_cols!(extract_array_as_f64),
+        DType::Float32 => format_cols!(extract_array_as_f32),
+        DType::Int64 => format_cols!(extract_array_as_i64),
+        DType::Int32 => format_cols!(extract_array_as_i32),
+        DType::Int16 => format_cols!(extract_array_as_i16),
+        DType::Int8 => format_cols!(extract_array_as_i8),
+        DType::Uint64 => format_cols!(extract_array_as_u64),
+        DType::Uint32 => format_cols!(extract_array_as_u32),
+        DType::Uint16 => format_cols!(extract_array_as_u16),
+        DType::Uint8 => format_cols!(extract_array_as_u8),
+        DType::Complex64 => format_cols!(extract_array_as_c64),
+        DType::Complex128 => format_cols!(extract_array_as_c128),
         DType::Bool => {
-            if let Some(arr) = extract_view_as_bool(wrapper, meta) {
+            if let Some(arr) = extract_array_as_bool(wrapper, meta) {
                 for (i, val) in arr.iter().enumerate().skip(start_idx).take(cols) {
                     if i > start_idx {
                         write!(buf, " ")?;
@@ -644,20 +644,20 @@ fn format_element_at_offset(
     }
 
     match wrapper.dtype {
-        DType::Float64 => format_elem!(extract_view_as_f64),
-        DType::Float32 => format_elem!(extract_view_as_f32),
-        DType::Int64 => format_elem!(extract_view_as_i64),
-        DType::Int32 => format_elem!(extract_view_as_i32),
-        DType::Int16 => format_elem!(extract_view_as_i16),
-        DType::Int8 => format_elem!(extract_view_as_i8),
-        DType::Uint64 => format_elem!(extract_view_as_u64),
-        DType::Uint32 => format_elem!(extract_view_as_u32),
-        DType::Uint16 => format_elem!(extract_view_as_u16),
-        DType::Uint8 => format_elem!(extract_view_as_u8),
-        DType::Complex64 => format_elem!(extract_view_as_c64),
-        DType::Complex128 => format_elem!(extract_view_as_c128),
+        DType::Float64 => format_elem!(extract_array_as_f64),
+        DType::Float32 => format_elem!(extract_array_as_f32),
+        DType::Int64 => format_elem!(extract_array_as_i64),
+        DType::Int32 => format_elem!(extract_array_as_i32),
+        DType::Int16 => format_elem!(extract_array_as_i16),
+        DType::Int8 => format_elem!(extract_array_as_i8),
+        DType::Uint64 => format_elem!(extract_array_as_u64),
+        DType::Uint32 => format_elem!(extract_array_as_u32),
+        DType::Uint16 => format_elem!(extract_array_as_u16),
+        DType::Uint8 => format_elem!(extract_array_as_u8),
+        DType::Complex64 => format_elem!(extract_array_as_c64),
+        DType::Complex128 => format_elem!(extract_array_as_c128),
         DType::Bool => {
-            if let Some(arr) = extract_view_as_bool(wrapper, meta) {
+            if let Some(arr) = extract_array_as_bool(wrapper, meta) {
                 for (i, val) in arr.iter().enumerate() {
                     if i == offset {
                         write!(buf, "{}", if *val != 0 { "true" } else { "false" })?;
@@ -699,20 +699,20 @@ fn format_elements_at_offset(
     }
 
     match wrapper.dtype {
-        DType::Float64 => format_elems!(extract_view_as_f64),
-        DType::Float32 => format_elems!(extract_view_as_f32),
-        DType::Int64 => format_elems!(extract_view_as_i64),
-        DType::Int32 => format_elems!(extract_view_as_i32),
-        DType::Int16 => format_elems!(extract_view_as_i16),
-        DType::Int8 => format_elems!(extract_view_as_i8),
-        DType::Uint64 => format_elems!(extract_view_as_u64),
-        DType::Uint32 => format_elems!(extract_view_as_u32),
-        DType::Uint16 => format_elems!(extract_view_as_u16),
-        DType::Uint8 => format_elems!(extract_view_as_u8),
-        DType::Complex64 => format_elems!(extract_view_as_c64),
-        DType::Complex128 => format_elems!(extract_view_as_c128),
+        DType::Float64 => format_elems!(extract_array_as_f64),
+        DType::Float32 => format_elems!(extract_array_as_f32),
+        DType::Int64 => format_elems!(extract_array_as_i64),
+        DType::Int32 => format_elems!(extract_array_as_i32),
+        DType::Int16 => format_elems!(extract_array_as_i16),
+        DType::Int8 => format_elems!(extract_array_as_i8),
+        DType::Uint64 => format_elems!(extract_array_as_u64),
+        DType::Uint32 => format_elems!(extract_array_as_u32),
+        DType::Uint16 => format_elems!(extract_array_as_u16),
+        DType::Uint8 => format_elems!(extract_array_as_u8),
+        DType::Complex64 => format_elems!(extract_array_as_c64),
+        DType::Complex128 => format_elems!(extract_array_as_c128),
         DType::Bool => {
-            if let Some(arr) = extract_view_as_bool(wrapper, meta) {
+            if let Some(arr) = extract_array_as_bool(wrapper, meta) {
                 for (i, val) in arr.iter().enumerate() {
                     if i >= base_offset + start * stride && i < base_offset + end * stride {
                         let idx = (i - base_offset) / stride;

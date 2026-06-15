@@ -3,21 +3,21 @@
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    broadcast_shape, extract_view_as_f32, extract_view_as_f64, extract_view_as_i16,
-    extract_view_as_i32, extract_view_as_i64, extract_view_as_i8, extract_view_as_u16,
-    extract_view_as_u32, extract_view_as_u64, extract_view_as_u8, extract_view_bool,
-    extract_view_c128, extract_view_c64,
+    broadcast_shape, extract_array_as_f32, extract_array_as_f64, extract_array_as_i16,
+    extract_array_as_i32, extract_array_as_i64, extract_array_as_i8, extract_array_as_u16,
+    extract_array_as_u32, extract_array_as_u64, extract_array_as_u8, extract_array_bool,
+    extract_array_c128, extract_array_c64,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
-use ndarray::{ArrayD, ArrayViewD, IxDyn};
+use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
 fn where_impl<T: Copy>(
-    cond: ArrayViewD<'_, u8>,
-    x: ArrayViewD<'_, T>,
-    y: ArrayViewD<'_, T>,
+    cond: &ArrayD<u8>,
+    x: &ArrayD<T>,
+    y: &ArrayD<T>,
 ) -> Result<(ArrayD<T>, Vec<usize>), String> {
     let out_xy = broadcast_shape(x.shape(), y.shape()).ok_or_else(|| {
         format!(
@@ -97,7 +97,7 @@ pub unsafe extern "C" fn ndarray_where(
             return ERR_DTYPE;
         }
 
-        let Some(cond_view) = extract_view_bool(cond_wrapper, cond_meta_ref) else {
+        let Some(cond_arr) = extract_array_bool(cond_wrapper, cond_meta_ref) else {
             error::set_last_error("Failed to extract Bool condition view".to_string());
             return ERR_GENERIC;
         };
@@ -106,15 +106,15 @@ pub unsafe extern "C" fn ndarray_where(
 
         let (result_wrapper, result_shape_vec) = match out_dtype {
             DType::Float64 => {
-                let Some(xv) = extract_view_as_f64(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_as_f64(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as f64".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_as_f64(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_as_f64(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as f64".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -130,15 +130,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Float32 => {
-                let Some(xv) = extract_view_as_f32(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_as_f32(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as f32".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_as_f32(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_as_f32(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as f32".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -154,15 +154,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Int64 => {
-                let Some(xv) = extract_view_as_i64(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_as_i64(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as i64".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_as_i64(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_as_i64(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as i64".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -178,15 +178,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Int32 => {
-                let Some(xv) = extract_view_as_i32(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_as_i32(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as i32".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_as_i32(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_as_i32(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as i32".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -202,15 +202,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Int16 => {
-                let Some(xv) = extract_view_as_i16(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_as_i16(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as i16".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_as_i16(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_as_i16(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as i16".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -226,15 +226,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Int8 => {
-                let Some(xv) = extract_view_as_i8(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_as_i8(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as i8".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_as_i8(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_as_i8(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as i8".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -250,15 +250,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Uint64 => {
-                let Some(xv) = extract_view_as_u64(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_as_u64(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as u64".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_as_u64(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_as_u64(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as u64".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -274,15 +274,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Uint32 => {
-                let Some(xv) = extract_view_as_u32(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_as_u32(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as u32".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_as_u32(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_as_u32(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as u32".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -298,15 +298,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Uint16 => {
-                let Some(xv) = extract_view_as_u16(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_as_u16(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as u16".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_as_u16(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_as_u16(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as u16".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -322,15 +322,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Uint8 => {
-                let Some(xv) = extract_view_as_u8(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_as_u8(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as u8".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_as_u8(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_as_u8(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as u8".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -346,15 +346,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Complex64 => {
-                let Some(xv) = extract_view_c64(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_c64(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as c64".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_c64(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_c64(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as c64".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -370,15 +370,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Complex128 => {
-                let Some(xv) = extract_view_c128(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_c128(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as c128".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_c128(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_c128(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as c128".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -394,15 +394,15 @@ pub unsafe extern "C" fn ndarray_where(
                 )
             }
             DType::Bool => {
-                let Some(xv) = extract_view_bool(x_wrapper, x_meta_ref) else {
+                let Some(xv) = extract_array_bool(x_wrapper, x_meta_ref) else {
                     error::set_last_error("Failed to extract x as bool".to_string());
                     return ERR_GENERIC;
                 };
-                let Some(yv) = extract_view_bool(y_wrapper, y_meta_ref) else {
+                let Some(yv) = extract_array_bool(y_wrapper, y_meta_ref) else {
                     error::set_last_error("Failed to extract y as bool".to_string());
                     return ERR_GENERIC;
                 };
-                let (out, shape_vec) = match where_impl(cond_view, xv.view(), yv.view()) {
+                let (out, shape_vec) = match where_impl(&cond_arr, &xv, &yv) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);

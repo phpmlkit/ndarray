@@ -4,7 +4,7 @@
 //! Always returns a Bool array.
 
 use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
-use crate::helpers::extract_view_as_bool;
+use crate::helpers::extract_array_as_bool;
 use crate::helpers::write_output_metadata;
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -48,11 +48,11 @@ pub unsafe extern "C" fn ndarray_logical_not(
             return ERR_GENERIC;
         }
 
-        let Some(view) = extract_view_as_bool(a_wrapper, a_meta) else {
+        let Some(arr) = extract_array_as_bool(a_wrapper, a_meta) else {
             set_last_error("Failed to extract view as bool".to_string());
             return ERR_GENERIC;
         };
-        let result = view.mapv(|x| not(&x));
+        let result = arr.mapv(|x| not(&x));
         let result_wrapper = NDArrayWrapper {
             data: ArrayData::Bool(Arc::new(RwLock::new(result))),
             dtype: DType::Bool,

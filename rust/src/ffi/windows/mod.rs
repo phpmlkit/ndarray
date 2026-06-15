@@ -21,4 +21,3 @@ pub use hanning::ndarray_hanning;
 pub use kaiser::ndarray_kaiser;
 pub use lanczos::ndarray_lanczos;
 pub use triang::ndarray_triang;
-

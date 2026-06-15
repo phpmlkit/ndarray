@@ -3,14 +3,14 @@
 use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
-    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
-    extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_array_bool, extract_array_c128, extract_array_c64, extract_array_f32,
+    extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64, extract_array_i8,
+    extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::PadMode;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
-use ndarray::{ArrayD, ArrayViewD, IxDyn};
+use ndarray::{ArrayD, IxDyn};
 use parking_lot::RwLock;
 use std::slice;
 use std::sync::Arc;
@@ -85,12 +85,12 @@ fn parse_constants<T: Copy>(raw: &[f64], ndim: usize, cast: fn(f64) -> T) -> Vec
 }
 
 fn pad_view<T: Copy>(
-    view: ArrayViewD<'_, T>,
+    arr: &ArrayD<T>,
     pad_pairs: &[(usize, usize)],
     mode: PadMode,
     constants: &[(T, T)],
 ) -> Result<ArrayD<T>, String> {
-    let in_shape = view.shape();
+    let in_shape = arr.shape();
     let ndim = in_shape.len();
 
     if ndim == 0 {
@@ -140,7 +140,7 @@ fn pad_view<T: Copy>(
                 constants[axis].1
             }
         } else {
-            match view.get(IxDyn(&in_idx)) {
+            match arr.get(IxDyn(&in_idx)) {
                 Some(v) => *v,
                 None => return Err("Failed to read source element during pad".to_string()),
             }
@@ -210,12 +210,12 @@ pub unsafe extern "C" fn ndarray_pad(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| x);
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -228,12 +228,12 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| x as f32);
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -246,12 +246,12 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| x as i64);
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -264,12 +264,12 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| x as i32);
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -282,12 +282,12 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| x as i16);
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -300,12 +300,12 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| x as i8);
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -318,12 +318,12 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| x as u64);
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -336,12 +336,12 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| x as u32);
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -354,12 +354,12 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| x as u16);
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -372,12 +372,12 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| x as u8);
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -390,13 +390,13 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta) else {
+                let Some(arr) = extract_array_bool(wrapper, meta) else {
                     error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts =
                     parse_constants(constant_slice, ndim, |x| if x != 0.0 { 1u8 } else { 0u8 });
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -409,14 +409,14 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(wrapper, meta) else {
+                let Some(arr) = extract_array_c64(wrapper, meta) else {
                     error::set_last_error("Failed to extract complex64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts = parse_constants(constant_slice, ndim, |x| {
                     num_complex::Complex::new(x as f32, 0.0)
                 });
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -429,13 +429,13 @@ pub unsafe extern "C" fn ndarray_pad(
                 }
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(wrapper, meta) else {
+                let Some(arr) = extract_array_c128(wrapper, meta) else {
                     error::set_last_error("Failed to extract complex128 view".to_string());
                     return ERR_GENERIC;
                 };
                 let consts =
                     parse_constants(constant_slice, ndim, |x| num_complex::Complex::new(x, 0.0));
-                let result = match pad_view(view, &pad_pairs, pad_mode, &consts) {
+                let result = match pad_view(&arr, &pad_pairs, pad_mode, &consts) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);

@@ -4,7 +4,7 @@ use crate::types::dtype::DType;
 
 /// Dtype used for `matmul` / `dot` computation after [`DType::promote`].
 ///
-/// Integer dtypes are computed in `Float64` (values promoted via `extract_view_as_f64`).
+/// Integer dtypes are computed in `Float64` (values promoted via `extract_array_as_f64`).
 /// [`DType::Bool`] is unsupported.
 pub fn linalg_computation_dtype(promoted: DType) -> Option<DType> {
     match promoted {

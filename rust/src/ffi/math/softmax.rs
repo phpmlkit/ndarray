@@ -5,7 +5,7 @@
 use crate::helpers::error::{set_last_error, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::normalize_axis;
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_array_f32, extract_array_f64};
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use ndarray::Axis;
@@ -48,12 +48,12 @@ pub unsafe extern "C" fn ndarray_softmax(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut result = view.to_owned();
-                for (in_lane, mut out_lane) in view
+                let mut result = arr.to_owned();
+                for (in_lane, mut out_lane) in arr
                     .lanes(Axis(axis_usize))
                     .into_iter()
                     .zip(result.lanes_mut(Axis(axis_usize)))
@@ -77,12 +77,12 @@ pub unsafe extern "C" fn ndarray_softmax(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let mut result = view.to_owned();
-                for (in_lane, mut out_lane) in view
+                let mut result = arr.to_owned();
+                for (in_lane, mut out_lane) in arr
                     .lanes(Axis(axis_usize))
                     .into_iter()
                     .zip(result.lanes_mut(Axis(axis_usize)))

@@ -12,7 +12,7 @@ use parking_lot::RwLock;
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_MATH, ERR_SHAPE, SUCCESS};
 use crate::helpers::validation::validate_square_matrix;
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_array_c128, extract_array_c64, extract_array_f32, extract_array_f64};
 use crate::types::{ArrayData, ArrayMetadata, DType, NDArrayWrapper, NdArrayHandle};
 
 /// Compute eigenvalue decomposition: `A * v = lambda * v`.
@@ -48,18 +48,18 @@ pub unsafe extern "C" fn ndarray_eig(
 
         let (eigvals_wrapper, eigvecs_wrapper) = match a_wrapper.dtype {
             DType::Float64 => {
-                let Some(a_view_dyn) = extract_view_f64(a_wrapper, a_meta_ref) else {
+                let Some(a_arr_dyn) = extract_array_f64(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract f64 view for Eig".to_string());
                     return ERR_GENERIC;
                 };
-                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                let a_arr_2d = match a_arr_dyn.into_dimensionality::<Ix2>() {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
                         return ERR_SHAPE;
                     }
                 };
-                let (eigvals, eigvecs) = match a_view_2d.eig() {
+                let (eigvals, eigvecs) = match a_arr_2d.eig() {
                     Ok(pair) => pair,
                     Err(e) => {
                         error::set_last_error(e);
@@ -78,18 +78,18 @@ pub unsafe extern "C" fn ndarray_eig(
                 (eigvals_wrapper, eigvecs_wrapper)
             }
             DType::Float32 => {
-                let Some(a_view_dyn) = extract_view_f32(a_wrapper, a_meta_ref) else {
+                let Some(a_arr_dyn) = extract_array_f32(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract f32 view for Eig".to_string());
                     return ERR_GENERIC;
                 };
-                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                let a_arr_2d = match a_arr_dyn.into_dimensionality::<Ix2>() {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
                         return ERR_SHAPE;
                     }
                 };
-                let (eigvals, eigvecs) = match a_view_2d.eig() {
+                let (eigvals, eigvecs) = match a_arr_2d.eig() {
                     Ok(pair) => pair,
                     Err(e) => {
                         error::set_last_error(e);
@@ -108,18 +108,18 @@ pub unsafe extern "C" fn ndarray_eig(
                 (eigvals_wrapper, eigvecs_wrapper)
             }
             DType::Complex64 => {
-                let Some(a_view_dyn) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                let Some(a_arr_dyn) = extract_array_c64(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract c64 view for Eig".to_string());
                     return ERR_GENERIC;
                 };
-                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                let a_arr_2d = match a_arr_dyn.into_dimensionality::<Ix2>() {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
                         return ERR_SHAPE;
                     }
                 };
-                let (eigvals, eigvecs) = match a_view_2d.eig() {
+                let (eigvals, eigvecs) = match a_arr_2d.eig() {
                     Ok(pair) => pair,
                     Err(e) => {
                         error::set_last_error(e);
@@ -138,18 +138,18 @@ pub unsafe extern "C" fn ndarray_eig(
                 (eigvals_wrapper, eigvecs_wrapper)
             }
             DType::Complex128 => {
-                let Some(a_view_dyn) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                let Some(a_arr_dyn) = extract_array_c128(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract c128 view for Eig".to_string());
                     return ERR_GENERIC;
                 };
-                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                let a_arr_2d = match a_arr_dyn.into_dimensionality::<Ix2>() {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
                         return ERR_SHAPE;
                     }
                 };
-                let (eigvals, eigvecs) = match a_view_2d.eig() {
+                let (eigvals, eigvecs) = match a_arr_2d.eig() {
                     Ok(pair) => pair,
                     Err(e) => {
                         error::set_last_error(e);

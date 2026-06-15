@@ -11,7 +11,7 @@ use parking_lot::RwLock;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_MATH, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_array_c128, extract_array_c64, extract_array_f32, extract_array_f64};
 use crate::types::{ArrayData, ArrayMetadata, DType, NDArrayWrapper, NdArrayHandle};
 
 /// Compute SVD: A = U * S * V^T
@@ -75,18 +75,18 @@ pub unsafe extern "C" fn ndarray_svd(
 
         let (u_wrapper_opt, s_wrapper, vt_wrapper_opt) = match a_wrapper.dtype {
             DType::Float64 => {
-                let Some(a_view_dyn) = extract_view_f64(a_wrapper, a_meta_ref) else {
+                let Some(a_arr_dyn) = extract_array_f64(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract f64 view for SVD".to_string());
                     return ERR_GENERIC;
                 };
-                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                let a_arr_2d = match a_arr_dyn.into_dimensionality::<Ix2>() {
                     Ok(a) => a,
                     Err(e) => {
                         error::set_last_error(e);
                         return ERR_SHAPE;
                     }
                 };
-                let (u_opt, s, vt_opt) = match a_view_2d.svd(calc_u_bool, calc_vt_bool) {
+                let (u_opt, s, vt_opt) = match a_arr_2d.svd(calc_u_bool, calc_vt_bool) {
                     Ok(triple) => triple,
                     Err(e) => {
                         error::set_last_error(e);
@@ -112,18 +112,18 @@ pub unsafe extern "C" fn ndarray_svd(
                 (u_wrapper, s_wrapper, vt_wrapper)
             }
             DType::Float32 => {
-                let Some(a_view_dyn) = extract_view_f32(a_wrapper, a_meta_ref) else {
+                let Some(a_arr_dyn) = extract_array_f32(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract f32 view for SVD".to_string());
                     return ERR_GENERIC;
                 };
-                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                let a_arr_2d = match a_arr_dyn.into_dimensionality::<Ix2>() {
                     Ok(a) => a,
                     Err(e) => {
                         error::set_last_error(e);
                         return ERR_SHAPE;
                     }
                 };
-                let (u_opt, s, vt_opt) = match a_view_2d.svd(calc_u_bool, calc_vt_bool) {
+                let (u_opt, s, vt_opt) = match a_arr_2d.svd(calc_u_bool, calc_vt_bool) {
                     Ok(triple) => triple,
                     Err(e) => {
                         error::set_last_error(e);
@@ -149,18 +149,18 @@ pub unsafe extern "C" fn ndarray_svd(
                 (u_wrapper, s_wrapper, vt_wrapper)
             }
             DType::Complex64 => {
-                let Some(a_view_dyn) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                let Some(a_arr_dyn) = extract_array_c64(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract c64 view for SVD".to_string());
                     return ERR_GENERIC;
                 };
-                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                let a_arr_2d = match a_arr_dyn.into_dimensionality::<Ix2>() {
                     Ok(a) => a,
                     Err(e) => {
                         error::set_last_error(e);
                         return ERR_SHAPE;
                     }
                 };
-                let (u_opt, s, vt_opt) = match a_view_2d.svd(calc_u_bool, calc_vt_bool) {
+                let (u_opt, s, vt_opt) = match a_arr_2d.svd(calc_u_bool, calc_vt_bool) {
                     Ok(triple) => triple,
                     Err(e) => {
                         error::set_last_error(e);
@@ -186,18 +186,18 @@ pub unsafe extern "C" fn ndarray_svd(
                 (u_wrapper, s_wrapper, vt_wrapper)
             }
             DType::Complex128 => {
-                let Some(a_view_dyn) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                let Some(a_arr_dyn) = extract_array_c128(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract c128 view for SVD".to_string());
                     return ERR_GENERIC;
                 };
-                let a_view_2d = match a_view_dyn.into_dimensionality::<Ix2>() {
+                let a_arr_2d = match a_arr_dyn.into_dimensionality::<Ix2>() {
                     Ok(a) => a,
                     Err(e) => {
                         error::set_last_error(e);
                         return ERR_SHAPE;
                     }
                 };
-                let (u_opt, s, vt_opt) = match a_view_2d.svd(calc_u_bool, calc_vt_bool) {
+                let (u_opt, s, vt_opt) = match a_arr_2d.svd(calc_u_bool, calc_vt_bool) {
                     Ok(triple) => triple,
                     Err(e) => {
                         error::set_last_error(e);

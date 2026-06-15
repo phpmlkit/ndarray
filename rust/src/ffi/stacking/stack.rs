@@ -10,9 +10,9 @@ use crate::helpers::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, S
 use crate::helpers::normalize_axis;
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
-    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
-    extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_array_bool, extract_array_c128, extract_array_c64, extract_array_f32,
+    extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64, extract_array_i8,
+    extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -77,7 +77,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_f64(w, meta) {
+                    let v = match extract_array_f64(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract f64 view".to_string());
@@ -86,7 +86,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -103,7 +104,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_f32(w, meta) {
+                    let v = match extract_array_f32(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract f32 view".to_string());
@@ -112,7 +113,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -129,7 +131,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_i64(w, meta) {
+                    let v = match extract_array_i64(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract i64 view".to_string());
@@ -138,7 +140,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -155,7 +158,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_i32(w, meta) {
+                    let v = match extract_array_i32(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract i32 view".to_string());
@@ -164,7 +167,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -181,7 +185,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_i16(w, meta) {
+                    let v = match extract_array_i16(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract i16 view".to_string());
@@ -190,7 +194,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -207,7 +212,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_i8(w, meta) {
+                    let v = match extract_array_i8(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract i8 view".to_string());
@@ -216,7 +221,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -233,7 +239,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_u64(w, meta) {
+                    let v = match extract_array_u64(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract u64 view".to_string());
@@ -242,7 +248,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -259,7 +266,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_u32(w, meta) {
+                    let v = match extract_array_u32(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract u32 view".to_string());
@@ -268,7 +275,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -285,7 +293,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_u16(w, meta) {
+                    let v = match extract_array_u16(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract u16 view".to_string());
@@ -294,7 +302,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -311,7 +320,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_u8(w, meta) {
+                    let v = match extract_array_u8(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract u8 view".to_string());
@@ -320,7 +329,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -337,7 +347,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_bool(w, meta) {
+                    let v = match extract_array_bool(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract bool view".to_string());
@@ -346,7 +356,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -363,7 +374,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_c64(w, meta) {
+                    let v = match extract_array_c64(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract complex64 view".to_string());
@@ -372,7 +383,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());
@@ -389,7 +401,7 @@ pub unsafe extern "C" fn ndarray_stack(
                 for i in 0..num_arrays {
                     let meta = &**metas_slice.get(i).unwrap();
                     let w = NdArrayHandle::as_wrapper(*handles_slice.get(i).unwrap() as *mut _);
-                    let v = match extract_view_c128(w, meta) {
+                    let v = match extract_array_c128(w, meta) {
                         Some(v) => v,
                         None => {
                             set_last_error("Failed to extract complex128 view".to_string());
@@ -398,7 +410,8 @@ pub unsafe extern "C" fn ndarray_stack(
                     };
                     views.push(v);
                 }
-                let arr = match stack(Axis(axis_usize), &views) {
+                let views_refs: Vec<_> = views.iter().map(|v| v.view()).collect();
+                let arr = match stack(Axis(axis_usize), &views_refs) {
                     Ok(a) => a.as_standard_layout().into_owned(),
                     Err(e) => {
                         set_last_error(e.to_string());

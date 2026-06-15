@@ -76,4 +76,3 @@ pub unsafe extern "C" fn ndarray_lanczos(
         SUCCESS
     })
 }
-

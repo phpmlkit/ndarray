@@ -17,12 +17,12 @@
 macro_rules! binary_op_arithmetic {
     ($a_wrapper:expr, $a_meta:expr, $b_wrapper:expr, $b_meta:expr, $fn:path) => {{
         use crate::helpers::{
-            extract_view_as_f32, extract_view_as_f64, extract_view_as_i16, extract_view_as_i32,
-            extract_view_as_i64, extract_view_as_i8, extract_view_as_u16, extract_view_as_u32,
-            extract_view_as_u64, extract_view_as_u8, extract_view_c128, extract_view_c64,
-            extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
-            extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32,
-            extract_view_u64, extract_view_u8, set_last_error, ERR_GENERIC,
+            extract_array_as_f32, extract_array_as_f64, extract_array_as_i16, extract_array_as_i32,
+            extract_array_as_i64, extract_array_as_i8, extract_array_as_u16, extract_array_as_u32,
+            extract_array_as_u64, extract_array_as_u8, extract_array_c128, extract_array_c64,
+            extract_array_f32, extract_array_f64, extract_array_i16, extract_array_i32,
+            extract_array_i64, extract_array_i8, extract_array_u16, extract_array_u32,
+            extract_array_u64, extract_array_u8, set_last_error, ERR_GENERIC,
         };
         use crate::types::dtype::DType;
         use crate::types::{ArrayData, NDArrayWrapper};
@@ -32,15 +32,15 @@ macro_rules! binary_op_arithmetic {
         if $a_wrapper.dtype == $b_wrapper.dtype {
             match out_dtype {
                 DType::Float64 => {
-                    let Some(a_view) = extract_view_f64($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_f64($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Float64 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_f64($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_f64($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Float64 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Float64(::std::sync::Arc::new(
                             ::parking_lot::RwLock::new(result),
@@ -49,15 +49,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Float32 => {
-                    let Some(a_view) = extract_view_f32($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_f32($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Float32 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_f32($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_f32($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Float32 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Float32(::std::sync::Arc::new(
                             ::parking_lot::RwLock::new(result),
@@ -66,15 +66,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Complex64 => {
-                    let Some(a_view) = extract_view_c64($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_c64($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Complex64 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_c64($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_c64($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Complex64 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Complex64(::std::sync::Arc::new(
                             ::parking_lot::RwLock::new(result),
@@ -83,15 +83,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Complex128 => {
-                    let Some(a_view) = extract_view_c128($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_c128($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Complex128 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_c128($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_c128($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Complex128 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Complex128(::std::sync::Arc::new(
                             ::parking_lot::RwLock::new(result),
@@ -100,15 +100,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Int64 => {
-                    let Some(a_view) = extract_view_i64($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_i64($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Int64 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_i64($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_i64($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Int64 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Int64(::std::sync::Arc::new(::parking_lot::RwLock::new(
                             result,
@@ -117,15 +117,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Int32 => {
-                    let Some(a_view) = extract_view_i32($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_i32($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Int32 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_i32($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_i32($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Int32 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Int32(::std::sync::Arc::new(::parking_lot::RwLock::new(
                             result,
@@ -134,15 +134,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Int16 => {
-                    let Some(a_view) = extract_view_i16($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_i16($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Int16 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_i16($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_i16($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Int16 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Int16(::std::sync::Arc::new(::parking_lot::RwLock::new(
                             result,
@@ -151,15 +151,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Int8 => {
-                    let Some(a_view) = extract_view_i8($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_i8($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Int8 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_i8($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_i8($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Int8 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Int8(::std::sync::Arc::new(::parking_lot::RwLock::new(
                             result,
@@ -168,15 +168,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Uint64 => {
-                    let Some(a_view) = extract_view_u64($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_u64($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Uint64 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_u64($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_u64($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Uint64 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Uint64(::std::sync::Arc::new(::parking_lot::RwLock::new(
                             result,
@@ -185,15 +185,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Uint32 => {
-                    let Some(a_view) = extract_view_u32($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_u32($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Uint32 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_u32($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_u32($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Uint32 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Uint32(::std::sync::Arc::new(::parking_lot::RwLock::new(
                             result,
@@ -202,15 +202,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Uint16 => {
-                    let Some(a_view) = extract_view_u16($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_u16($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Uint16 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_u16($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_u16($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Uint16 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Uint16(::std::sync::Arc::new(::parking_lot::RwLock::new(
                             result,
@@ -219,15 +219,15 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Uint8 => {
-                    let Some(a_view) = extract_view_u8($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_u8($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract Uint8 operand a".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_view) = extract_view_u8($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_u8($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract Uint8 operand b".to_string());
                         return ERR_GENERIC;
                     };
-                    let result = crate::broadcast_binary!(a_view, b_view, $fn);
+                    let result = crate::broadcast_binary!(a_arr, b_arr, $fn);
                     NDArrayWrapper {
                         data: ArrayData::Uint8(::std::sync::Arc::new(::parking_lot::RwLock::new(
                             result,
@@ -243,11 +243,11 @@ macro_rules! binary_op_arithmetic {
         } else {
             match out_dtype {
                 DType::Float64 => {
-                    let Some(a_arr) = extract_view_as_f64($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_as_f64($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Float64".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_f64($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_as_f64($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract operand b as Float64".to_string());
                         return ERR_GENERIC;
                     };
@@ -260,11 +260,11 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Float32 => {
-                    let Some(a_arr) = extract_view_as_f32($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_as_f32($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Float32".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_f32($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_as_f32($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract operand b as Float32".to_string());
                         return ERR_GENERIC;
                     };
@@ -281,11 +281,11 @@ macro_rules! binary_op_arithmetic {
                     return ERR_GENERIC;
                 }
                 DType::Int64 => {
-                    let Some(a_arr) = extract_view_as_i64($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_as_i64($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Int64".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_i64($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_as_i64($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract operand b as Int64".to_string());
                         return ERR_GENERIC;
                     };
@@ -298,11 +298,11 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Int32 => {
-                    let Some(a_arr) = extract_view_as_i32($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_as_i32($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Int32".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_i32($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_as_i32($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract operand b as Int32".to_string());
                         return ERR_GENERIC;
                     };
@@ -315,11 +315,11 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Int16 => {
-                    let Some(a_arr) = extract_view_as_i16($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_as_i16($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Int16".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_i16($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_as_i16($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract operand b as Int16".to_string());
                         return ERR_GENERIC;
                     };
@@ -332,11 +332,11 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Int8 => {
-                    let Some(a_arr) = extract_view_as_i8($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_as_i8($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Int8".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_i8($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_as_i8($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract operand b as Int8".to_string());
                         return ERR_GENERIC;
                     };
@@ -349,11 +349,11 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Uint64 => {
-                    let Some(a_arr) = extract_view_as_u64($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_as_u64($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Uint64".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_u64($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_as_u64($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract operand b as Uint64".to_string());
                         return ERR_GENERIC;
                     };
@@ -366,11 +366,11 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Uint32 => {
-                    let Some(a_arr) = extract_view_as_u32($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_as_u32($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Uint32".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_u32($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_as_u32($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract operand b as Uint32".to_string());
                         return ERR_GENERIC;
                     };
@@ -383,11 +383,11 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Uint16 => {
-                    let Some(a_arr) = extract_view_as_u16($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_as_u16($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Uint16".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_u16($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_as_u16($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract operand b as Uint16".to_string());
                         return ERR_GENERIC;
                     };
@@ -400,11 +400,11 @@ macro_rules! binary_op_arithmetic {
                     }
                 }
                 DType::Uint8 => {
-                    let Some(a_arr) = extract_view_as_u8($a_wrapper, $a_meta) else {
+                    let Some(a_arr) = extract_array_as_u8($a_wrapper, $a_meta) else {
                         set_last_error("Failed to extract operand a as Uint8".to_string());
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_u8($b_wrapper, $b_meta) else {
+                    let Some(b_arr) = extract_array_as_u8($b_wrapper, $b_meta) else {
                         set_last_error("Failed to extract operand b as Uint8".to_string());
                         return ERR_GENERIC;
                     };

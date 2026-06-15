@@ -68,4 +68,3 @@ pub unsafe extern "C" fn ndarray_triang(
         SUCCESS
     })
 }
-

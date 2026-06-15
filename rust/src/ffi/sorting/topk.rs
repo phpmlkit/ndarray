@@ -6,9 +6,9 @@ use crate::ffi::sorting::helpers::{
 use crate::helpers::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::normalize_axis;
 use crate::helpers::{
-    extract_view_bool, extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32,
-    extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64,
-    extract_view_u8,
+    extract_array_bool, extract_array_f32, extract_array_f64, extract_array_i16, extract_array_i32,
+    extract_array_i64, extract_array_i8, extract_array_u16, extract_array_u32, extract_array_u64,
+    extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::SortKind;
@@ -71,12 +71,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
 
         let (values_wrapper, indices_wrapper) = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) = topk_axis_generic(
-                    view,
+                    &arr,
                     axis_usize,
                     k,
                     largest,
@@ -96,12 +96,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
                 )
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) = topk_axis_generic(
-                    view,
+                    &arr,
                     axis_usize,
                     k,
                     largest,
@@ -121,12 +121,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
                 )
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_axis_generic(view, axis_usize, k, largest, sorted, sort_kind, |a, b| {
+                    topk_axis_generic(&arr, axis_usize, k, largest, sorted, sort_kind, |a, b| {
                         a.cmp(b)
                     });
                 (
@@ -141,12 +141,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
                 )
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_axis_generic(view, axis_usize, k, largest, sorted, sort_kind, |a, b| {
+                    topk_axis_generic(&arr, axis_usize, k, largest, sorted, sort_kind, |a, b| {
                         a.cmp(b)
                     });
                 (
@@ -161,12 +161,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
                 )
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_axis_generic(view, axis_usize, k, largest, sorted, sort_kind, |a, b| {
+                    topk_axis_generic(&arr, axis_usize, k, largest, sorted, sort_kind, |a, b| {
                         a.cmp(b)
                     });
                 (
@@ -181,12 +181,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
                 )
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_axis_generic(view, axis_usize, k, largest, sorted, sort_kind, |a, b| {
+                    topk_axis_generic(&arr, axis_usize, k, largest, sorted, sort_kind, |a, b| {
                         a.cmp(b)
                     });
                 (
@@ -201,12 +201,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
                 )
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_axis_generic(view, axis_usize, k, largest, sorted, sort_kind, |a, b| {
+                    topk_axis_generic(&arr, axis_usize, k, largest, sorted, sort_kind, |a, b| {
                         a.cmp(b)
                     });
                 (
@@ -221,12 +221,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
                 )
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_axis_generic(view, axis_usize, k, largest, sorted, sort_kind, |a, b| {
+                    topk_axis_generic(&arr, axis_usize, k, largest, sorted, sort_kind, |a, b| {
                         a.cmp(b)
                     });
                 (
@@ -241,12 +241,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
                 )
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_axis_generic(view, axis_usize, k, largest, sorted, sort_kind, |a, b| {
+                    topk_axis_generic(&arr, axis_usize, k, largest, sorted, sort_kind, |a, b| {
                         a.cmp(b)
                     });
                 (
@@ -261,12 +261,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
                 )
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_axis_generic(view, axis_usize, k, largest, sorted, sort_kind, |a, b| {
+                    topk_axis_generic(&arr, axis_usize, k, largest, sorted, sort_kind, |a, b| {
                         a.cmp(b)
                     });
                 (
@@ -285,12 +285,12 @@ pub unsafe extern "C" fn ndarray_topk_axis(
                 return ERR_DTYPE;
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta) else {
+                let Some(arr) = extract_array_bool(wrapper, meta) else {
                     set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_axis_generic(view, axis_usize, k, largest, sorted, sort_kind, |a, b| {
+                    topk_axis_generic(&arr, axis_usize, k, largest, sorted, sort_kind, |a, b| {
                         a.cmp(b)
                     });
                 (
@@ -370,12 +370,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
 
         let (values_wrapper, indices_wrapper) = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, cmp_f64_asc_nan_last);
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, cmp_f64_asc_nan_last);
                 (
                     NDArrayWrapper {
                         data: ArrayData::Float64(Arc::new(RwLock::new(vals))),
@@ -388,12 +388,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
                 )
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, cmp_f32_asc_nan_last);
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, cmp_f32_asc_nan_last);
                 (
                     NDArrayWrapper {
                         data: ArrayData::Float32(Arc::new(RwLock::new(vals))),
@@ -406,12 +406,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
                 )
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
                 (
                     NDArrayWrapper {
                         data: ArrayData::Int64(Arc::new(RwLock::new(vals))),
@@ -424,12 +424,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
                 )
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
                 (
                     NDArrayWrapper {
                         data: ArrayData::Int32(Arc::new(RwLock::new(vals))),
@@ -442,12 +442,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
                 )
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
                 (
                     NDArrayWrapper {
                         data: ArrayData::Int16(Arc::new(RwLock::new(vals))),
@@ -460,12 +460,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
                 )
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
                 (
                     NDArrayWrapper {
                         data: ArrayData::Int8(Arc::new(RwLock::new(vals))),
@@ -478,12 +478,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
                 )
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
                 (
                     NDArrayWrapper {
                         data: ArrayData::Uint64(Arc::new(RwLock::new(vals))),
@@ -496,12 +496,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
                 )
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
                 (
                     NDArrayWrapper {
                         data: ArrayData::Uint32(Arc::new(RwLock::new(vals))),
@@ -514,12 +514,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
                 )
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
                 (
                     NDArrayWrapper {
                         data: ArrayData::Uint16(Arc::new(RwLock::new(vals))),
@@ -532,12 +532,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
                 )
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
                 (
                     NDArrayWrapper {
                         data: ArrayData::Uint8(Arc::new(RwLock::new(vals))),
@@ -554,12 +554,12 @@ pub unsafe extern "C" fn ndarray_topk_flat(
                 return ERR_DTYPE;
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta) else {
+                let Some(arr) = extract_array_bool(wrapper, meta) else {
                     set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
                 let (vals, idxs) =
-                    topk_flat_generic(view, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
+                    topk_flat_generic(&arr, k, largest, sorted, sort_kind, |a, b| a.cmp(b));
                 (
                     NDArrayWrapper {
                         data: ArrayData::Bool(Arc::new(RwLock::new(vals))),

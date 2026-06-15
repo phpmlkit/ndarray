@@ -3,8 +3,8 @@
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_bool, extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8,
-    extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_array_bool, extract_array_i16, extract_array_i32, extract_array_i64, extract_array_i8,
+    extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -72,11 +72,11 @@ pub unsafe extern "C" fn ndarray_bincount(
 
         let out = match wrapper.dtype {
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                match bincount_from_iter(view.iter().copied(), minlength) {
+                match bincount_from_iter(arr.iter().copied(), minlength) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -85,11 +85,11 @@ pub unsafe extern "C" fn ndarray_bincount(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                match bincount_from_iter(view.iter().map(|&x| x as i64), minlength) {
+                match bincount_from_iter(arr.iter().map(|&x| x as i64), minlength) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -98,11 +98,11 @@ pub unsafe extern "C" fn ndarray_bincount(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                match bincount_from_iter(view.iter().map(|&x| x as i64), minlength) {
+                match bincount_from_iter(arr.iter().map(|&x| x as i64), minlength) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -111,11 +111,11 @@ pub unsafe extern "C" fn ndarray_bincount(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                match bincount_from_iter(view.iter().map(|&x| x as i64), minlength) {
+                match bincount_from_iter(arr.iter().map(|&x| x as i64), minlength) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -124,11 +124,11 @@ pub unsafe extern "C" fn ndarray_bincount(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                match bincount_from_iter(view.iter().map(|&x| x as i64), minlength) {
+                match bincount_from_iter(arr.iter().map(|&x| x as i64), minlength) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -137,11 +137,11 @@ pub unsafe extern "C" fn ndarray_bincount(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                match bincount_from_iter(view.iter().map(|&x| x as i64), minlength) {
+                match bincount_from_iter(arr.iter().map(|&x| x as i64), minlength) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -150,11 +150,11 @@ pub unsafe extern "C" fn ndarray_bincount(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                match bincount_from_iter(view.iter().map(|&x| x as i64), minlength) {
+                match bincount_from_iter(arr.iter().map(|&x| x as i64), minlength) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -163,11 +163,11 @@ pub unsafe extern "C" fn ndarray_bincount(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                match bincount_from_iter(view.iter().map(|&x| x as i64), minlength) {
+                match bincount_from_iter(arr.iter().map(|&x| x as i64), minlength) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -176,11 +176,11 @@ pub unsafe extern "C" fn ndarray_bincount(
                 }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta) else {
+                let Some(arr) = extract_array_bool(wrapper, meta) else {
                     error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
-                match bincount_from_iter(view.iter().map(|&x| x as i64), minlength) {
+                match bincount_from_iter(arr.iter().map(|&x| x as i64), minlength) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);

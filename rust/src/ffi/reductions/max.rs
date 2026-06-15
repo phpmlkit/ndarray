@@ -7,8 +7,8 @@ use crate::helpers::error::{set_last_error, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::normalize_axis;
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
-    extract_view_i8, extract_view_u16, extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_array_f32, extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64,
+    extract_array_i8, extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -35,11 +35,11 @@ pub unsafe extern "C" fn ndarray_max(
 
         let scalar = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                ReductionScalar::F64(view.iter().cloned().fold(f64::NAN, |max, x| {
+                ReductionScalar::F64(arr.iter().cloned().fold(f64::NAN, |max, x| {
                     if max.is_nan() || x > max {
                         x
                     } else {
@@ -48,11 +48,11 @@ pub unsafe extern "C" fn ndarray_max(
                 }))
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                ReductionScalar::F32(view.iter().cloned().fold(f32::NAN, |max, x| {
+                ReductionScalar::F32(arr.iter().cloned().fold(f32::NAN, |max, x| {
                     if max.is_nan() || x > max {
                         x
                     } else {
@@ -61,11 +61,11 @@ pub unsafe extern "C" fn ndarray_max(
                 }))
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                ReductionScalar::I64(view.iter().cloned().fold(i64::MIN, |max, x| {
+                ReductionScalar::I64(arr.iter().cloned().fold(i64::MIN, |max, x| {
                     if x > max {
                         x
                     } else {
@@ -74,11 +74,11 @@ pub unsafe extern "C" fn ndarray_max(
                 }))
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                ReductionScalar::I32(view.iter().cloned().fold(i32::MIN, |max, x| {
+                ReductionScalar::I32(arr.iter().cloned().fold(i32::MIN, |max, x| {
                     if x > max {
                         x
                     } else {
@@ -87,11 +87,11 @@ pub unsafe extern "C" fn ndarray_max(
                 }))
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                ReductionScalar::I16(view.iter().cloned().fold(i16::MIN, |max, x| {
+                ReductionScalar::I16(arr.iter().cloned().fold(i16::MIN, |max, x| {
                     if x > max {
                         x
                     } else {
@@ -100,11 +100,11 @@ pub unsafe extern "C" fn ndarray_max(
                 }))
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                ReductionScalar::I8(view.iter().cloned().fold(i8::MIN, |max, x| {
+                ReductionScalar::I8(arr.iter().cloned().fold(i8::MIN, |max, x| {
                     if x > max {
                         x
                     } else {
@@ -113,11 +113,11 @@ pub unsafe extern "C" fn ndarray_max(
                 }))
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                ReductionScalar::U64(view.iter().cloned().fold(u64::MIN, |max, x| {
+                ReductionScalar::U64(arr.iter().cloned().fold(u64::MIN, |max, x| {
                     if x > max {
                         x
                     } else {
@@ -126,11 +126,11 @@ pub unsafe extern "C" fn ndarray_max(
                 }))
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                ReductionScalar::U32(view.iter().cloned().fold(u32::MIN, |max, x| {
+                ReductionScalar::U32(arr.iter().cloned().fold(u32::MIN, |max, x| {
                     if x > max {
                         x
                     } else {
@@ -139,11 +139,11 @@ pub unsafe extern "C" fn ndarray_max(
                 }))
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                ReductionScalar::U16(view.iter().cloned().fold(u16::MIN, |max, x| {
+                ReductionScalar::U16(arr.iter().cloned().fold(u16::MIN, |max, x| {
                     if x > max {
                         x
                     } else {
@@ -152,11 +152,11 @@ pub unsafe extern "C" fn ndarray_max(
                 }))
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                ReductionScalar::U8(view.iter().cloned().fold(u8::MIN, |max, x| {
+                ReductionScalar::U8(arr.iter().cloned().fold(u8::MIN, |max, x| {
                     if x > max {
                         x
                     } else {
@@ -225,12 +225,12 @@ pub unsafe extern "C" fn ndarray_max_axis(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result =
-                    view.fold_axis(Axis(axis_usize), f64::NEG_INFINITY, |acc, &x| acc.max(x));
+                    arr.fold_axis(Axis(axis_usize), f64::NEG_INFINITY, |acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -242,12 +242,12 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result =
-                    view.fold_axis(Axis(axis_usize), f32::NEG_INFINITY, |acc, &x| acc.max(x));
+                    arr.fold_axis(Axis(axis_usize), f32::NEG_INFINITY, |acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -259,12 +259,12 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result =
-                    view.fold_axis(Axis(axis_usize), i64::MIN as i64, |&acc, &x| acc.max(x));
+                    arr.fold_axis(Axis(axis_usize), i64::MIN as i64, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -276,12 +276,12 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result =
-                    view.fold_axis(Axis(axis_usize), i32::MIN as i32, |&acc, &x| acc.max(x));
+                    arr.fold_axis(Axis(axis_usize), i32::MIN as i32, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -293,12 +293,12 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result =
-                    view.fold_axis(Axis(axis_usize), i16::MIN as i16, |&acc, &x| acc.max(x));
+                    arr.fold_axis(Axis(axis_usize), i16::MIN as i16, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -310,11 +310,11 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), i8::MIN as i8, |&acc, &x| acc.max(x));
+                let result = arr.fold_axis(Axis(axis_usize), i8::MIN as i8, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -326,12 +326,12 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result =
-                    view.fold_axis(Axis(axis_usize), u64::MIN as u64, |&acc, &x| acc.max(x));
+                    arr.fold_axis(Axis(axis_usize), u64::MIN as u64, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -343,12 +343,12 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result =
-                    view.fold_axis(Axis(axis_usize), u32::MIN as u32, |&acc, &x| acc.max(x));
+                    arr.fold_axis(Axis(axis_usize), u32::MIN as u32, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -360,12 +360,12 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
                 let result =
-                    view.fold_axis(Axis(axis_usize), u16::MIN as u16, |&acc, &x| acc.max(x));
+                    arr.fold_axis(Axis(axis_usize), u16::MIN as u16, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
@@ -377,11 +377,11 @@ pub unsafe extern "C" fn ndarray_max_axis(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.fold_axis(Axis(axis_usize), u8::MIN as u8, |&acc, &x| acc.max(x));
+                let result = arr.fold_axis(Axis(axis_usize), u8::MIN as u8, |&acc, &x| acc.max(x));
                 let final_arr = if keepdims {
                     result.insert_axis(Axis(axis_usize))
                 } else {
