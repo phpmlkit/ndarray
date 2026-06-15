@@ -1,31 +1,54 @@
-//! Macros to generate `extract_view` and `extract_view_as` functions for each type.
+//! Macros to generate array extraction functions for each type.
 
-/// Macro to generate `extract_view` functions for each type (immutable)
+/// Array extraction for each type.
 #[macro_export]
-macro_rules! define_extract_view {
+macro_rules! define_extract_array {
     ($name:ident, $variant:path, $type:ty) => {
-        /// Extract a view of the specific type from the wrapper.
-        ///
-        /// # Safety
-        /// The caller must ensure the ArrayMetadata is valid.
-        pub unsafe fn $name<'a>(
-            wrapper: &'a crate::types::NDArrayWrapper,
-            meta: &'a crate::types::ArrayMetadata,
-        ) -> Option<ndarray::ArrayViewD<'a, $type>> {
+        pub unsafe fn $name(
+            wrapper: &crate::types::NDArrayWrapper,
+            meta: &crate::types::ArrayMetadata,
+        ) -> Option<ndarray::ArrayD<$type>> {
             let offset = meta.offset;
             let shape = meta.shape_slice();
             let strides = meta.strides_slice();
+            let total: usize = shape.iter().product();
+
             match &wrapper.data {
                 $variant(arr) => {
                     let guard = arr.read();
-                    let ptr = guard.as_ptr();
-                    let view_ptr = ptr.add(offset);
+                    let base = guard.as_ptr();
+                    let ptr = base.add(offset);
+                    let shape_ix = ndarray::IxDyn(shape);
+
+                    if total == 0 {
+                        return ndarray::ArrayD::from_shape_vec(shape_ix, Vec::new()).ok();
+                    }
+
+                    // Check if strides match C-contiguous defaults
+                    let ndim = shape.len();
+                    let mut c_default = ndim > 0;
+                    let mut cstride = 1;
+                    for dim in (0..ndim).rev() {
+                        if strides[dim] != cstride {
+                            c_default = false;
+                            break;
+                        }
+                        cstride *= shape[dim];
+                    }
+
+                    if c_default {
+                        let data = std::slice::from_raw_parts(ptr, total).to_vec();
+                        return ndarray::ArrayD::from_shape_vec(shape_ix, data).ok();
+                    }
+
+                    // Custom strides — stride-based iteration via temporary view
                     let strides_ix = ndarray::IxDyn(strides);
-                    ndarray::ArrayViewD::<$type>::from_shape_ptr(
-                        ndarray::IxDyn(shape).strides(strides_ix),
-                        view_ptr,
-                    )
-                    .into()
+                    let view = ndarray::ArrayViewD::<$type>::from_shape_ptr(
+                        shape_ix.strides(strides_ix),
+                        ptr,
+                    );
+                    let data: Vec<$type> = view.iter().copied().collect();
+                    ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(shape), data).ok()
                 }
                 _ => None,
             }
@@ -33,15 +56,10 @@ macro_rules! define_extract_view {
     };
 }
 
-/// Macro to generate `extract_view_mut` functions for each type (mutable)
+/// Mutable view extraction for each type.
 #[macro_export]
 macro_rules! define_extract_view_mut {
     ($name:ident, $variant:path, $type:ty) => {
-        /// Extract a mutable view of the specific type from the wrapper.
-        ///
-        /// # Safety
-        /// The caller must ensure the ArrayMetadata is valid and that there are
-        /// no other readers or writers to this array.
         pub unsafe fn $name<'a>(
             wrapper: &'a crate::types::NDArrayWrapper,
             meta: &'a crate::types::ArrayMetadata,
@@ -67,9 +85,9 @@ macro_rules! define_extract_view_mut {
     };
 }
 
-/// Macro to generate `extract_view_as` functions.
+/// Generate `extract_array_as` functions
 #[macro_export]
-macro_rules! define_extract_view_as {
+macro_rules! define_extract_array_as {
     (
         $name:ident,
         $target_type:ty,
@@ -81,8 +99,8 @@ macro_rules! define_extract_view_as {
             meta: &crate::types::ArrayMetadata,
         ) -> Option<ndarray::ArrayD<$target_type>> {
             unsafe {
-                if let Some(view) = $native_fn(wrapper, meta) {
-                    return Some(view.to_owned());
+                if let Some(data) = $native_fn(wrapper, meta) {
+                    return Some(data);
                 }
 
                 $(

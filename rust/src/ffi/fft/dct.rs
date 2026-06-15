@@ -18,7 +18,7 @@ use crate::helpers::{
     dct_ndrust_norm_is_default, map_axis_lane_f64, scale_axis_f32, scale_axis_f64,
 };
 use crate::helpers::{
-    extract_view_as_f32, extract_view_as_f64, normalize_axis, resize_along_axis_f32,
+    extract_array_as_f32, extract_array_as_f64, normalize_axis, resize_along_axis_f32,
     resize_along_axis_f64, write_output_metadata,
 };
 use crate::types::dtype::DType;
@@ -533,7 +533,7 @@ pub unsafe extern "C" fn ndarray_dct(
             | DType::Uint16
             | DType::Uint32
             | DType::Uint64 => {
-                let arr = if let Some(v) = extract_view_as_f64(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_as_f64(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("dct: failed to read real input".to_string());
@@ -553,7 +553,7 @@ pub unsafe extern "C" fn ndarray_dct(
                 }
             }
             DType::Float32 => {
-                let arr = if let Some(v) = extract_view_as_f32(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_as_f32(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("dct: failed to read Float32 input".to_string());
@@ -657,7 +657,7 @@ pub unsafe extern "C" fn ndarray_idct(
             | DType::Uint16
             | DType::Uint32
             | DType::Uint64 => {
-                let arr = if let Some(v) = extract_view_as_f64(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_as_f64(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("idct: failed to read real input".to_string());
@@ -677,7 +677,7 @@ pub unsafe extern "C" fn ndarray_idct(
                 }
             }
             DType::Float32 => {
-                let arr = if let Some(v) = extract_view_as_f32(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_as_f32(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("idct: failed to read Float32 input".to_string());
@@ -778,7 +778,7 @@ pub unsafe extern "C" fn ndarray_dctn(
             | DType::Uint16
             | DType::Uint32
             | DType::Uint64 => {
-                let arr = if let Some(v) = extract_view_as_f64(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_as_f64(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("dctn: failed to read real input".to_string());
@@ -797,7 +797,7 @@ pub unsafe extern "C" fn ndarray_dctn(
                 }
             }
             DType::Float32 => {
-                let arr = if let Some(v) = extract_view_as_f32(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_as_f32(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("dctn: failed to read Float32 input".to_string());
@@ -897,7 +897,7 @@ pub unsafe extern "C" fn ndarray_idctn(
             | DType::Uint16
             | DType::Uint32
             | DType::Uint64 => {
-                let arr = if let Some(v) = extract_view_as_f64(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_as_f64(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("idctn: failed to read real input".to_string());
@@ -916,7 +916,7 @@ pub unsafe extern "C" fn ndarray_idctn(
                 }
             }
             DType::Float32 => {
-                let arr = if let Some(v) = extract_view_as_f32(wrapper, meta_ref) {
+                let arr = if let Some(v) = extract_array_as_f32(wrapper, meta_ref) {
                     v
                 } else {
                     error::set_last_error("idctn: failed to read Float32 input".to_string());

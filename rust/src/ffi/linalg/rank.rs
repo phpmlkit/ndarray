@@ -6,7 +6,7 @@ use ndarray::Ix2;
 use ndarray_linalg::SVD;
 
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_MATH, ERR_SHAPE};
-use crate::helpers::{extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_array_c128, extract_array_c64, extract_array_f32, extract_array_f64};
 use crate::types::{ArrayMetadata, DType, NdArrayHandle};
 
 /// Compute the rank of a matrix.
@@ -35,11 +35,11 @@ pub unsafe extern "C" fn ndarray_rank(
 
         match a_wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(a_wrapper, a_meta_ref) else {
+                let Some(arr) = extract_array_f64(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract f64 view for rank".to_string());
                     return ERR_GENERIC;
                 };
-                let a_arr = match view.into_dimensionality::<Ix2>() {
+                let a_arr = match arr.into_dimensionality::<Ix2>() {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(format!("Rank: failed to convert to 2D: {}", e));
@@ -65,11 +65,11 @@ pub unsafe extern "C" fn ndarray_rank(
                 *out_rank = rank;
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(a_wrapper, a_meta_ref) else {
+                let Some(arr) = extract_array_f32(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract f32 view for rank".to_string());
                     return ERR_GENERIC;
                 };
-                let a_arr = match view.into_dimensionality::<Ix2>() {
+                let a_arr = match arr.into_dimensionality::<Ix2>() {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(format!("Rank: failed to convert to 2D: {}", e));
@@ -95,11 +95,11 @@ pub unsafe extern "C" fn ndarray_rank(
                 *out_rank = rank;
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                let Some(arr) = extract_array_c64(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract c64 view for rank".to_string());
                     return ERR_GENERIC;
                 };
-                let a_arr = match view.into_dimensionality::<Ix2>() {
+                let a_arr = match arr.into_dimensionality::<Ix2>() {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(format!("Rank: failed to convert to 2D: {}", e));
@@ -125,11 +125,11 @@ pub unsafe extern "C" fn ndarray_rank(
                 *out_rank = rank;
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                let Some(arr) = extract_array_c128(a_wrapper, a_meta_ref) else {
                     error::set_last_error("Failed to extract c128 view for rank".to_string());
                     return ERR_GENERIC;
                 };
-                let a_arr = match view.into_dimensionality::<Ix2>() {
+                let a_arr = match arr.into_dimensionality::<Ix2>() {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(format!("Rank: failed to convert to 2D: {}", e));

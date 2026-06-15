@@ -7,8 +7,8 @@ use std::ops::Neg;
 use crate::helpers::error::{set_last_error, ERR_DTYPE, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_f32, extract_view_f64, extract_view_i16, extract_view_i32, extract_view_i64,
-    extract_view_i8,
+    extract_array_f32, extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64,
+    extract_array_i8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -43,88 +43,88 @@ pub unsafe extern "C" fn ndarray_neg(
 
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(a_wrapper, meta) else {
+                let Some(arr) = extract_array_f64(a_wrapper, meta) else {
                     set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.neg();
+                let result = arr.neg();
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
                     dtype: DType::Float64,
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(a_wrapper, meta) else {
+                let Some(arr) = extract_array_f32(a_wrapper, meta) else {
                     set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.neg();
+                let result = arr.neg();
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
                     dtype: DType::Float32,
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(a_wrapper, meta) else {
+                let Some(arr) = extract_array_i64(a_wrapper, meta) else {
                     set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.neg();
+                let result = arr.neg();
                 NDArrayWrapper {
                     data: ArrayData::Int64(Arc::new(RwLock::new(result))),
                     dtype: DType::Int64,
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(a_wrapper, meta) else {
+                let Some(arr) = extract_array_i32(a_wrapper, meta) else {
                     set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.neg();
+                let result = arr.neg();
                 NDArrayWrapper {
                     data: ArrayData::Int32(Arc::new(RwLock::new(result))),
                     dtype: DType::Int32,
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(a_wrapper, meta) else {
+                let Some(arr) = extract_array_i16(a_wrapper, meta) else {
                     set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.neg();
+                let result = arr.neg();
                 NDArrayWrapper {
                     data: ArrayData::Int16(Arc::new(RwLock::new(result))),
                     dtype: DType::Int16,
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(a_wrapper, meta) else {
+                let Some(arr) = extract_array_i8(a_wrapper, meta) else {
                     set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.neg();
+                let result = arr.neg();
                 NDArrayWrapper {
                     data: ArrayData::Int8(Arc::new(RwLock::new(result))),
                     dtype: DType::Int8,
                 }
             }
             DType::Complex64 => {
-                let Some(view) = crate::helpers::extract_view_c64(a_wrapper, meta) else {
+                let Some(arr) = crate::helpers::extract_array_c64(a_wrapper, meta) else {
                     set_last_error("Failed to extract Complex64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| -x);
+                let result = arr.mapv(|x| -x);
                 NDArrayWrapper {
                     data: ArrayData::Complex64(Arc::new(RwLock::new(result))),
                     dtype: DType::Complex64,
                 }
             }
             DType::Complex128 => {
-                let Some(view) = crate::helpers::extract_view_c128(a_wrapper, meta) else {
+                let Some(arr) = crate::helpers::extract_array_c128(a_wrapper, meta) else {
                     set_last_error("Failed to extract Complex128 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| -x);
+                let result = arr.mapv(|x| -x);
                 NDArrayWrapper {
                     data: ArrayData::Complex128(Arc::new(RwLock::new(result))),
                     dtype: DType::Complex128,

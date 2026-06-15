@@ -54,4 +54,3 @@ pub unsafe extern "C" fn ndarray_boxcar(
         SUCCESS
     })
 }
-

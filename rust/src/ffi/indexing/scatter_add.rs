@@ -3,9 +3,9 @@
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_INDEX, ERR_MATH, SUCCESS};
 use crate::helpers::normalize_index;
 use crate::helpers::{
-    extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64, extract_view_i16,
-    extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16, extract_view_u32,
-    extract_view_u64, extract_view_u8,
+    extract_array_c128, extract_array_c64, extract_array_f32, extract_array_f64, extract_array_i16,
+    extract_array_i32, extract_array_i64, extract_array_i8, extract_array_u16, extract_array_u32,
+    extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -16,7 +16,7 @@ use std::ffi::c_void;
 use std::sync::Arc;
 
 fn scatter_add_impl<T>(
-    view: ndarray::ArrayViewD<'_, T>,
+    arr: &ndarray::ArrayD<T>,
     indices: &[i64],
     updates: &[T],
     scalar: Option<T>,
@@ -24,7 +24,7 @@ fn scatter_add_impl<T>(
 where
     T: Copy + std::ops::AddAssign,
 {
-    let mut flat: Vec<T> = view.iter().copied().collect();
+    let mut flat: Vec<T> = arr.iter().copied().collect();
     if updates.is_empty() && scalar.is_none() {
         return Err("scatterAdd requires scalar or non-empty updates".to_string());
     }
@@ -38,7 +38,7 @@ where
         flat[i] += upd;
     }
 
-    ArrayD::from_shape_vec(view.raw_dim(), flat)
+    ArrayD::from_shape_vec(arr.raw_dim(), flat)
         .map_err(|e| format!("Failed to create scatterAdd output: {}", e))
 }
 
@@ -75,15 +75,15 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
             return ERR_DTYPE;
         }
 
-        let Some(indices_view) = extract_view_i64(indices_wrapper, indices_meta_ref) else {
+        let Some(indices_arr) = extract_array_i64(indices_wrapper, indices_meta_ref) else {
             error::set_last_error("Failed to extract Int64 indices view".to_string());
             return ERR_GENERIC;
         };
-        let idx_slice = indices_view.as_slice().unwrap_or(&[]);
+        let idx_slice = indices_arr.as_slice().unwrap_or(&[]);
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_f64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -93,7 +93,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const f64, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(scalar_update as f64),
@@ -110,7 +110,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_f32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -120,7 +120,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const f32, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(scalar_update as f32),
@@ -137,7 +137,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -147,7 +147,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const i64, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(scalar_update as i64),
@@ -164,7 +164,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -174,7 +174,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const i32, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(scalar_update as i32),
@@ -191,7 +191,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -201,7 +201,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const i16, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(scalar_update as i16),
@@ -218,7 +218,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -228,7 +228,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const i8, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(scalar_update as i8),
@@ -245,7 +245,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -255,7 +255,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const u64, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(scalar_update as u64),
@@ -272,7 +272,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -282,7 +282,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const u32, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(scalar_update as u32),
@@ -299,7 +299,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -309,7 +309,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const u16, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(scalar_update as u16),
@@ -326,7 +326,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -336,7 +336,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const u8, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(scalar_update as u8),
@@ -353,7 +353,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_c64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract c64 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -363,7 +363,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const Complex<f32>, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(Complex::new(scalar_update as f32, 0.0)),
@@ -380,7 +380,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                 }
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_c128(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract c128 view".to_string());
                     return ERR_GENERIC;
                 };
@@ -390,7 +390,7 @@ pub unsafe extern "C" fn ndarray_scatter_add_flat(
                     std::slice::from_raw_parts(updates as *const Complex<f64>, updates_len)
                 };
                 let out = match scatter_add_impl(
-                    view,
+                    &arr,
                     idx_slice,
                     upd,
                     has_scalar.then_some(Complex::new(scalar_update, 0.0)),

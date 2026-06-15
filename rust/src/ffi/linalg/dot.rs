@@ -9,8 +9,8 @@ use parking_lot::RwLock;
 use crate::helpers::error::{self, ERR_DTYPE, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_as_c128, extract_view_as_c64, extract_view_as_f32, extract_view_as_f64,
-    extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
+    extract_array_as_c128, extract_array_as_c64, extract_array_as_f32, extract_array_as_f64,
+    extract_array_c128, extract_array_c64, extract_array_f32, extract_array_f64,
     linalg_computation_dtype,
 };
 use crate::types::dtype::DType;
@@ -60,19 +60,19 @@ pub unsafe extern "C" fn ndarray_dot(
         let result_wrapper = match comp_dtype {
             DType::Float64 => {
                 let result = if same_native {
-                    let Some(a_v) = extract_view_f64(a_wrapper, a_meta_ref) else {
+                    let Some(a_arr) = extract_array_f64(a_wrapper, a_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Float64 operand a for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    let Some(b_v) = extract_view_f64(b_wrapper, b_meta_ref) else {
+                    let Some(b_arr) = extract_array_f64(b_wrapper, b_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Float64 operand b for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    match dot_dispatch(&a_v, &b_v) {
+                    match dot_dispatch(&a_arr, &b_arr) {
                         Ok(r) => r,
                         Err(e) => {
                             error::set_last_error(e);
@@ -80,13 +80,13 @@ pub unsafe extern "C" fn ndarray_dot(
                         }
                     }
                 } else {
-                    let Some(a_arr) = extract_view_as_f64(a_wrapper, a_meta_ref) else {
+                    let Some(a_arr) = extract_array_as_f64(a_wrapper, a_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Float64 operand a for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_f64(b_wrapper, b_meta_ref) else {
+                    let Some(b_arr) = extract_array_as_f64(b_wrapper, b_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Float64 operand b for dot".to_string(),
                         );
@@ -107,19 +107,19 @@ pub unsafe extern "C" fn ndarray_dot(
             }
             DType::Float32 => {
                 let result = if same_native {
-                    let Some(a_v) = extract_view_f32(a_wrapper, a_meta_ref) else {
+                    let Some(a_arr) = extract_array_f32(a_wrapper, a_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Float32 operand a for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    let Some(b_v) = extract_view_f32(b_wrapper, b_meta_ref) else {
+                    let Some(b_arr) = extract_array_f32(b_wrapper, b_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Float32 operand b for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    match dot_dispatch(&a_v, &b_v) {
+                    match dot_dispatch(&a_arr, &b_arr) {
                         Ok(r) => r,
                         Err(e) => {
                             error::set_last_error(e);
@@ -127,13 +127,13 @@ pub unsafe extern "C" fn ndarray_dot(
                         }
                     }
                 } else {
-                    let Some(a_arr) = extract_view_as_f32(a_wrapper, a_meta_ref) else {
+                    let Some(a_arr) = extract_array_as_f32(a_wrapper, a_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Float32 operand a for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_f32(b_wrapper, b_meta_ref) else {
+                    let Some(b_arr) = extract_array_as_f32(b_wrapper, b_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Float32 operand b for dot".to_string(),
                         );
@@ -154,19 +154,19 @@ pub unsafe extern "C" fn ndarray_dot(
             }
             DType::Complex64 => {
                 let result = if same_native {
-                    let Some(a_v) = extract_view_c64(a_wrapper, a_meta_ref) else {
+                    let Some(a_arr) = extract_array_c64(a_wrapper, a_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Complex64 operand a for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    let Some(b_v) = extract_view_c64(b_wrapper, b_meta_ref) else {
+                    let Some(b_arr) = extract_array_c64(b_wrapper, b_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Complex64 operand b for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    match dot_dispatch(&a_v, &b_v) {
+                    match dot_dispatch(&a_arr, &b_arr) {
                         Ok(r) => r,
                         Err(e) => {
                             error::set_last_error(e);
@@ -174,13 +174,13 @@ pub unsafe extern "C" fn ndarray_dot(
                         }
                     }
                 } else {
-                    let Some(a_arr) = extract_view_as_c64(a_wrapper, a_meta_ref) else {
+                    let Some(a_arr) = extract_array_as_c64(a_wrapper, a_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Complex64 operand a for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_c64(b_wrapper, b_meta_ref) else {
+                    let Some(b_arr) = extract_array_as_c64(b_wrapper, b_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Complex64 operand b for dot".to_string(),
                         );
@@ -201,19 +201,19 @@ pub unsafe extern "C" fn ndarray_dot(
             }
             DType::Complex128 => {
                 let result = if same_native {
-                    let Some(a_v) = extract_view_c128(a_wrapper, a_meta_ref) else {
+                    let Some(a_arr) = extract_array_c128(a_wrapper, a_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Complex128 operand a for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    let Some(b_v) = extract_view_c128(b_wrapper, b_meta_ref) else {
+                    let Some(b_arr) = extract_array_c128(b_wrapper, b_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Complex128 operand b for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    match dot_dispatch(&a_v, &b_v) {
+                    match dot_dispatch(&a_arr, &b_arr) {
                         Ok(r) => r,
                         Err(e) => {
                             error::set_last_error(e);
@@ -221,13 +221,13 @@ pub unsafe extern "C" fn ndarray_dot(
                         }
                     }
                 } else {
-                    let Some(a_arr) = extract_view_as_c128(a_wrapper, a_meta_ref) else {
+                    let Some(a_arr) = extract_array_as_c128(a_wrapper, a_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Complex128 operand a for dot".to_string(),
                         );
                         return ERR_GENERIC;
                     };
-                    let Some(b_arr) = extract_view_as_c128(b_wrapper, b_meta_ref) else {
+                    let Some(b_arr) = extract_array_as_c128(b_wrapper, b_meta_ref) else {
                         error::set_last_error(
                             "Failed to prepare Complex128 operand b for dot".to_string(),
                         );

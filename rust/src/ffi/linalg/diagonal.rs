@@ -5,23 +5,20 @@ use ndarray::s;
 use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
-    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
-    extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_array_bool, extract_array_c128, extract_array_c64, extract_array_f32,
+    extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64, extract_array_i8,
+    extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-fn extract_offset_diag<T: Clone>(
-    view: ndarray::ArrayViewD<T>,
-    offset: isize,
-) -> ndarray::ArrayD<T> {
+fn extract_offset_diag<T: Clone>(arr: &ndarray::ArrayD<T>, offset: isize) -> ndarray::ArrayD<T> {
     let result = if offset >= 0 {
-        view.slice(s![.., offset as usize..]).diag().to_owned()
+        arr.slice(s![.., offset as usize..]).diag().to_owned()
     } else {
-        view.slice(s![(-offset) as usize.., ..]).diag().to_owned()
+        arr.slice(s![(-offset) as usize.., ..]).diag().to_owned()
     };
     result.into_dyn()
 }
@@ -64,143 +61,143 @@ pub unsafe extern "C" fn ndarray_diagonal(
 
         let result = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
                     dtype: DType::Float64,
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
                     dtype: DType::Float32,
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Int64(Arc::new(RwLock::new(result))),
                     dtype: DType::Int64,
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Int32(Arc::new(RwLock::new(result))),
                     dtype: DType::Int32,
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Int16(Arc::new(RwLock::new(result))),
                     dtype: DType::Int16,
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Int8(Arc::new(RwLock::new(result))),
                     dtype: DType::Int8,
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Uint64(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint64,
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Uint32(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint32,
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Uint16(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint16,
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Uint8(Arc::new(RwLock::new(result))),
                     dtype: DType::Uint8,
                 }
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(wrapper, meta) else {
+                let Some(arr) = extract_array_c64(wrapper, meta) else {
                     error::set_last_error("Failed to extract c64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Complex64(Arc::new(RwLock::new(result))),
                     dtype: DType::Complex64,
                 }
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(wrapper, meta) else {
+                let Some(arr) = extract_array_c128(wrapper, meta) else {
                     error::set_last_error("Failed to extract c128 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Complex128(Arc::new(RwLock::new(result))),
                     dtype: DType::Complex128,
                 }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta) else {
+                let Some(arr) = extract_array_bool(wrapper, meta) else {
                     error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = extract_offset_diag(view, offset);
+                let result = extract_offset_diag(&arr, offset);
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),
                     dtype: DType::Bool,

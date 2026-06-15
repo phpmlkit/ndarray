@@ -1,9 +1,9 @@
 //! Array copy FFI function.
 
 use crate::helpers::view::{
-    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
-    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
-    extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_array_bool, extract_array_c128, extract_array_c64, extract_array_f32,
+    extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64, extract_array_i8,
+    extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -27,93 +27,93 @@ pub unsafe extern "C" fn ndarray_copy(
 
         let new_wrapper = match wrapper.dtype {
             DType::Int8 => {
-                let view = extract_view_i8(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_i8(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Int8(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Int8(Arc::new(RwLock::new(arr))),
                     dtype: DType::Int8,
                 }
             }
             DType::Int16 => {
-                let view = extract_view_i16(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_i16(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Int16(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Int16(Arc::new(RwLock::new(arr))),
                     dtype: DType::Int16,
                 }
             }
             DType::Int32 => {
-                let view = extract_view_i32(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_i32(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Int32(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Int32(Arc::new(RwLock::new(arr))),
                     dtype: DType::Int32,
                 }
             }
             DType::Int64 => {
-                let view = extract_view_i64(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_i64(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Int64(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Int64(Arc::new(RwLock::new(arr))),
                     dtype: DType::Int64,
                 }
             }
             DType::Uint8 => {
-                let view = extract_view_u8(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_u8(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Uint8(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Uint8(Arc::new(RwLock::new(arr))),
                     dtype: DType::Uint8,
                 }
             }
             DType::Uint16 => {
-                let view = extract_view_u16(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_u16(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Uint16(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Uint16(Arc::new(RwLock::new(arr))),
                     dtype: DType::Uint16,
                 }
             }
             DType::Uint32 => {
-                let view = extract_view_u32(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_u32(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Uint32(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Uint32(Arc::new(RwLock::new(arr))),
                     dtype: DType::Uint32,
                 }
             }
             DType::Uint64 => {
-                let view = extract_view_u64(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_u64(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Uint64(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Uint64(Arc::new(RwLock::new(arr))),
                     dtype: DType::Uint64,
                 }
             }
             DType::Float32 => {
-                let view = extract_view_f32(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_f32(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Float32(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Float32(Arc::new(RwLock::new(arr))),
                     dtype: DType::Float32,
                 }
             }
             DType::Float64 => {
-                let view = extract_view_f64(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_f64(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Float64(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Float64(Arc::new(RwLock::new(arr))),
                     dtype: DType::Float64,
                 }
             }
             DType::Bool => {
-                let view = extract_view_bool(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_bool(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Bool(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Bool(Arc::new(RwLock::new(arr))),
                     dtype: DType::Bool,
                 }
             }
             DType::Complex64 => {
-                let view = extract_view_c64(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_c64(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Complex64(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Complex64(Arc::new(RwLock::new(arr))),
                     dtype: DType::Complex64,
                 }
             }
             DType::Complex128 => {
-                let view = extract_view_c128(wrapper, meta).expect("Type mismatch");
+                let arr = extract_array_c128(wrapper, meta).expect("Type mismatch");
                 NDArrayWrapper {
-                    data: ArrayData::Complex128(Arc::new(RwLock::new(view.to_owned()))),
+                    data: ArrayData::Complex128(Arc::new(RwLock::new(arr))),
                     dtype: DType::Complex128,
                 }
             }

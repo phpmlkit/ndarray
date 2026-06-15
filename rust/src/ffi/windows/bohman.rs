@@ -67,4 +67,3 @@ pub unsafe extern "C" fn ndarray_bohman(
         SUCCESS
     })
 }
-

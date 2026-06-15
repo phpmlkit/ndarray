@@ -5,7 +5,7 @@
 
 use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_c128, extract_view_c64};
+use crate::helpers::{extract_array_c128, extract_array_c64};
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use ndarray::{ArrayD, IxDyn};
@@ -127,22 +127,22 @@ pub unsafe extern "C" fn ndarray_imag(
                 }
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(a_wrapper, meta) else {
+                let Some(arr) = extract_array_c64(a_wrapper, meta) else {
                     set_last_error("Failed to extract Complex64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| x.im);
+                let result = arr.mapv(|x| x.im);
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
                     dtype: DType::Float32,
                 }
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(a_wrapper, meta) else {
+                let Some(arr) = extract_array_c128(a_wrapper, meta) else {
                     set_last_error("Failed to extract Complex128 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| x.im);
+                let result = arr.mapv(|x| x.im);
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
                     dtype: DType::Float64,

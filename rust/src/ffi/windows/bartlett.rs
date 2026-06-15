@@ -66,4 +66,3 @@ pub unsafe extern "C" fn ndarray_bartlett(
         SUCCESS
     })
 }
-

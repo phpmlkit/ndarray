@@ -2,7 +2,7 @@
 
 use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_f32, extract_view_f64};
+use crate::helpers::{extract_array_f32, extract_array_f64};
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use parking_lot::RwLock;
@@ -35,44 +35,44 @@ pub unsafe extern "C" fn ndarray_cos(
 
         let result_wrapper = match a_wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(a_wrapper, meta) else {
+                let Some(arr) = extract_array_f64(a_wrapper, meta) else {
                     set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.cos();
+                let result = arr.cos();
                 NDArrayWrapper {
                     data: ArrayData::Float64(Arc::new(RwLock::new(result))),
                     dtype: DType::Float64,
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(a_wrapper, meta) else {
+                let Some(arr) = extract_array_f32(a_wrapper, meta) else {
                     set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.cos();
+                let result = arr.cos();
                 NDArrayWrapper {
                     data: ArrayData::Float32(Arc::new(RwLock::new(result))),
                     dtype: DType::Float32,
                 }
             }
             DType::Complex64 => {
-                let Some(view) = crate::helpers::extract_view_c64(a_wrapper, meta) else {
+                let Some(arr) = crate::helpers::extract_array_c64(a_wrapper, meta) else {
                     set_last_error("Failed to extract Complex64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| x.cos());
+                let result = arr.mapv(|x| x.cos());
                 NDArrayWrapper {
                     data: ArrayData::Complex64(Arc::new(RwLock::new(result))),
                     dtype: DType::Complex64,
                 }
             }
             DType::Complex128 => {
-                let Some(view) = crate::helpers::extract_view_c128(a_wrapper, meta) else {
+                let Some(arr) = crate::helpers::extract_array_c128(a_wrapper, meta) else {
                     set_last_error("Failed to extract Complex128 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| x.cos());
+                let result = arr.mapv(|x| x.cos());
                 NDArrayWrapper {
                     data: ArrayData::Complex128(Arc::new(RwLock::new(result))),
                     dtype: DType::Complex128,

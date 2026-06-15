@@ -5,7 +5,7 @@
 
 use crate::helpers::error::{set_last_error, ERR_GENERIC, SUCCESS};
 use crate::helpers::write_output_metadata;
-use crate::helpers::{extract_view_c128, extract_view_c64};
+use crate::helpers::{extract_array_c128, extract_array_c64};
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
 use ndarray::{ArrayD, IxDyn};
@@ -39,22 +39,22 @@ pub unsafe extern "C" fn ndarray_iscomplex(
 
         let result_wrapper = match a_wrapper.dtype {
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(a_wrapper, meta) else {
+                let Some(arr) = extract_array_c64(a_wrapper, meta) else {
                     set_last_error("Failed to extract Complex64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| if x.im != 0.0 { 1u8 } else { 0u8 });
+                let result = arr.mapv(|x| if x.im != 0.0 { 1u8 } else { 0u8 });
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),
                     dtype: DType::Bool,
                 }
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(a_wrapper, meta) else {
+                let Some(arr) = extract_array_c128(a_wrapper, meta) else {
                     set_last_error("Failed to extract Complex128 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| if x.im != 0.0 { 1u8 } else { 0u8 });
+                let result = arr.mapv(|x| if x.im != 0.0 { 1u8 } else { 0u8 });
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),
                     dtype: DType::Bool,
@@ -109,22 +109,22 @@ pub unsafe extern "C" fn ndarray_isreal(
 
         let result_wrapper = match a_wrapper.dtype {
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(a_wrapper, meta) else {
+                let Some(arr) = extract_array_c64(a_wrapper, meta) else {
                     set_last_error("Failed to extract Complex64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| if x.im == 0.0 { 1u8 } else { 0u8 });
+                let result = arr.mapv(|x| if x.im == 0.0 { 1u8 } else { 0u8 });
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),
                     dtype: DType::Bool,
                 }
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(a_wrapper, meta) else {
+                let Some(arr) = extract_array_c128(a_wrapper, meta) else {
                     set_last_error("Failed to extract Complex128 view".to_string());
                     return ERR_GENERIC;
                 };
-                let result = view.mapv(|x| if x.im == 0.0 { 1u8 } else { 0u8 });
+                let result = arr.mapv(|x| if x.im == 0.0 { 1u8 } else { 0u8 });
                 NDArrayWrapper {
                     data: ArrayData::Bool(Arc::new(RwLock::new(result))),
                     dtype: DType::Bool,

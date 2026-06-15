@@ -3,9 +3,9 @@
 use crate::helpers::error::{self, ERR_GENERIC, ERR_SHAPE, SUCCESS};
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
-    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
-    extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_array_bool, extract_array_c128, extract_array_c64, extract_array_f32,
+    extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64, extract_array_i8,
+    extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -43,107 +43,107 @@ pub unsafe extern "C" fn ndarray_trace(
 
         let result = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta) else {
+                let Some(arr) = extract_array_f64(wrapper, meta) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: f64 = view.diag().iter().sum();
+                let trace_sum: f64 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_f64(&[trace_sum], &[]).unwrap()
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta) else {
+                let Some(arr) = extract_array_f32(wrapper, meta) else {
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: f32 = view.diag().iter().sum();
+                let trace_sum: f32 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_f32(&[trace_sum], &[]).unwrap()
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(wrapper, meta) else {
+                let Some(arr) = extract_array_c64(wrapper, meta) else {
                     error::set_last_error("Failed to extract c64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: num_complex::Complex<f32> = view.diag().iter().sum();
+                let trace_sum: num_complex::Complex<f32> = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_complex64(&[trace_sum.re, trace_sum.im], &[]).unwrap()
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(wrapper, meta) else {
+                let Some(arr) = extract_array_c128(wrapper, meta) else {
                     error::set_last_error("Failed to extract c128 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: num_complex::Complex<f64> = view.diag().iter().sum();
+                let trace_sum: num_complex::Complex<f64> = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_complex128(&[trace_sum.re, trace_sum.im], &[]).unwrap()
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta) else {
+                let Some(arr) = extract_array_i64(wrapper, meta) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: i64 = view.diag().iter().sum();
+                let trace_sum: i64 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_i64(&[trace_sum], &[]).unwrap()
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta) else {
+                let Some(arr) = extract_array_i32(wrapper, meta) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: i32 = view.diag().iter().sum();
+                let trace_sum: i32 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_i32(&[trace_sum], &[]).unwrap()
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta) else {
+                let Some(arr) = extract_array_i16(wrapper, meta) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: i16 = view.diag().iter().sum();
+                let trace_sum: i16 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_i16(&[trace_sum], &[]).unwrap()
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta) else {
+                let Some(arr) = extract_array_i8(wrapper, meta) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: i8 = view.diag().iter().sum();
+                let trace_sum: i8 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_i8(&[trace_sum], &[]).unwrap()
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta) else {
+                let Some(arr) = extract_array_u64(wrapper, meta) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: u64 = view.diag().iter().sum();
+                let trace_sum: u64 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_u64(&[trace_sum], &[]).unwrap()
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta) else {
+                let Some(arr) = extract_array_u32(wrapper, meta) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: u32 = view.diag().iter().sum();
+                let trace_sum: u32 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_u32(&[trace_sum], &[]).unwrap()
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta) else {
+                let Some(arr) = extract_array_u16(wrapper, meta) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: u16 = view.diag().iter().sum();
+                let trace_sum: u16 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_u16(&[trace_sum], &[]).unwrap()
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta) else {
+                let Some(arr) = extract_array_u8(wrapper, meta) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: u8 = view.diag().iter().sum();
+                let trace_sum: u8 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_u8(&[trace_sum], &[]).unwrap()
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta) else {
+                let Some(arr) = extract_array_bool(wrapper, meta) else {
                     error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
-                let trace_sum: u8 = view.diag().iter().sum();
+                let trace_sum: u8 = arr.diag().iter().sum();
                 NDArrayWrapper::from_slice_bool(&[trace_sum], &[]).unwrap()
             }
         };

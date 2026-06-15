@@ -65,4 +65,3 @@ pub unsafe extern "C" fn ndarray_hamming(
         SUCCESS
     })
 }
-

@@ -5,9 +5,9 @@ use crate::helpers::normalize_axis;
 use crate::helpers::normalize_index;
 use crate::helpers::write_output_metadata;
 use crate::helpers::{
-    extract_view_bool, extract_view_c128, extract_view_c64, extract_view_f32, extract_view_f64,
-    extract_view_i16, extract_view_i32, extract_view_i64, extract_view_i8, extract_view_u16,
-    extract_view_u32, extract_view_u64, extract_view_u8,
+    extract_array_bool, extract_array_c128, extract_array_c64, extract_array_f32,
+    extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64, extract_array_i8,
+    extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NDArrayWrapper, NdArrayHandle};
@@ -16,11 +16,11 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 
 fn take_impl<T: Copy>(
-    view: ndarray::ArrayViewD<'_, T>,
+    arr: &ndarray::ArrayD<T>,
     indices: &[i64],
     indices_shape: &[usize],
 ) -> Result<ArrayD<T>, String> {
-    let flat: Vec<T> = view.iter().copied().collect();
+    let flat: Vec<T> = arr.iter().copied().collect();
     let len = flat.len();
     let mut out = Vec::with_capacity(indices.len());
     for &idx in indices {
@@ -66,21 +66,21 @@ pub unsafe extern "C" fn ndarray_take(
             return ERR_DTYPE;
         }
 
-        let Some(indices_view) = extract_view_i64(indices_wrapper, indices_meta_ref) else {
+        let Some(indices_arr) = extract_array_i64(indices_wrapper, indices_meta_ref) else {
             error::set_last_error("Failed to extract Int64 indices view".to_string());
             return ERR_GENERIC;
         };
 
-        let idx_slice = indices_view.as_slice().unwrap_or(&[]);
+        let idx_slice = indices_arr.as_slice().unwrap_or(&[]);
         let idx_shape_slice = indices_meta_ref.shape_slice();
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_f64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -93,11 +93,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_f32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -110,11 +110,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -127,11 +127,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -144,11 +144,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -161,11 +161,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -178,11 +178,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -195,11 +195,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -212,11 +212,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -229,11 +229,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -246,11 +246,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_c64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract c64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -263,11 +263,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_c128(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract c128 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -280,11 +280,11 @@ pub unsafe extern "C" fn ndarray_take(
                 }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_bool(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_impl(view, idx_slice, idx_shape_slice) {
+                let out = match take_impl(&arr, idx_slice, idx_shape_slice) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -315,12 +315,12 @@ pub unsafe extern "C" fn ndarray_take(
 /// This selects entire slices along the specified axis according to indices.
 /// Output shape = input_shape[:axis] + indices_shape + input_shape[axis+1:]
 fn take_axis_impl<T: Copy>(
-    view: ndarray::ArrayViewD<'_, T>,
+    arr: &ndarray::ArrayD<T>,
     indices: &[i64],
     indices_shape: &[usize],
     axis: usize,
 ) -> Result<ArrayD<T>, String> {
-    let in_shape = view.shape();
+    let in_shape = arr.shape();
     let ndim = in_shape.len();
 
     if axis >= ndim {
@@ -349,7 +349,7 @@ fn take_axis_impl<T: Copy>(
     if ndim == 1 {
         // Simple 1D case: just gather elements at indices
         for &idx in &normalized_indices {
-            out.push(view[IxDyn(&[idx])]);
+            out.push(arr[IxDyn(&[idx])]);
         }
     } else {
         // Multi-dimensional case: iterate through output positions
@@ -410,7 +410,7 @@ fn take_axis_impl<T: Copy>(
             in_idx.extend_from_slice(&out_idx_slice[axis + indices_ndim..]);
 
             // Get value from input
-            if let Some(&val) = view.get(IxDyn(&in_idx)) {
+            if let Some(&val) = arr.get(IxDyn(&in_idx)) {
                 out.push(val);
             } else {
                 return Err(format!(
@@ -463,12 +463,12 @@ pub unsafe extern "C" fn ndarray_take_axis(
             return ERR_DTYPE;
         }
 
-        let Some(indices_view) = extract_view_i64(indices_wrapper, indices_meta_ref) else {
+        let Some(indices_arr) = extract_array_i64(indices_wrapper, indices_meta_ref) else {
             error::set_last_error("Failed to extract Int64 indices view".to_string());
             return ERR_GENERIC;
         };
 
-        let idx_slice = indices_view.as_slice().unwrap_or(&[]);
+        let idx_slice = indices_arr.as_slice().unwrap_or(&[]);
         let idx_shape_slice = indices_meta_ref.shape_slice();
 
         let axis_usize = match normalize_axis(meta_ref.shape_slice(), axis, false) {
@@ -481,11 +481,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
 
         let result_wrapper = match wrapper.dtype {
             DType::Float64 => {
-                let Some(view) = extract_view_f64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_f64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -498,11 +498,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Float32 => {
-                let Some(view) = extract_view_f32(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_f32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract f32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -515,11 +515,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Int64 => {
-                let Some(view) = extract_view_i64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -532,11 +532,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Int32 => {
-                let Some(view) = extract_view_i32(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -549,11 +549,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Int16 => {
-                let Some(view) = extract_view_i16(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -566,11 +566,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Int8 => {
-                let Some(view) = extract_view_i8(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_i8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract i8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -583,11 +583,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Uint64 => {
-                let Some(view) = extract_view_u64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -600,11 +600,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Uint32 => {
-                let Some(view) = extract_view_u32(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u32(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u32 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -617,11 +617,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Uint16 => {
-                let Some(view) = extract_view_u16(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u16(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u16 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -634,11 +634,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Uint8 => {
-                let Some(view) = extract_view_u8(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_u8(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract u8 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -651,11 +651,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Complex64 => {
-                let Some(view) = extract_view_c64(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_c64(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract c64 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -668,11 +668,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Complex128 => {
-                let Some(view) = extract_view_c128(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_c128(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract c128 view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
@@ -685,11 +685,11 @@ pub unsafe extern "C" fn ndarray_take_axis(
                 }
             }
             DType::Bool => {
-                let Some(view) = extract_view_bool(wrapper, meta_ref) else {
+                let Some(arr) = extract_array_bool(wrapper, meta_ref) else {
                     error::set_last_error("Failed to extract bool view".to_string());
                     return ERR_GENERIC;
                 };
-                let out = match take_axis_impl(view, idx_slice, idx_shape_slice, axis_usize) {
+                let out = match take_axis_impl(&arr, idx_slice, idx_shape_slice, axis_usize) {
                     Ok(v) => v,
                     Err(e) => {
                         error::set_last_error(e);
