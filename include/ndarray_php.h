@@ -286,7 +286,7 @@ int32_t ndarray_free(struct NdArrayHandle *handle);
  * * `meta` - View metadata
  * * `start` - Starting element offset (0-indexed)
  * * `len` - Number of elements to copy
- * * `out_data` - Pointer to output buffer (type depends on array dtype)
+ * * `out_data` - Pointer to output buffer (type must match array dtype)
  * * `out_len` - Output: actual number of elements copied
  */
 int32_t ndarray_get_data(const struct NdArrayHandle *handle,
