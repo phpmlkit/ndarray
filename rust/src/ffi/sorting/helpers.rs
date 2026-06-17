@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 
-use ndarray::{ArrayD, Axis, IxDyn};
+use ndarray::{ArrayBase, ArrayD, Axis, Data, IxDyn};
 
 use crate::types::SortKind;
 
@@ -114,7 +114,8 @@ where
 {
     let mut flat: Vec<T> = view.iter().copied().collect();
     sort_by_kind(&mut flat, kind, |a, b| cmp(a, b));
-    ArrayD::from_shape_vec(IxDyn(&[flat.len()]), flat).expect("Failed to build flat sorted output")
+    ArrayD::from_shape_vec(IxDyn(&[flat.len()]), flat)
+        .expect("Failed to build flat sorted output")
 }
 
 pub fn argsort_axis_generic<T, F>(
@@ -157,11 +158,108 @@ where
     let mut indices: Vec<usize> = (0..values.len()).collect();
     sort_by_kind(&mut indices, kind, |a, b| cmp(&values[*a], &values[*b]));
     let out: Vec<i64> = indices.into_iter().map(|i| i as i64).collect();
-    ArrayD::from_shape_vec(IxDyn(&[out.len()]), out).expect("Failed to build flat argsort output")
+    ArrayD::from_shape_vec(IxDyn(&[out.len()]), out)
+        .expect("Failed to build flat argsort output")
 }
 
-pub fn topk_axis_generic<T, F>(
-    view: &ArrayD<T>,
+// ---------------------------------------------------------------------------
+// heap helpers
+// ---------------------------------------------------------------------------
+
+fn build_heap_by<T, F>(values: &mut [T], end: usize, cmp: &mut F)
+where
+    F: FnMut(&T, &T) -> Ordering,
+{
+    if end < 2 {
+        return;
+    }
+    let mut start = (end - 2) / 2;
+    loop {
+        sift_down_by(values, start, end, cmp);
+        if start == 0 {
+            break;
+        }
+        start -= 1;
+    }
+}
+
+fn heap_topk<T, F>(
+    data: &[T],
+    k: usize,
+    largest: bool,
+    cmp_asc: &mut F,
+) -> Vec<(T, usize)>
+where
+    T: Copy,
+    F: FnMut(&T, &T) -> Ordering,
+{
+    let n = data.len();
+    if k == 0 {
+        return Vec::new();
+    }
+    if k >= n {
+        let mut result: Vec<_> = data
+            .iter()
+            .copied()
+            .enumerate()
+            .map(|(i, v)| (v, i))
+            .collect();
+        if largest {
+            result.sort_unstable_by(|a, b| cmp_asc(&b.0, &a.0));
+        } else {
+            result.sort_unstable_by(|a, b| cmp_asc(&a.0, &b.0));
+        }
+        return result;
+    }
+
+    let mut heap: Vec<(T, usize)> = Vec::with_capacity(k);
+
+    for i in 0..k {
+        heap.push((data[i], i));
+    }
+
+    if largest {
+        let mut min_cmp = |a: &(T, usize), b: &(T, usize)| cmp_asc(&b.0, &a.0);
+        build_heap_by(&mut heap, k - 1, &mut min_cmp);
+    } else {
+        let mut max_cmp = |a: &(T, usize), b: &(T, usize)| cmp_asc(&a.0, &b.0);
+        build_heap_by(&mut heap, k - 1, &mut max_cmp);
+    }
+
+    for i in k..n {
+        let cmp_root = cmp_asc(&heap[0].0, &data[i]);
+        let replace = if largest {
+            cmp_root == Ordering::Less
+        } else {
+            cmp_root == Ordering::Greater
+        };
+        if replace {
+            heap[0] = (data[i], i);
+            if largest {
+                let mut min_cmp = |a: &(T, usize), b: &(T, usize)| cmp_asc(&b.0, &a.0);
+                sift_down_by(&mut heap, 0, k - 1, &mut min_cmp);
+            } else {
+                let mut max_cmp = |a: &(T, usize), b: &(T, usize)| cmp_asc(&a.0, &b.0);
+                sift_down_by(&mut heap, 0, k - 1, &mut max_cmp);
+            }
+        }
+    }
+
+    if largest {
+        heap.sort_unstable_by(|a, b| cmp_asc(&b.0, &a.0));
+    } else {
+        heap.sort_unstable_by(|a, b| cmp_asc(&a.0, &b.0));
+    }
+
+    heap
+}
+
+// ---------------------------------------------------------------------------
+// topk
+// ---------------------------------------------------------------------------
+
+pub fn topk_axis_generic<T, D, F>(
+    view: &ArrayBase<D, IxDyn>,
     axis: usize,
     k: usize,
     largest: bool,
@@ -171,6 +269,7 @@ pub fn topk_axis_generic<T, F>(
 ) -> (ArrayD<T>, ArrayD<i64>)
 where
     T: Copy + Default,
+    D: Data<Elem = T>,
     F: Fn(&T, &T) -> Ordering + Copy,
 {
     let mut out_shape = view.shape().to_vec();
@@ -187,8 +286,60 @@ where
         .zip(out_values.lanes_mut(Axis(axis)))
         .zip(out_indices.lanes_mut(Axis(axis)))
     {
+        let n = lane_in.len();
+
+        if k == 0 {
+            continue;
+        }
+
+        if k == 1 {
+            let mut best_idx = 0usize;
+            let mut best_val = lane_in[0];
+            for (i, &val) in lane_in.iter().enumerate().skip(1) {
+                let better = if largest {
+                    cmp_asc(&best_val, &val) == Ordering::Less
+                } else {
+                    cmp_asc(&val, &best_val) == Ordering::Less
+                };
+                if better {
+                    best_val = val;
+                    best_idx = i;
+                }
+            }
+            lane_vals[0] = best_val;
+            lane_idxs[0] = best_idx as i64;
+            continue;
+        }
+
+        if k * 4 < n {
+            let mut cmp = cmp_asc;
+            let top_items: Vec<(T, usize)> = if let Some(slice) = lane_in.as_slice() {
+                heap_topk(slice, k, largest, &mut cmp)
+            } else {
+                let tmp: Vec<T> = lane_in.iter().copied().collect();
+                heap_topk(&tmp, k, largest, &mut cmp)
+            };
+
+            if !sorted {
+                let mut items = top_items;
+                items.sort_unstable_by_key(|&(_, idx)| idx);
+                for (i, &(val, idx)) in items.iter().enumerate() {
+                    lane_vals[i] = val;
+                    lane_idxs[i] = idx as i64;
+                }
+            } else {
+                for (i, &(val, idx)) in top_items.iter().enumerate() {
+                    lane_vals[i] = val;
+                    lane_idxs[i] = idx as i64;
+                }
+            }
+            continue;
+        }
+
+        // Full sort for large k
+
         idx_scratch.clear();
-        idx_scratch.extend(0..lane_in.len());
+        idx_scratch.extend(0..n);
 
         if largest {
             sort_by_kind(&mut idx_scratch, kind, |a, b| {
@@ -214,8 +365,8 @@ where
     (out_values, out_indices)
 }
 
-pub fn topk_flat_generic<T, F>(
-    view: &ArrayD<T>,
+pub fn topk_flat_generic<T, D, F>(
+    view: &ArrayBase<D, IxDyn>,
     k: usize,
     largest: bool,
     sorted: bool,
@@ -224,30 +375,60 @@ pub fn topk_flat_generic<T, F>(
 ) -> (ArrayD<T>, ArrayD<i64>)
 where
     T: Copy,
+    D: Data<Elem = T>,
     F: Fn(&T, &T) -> Ordering + Copy,
 {
     let flat: Vec<T> = view.iter().copied().collect();
-    let mut indices: Vec<usize> = (0..flat.len()).collect();
+    let n = flat.len();
+    let out_k = k.min(n);
 
-    if largest {
-        sort_by_kind(&mut indices, kind, |a, b| cmp_asc(&flat[*b], &flat[*a]));
+    if out_k == 0 {
+        return (
+            ArrayD::from_shape_vec(IxDyn(&[0]), Vec::new()).unwrap(),
+            ArrayD::from_shape_vec(IxDyn(&[0]), Vec::new()).unwrap(),
+        );
+    }
+
+    let mut out_vals: Vec<T> = Vec::with_capacity(out_k);
+    let mut out_idxs: Vec<i64> = Vec::with_capacity(out_k);
+
+    if k * 4 < n {
+        let mut cmp = cmp_asc;
+        let top_items = heap_topk(&flat, k, largest, &mut cmp);
+
+        let items: Vec<_> = if sorted {
+            top_items
+        } else {
+            let mut items = top_items;
+            items.sort_unstable_by_key(|&(_, idx)| idx);
+            items
+        };
+
+        for &(val, idx) in items.iter().take(out_k) {
+            out_vals.push(val);
+            out_idxs.push(idx as i64);
+        }
     } else {
-        sort_by_kind(&mut indices, kind, |a, b| cmp_asc(&flat[*a], &flat[*b]));
-    }
+        let mut indices: Vec<usize> = (0..n).collect();
 
-    if !sorted {
-        indices[..k].sort_unstable();
-    }
+        if largest {
+            sort_by_kind(&mut indices, kind, |a, b| cmp_asc(&flat[*b], &flat[*a]));
+        } else {
+            sort_by_kind(&mut indices, kind, |a, b| cmp_asc(&flat[*a], &flat[*b]));
+        }
 
-    let mut out_vals: Vec<T> = Vec::with_capacity(k);
-    let mut out_idxs: Vec<i64> = Vec::with_capacity(k);
-    for &idx in indices.iter().take(k) {
-        out_vals.push(flat[idx]);
-        out_idxs.push(idx as i64);
+        if !sorted {
+            indices[..out_k].sort_unstable();
+        }
+
+        for &idx in indices.iter().take(out_k) {
+            out_vals.push(flat[idx]);
+            out_idxs.push(idx as i64);
+        }
     }
 
     (
-        ArrayD::from_shape_vec(IxDyn(&[k]), out_vals).expect("Failed to build topk flat values"),
-        ArrayD::from_shape_vec(IxDyn(&[k]), out_idxs).expect("Failed to build topk flat indices"),
+        ArrayD::from_shape_vec(IxDyn(&[out_k]), out_vals).unwrap(),
+        ArrayD::from_shape_vec(IxDyn(&[out_k]), out_idxs).unwrap(),
     )
 }

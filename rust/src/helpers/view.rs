@@ -5,6 +5,7 @@
 
 use crate::define_extract_array;
 use crate::define_extract_array_as;
+use crate::define_extract_view;
 use crate::define_extract_view_mut;
 use crate::types::ArrayData;
 use ndarray::ShapeBuilder;
@@ -28,6 +29,30 @@ define_extract_array!(
 );
 define_extract_array!(
     extract_array_c128,
+    ArrayData::Complex128,
+    num_complex::Complex64
+);
+
+// Generate `extract_view` functions for all types (immutable, zero-copy).
+// Caller must gate on `is_c_contiguous()` before calling these.
+define_extract_view!(extract_view_f64, ArrayData::Float64, f64);
+define_extract_view!(extract_view_f32, ArrayData::Float32, f32);
+define_extract_view!(extract_view_i64, ArrayData::Int64, i64);
+define_extract_view!(extract_view_i32, ArrayData::Int32, i32);
+define_extract_view!(extract_view_i16, ArrayData::Int16, i16);
+define_extract_view!(extract_view_i8, ArrayData::Int8, i8);
+define_extract_view!(extract_view_u64, ArrayData::Uint64, u64);
+define_extract_view!(extract_view_u32, ArrayData::Uint32, u32);
+define_extract_view!(extract_view_u16, ArrayData::Uint16, u16);
+define_extract_view!(extract_view_u8, ArrayData::Uint8, u8);
+define_extract_view!(extract_view_bool, ArrayData::Bool, u8);
+define_extract_view!(
+    extract_view_c64,
+    ArrayData::Complex64,
+    num_complex::Complex32
+);
+define_extract_view!(
+    extract_view_c128,
     ArrayData::Complex128,
     num_complex::Complex64
 );
@@ -414,6 +439,22 @@ pub fn rhs_broadcasts_to_lhs(dst: &[usize], src: &[usize]) -> bool {
         Some(bc) => bc == dst,
         None => false,
     }
+}
+
+/// True when `strides` match C-contiguous (row-major) defaults for the given `shape`.
+pub fn is_c_contiguous(shape: &[usize], strides: &[usize]) -> bool {
+    let ndim = shape.len();
+    if ndim == 0 {
+        return true;
+    }
+    let mut expected = 1;
+    for i in (0..ndim).rev() {
+        if strides[i] != expected {
+            return false;
+        }
+        expected *= shape[i];
+    }
+    true
 }
 
 #[cfg(test)]

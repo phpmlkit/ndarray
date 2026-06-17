@@ -12,6 +12,7 @@ use crate::helpers::{
     extract_array_f64, extract_array_i16, extract_array_i32, extract_array_i64, extract_array_i8,
     extract_array_u16, extract_array_u32, extract_array_u64, extract_array_u8,
 };
+use crate::helpers::is_c_contiguous;
 use crate::types::dtype::DType;
 use crate::types::{ArrayData, ArrayMetadata, NdArrayHandle};
 use ndarray::ArrayD;
@@ -19,22 +20,6 @@ use ndarray::ArrayD;
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/// True when `strides` match C-contiguous defaults for the given `shape`.
-fn is_c_contiguous(shape: &[usize], strides: &[usize]) -> bool {
-    let ndim = shape.len();
-    if ndim == 0 {
-        return true;
-    }
-    let mut expected = 1;
-    for i in (0..ndim).rev() {
-        if strides[i] != expected {
-            return false;
-        }
-        expected *= shape[i];
-    }
-    true
-}
 
 /// Build a closure that extracts the typed `Arc<RwLock<ArrayD<T>>>` from an
 /// `ArrayData` enum, returning `None` when the variant doesn't match.

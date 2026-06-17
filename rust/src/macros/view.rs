@@ -24,19 +24,7 @@ macro_rules! define_extract_array {
                         return ndarray::ArrayD::from_shape_vec(shape_ix, Vec::new()).ok();
                     }
 
-                    // Check if strides match C-contiguous defaults
-                    let ndim = shape.len();
-                    let mut c_default = ndim > 0;
-                    let mut cstride = 1;
-                    for dim in (0..ndim).rev() {
-                        if strides[dim] != cstride {
-                            c_default = false;
-                            break;
-                        }
-                        cstride *= shape[dim];
-                    }
-
-                    if c_default {
+                    if $crate::helpers::is_c_contiguous(shape, strides) {
                         let data = std::slice::from_raw_parts(ptr, total).to_vec();
                         return ndarray::ArrayD::from_shape_vec(shape_ix, data).ok();
                     }
@@ -49,6 +37,38 @@ macro_rules! define_extract_array {
                     );
                     let data: Vec<$type> = view.iter().copied().collect();
                     ndarray::ArrayD::from_shape_vec(ndarray::IxDyn(shape), data).ok()
+                }
+                _ => None,
+            }
+        }
+    };
+}
+
+/// Immutable view extraction for each type.
+///
+/// Returns a zero-copy `ArrayViewD` when the data variant matches.
+/// **Does not** check contiguity — the caller must gate on `is_c_contiguous()` first.
+#[macro_export]
+macro_rules! define_extract_view {
+    ($name:ident, $variant:path, $type:ty) => {
+        pub unsafe fn $name<'a>(
+            wrapper: &'a crate::types::NDArrayWrapper,
+            meta: &'a crate::types::ArrayMetadata,
+        ) -> Option<ndarray::ArrayViewD<'a, $type>> {
+            let offset = meta.offset;
+            let shape = meta.shape_slice();
+            let strides = meta.strides_slice();
+            match &wrapper.data {
+                $variant(arr) => {
+                    let guard = arr.read();
+                    let ptr = guard.as_ptr();
+                    let view_ptr = ptr.add(offset);
+                    let strides_ix = ndarray::IxDyn(strides);
+                    ndarray::ArrayViewD::<$type>::from_shape_ptr(
+                        ndarray::IxDyn(shape).strides(strides_ix),
+                        view_ptr,
+                    )
+                    .into()
                 }
                 _ => None,
             }
