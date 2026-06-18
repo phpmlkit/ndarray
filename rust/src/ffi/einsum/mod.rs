@@ -167,7 +167,7 @@ pub unsafe extern "C" fn ndarray_einsum(
             None
         };
 
-        let s = match CStr::from_ptr(subscripts as *const i8).to_str() {
+        let s = match CStr::from_ptr(subscripts).to_str() {
             Ok(s) => s,
             Err(e) => {
                 set_last_error(format!("Invalid subscripts: {}", e));
